@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "./api/client";
+import { Table } from "antd";
 
 function App() {
   const [orders, setOrders] = useState([]);
@@ -14,34 +15,43 @@ function App() {
       });
   }, []);
 
+  const columns = [
+    {
+      title: "ID",
+      dataIndex: "id",
+    },
+    {
+      title: "Номер",
+      dataIndex: "order_no",
+    },
+    {
+      title: "Постачальник",
+      dataIndex: "vendor_name",
+    },
+    {
+      title: "Статус",
+      dataIndex: "status_name",
+    },
+    {
+      title: "Оплата",
+      dataIndex: "payment_status_name",
+    },
+    {
+      title: "Дата",
+      dataIndex: "created_at",
+      render: (value) => new Date(value).toLocaleString(),
+    },
+  ];
+
   return (
-    <div style={{ padding: "20px" }}>
+    <div style={{ padding: 20 }}>
       <h1>Замовлення</h1>
 
-      <table border="1" cellPadding="8" style={{ borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Номер</th>
-            <th>Постачальник</th>
-            <th>Статус</th>
-            <th>Оплата</th>
-            <th>Дата</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map(order => (
-            <tr key={order.id}>
-              <td>{order.id}</td>
-              <td>{order.order_no}</td>
-              <td>{order.vendor_name}</td>
-              <td>{order.status_name}</td>
-              <td>{order.payment_status_name}</td>
-              <td>{new Date(order.created_at).toLocaleString()}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <Table
+        dataSource={orders}
+        columns={columns}
+        rowKey="id"
+      />
     </div>
   );
 }

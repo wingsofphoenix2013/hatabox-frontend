@@ -37,16 +37,17 @@ function ProtectedLayout() {
           height: "100vh",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
         }}
       >
-        {/* верхнее меню */}
-        <Menu
-          mode="inline"
-          selectedKeys={[location.pathname]}
-          onClick={({ key }) => navigate(key)}
-          items={mainMenuItems}
-        />
+        {/* ВАЖНО: этот div растягивает верхнее меню */}
+        <div style={{ flex: 1 }}>
+          <Menu
+            mode="inline"
+            selectedKeys={[location.pathname]}
+            onClick={({ key }) => navigate(key)}
+            items={mainMenuItems}
+          />
+        </div>
 
         {/* нижнее меню */}
         <Menu

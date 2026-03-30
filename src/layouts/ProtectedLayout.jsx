@@ -9,6 +9,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
@@ -16,6 +17,8 @@ const { Text } = Typography;
 function ProtectedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [panelOpen, setPanelOpen] = useState(false);
 
   const mainMenuItems = [
     { key: "/home", icon: <HomeOutlined />, label: "Головна" },
@@ -38,16 +41,21 @@ function ProtectedLayout() {
         style={{
           height: "100vh",
           position: "relative",
-          background: "#fff"
+          background: "#fff",
         }}
       >
+        {/* верхнее меню */}
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
-          onClick={({ key }) => navigate(key)}
+          onClick={({ key }) => {
+            navigate(key);
+            setPanelOpen(true);
+          }}
           items={mainMenuItems}
         />
 
+        {/* нижнее меню */}
         <div
           style={{
             position: "absolute",
@@ -65,51 +73,61 @@ function ProtectedLayout() {
       </Sider>
 
       {/* второй sidebar */}
-      <Sider
-        width={260}
-        style={{
-          background: "#fafafa",
-          padding: 16,
-          borderRight: "1px solid #f0f0f0"
-        }}
-      >
-        {/* Сторінки */}
-        <Text strong>Сторінки</Text>
-        <Menu
-          mode="inline"
-          items={[
-            { key: "p1", label: "Сторінка 1" },
-            { key: "p2", label: "Сторінка 2" },
-            { key: "p3", label: "Сторінка 3" },
-          ]}
-        />
+      {panelOpen && (
+        <Sider
+          width={260}
+          style={{
+            background: "#fafafa",
+            padding: 16,
+            borderRight: "1px solid #f0f0f0",
+          }}
+        >
+          {/* кнопка закрытия */}
+          <div style={{ marginBottom: 10, textAlign: "right" }}>
+            <a onClick={() => setPanelOpen(false)}>Закрити</a>
+          </div>
 
-        <Divider />
+          {/* Сторінки */}
+          <Text strong>Сторінки</Text>
+          <Menu
+            mode="inline"
+            onClick={() => setPanelOpen(false)}
+            items={[
+              { key: "p1", label: "Сторінка 1" },
+              { key: "p2", label: "Сторінка 2" },
+              { key: "p3", label: "Сторінка 3" },
+            ]}
+          />
 
-        {/* Дії */}
-        <Text strong>Дії</Text>
-        <Menu
-          mode="inline"
-          items={[
-            { key: "a1", label: "Дія 1" },
-            { key: "a2", label: "Дія 2" },
-            { key: "a3", label: "Дія 3" },
-          ]}
-        />
+          <Divider />
 
-        <Divider />
+          {/* Дії */}
+          <Text strong>Дії</Text>
+          <Menu
+            mode="inline"
+            onClick={() => setPanelOpen(false)}
+            items={[
+              { key: "a1", label: "Дія 1" },
+              { key: "a2", label: "Дія 2" },
+              { key: "a3", label: "Дія 3" },
+            ]}
+          />
 
-        {/* Довідники */}
-        <Text strong>Довідники</Text>
-        <Menu
-          mode="inline"
-          items={[
-            { key: "d1", label: "Довідник 1" },
-            { key: "d2", label: "Довідник 2" },
-            { key: "d3", label: "Довідник 3" },
-          ]}
-        />
-      </Sider>
+          <Divider />
+
+          {/* Довідники */}
+          <Text strong>Довідники</Text>
+          <Menu
+            mode="inline"
+            onClick={() => setPanelOpen(false)}
+            items={[
+              { key: "d1", label: "Довідник 1" },
+              { key: "d2", label: "Довідник 2" },
+              { key: "d3", label: "Довідник 3" },
+            ]}
+          />
+        </Sider>
+      )}
 
       {/* контент */}
       <Layout>

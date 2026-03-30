@@ -17,10 +17,10 @@ function ProtectedLayout() {
   const location = useLocation();
 
   const mainMenuItems = [
-    { key: "/home", icon: <HomeOutlined />, label: "Дуже головна" },
+    { key: "/home", icon: <HomeOutlined />, label: "Головна" },
     { key: "/sales", icon: <ShoppingCartOutlined />, label: "Продажі" },
     { key: "/production", icon: <BuildOutlined />, label: "Виробництво" },
-    { key: "/inventory", icon: <AppstoreOutlined />, label: "Склади" },
+    { key: "/inventory", icon: <AppstoreOutlined />, label: "Склад" },
     { key: "/orders", icon: <ShoppingOutlined />, label: "Закупівлі" },
     { key: "/service", icon: <ToolOutlined />, label: "Сервіс" },
   ];
@@ -35,27 +35,32 @@ function ProtectedLayout() {
         width={220}
         style={{
           height: "100vh",
-          display: "flex",
-          flexDirection: "column",
+          position: "relative",
         }}
       >
-        {/* ВАЖНО: этот div растягивает верхнее меню */}
-        <div style={{ flex: 1 }}>
-          <Menu
-            mode="inline"
-            selectedKeys={[location.pathname]}
-            onClick={({ key }) => navigate(key)}
-            items={mainMenuItems}
-          />
-        </div>
-
-        {/* нижнее меню */}
+        {/* верхнее меню */}
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
           onClick={({ key }) => navigate(key)}
-          items={bottomMenuItems}
+          items={mainMenuItems}
         />
+
+        {/* нижнее меню */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            width: "100%",
+          }}
+        >
+          <Menu
+            mode="inline"
+            selectedKeys={[location.pathname]}
+            onClick={({ key }) => navigate(key)}
+            items={bottomMenuItems}
+          />
+        </div>
       </Sider>
 
       <Layout>

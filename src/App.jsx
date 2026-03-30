@@ -2,6 +2,8 @@ import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-
 import { useEffect, useState } from "react";
 import api from "./api/client";
 
+import ProtectedLayout from "./layouts/ProtectedLayout";
+
 import OrdersPage from "./pages/OrdersPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import LoginPage from "./pages/LoginPage";
@@ -46,9 +48,11 @@ function App() {
           {/* редирект с корня */}
           <Route path="/" element={<Navigate to="/orders" />} />
 
-          {/* orders */}
-          <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/orders/:id" element={<OrderDetailPage />} />
+          {/* layout */}
+          <Route element={<ProtectedLayout />}>
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/orders/:id" element={<OrderDetailPage />} />
+          </Route>
         </>
       )}
 

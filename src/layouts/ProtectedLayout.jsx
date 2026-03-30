@@ -16,24 +16,44 @@ function ProtectedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const menuItems = [
+  const mainMenuItems = [
     { key: "/home", icon: <HomeOutlined />, label: "Головна" },
     { key: "/sales", icon: <ShoppingCartOutlined />, label: "Продажі" },
     { key: "/production", icon: <BuildOutlined />, label: "Виробництво" },
     { key: "/inventory", icon: <AppstoreOutlined />, label: "Склад" },
     { key: "/orders", icon: <ShoppingOutlined />, label: "Закупівлі" },
     { key: "/service", icon: <ToolOutlined />, label: "Сервіс" },
+  ];
+
+  const bottomMenuItems = [
     { key: "/user", icon: <UserOutlined />, label: "Користувач" },
   ];
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider width={220} style={{ minHeight: "100vh" }}>
+      <Sider
+        width={220}
+        style={{
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
+      >
+        {/* верхнее меню */}
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
           onClick={({ key }) => navigate(key)}
-          items={menuItems}
+          items={mainMenuItems}
+        />
+
+        {/* нижнее меню */}
+        <Menu
+          mode="inline"
+          selectedKeys={[location.pathname]}
+          onClick={({ key }) => navigate(key)}
+          items={bottomMenuItems}
         />
       </Sider>
 

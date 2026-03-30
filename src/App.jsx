@@ -1,4 +1,4 @@
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "./api/client";
 
@@ -37,13 +37,17 @@ function App() {
 
   return (
     <Routes>
-      {/* страница логина доступна всегда */}
+      {/* страница логина */}
       <Route path="/login" element={<LoginPage />} />
 
       {/* защищённые маршруты */}
       {isAuth && (
         <>
-          <Route path="/" element={<OrdersPage />} />
+          {/* редирект с корня */}
+          <Route path="/" element={<Navigate to="/orders" />} />
+
+          {/* orders */}
+          <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:id" element={<OrderDetailPage />} />
         </>
       )}

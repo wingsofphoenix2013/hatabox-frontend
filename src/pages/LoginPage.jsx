@@ -32,34 +32,46 @@ function LoginPage() {
     }
   };
 
-  return (
-    <div style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      height: "100vh"
-    }}>
-      <Card title="Вхід" style={{ width: 300 }}>
-        <Input
-          placeholder="Логін"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          style={{ marginBottom: 10 }}
-        />
+return (
+  <div style={{
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    height: "100vh"
+  }}>
+    
+    <img
+      src="https://pub-75139bf2aa40449aba5b2da5e10ec84e.r2.dev/site/logo.png"
+      alt="Logo"
+      style={{
+        width: 180,
+        marginBottom: 20,
+      }}
+    />
 
-        <Input.Password
-          placeholder="Пароль"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ marginBottom: 10 }}
-        />
+    <Card title="Вхід" style={{ width: 300 }}>
+      <Input
+        placeholder="Логін"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        style={{ marginBottom: 10 }}
+      />
 
-        <Button type="primary" block onClick={handleLogin}>
-          Увійти
-        </Button>
-      </Card>
-    </div>
-  );
+      <Input.Password
+        placeholder="Пароль"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        style={{ marginBottom: 10 }}
+      />
+
+      <Button type="primary" block onClick={handleLogin}>
+        Увійти
+      </Button>
+    </Card>
+
+  </div>
+);
 }
 
 export default LoginPage;

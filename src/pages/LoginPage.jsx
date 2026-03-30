@@ -2,12 +2,22 @@ import { useState } from "react";
 import { Input, Button, Card } from "antd";
 import api from "../api/client";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    api.get("me/")
+      .then(() => {
+        navigate("/");
+      })
+      .catch(() => {});
+  }, [navigate]);
+  
   const handleLogin = async () => {
     try {
       await api.post("login/", {

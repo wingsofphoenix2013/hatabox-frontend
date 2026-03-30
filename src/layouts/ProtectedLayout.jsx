@@ -28,7 +28,7 @@ function ProtectedLayout() {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sider width={220}>
+      <Sider width={220} style={{ minHeight: "100vh" }}>
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}

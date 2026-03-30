@@ -17,10 +17,10 @@ function ProtectedLayout() {
   const location = useLocation();
 
   const mainMenuItems = [
-    { key: "/home", icon: <HomeOutlined />, label: "Головна" },
+    { key: "/home", icon: <HomeOutlined />, label: "Дуже головна" },
     { key: "/sales", icon: <ShoppingCartOutlined />, label: "Продажі" },
     { key: "/production", icon: <BuildOutlined />, label: "Виробництво" },
-    { key: "/inventory", icon: <AppstoreOutlined />, label: "Склад" },
+    { key: "/inventory", icon: <AppstoreOutlined />, label: "Склади" },
     { key: "/orders", icon: <ShoppingOutlined />, label: "Закупівлі" },
     { key: "/service", icon: <ToolOutlined />, label: "Сервіс" },
   ];

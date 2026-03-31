@@ -190,7 +190,7 @@ function ProductionComponentsPage() {
             onChange={handleTableChange}
             pagination={{
               current: currentPage,
-              pageSize: 25,
+              pageSize: 50,
               total: total,
               showSizeChanger: false,
             }}

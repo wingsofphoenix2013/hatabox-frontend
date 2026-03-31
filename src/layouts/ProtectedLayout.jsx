@@ -7,6 +7,9 @@ import {
   ShoppingOutlined,
   ToolOutlined,
   UserOutlined,
+  DatabaseOutlined,
+  FileAddOutlined,
+  ReadOutlined,
 } from "@ant-design/icons";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
@@ -134,6 +137,7 @@ function ProtectedLayout() {
                 onClick={() => setPanelOpen(false)}
                 items={currentConfig.pages.map((item, i) => ({
                   key: "p" + i,
+                  icon: <DatabaseOutlined />,
                   label: item,
                 }))}
               />
@@ -152,6 +156,7 @@ function ProtectedLayout() {
                 onClick={() => setPanelOpen(false)}
                 items={currentConfig.actions.map((item, i) => ({
                   key: "a" + i,
+                  icon: <FileAddOutlined />,
                   label: item,
                 }))}
               />
@@ -170,6 +175,7 @@ function ProtectedLayout() {
                 onClick={() => setPanelOpen(false)}
                 items={currentConfig.dictionaries.map((item, i) => ({
                   key: "d" + i,
+                  icon: <ReadOutlined />,
                   label: item,
                 }))}
               />

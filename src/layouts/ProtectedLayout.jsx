@@ -10,6 +10,7 @@ import {
   DatabaseOutlined,
   FileAddOutlined,
   ReadOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
@@ -174,10 +175,13 @@ function ProtectedLayout() {
             flexShrink: 0,
           }}
         >
-          <div style={{ marginBottom: 10, textAlign: 'right' }}>
-            <Button type="link" onClick={() => setPanelOpen(false)}>
-              Закрити
-            </Button>
+          <div style={{ marginBottom: 8, textAlign: 'right' }}>
+            <Button
+              type="text"
+              icon={<CloseOutlined />}
+              onClick={() => setPanelOpen(false)}
+              style={{ color: '#d1d5db' }} // нейтральный серый
+            />
           </div>
 
           {currentConfig.pages.length > 0 && (
@@ -228,7 +232,15 @@ function ProtectedLayout() {
 
           {currentConfig.dictionaries.length > 0 && (
             <>
-              <Text strong style={{ color: '#ffffff' }}>
+              <Text
+                strong
+                style={{
+                  color: '#ffffff',
+                  display: 'block',
+                  paddingLeft: 12,
+                  marginBottom: 8,
+                }}
+              >
                 Довідники
               </Text>
               <Menu

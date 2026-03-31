@@ -109,8 +109,7 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
-
-/* Sidebar 1 hover — усиленный селектор */
-.ant-menu-dark .ant-menu-item:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+/* Sidebar 1 hover — принудительно */
+.custom-sidebar-menu .ant-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }

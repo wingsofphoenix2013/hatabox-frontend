@@ -93,6 +93,7 @@ function ProtectedLayout() {
           mode="inline"
           style={{ background: '#1f2937' }}
           selectedKeys={[location.pathname]}
+          className="custom-sidebar-menu"
           onClick={({ key }) => {
             navigate(key);
             setPanelOpen(true);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppstoreAddOutlined, PlusOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Image, Space, Table, Typography } from 'antd';
+import { Alert, Button, Card, Image, Table, Typography, Flex } from 'antd';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 
@@ -41,13 +41,13 @@ function ProductionComponentsPage() {
 
   const columns = [
     {
-      title: 'Internal code',
+      title: 'Код',
       dataIndex: 'internal_code',
       key: 'internal_code',
-      width: 180,
+      width: 160,
     },
     {
-      title: 'Name',
+      title: 'Назва',
       dataIndex: 'name',
       key: 'name',
       render: (_, record) => (
@@ -55,31 +55,31 @@ function ProductionComponentsPage() {
       ),
     },
     {
-      title: 'Category',
+      title: 'Категорія',
       dataIndex: 'category_name',
       key: 'category_name',
       width: 220,
       render: (value) => value || '—',
     },
     {
-      title: 'Unit',
+      title: 'Од. вим.',
       dataIndex: 'unit_symbol',
       key: 'unit_symbol',
       width: 100,
       render: (value) => value || '—',
     },
     {
-      title: 'Image',
+      title: 'Превʼю',
       dataIndex: 'image',
       key: 'image',
-      width: 110,
+      width: 96,
       render: (value, record) => {
         if (!value) {
           return (
             <div
               style={{
-                width: 56,
-                height: 56,
+                width: 44,
+                height: 44,
                 border: '1px solid #f0f0f0',
                 borderRadius: 8,
                 display: 'flex',
@@ -98,8 +98,8 @@ function ProductionComponentsPage() {
         return (
           <div
             style={{
-              width: 56,
-              height: 56,
+              width: 44,
+              height: 44,
               border: '1px solid #f0f0f0',
               borderRadius: 8,
               display: 'flex',
@@ -112,9 +112,9 @@ function ProductionComponentsPage() {
             <Image
               src={value}
               alt={record.name}
-              width={48}
-              height={48}
-              preview={true}
+              width={38}
+              height={38}
+              preview
               style={{ objectFit: 'contain' }}
             />
           </div>
@@ -124,12 +124,12 @@ function ProductionComponentsPage() {
     {
       title: '',
       key: 'action',
-      width: 70,
+      width: 56,
       align: 'center',
       render: () => (
         <AppstoreAddOutlined
           style={{
-            fontSize: 18,
+            fontSize: 17,
             color: '#8c8c8c',
             cursor: 'default',
           }}
@@ -140,15 +140,8 @@ function ProductionComponentsPage() {
 
   return (
     <div style={{ padding: 20 }}>
-      <Space direction="vertical" size={16} style={{ width: '100%' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 16,
-          }}
-        >
+      <Flex vertical gap={16}>
+        <Flex justify="space-between" align="center" gap={16} wrap>
           <div>
             <Title level={2} style={{ margin: 0 }}>
               Номенклатура компонентів
@@ -158,41 +151,32 @@ function ProductionComponentsPage() {
           <Button type="primary" size="large" icon={<PlusOutlined />}>
             Додати позицію
           </Button>
-        </div>
+        </Flex>
 
-        <Card>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 16,
-              flexWrap: 'wrap',
-            }}
-          >
-            <Text>
-              Обрано: <strong>{selectedRowKeys.length}</strong>
-            </Text>
-          </div>
+        <Card size="small">
+          <Text>
+            Обрано: <strong>{selectedRowKeys.length}</strong>
+          </Text>
         </Card>
 
-        {error && <Alert type="error" message={error} showIcon />}
+        {error && <Alert type="error" description={error} showIcon />}
 
-        <Card bodyStyle={{ padding: 0 }}>
+        <Card styles={{ body: { padding: 0 } }}>
           <Table
             rowKey="id"
             loading={loading}
             dataSource={items}
             columns={columns}
             rowSelection={rowSelection}
+            size="small"
             pagination={{
               pageSize: 25,
               showSizeChanger: false,
             }}
-            scroll={{ x: 1000 }}
+            scroll={{ x: 900 }}
           />
         </Card>
-      </Space>
+      </Flex>
     </div>
   );
 }

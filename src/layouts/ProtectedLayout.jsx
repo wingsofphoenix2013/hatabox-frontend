@@ -41,11 +41,12 @@ function ProtectedLayout() {
         style={{
           height: "100vh",
           position: "relative",
-          background: "#fff",
+          background: "#1f2937",
         }}
       >
         {/* верхнее меню */}
         <Menu
+          theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
           onClick={({ key }) => {
@@ -64,6 +65,7 @@ function ProtectedLayout() {
           }}
         >
           <Menu
+            theme="dark"
             mode="inline"
             selectedKeys={[location.pathname]}
             onClick={({ key }) => navigate(key)}
@@ -77,9 +79,9 @@ function ProtectedLayout() {
         <Sider
           width={260}
           style={{
-            background: "#fafafa",
+            background: "#f4f6f8",
             padding: 16,
-            borderRight: "1px solid #f0f0f0",
+            borderRight: "1px solid #e5e7eb",
           }}
         >
           {/* кнопка закрытия */}

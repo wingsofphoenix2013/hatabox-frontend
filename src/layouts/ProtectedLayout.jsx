@@ -48,6 +48,7 @@ function ProtectedLayout() {
         <Menu
           theme="dark"
           mode="inline"
+          style={{ background: "#1f2937" }}
           selectedKeys={[location.pathname]}
           onClick={({ key }) => {
             navigate(key);
@@ -67,6 +68,7 @@ function ProtectedLayout() {
           <Menu
             theme="dark"
             mode="inline"
+            style={{ background: "#1f2937" }}
             selectedKeys={[location.pathname]}
             onClick={({ key }) => navigate(key)}
             items={bottomMenuItems}
@@ -79,7 +81,7 @@ function ProtectedLayout() {
         <Sider
           width={260}
           style={{
-            background: "#f4f6f8",
+            background: "#2a3441",
             padding: 16,
             borderRight: "1px solid #e5e7eb",
           }}
@@ -93,6 +95,8 @@ function ProtectedLayout() {
           <Text strong>Сторінки</Text>
           <Menu
             mode="inline"
+            theme="dark"
+            style={{ background: "#2a3441" }}
             onClick={() => setPanelOpen(false)}
             items={[
               { key: "p1", label: "Сторінка 1" },
@@ -107,6 +111,8 @@ function ProtectedLayout() {
           <Text strong>Дії</Text>
           <Menu
             mode="inline"
+            theme="dark"
+            style={{ background: "#2a3441" }}
             onClick={() => setPanelOpen(false)}
             items={[
               { key: "a1", label: "Дія 1" },
@@ -121,6 +127,8 @@ function ProtectedLayout() {
           <Text strong>Довідники</Text>
           <Menu
             mode="inline"
+            theme="dark"
+            style={{ background: "#2a3441" }}
             onClick={() => setPanelOpen(false)}
             items={[
               { key: "d1", label: "Довідник 1" },

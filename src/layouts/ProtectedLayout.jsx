@@ -12,7 +12,7 @@ import {
   ReadOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
@@ -22,6 +22,11 @@ function ProtectedLayout() {
   const location = useLocation();
 
   const [panelOpen, setPanelOpen] = useState(false);
+  useEffect(() => {
+    if (currentModule) {
+      setPanelOpen(true);
+    }
+  }, [currentModule]);
 
   const mainMenuItems = [
     { key: '/home', icon: <HomeOutlined />, label: 'Головна' },

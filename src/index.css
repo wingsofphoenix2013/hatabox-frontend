@@ -109,10 +109,3 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
-.custom-sidebar-menu .ant-menu-item {
-  transition: background 0.2s;
-}
-
-.custom-sidebar-menu .ant-menu-item:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-}

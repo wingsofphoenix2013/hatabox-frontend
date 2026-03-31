@@ -149,7 +149,6 @@ function ProtectedLayout() {
               <Divider />
             </>
           )}
-
           {/* Дії */}
           {currentConfig.actions.length > 0 && (
             <>
@@ -168,7 +167,6 @@ function ProtectedLayout() {
               <Divider />
             </>
           )}
-
           {/* Довідники */}
           {currentConfig.dictionaries.length > 0 && (
             <>
@@ -177,7 +175,12 @@ function ProtectedLayout() {
                 mode="inline"
                 theme="dark"
                 style={{ background: "#2a3441" }}
-                onClick={() => setPanelOpen(false)}
+                onClick={({ key }) => {
+                  if (currentModule === "/production" && key === "d0") {
+                    navigate("/production/components");
+                  }
+                  setPanelOpen(false);
+                }}
                 items={currentConfig.dictionaries.map((item, i) => ({
                   key: "d" + i,
                   icon: <ReadOutlined />,

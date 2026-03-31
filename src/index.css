@@ -111,6 +111,6 @@ code {
 }
 
 /* Sidebar 1 hover — усиленный селектор */
-.ant-menu-dark .ant-menu-item:not(.ant-menu-item-selected):hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
+.ant-menu-dark .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
 }

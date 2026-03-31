@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
 import { AppstoreAddOutlined, PlusOutlined } from '@ant-design/icons';
-import { Alert, Button, Card, Image, Table, Typography, Flex } from 'antd';
+import {
+  Alert,
+  Button,
+  Card,
+  Divider,
+  Flex,
+  Image,
+  Select,
+  Table,
+  Typography,
+} from 'antd';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 
@@ -8,25 +18,46 @@ const { Title, Text } = Typography;
 
 function ProductionComponentsPage() {
   const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [error, setError] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
     loadItems(currentPage);
-  }, [currentPage]);
+  }, [currentPage, selectedCategories]);
+
+  const loadCategories = async () => {
+    try {
+      const response = await api.get('categories/');
+      setCategories(Array.isArray(response.data) ? response.data : []);
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+      setCategories([]);
+    }
+  };
 
   const loadItems = async (page) => {
     try {
       setLoading(true);
       setError('');
 
-      const response = await api.get('items/', {
-        params: { page },
-      });
+      const params = { page };
+
+      if (selectedCategories.length > 0) {
+        params.category = selectedCategories;
+      }
+
+      const response = await api.get('items/', { params });
 
       setItems(
         Array.isArray(response.data.results) ? response.data.results : [],
@@ -172,9 +203,40 @@ function ProductionComponentsPage() {
         </Flex>
 
         <Card size="small">
-          <Text>
-            Обрано: <strong>{selectedRowKeys.length}</strong>
-          </Text>
+          <Flex justify="space-between" align="center" wrap gap={16}>
+            <Flex align="center" gap={12} wrap>
+              <Text>
+                Обрано: <strong>{selectedRowKeys.length}</strong>
+              </Text>
+
+              <Select
+                placeholder="Дії"
+                style={{ width: 180 }}
+                disabled={selectedRowKeys.length === 0}
+                options={[{ value: 'placeholder', label: 'Дії' }]}
+              />
+            </Flex>
+
+            <Flex align="center" gap={12} wrap>
+              <Divider type="vertical" style={{ height: 28 }} />
+
+              <Select
+                mode="multiple"
+                allowClear
+                placeholder="Категорії"
+                style={{ minWidth: 260 }}
+                value={selectedCategories}
+                onChange={(values) => {
+                  setSelectedCategories(values);
+                  setCurrentPage(1);
+                }}
+                options={categories.map((category) => ({
+                  value: category.id,
+                  label: category.name,
+                }))}
+              />
+            </Flex>
+          </Flex>
         </Card>
 
         {error && <Alert type="error" description={error} showIcon />}

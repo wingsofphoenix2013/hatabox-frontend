@@ -39,23 +39,23 @@ function ProtectedLayout() {
 
   const moduleConfig = {
     '/orders': {
-      pages: ['Замовлення', 'Повернення', 'Чернетки'],
-      actions: ['Створити замовлення', 'Імпорт', 'Експорт'],
-      dictionaries: ['Постачальники', 'Типи оплат', 'Статуси'],
+      pages: [],
+      actions: [],
+      dictionaries: [],
     },
     '/inventory': {
-      pages: ['Номенклатура', 'Залишки', 'Переміщення'],
-      actions: ['Прийомка', 'Списання', 'Інвентаризація'],
-      dictionaries: ['Склади', 'Категорії', 'Одиниці'],
+      pages: [],
+      actions: [],
+      dictionaries: [],
     },
     '/sales': {
-      pages: ['Продажі', 'Клієнти', 'Рахунки'],
-      actions: ['Створити продаж', 'Знижки', 'Повернення'],
-      dictionaries: ['Клієнти', 'Типи цін', 'Канали'],
+      pages: [],
+      actions: [],
+      dictionaries: [],
     },
     '/user': {
-      pages: ['Повідомлення', 'Налаштування'],
-      actions: ['Вихід з системи'],
+      pages: [],
+      actions: [],
       dictionaries: [],
     },
     '/production': {

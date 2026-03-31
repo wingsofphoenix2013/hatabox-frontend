@@ -59,24 +59,20 @@ function App() {
 
           {/* layout */}
           <Route element={<ProtectedLayout />}>
+            <Route path="/home" element={<div>Головна</div>} />
+
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailPage />} />
 
-            <Route path="/inventory" element={<div>Склад</div>} />
-            <Route path="/sales" element={<div>Продажі</div>} />
-
-            <Route path="/production" element={<div>Виробництво</div>} />
             <Route
               path="/production/components"
               element={<ProductionComponentsPage />}
             />
             <Route
               path="/production/components/:id"
-              element={<div>Деталі компонента</div>}
+              element={<ProductionComponentDetailPage />}
             />
 
-            <Route path="/service" element={<div>Сервіс</div>} />
-            <Route path="/home" element={<div>Головна</div>} />
             <Route path="/user" element={<div>Користувач</div>} />
           </Route>
         </>

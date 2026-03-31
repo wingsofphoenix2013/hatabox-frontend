@@ -35,7 +35,7 @@ function ProductionComponentsPage() {
       setSelectedRowKeys([]);
     } catch (err) {
       console.error('Failed to load items:', err);
-      setError('Не вдалося завантажити номенклатуру компонентів.');
+      setError('Не вдалося завантажити номенклатуру компонентів!');
       setItems([]);
       setTotal(0);
       setSelectedRowKeys([]);

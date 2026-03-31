@@ -186,7 +186,17 @@ function ProtectedLayout() {
 
           {currentConfig.pages.length > 0 && (
             <>
-              <Text strong style={{ color: '#ffffff' }}>
+              <Text
+                strong
+                style={{
+                  color: '#ffffff',
+                  display: 'block',
+                  paddingLeft: 12,
+                  marginBottom: 8,
+                  fontSize: 12,
+                  opacity: 0.8,
+                }}
+              >
                 Сторінки
               </Text>
               <Menu
@@ -209,7 +219,17 @@ function ProtectedLayout() {
 
           {currentConfig.actions.length > 0 && (
             <>
-              <Text strong style={{ color: '#ffffff' }}>
+              <Text
+                strong
+                style={{
+                  color: '#ffffff',
+                  display: 'block',
+                  paddingLeft: 12,
+                  marginBottom: 8,
+                  fontSize: 12,
+                  opacity: 0.8,
+                }}
+              >
                 Дії
               </Text>
               <Menu
@@ -239,6 +259,8 @@ function ProtectedLayout() {
                   display: 'block',
                   paddingLeft: 12,
                   marginBottom: 8,
+                  fontSize: 12,
+                  opacity: 0.8,
                 }}
               >
                 Довідники

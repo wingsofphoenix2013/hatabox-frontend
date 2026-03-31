@@ -109,7 +109,10 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
-/* Sidebar 1 hover — принудительно */
+.custom-sidebar-menu .ant-menu-item {
+  transition: background 0.2s;
+}
+
 .custom-sidebar-menu .ant-menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
 }

@@ -151,7 +151,6 @@ function ProtectedLayout() {
                 style={{ background: '#2a3441' }}
                 selectedKeys={[location.pathname]}
                 onClick={({ key }) => {
-                  navigate(key);
                   setPanelOpen(false);
                 }}
                 items={currentConfig.pages.map((item, i) => ({
@@ -173,7 +172,6 @@ function ProtectedLayout() {
                 style={{ background: '#2a3441' }}
                 selectedKeys={[location.pathname]}
                 onClick={({ key }) => {
-                  navigate(key);
                   setPanelOpen(false);
                 }}
                 items={currentConfig.actions.map((item, i) => ({

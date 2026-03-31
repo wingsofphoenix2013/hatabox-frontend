@@ -53,13 +53,14 @@ function ProductionComponentsPage() {
       setLoading(true);
       setError('');
 
-      const params = { page };
+      const params = new URLSearchParams();
+      params.append('page', page);
 
-      if (selectedCategories.length > 0) {
-        params.category = selectedCategories;
-      }
+      selectedCategories.forEach((categoryId) => {
+        params.append('category', categoryId);
+      });
 
-      const response = await api.get('items/', { params });
+      const response = await api.get(`items/?${params.toString()}`);
 
       setItems(
         Array.isArray(response.data.results) ? response.data.results : [],

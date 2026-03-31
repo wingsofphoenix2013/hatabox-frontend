@@ -1,4 +1,4 @@
-import { Layout, Menu, Divider, Typography } from 'antd';
+import { Layout, Menu, Divider, Typography, Button } from 'antd';
 import {
   HomeOutlined,
   ShoppingCartOutlined,
@@ -12,7 +12,7 @@ import {
   ReadOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
@@ -22,6 +22,7 @@ function ProtectedLayout() {
   const location = useLocation();
 
   const [panelOpen, setPanelOpen] = useState(false);
+  const [activeModule, setActiveModule] = useState(null);
 
   const mainMenuItems = [
     { key: '/home', icon: <HomeOutlined />, label: 'Головна' },
@@ -67,13 +68,54 @@ function ProtectedLayout() {
         },
       ],
     },
+    '/service': {
+      pages: [],
+      actions: [],
+      dictionaries: [],
+    },
   };
 
-  const currentModule = Object.keys(moduleConfig).find((key) =>
-    location.pathname.startsWith(key),
-  );
+  useEffect(() => {
+    const moduleFromPath = Object.keys(moduleConfig).find((key) =>
+      location.pathname.startsWith(key),
+    );
 
-  const currentConfig = moduleConfig[currentModule];
+    if (moduleFromPath) {
+      setActiveModule(moduleFromPath);
+
+      if (location.pathname === '/home') {
+        setPanelOpen(false);
+      } else {
+        setPanelOpen(true);
+      }
+    } else if (location.pathname === '/home') {
+      setActiveModule(null);
+      setPanelOpen(false);
+    }
+  }, [location.pathname]);
+
+  const mainSelectedKey =
+    location.pathname === '/home' ? '/home' : activeModule || '';
+
+  const currentConfig = activeModule ? moduleConfig[activeModule] : null;
+
+  const handleMainMenuClick = ({ key }) => {
+    if (key === '/home') {
+      setActiveModule(null);
+      setPanelOpen(false);
+      navigate('/home');
+      return;
+    }
+
+    if (key === '/user') {
+      setActiveModule('/user');
+      setPanelOpen(true);
+      return;
+    }
+
+    setActiveModule(key);
+    setPanelOpen(true);
+  };
 
   return (
     <Layout
@@ -96,11 +138,8 @@ function ProtectedLayout() {
           theme="dark"
           mode="inline"
           style={{ background: '#1f2937', borderInlineEnd: 'none' }}
-          selectedKeys={[location.pathname]}
-          onClick={({ key }) => {
-            navigate(key);
-            setPanelOpen(true);
-          }}
+          selectedKeys={[mainSelectedKey]}
+          onClick={handleMainMenuClick}
           items={mainMenuItems}
         />
 
@@ -115,11 +154,8 @@ function ProtectedLayout() {
             theme="dark"
             mode="inline"
             style={{ background: '#1f2937', borderInlineEnd: 'none' }}
-            selectedKeys={[location.pathname]}
-            onClick={({ key }) => {
-              navigate(key);
-              setPanelOpen(true);
-            }}
+            selectedKeys={[activeModule === '/user' ? '/user' : '']}
+            onClick={handleMainMenuClick}
             items={bottomMenuItems}
           />
         </div>
@@ -139,7 +175,9 @@ function ProtectedLayout() {
           }}
         >
           <div style={{ marginBottom: 10, textAlign: 'right' }}>
-            <a onClick={() => setPanelOpen(false)}>Закрити</a>
+            <Button type="link" onClick={() => setPanelOpen(false)}>
+              Закрити
+            </Button>
           </div>
 
           {currentConfig.pages.length > 0 && (
@@ -154,7 +192,6 @@ function ProtectedLayout() {
                 selectedKeys={[location.pathname]}
                 onClick={({ key }) => {
                   navigate(key);
-                  setPanelOpen(false);
                 }}
                 items={currentConfig.pages.map((item, i) => ({
                   key: item.path || 'p' + i,
@@ -178,7 +215,6 @@ function ProtectedLayout() {
                 selectedKeys={[location.pathname]}
                 onClick={({ key }) => {
                   navigate(key);
-                  setPanelOpen(false);
                 }}
                 items={currentConfig.actions.map((item, i) => ({
                   key: item.path || 'a' + i,
@@ -202,7 +238,6 @@ function ProtectedLayout() {
                 selectedKeys={[location.pathname]}
                 onClick={({ key }) => {
                   navigate(key);
-                  setPanelOpen(false);
                 }}
                 items={currentConfig.dictionaries.map((item, i) => ({
                   key: item.path || 'd' + i,

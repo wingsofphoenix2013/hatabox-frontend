@@ -58,6 +58,11 @@ function ProtectedLayout() {
       actions: ["Вихід з системи"],
       dictionaries: [],
     },
+    "/production": {
+      pages: [],
+      actions: [],
+      dictionaries: ["Номенклатура компонентів"],
+    },
   };
 
   // определяем текущий модуль

@@ -36,7 +36,6 @@ function ProtectedLayout() {
     { key: '/user', icon: <UserOutlined />, label: 'Користувач' },
   ];
 
-  // конфигурация модулей
   const moduleConfig = {
     '/orders': {
       pages: ['Замовлення', 'Повернення', 'Чернетки'],
@@ -70,7 +69,6 @@ function ProtectedLayout() {
     },
   };
 
-  // определяем текущий модуль
   const currentModule = Object.keys(moduleConfig).find((key) =>
     location.pathname.startsWith(key),
   );
@@ -78,20 +76,26 @@ function ProtectedLayout() {
   const currentConfig = moduleConfig[currentModule];
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout
+      style={{
+        height: '100vh',
+        overflow: 'hidden',
+      }}
+    >
       {/* левый sidebar */}
       <Sider
         width={220}
         style={{
           height: '100vh',
-          position: 'relative',
           background: '#1f2937',
+          position: 'relative',
+          flexShrink: 0,
         }}
       >
         <Menu
           theme="dark"
           mode="inline"
-          style={{ background: '#1f2937' }}
+          style={{ background: '#1f2937', borderInlineEnd: 'none' }}
           selectedKeys={[location.pathname]}
           onClick={({ key }) => {
             navigate(key);
@@ -110,7 +114,7 @@ function ProtectedLayout() {
           <Menu
             theme="dark"
             mode="inline"
-            style={{ background: '#1f2937' }}
+            style={{ background: '#1f2937', borderInlineEnd: 'none' }}
             selectedKeys={[location.pathname]}
             onClick={({ key }) => {
               navigate(key);
@@ -126,24 +130,27 @@ function ProtectedLayout() {
         <Sider
           width={260}
           style={{
+            height: '100vh',
             background: '#2a3441',
             padding: 16,
             borderRight: '1px solid #e5e7eb',
+            overflowY: 'auto',
+            flexShrink: 0,
           }}
         >
-          {/* кнопка закрытия */}
           <div style={{ marginBottom: 10, textAlign: 'right' }}>
             <a onClick={() => setPanelOpen(false)}>Закрити</a>
           </div>
 
-          {/* Сторінки */}
           {currentConfig.pages.length > 0 && (
             <>
-              <Text strong>Сторінки</Text>
+              <Text strong style={{ color: '#ffffff' }}>
+                Сторінки
+              </Text>
               <Menu
                 mode="inline"
                 theme="dark"
-                style={{ background: '#2a3441' }}
+                style={{ background: '#2a3441', borderInlineEnd: 'none' }}
                 selectedKeys={[location.pathname]}
                 onClick={({ key }) => {
                   navigate(key);
@@ -155,17 +162,19 @@ function ProtectedLayout() {
                   label: item.label || item,
                 }))}
               />
-              <Divider />
+              <Divider style={{ borderColor: 'rgba(255,255,255,0.12)' }} />
             </>
           )}
-          {/* Дії */}
+
           {currentConfig.actions.length > 0 && (
             <>
-              <Text strong>Дії</Text>
+              <Text strong style={{ color: '#ffffff' }}>
+                Дії
+              </Text>
               <Menu
                 mode="inline"
                 theme="dark"
-                style={{ background: '#2a3441' }}
+                style={{ background: '#2a3441', borderInlineEnd: 'none' }}
                 selectedKeys={[location.pathname]}
                 onClick={({ key }) => {
                   navigate(key);
@@ -177,17 +186,19 @@ function ProtectedLayout() {
                   label: item.label || item,
                 }))}
               />
-              <Divider />
+              <Divider style={{ borderColor: 'rgba(255,255,255,0.12)' }} />
             </>
           )}
-          {/* Довідники */}
+
           {currentConfig.dictionaries.length > 0 && (
             <>
-              <Text strong>Довідники</Text>
+              <Text strong style={{ color: '#ffffff' }}>
+                Довідники
+              </Text>
               <Menu
                 mode="inline"
                 theme="dark"
-                style={{ background: '#2a3441' }}
+                style={{ background: '#2a3441', borderInlineEnd: 'none' }}
                 selectedKeys={[location.pathname]}
                 onClick={({ key }) => {
                   navigate(key);
@@ -204,9 +215,22 @@ function ProtectedLayout() {
         </Sider>
       )}
 
-      {/* контент */}
-      <Layout>
-        <Content style={{ padding: 20 }}>
+      {/* правая часть */}
+      <Layout
+        style={{
+          height: '100vh',
+          overflow: 'hidden',
+          minWidth: 0,
+        }}
+      >
+        <Content
+          style={{
+            height: '100vh',
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            padding: 20,
+          }}
+        >
           <Outlet />
         </Content>
       </Layout>

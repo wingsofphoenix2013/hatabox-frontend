@@ -12,21 +12,33 @@ function ProductionComponentsPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadItems();
-  }, []);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const loadItems = async () => {
+  useEffect(() => {
+    loadItems(currentPage);
+  }, [currentPage]);
+
+  const loadItems = async (page) => {
     try {
       setLoading(true);
       setError('');
 
-      const response = await api.get('items/');
-      setItems(Array.isArray(response.data) ? response.data : []);
+      const response = await api.get('items/', {
+        params: { page },
+      });
+
+      setItems(
+        Array.isArray(response.data.results) ? response.data.results : [],
+      );
+      setTotal(response.data.count || 0);
+      setSelectedRowKeys([]);
     } catch (err) {
       console.error('Failed to load items:', err);
       setError('Не вдалося завантажити номенклатуру компонентів.');
       setItems([]);
+      setTotal(0);
+      setSelectedRowKeys([]);
     } finally {
       setLoading(false);
     }
@@ -37,6 +49,12 @@ function ProductionComponentsPage() {
     onChange: (newSelectedRowKeys) => {
       setSelectedRowKeys(newSelectedRowKeys);
     },
+  };
+
+  const handleTableChange = (pagination) => {
+    if (pagination.current !== currentPage) {
+      setCurrentPage(pagination.current);
+    }
   };
 
   const columns = [
@@ -169,8 +187,11 @@ function ProductionComponentsPage() {
             columns={columns}
             rowSelection={rowSelection}
             size="small"
+            onChange={handleTableChange}
             pagination={{
+              current: currentPage,
               pageSize: 25,
+              total: total,
               showSizeChanger: false,
             }}
             scroll={{ x: 900 }}

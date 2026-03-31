@@ -1,13 +1,20 @@
-import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import api from "./api/client";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+  Navigate,
+} from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import api from './api/client';
 
-import ProtectedLayout from "./layouts/ProtectedLayout";
+import ProtectedLayout from './layouts/ProtectedLayout';
 
-import OrdersPage from "./pages/OrdersPage";
-import OrderDetailPage from "./pages/OrderDetailPage";
-import LoginPage from "./pages/LoginPage";
-import ProductionComponentsPage from "./pages/ProductionComponentsPage";
+import OrdersPage from './pages/OrdersPage';
+import OrderDetailPage from './pages/OrderDetailPage';
+import LoginPage from './pages/LoginPage';
+import ProductionComponentsPage from './pages/ProductionComponentsPage';
+import ProductionComponentDetailPage from './pages/ProductionComponentDetailPage';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -18,18 +25,19 @@ function App() {
 
   useEffect(() => {
     // не проверяем авторизацию на странице логина
-    if (location.pathname === "/login") {
+    if (location.pathname === '/login') {
       setLoading(false);
       return;
     }
 
-    api.get("me/")
+    api
+      .get('me/')
       .then(() => {
         setIsAuth(true);
       })
       .catch(() => {
         setIsAuth(false);
-        navigate("/login");
+        navigate('/login');
       })
       .finally(() => {
         setLoading(false);
@@ -56,10 +64,17 @@ function App() {
 
             <Route path="/inventory" element={<div>Склад</div>} />
             <Route path="/sales" element={<div>Продажі</div>} />
-            
+
             <Route path="/production" element={<div>Виробництво</div>} />
-            <Route path="/production/components" element={<ProductionComponentsPage />} />
-            
+            <Route
+              path="/production/components"
+              element={<ProductionComponentsPage />}
+            />
+            <Route
+              path="/production/components/:id"
+              element={<div>Деталі компонента</div>}
+            />
+
             <Route path="/service" element={<div>Сервіс</div>} />
             <Route path="/home" element={<div>Головна</div>} />
             <Route path="/user" element={<div>Користувач</div>} />

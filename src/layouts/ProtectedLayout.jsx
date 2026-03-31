@@ -63,7 +63,7 @@ function ProtectedLayout() {
       actions: [],
       dictionaries: [
         {
-          label: 'Номенклатура компонентів',
+          label: 'Каталог компонентів',
           path: '/production/components',
         },
       ],

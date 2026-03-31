@@ -55,7 +55,7 @@ function App() {
       {isAuth && (
         <>
           {/* редирект с корня */}
-          <Route path="/" element={<Navigate to="/orders" />} />
+          <Route path="/" element={<Navigate to="/home" />} />
 
           {/* layout */}
           <Route element={<ProtectedLayout />}>

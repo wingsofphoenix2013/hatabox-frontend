@@ -144,11 +144,15 @@ function ProtectedLayout() {
                 mode="inline"
                 theme="dark"
                 style={{ background: '#2a3441' }}
-                onClick={() => setPanelOpen(false)}
+                selectedKeys={[location.pathname]}
+                onClick={({ key }) => {
+                  navigate(key);
+                  setPanelOpen(false);
+                }}
                 items={currentConfig.pages.map((item, i) => ({
-                  key: 'p' + i,
+                  key: item.path || 'p' + i,
                   icon: <DatabaseOutlined />,
-                  label: item,
+                  label: item.label || item,
                 }))}
               />
               <Divider />
@@ -162,11 +166,15 @@ function ProtectedLayout() {
                 mode="inline"
                 theme="dark"
                 style={{ background: '#2a3441' }}
-                onClick={() => setPanelOpen(false)}
+                selectedKeys={[location.pathname]}
+                onClick={({ key }) => {
+                  navigate(key);
+                  setPanelOpen(false);
+                }}
                 items={currentConfig.actions.map((item, i) => ({
-                  key: 'a' + i,
+                  key: item.path || 'a' + i,
                   icon: <FileAddOutlined />,
-                  label: item,
+                  label: item.label || item,
                 }))}
               />
               <Divider />
@@ -180,6 +188,7 @@ function ProtectedLayout() {
                 mode="inline"
                 theme="dark"
                 style={{ background: '#2a3441' }}
+                selectedKeys={[location.pathname]}
                 onClick={({ key }) => {
                   navigate(key);
                   setPanelOpen(false);

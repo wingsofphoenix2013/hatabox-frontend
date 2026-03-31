@@ -39,26 +39,10 @@ function ProtectedLayout() {
   ];
 
   const moduleConfig = {
-    '/orders': {
-      pages: [],
-      actions: [],
-      dictionaries: [],
-    },
-    '/inventory': {
-      pages: [],
-      actions: [],
-      dictionaries: [],
-    },
-    '/sales': {
-      pages: [],
-      actions: [],
-      dictionaries: [],
-    },
-    '/user': {
-      pages: [],
-      actions: [],
-      dictionaries: [],
-    },
+    '/orders': { pages: [], actions: [], dictionaries: [] },
+    '/inventory': { pages: [], actions: [], dictionaries: [] },
+    '/sales': { pages: [], actions: [], dictionaries: [] },
+    '/user': { pages: [], actions: [], dictionaries: [] },
     '/production': {
       pages: [],
       actions: [],
@@ -69,11 +53,17 @@ function ProtectedLayout() {
         },
       ],
     },
-    '/service': {
-      pages: [],
-      actions: [],
-      dictionaries: [],
-    },
+    '/service': { pages: [], actions: [], dictionaries: [] },
+  };
+
+  // helper: есть ли контент у модуля
+  const hasModuleContent = (config) => {
+    if (!config) return false;
+    return (
+      config.pages.length > 0 ||
+      config.actions.length > 0 ||
+      config.dictionaries.length > 0
+    );
   };
 
   useEffect(() => {
@@ -81,17 +71,16 @@ function ProtectedLayout() {
       location.pathname.startsWith(key),
     );
 
-    if (moduleFromPath) {
-      setActiveModule(moduleFromPath);
-
-      if (location.pathname === '/home') {
-        setPanelOpen(false);
-      } else {
-        setPanelOpen(true);
-      }
-    } else if (location.pathname === '/home') {
+    if (location.pathname === '/home') {
       setActiveModule(null);
       setPanelOpen(false);
+      return;
+    }
+
+    if (moduleFromPath) {
+      const config = moduleConfig[moduleFromPath];
+      setActiveModule(moduleFromPath);
+      setPanelOpen(hasModuleContent(config));
     }
   }, [location.pathname]);
 
@@ -99,6 +88,7 @@ function ProtectedLayout() {
     location.pathname === '/home' ? '/home' : activeModule || '';
 
   const currentConfig = activeModule ? moduleConfig[activeModule] : null;
+  const hasContent = hasModuleContent(currentConfig);
 
   const handleMainMenuClick = ({ key }) => {
     if (key === '/home') {
@@ -108,24 +98,15 @@ function ProtectedLayout() {
       return;
     }
 
-    if (key === '/user') {
-      setActiveModule('/user');
-      setPanelOpen(true);
-      return;
-    }
+    const config = moduleConfig[key];
 
     setActiveModule(key);
-    setPanelOpen(true);
+    setPanelOpen(hasModuleContent(config));
   };
 
   return (
-    <Layout
-      style={{
-        height: '100vh',
-        overflow: 'hidden',
-      }}
-    >
-      {/* левый sidebar */}
+    <Layout style={{ height: '100vh', overflow: 'hidden' }}>
+      {/* sidebar-1 */}
       <Sider
         width={220}
         style={{
@@ -144,13 +125,7 @@ function ProtectedLayout() {
           items={mainMenuItems}
         />
 
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            width: '100%',
-          }}
-        >
+        <div style={{ position: 'absolute', bottom: 0, width: '100%' }}>
           <Menu
             theme="dark"
             mode="inline"
@@ -162,8 +137,8 @@ function ProtectedLayout() {
         </div>
       </Sider>
 
-      {/* второй sidebar */}
-      {panelOpen && currentConfig && (
+      {/* sidebar-2 */}
+      {panelOpen && hasContent && (
         <Sider
           width={260}
           style={{
@@ -180,23 +155,13 @@ function ProtectedLayout() {
               type="text"
               icon={<CloseOutlined />}
               onClick={() => setPanelOpen(false)}
-              style={{ color: '#d1d5db' }} // нейтральный серый
+              style={{ color: '#d1d5db' }}
             />
           </div>
 
           {currentConfig.pages.length > 0 && (
             <>
-              <Text
-                strong
-                style={{
-                  color: '#ffffff',
-                  display: 'block',
-                  paddingLeft: 12,
-                  marginBottom: 8,
-                  fontSize: 12,
-                  opacity: 0.8,
-                }}
-              >
+              <Text strong style={{ color: '#fff', paddingLeft: 12 }}>
                 Сторінки
               </Text>
               <Menu
@@ -204,9 +169,7 @@ function ProtectedLayout() {
                 theme="dark"
                 style={{ background: '#2a3441', borderInlineEnd: 'none' }}
                 selectedKeys={[location.pathname]}
-                onClick={({ key }) => {
-                  navigate(key);
-                }}
+                onClick={({ key }) => navigate(key)}
                 items={currentConfig.pages.map((item, i) => ({
                   key: item.path || 'p' + i,
                   icon: <DatabaseOutlined />,
@@ -219,27 +182,14 @@ function ProtectedLayout() {
 
           {currentConfig.actions.length > 0 && (
             <>
-              <Text
-                strong
-                style={{
-                  color: '#ffffff',
-                  display: 'block',
-                  paddingLeft: 12,
-                  marginBottom: 8,
-                  fontSize: 12,
-                  opacity: 0.8,
-                }}
-              >
+              <Text strong style={{ color: '#fff', paddingLeft: 12 }}>
                 Дії
               </Text>
               <Menu
                 mode="inline"
                 theme="dark"
                 style={{ background: '#2a3441', borderInlineEnd: 'none' }}
-                selectedKeys={[location.pathname]}
-                onClick={({ key }) => {
-                  navigate(key);
-                }}
+                onClick={({ key }) => navigate(key)}
                 items={currentConfig.actions.map((item, i) => ({
                   key: item.path || 'a' + i,
                   icon: <FileAddOutlined />,
@@ -252,17 +202,7 @@ function ProtectedLayout() {
 
           {currentConfig.dictionaries.length > 0 && (
             <>
-              <Text
-                strong
-                style={{
-                  color: '#ffffff',
-                  display: 'block',
-                  paddingLeft: 12,
-                  marginBottom: 8,
-                  fontSize: 12,
-                  opacity: 0.8,
-                }}
-              >
+              <Text strong style={{ color: '#fff', paddingLeft: 12 }}>
                 Довідники
               </Text>
               <Menu
@@ -270,9 +210,7 @@ function ProtectedLayout() {
                 theme="dark"
                 style={{ background: '#2a3441', borderInlineEnd: 'none' }}
                 selectedKeys={[location.pathname]}
-                onClick={({ key }) => {
-                  navigate(key);
-                }}
+                onClick={({ key }) => navigate(key)}
                 items={currentConfig.dictionaries.map((item, i) => ({
                   key: item.path || 'd' + i,
                   icon: <ReadOutlined />,
@@ -284,14 +222,8 @@ function ProtectedLayout() {
         </Sider>
       )}
 
-      {/* правая часть */}
-      <Layout
-        style={{
-          height: '100vh',
-          overflow: 'hidden',
-          minWidth: 0,
-        }}
-      >
+      {/* контент */}
+      <Layout style={{ height: '100vh', overflow: 'hidden', minWidth: 0 }}>
         <Content
           style={{
             height: '100vh',

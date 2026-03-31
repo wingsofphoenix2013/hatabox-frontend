@@ -33,6 +33,37 @@ function ProtectedLayout() {
     { key: "/user", icon: <UserOutlined />, label: "Користувач" },
   ];
 
+  // конфигурация модулей
+  const moduleConfig = {
+    "/orders": {
+      pages: ["Замовлення", "Повернення", "Чернетки"],
+      actions: ["Створити замовлення", "Імпорт", "Експорт"],
+      dictionaries: ["Постачальники", "Типи оплат", "Статуси"],
+    },
+    "/inventory": {
+      pages: ["Номенклатура", "Залишки", "Переміщення"],
+      actions: ["Прийомка", "Списання", "Інвентаризація"],
+      dictionaries: ["Склади", "Категорії", "Одиниці"],
+    },
+    "/sales": {
+      pages: ["Продажі", "Клієнти", "Рахунки"],
+      actions: ["Створити продаж", "Знижки", "Повернення"],
+      dictionaries: ["Клієнти", "Типи цін", "Канали"],
+    },
+    "/user": {
+      pages: ["Повідомлення", "Налаштування"],
+      actions: ["Вихід з системи"],
+      dictionaries: [],
+    },
+  };
+
+  // определяем текущий модуль
+  const currentModule = Object.keys(moduleConfig).find((key) =>
+    location.pathname.startsWith(key)
+  );
+
+  const currentConfig = moduleConfig[currentModule];
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
       {/* левый sidebar */}
@@ -44,7 +75,6 @@ function ProtectedLayout() {
           background: "#1f2937",
         }}
       >
-        {/* верхнее меню */}
         <Menu
           theme="dark"
           mode="inline"
@@ -57,7 +87,6 @@ function ProtectedLayout() {
           items={mainMenuItems}
         />
 
-        {/* нижнее меню */}
         <div
           style={{
             position: "absolute",
@@ -70,14 +99,17 @@ function ProtectedLayout() {
             mode="inline"
             style={{ background: "#1f2937" }}
             selectedKeys={[location.pathname]}
-            onClick={({ key }) => navigate(key)}
+            onClick={({ key }) => {
+              navigate(key);
+              setPanelOpen(true);
+            }}
             items={bottomMenuItems}
           />
         </div>
       </Sider>
 
       {/* второй sidebar */}
-      {panelOpen && (
+      {panelOpen && currentConfig && (
         <Sider
           width={260}
           style={{
@@ -92,50 +124,57 @@ function ProtectedLayout() {
           </div>
 
           {/* Сторінки */}
-          <Text strong>Сторінки</Text>
-          <Menu
-            mode="inline"
-            theme="dark"
-            style={{ background: "#2a3441" }}
-            onClick={() => setPanelOpen(false)}
-            items={[
-              { key: "p1", label: "Сторінка 1" },
-              { key: "p2", label: "Сторінка 2" },
-              { key: "p3", label: "Сторінка 3" },
-            ]}
-          />
-
-          <Divider />
+          {currentConfig.pages.length > 0 && (
+            <>
+              <Text strong>Сторінки</Text>
+              <Menu
+                mode="inline"
+                theme="dark"
+                style={{ background: "#2a3441" }}
+                onClick={() => setPanelOpen(false)}
+                items={currentConfig.pages.map((item, i) => ({
+                  key: "p" + i,
+                  label: item,
+                }))}
+              />
+              <Divider />
+            </>
+          )}
 
           {/* Дії */}
-          <Text strong>Дії</Text>
-          <Menu
-            mode="inline"
-            theme="dark"
-            style={{ background: "#2a3441" }}
-            onClick={() => setPanelOpen(false)}
-            items={[
-              { key: "a1", label: "Дія 1" },
-              { key: "a2", label: "Дія 2" },
-              { key: "a3", label: "Дія 3" },
-            ]}
-          />
-
-          <Divider />
+          {currentConfig.actions.length > 0 && (
+            <>
+              <Text strong>Дії</Text>
+              <Menu
+                mode="inline"
+                theme="dark"
+                style={{ background: "#2a3441" }}
+                onClick={() => setPanelOpen(false)}
+                items={currentConfig.actions.map((item, i) => ({
+                  key: "a" + i,
+                  label: item,
+                }))}
+              />
+              <Divider />
+            </>
+          )}
 
           {/* Довідники */}
-          <Text strong>Довідники</Text>
-          <Menu
-            mode="inline"
-            theme="dark"
-            style={{ background: "#2a3441" }}
-            onClick={() => setPanelOpen(false)}
-            items={[
-              { key: "d1", label: "Довідник 1" },
-              { key: "d2", label: "Довідник 2" },
-              { key: "d3", label: "Довідник 3" },
-            ]}
-          />
+          {currentConfig.dictionaries.length > 0 && (
+            <>
+              <Text strong>Довідники</Text>
+              <Menu
+                mode="inline"
+                theme="dark"
+                style={{ background: "#2a3441" }}
+                onClick={() => setPanelOpen(false)}
+                items={currentConfig.dictionaries.map((item, i) => ({
+                  key: "d" + i,
+                  label: item,
+                }))}
+              />
+            </>
+          )}
         </Sider>
       )}
 

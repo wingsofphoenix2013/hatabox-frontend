@@ -39,7 +39,9 @@ function ProductionComponentsPage() {
   const loadCategories = async () => {
     try {
       const response = await api.get('categories/');
-      setCategories(Array.isArray(response.data) ? response.data : []);
+      setCategories(
+        Array.isArray(response.data.results) ? response.data.results : [],
+      );
     } catch (err) {
       console.error('Failed to load categories:', err);
       setCategories([]);

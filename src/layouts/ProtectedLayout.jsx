@@ -1,4 +1,4 @@
-import { Layout, Menu, Divider, Typography } from "antd";
+import { Layout, Menu, Divider, Typography } from 'antd';
 import {
   HomeOutlined,
   ShoppingCartOutlined,
@@ -10,9 +10,9 @@ import {
   DatabaseOutlined,
   FileAddOutlined,
   ReadOutlined,
-} from "@ant-design/icons";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
+} from '@ant-design/icons';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
@@ -24,69 +24,74 @@ function ProtectedLayout() {
   const [panelOpen, setPanelOpen] = useState(false);
 
   const mainMenuItems = [
-    { key: "/home", icon: <HomeOutlined />, label: "Головна" },
-    { key: "/sales", icon: <ShoppingCartOutlined />, label: "Продажі" },
-    { key: "/production", icon: <BuildOutlined />, label: "Виробництво" },
-    { key: "/inventory", icon: <AppstoreOutlined />, label: "Склад" },
-    { key: "/orders", icon: <ShoppingOutlined />, label: "Закупівлі" },
-    { key: "/service", icon: <ToolOutlined />, label: "Сервіс" },
+    { key: '/home', icon: <HomeOutlined />, label: 'Головна' },
+    { key: '/sales', icon: <ShoppingCartOutlined />, label: 'Продажі' },
+    { key: '/production', icon: <BuildOutlined />, label: 'Виробництво' },
+    { key: '/inventory', icon: <AppstoreOutlined />, label: 'Склад' },
+    { key: '/orders', icon: <ShoppingOutlined />, label: 'Закупівлі' },
+    { key: '/service', icon: <ToolOutlined />, label: 'Сервіс' },
   ];
 
   const bottomMenuItems = [
-    { key: "/user", icon: <UserOutlined />, label: "Користувач" },
+    { key: '/user', icon: <UserOutlined />, label: 'Користувач' },
   ];
 
   // конфигурация модулей
   const moduleConfig = {
-    "/orders": {
-      pages: ["Замовлення", "Повернення", "Чернетки"],
-      actions: ["Створити замовлення", "Імпорт", "Експорт"],
-      dictionaries: ["Постачальники", "Типи оплат", "Статуси"],
+    '/orders': {
+      pages: ['Замовлення', 'Повернення', 'Чернетки'],
+      actions: ['Створити замовлення', 'Імпорт', 'Експорт'],
+      dictionaries: ['Постачальники', 'Типи оплат', 'Статуси'],
     },
-    "/inventory": {
-      pages: ["Номенклатура", "Залишки", "Переміщення"],
-      actions: ["Прийомка", "Списання", "Інвентаризація"],
-      dictionaries: ["Склади", "Категорії", "Одиниці"],
+    '/inventory': {
+      pages: ['Номенклатура', 'Залишки', 'Переміщення'],
+      actions: ['Прийомка', 'Списання', 'Інвентаризація'],
+      dictionaries: ['Склади', 'Категорії', 'Одиниці'],
     },
-    "/sales": {
-      pages: ["Продажі", "Клієнти", "Рахунки"],
-      actions: ["Створити продаж", "Знижки", "Повернення"],
-      dictionaries: ["Клієнти", "Типи цін", "Канали"],
+    '/sales': {
+      pages: ['Продажі', 'Клієнти', 'Рахунки'],
+      actions: ['Створити продаж', 'Знижки', 'Повернення'],
+      dictionaries: ['Клієнти', 'Типи цін', 'Канали'],
     },
-    "/user": {
-      pages: ["Повідомлення", "Налаштування"],
-      actions: ["Вихід з системи"],
+    '/user': {
+      pages: ['Повідомлення', 'Налаштування'],
+      actions: ['Вихід з системи'],
       dictionaries: [],
     },
-    "/production": {
+    '/production': {
       pages: [],
       actions: [],
-      dictionaries: ["Номенклатура компонентів"],
+      dictionaries: [
+        {
+          label: 'Номенклатура компонентів',
+          path: '/production/components',
+        },
+      ],
     },
   };
 
   // определяем текущий модуль
   const currentModule = Object.keys(moduleConfig).find((key) =>
-    location.pathname.startsWith(key)
+    location.pathname.startsWith(key),
   );
 
   const currentConfig = moduleConfig[currentModule];
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <Layout style={{ minHeight: '100vh' }}>
       {/* левый sidebar */}
       <Sider
         width={220}
         style={{
-          height: "100vh",
-          position: "relative",
-          background: "#1f2937",
+          height: '100vh',
+          position: 'relative',
+          background: '#1f2937',
         }}
       >
         <Menu
           theme="dark"
           mode="inline"
-          style={{ background: "#1f2937" }}
+          style={{ background: '#1f2937' }}
           selectedKeys={[location.pathname]}
           onClick={({ key }) => {
             navigate(key);
@@ -97,15 +102,15 @@ function ProtectedLayout() {
 
         <div
           style={{
-            position: "absolute",
+            position: 'absolute',
             bottom: 0,
-            width: "100%",
+            width: '100%',
           }}
         >
           <Menu
             theme="dark"
             mode="inline"
-            style={{ background: "#1f2937" }}
+            style={{ background: '#1f2937' }}
             selectedKeys={[location.pathname]}
             onClick={({ key }) => {
               navigate(key);
@@ -121,13 +126,13 @@ function ProtectedLayout() {
         <Sider
           width={260}
           style={{
-            background: "#2a3441",
+            background: '#2a3441',
             padding: 16,
-            borderRight: "1px solid #e5e7eb",
+            borderRight: '1px solid #e5e7eb',
           }}
         >
           {/* кнопка закрытия */}
-          <div style={{ marginBottom: 10, textAlign: "right" }}>
+          <div style={{ marginBottom: 10, textAlign: 'right' }}>
             <a onClick={() => setPanelOpen(false)}>Закрити</a>
           </div>
 
@@ -138,10 +143,10 @@ function ProtectedLayout() {
               <Menu
                 mode="inline"
                 theme="dark"
-                style={{ background: "#2a3441" }}
+                style={{ background: '#2a3441' }}
                 onClick={() => setPanelOpen(false)}
                 items={currentConfig.pages.map((item, i) => ({
-                  key: "p" + i,
+                  key: 'p' + i,
                   icon: <DatabaseOutlined />,
                   label: item,
                 }))}
@@ -156,10 +161,10 @@ function ProtectedLayout() {
               <Menu
                 mode="inline"
                 theme="dark"
-                style={{ background: "#2a3441" }}
+                style={{ background: '#2a3441' }}
                 onClick={() => setPanelOpen(false)}
                 items={currentConfig.actions.map((item, i) => ({
-                  key: "a" + i,
+                  key: 'a' + i,
                   icon: <FileAddOutlined />,
                   label: item,
                 }))}
@@ -174,17 +179,15 @@ function ProtectedLayout() {
               <Menu
                 mode="inline"
                 theme="dark"
-                style={{ background: "#2a3441" }}
+                style={{ background: '#2a3441' }}
                 onClick={({ key }) => {
-                  if (currentModule === "/production" && key === "d0") {
-                    navigate("/production/components");
-                  }
+                  navigate(key);
                   setPanelOpen(false);
                 }}
                 items={currentConfig.dictionaries.map((item, i) => ({
-                  key: "d" + i,
+                  key: item.path || 'd' + i,
                   icon: <ReadOutlined />,
-                  label: item,
+                  label: item.label || item,
                 }))}
               />
             </>

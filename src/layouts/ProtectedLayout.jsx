@@ -105,7 +105,7 @@ function ProtectedLayout() {
       'Головна',
       'Виробництво',
       'Каталог компонентів',
-      'Компонент ID ${currentId}',
+      `Компонент ID ${currentId}`,
     ];
   } else if (location.pathname === '/production/components') {
     breadcrumbItems = ['Головна', 'Виробництво', 'Каталог компонентів'];

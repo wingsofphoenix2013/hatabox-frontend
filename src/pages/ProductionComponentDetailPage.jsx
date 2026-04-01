@@ -143,7 +143,7 @@ function ProductionComponentDetailPage() {
                 aspectRatio: '1 / 1',
                 border: '1px solid #f0f0f0',
                 borderRadius: 12,
-                background: '#fafafa',
+                background: '#ffffff', // ← белый фон
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -154,12 +154,14 @@ function ProductionComponentDetailPage() {
                 <Image
                   src={formData.image}
                   alt={formData.name}
-                  style={{
-                    maxWidth: '85%',
-                    maxHeight: '85%',
-                    objectFit: 'contain',
-                  }}
                   preview
+                  style={{
+                    maxWidth: '80%',
+                    maxHeight: '80%',
+                    objectFit: 'contain',
+                    margin: '0 auto', // ← ключ к центрированию
+                    display: 'block', // ← фикс поведения inline-image
+                  }}
                 />
               ) : (
                 <Text type="secondary">Немає зображення</Text>

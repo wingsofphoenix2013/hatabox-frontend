@@ -129,7 +129,10 @@ function ProtectedLayout() {
       { title: 'Виробництво' },
       {
         title: (
-          <Link to="/production/components" style={breadcrumbLinkStyle}>
+          <Link
+            to={`/production/components${location.search}`}
+            style={breadcrumbLinkStyle}
+          >
             Каталог компонентів
           </Link>
         ),

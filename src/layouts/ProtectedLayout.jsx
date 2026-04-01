@@ -24,6 +24,7 @@ function ProtectedLayout() {
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [activeModule, setActiveModule] = useState(null);
+  const [panelManuallyClosed, setPanelManuallyClosed] = useState(false);
 
   const mainMenuItems = [
     { key: '/home', icon: <HomeOutlined />, label: 'Головна' },
@@ -81,15 +82,19 @@ function ProtectedLayout() {
     if (location.pathname === '/home') {
       setActiveModule(null);
       setPanelOpen(false);
+      setPanelManuallyClosed(false);
       return;
     }
 
     if (moduleFromPath) {
       const config = moduleConfig[moduleFromPath];
       setActiveModule(moduleFromPath);
-      setPanelOpen(hasModuleContent(config));
+
+      if (!panelManuallyClosed) {
+        setPanelOpen(hasModuleContent(config));
+      }
     }
-  }, [location.pathname]);
+  }, [location.pathname, panelManuallyClosed]);
 
   const mainSelectedKey =
     location.pathname === '/home' ? '/home' : activeModule || '';
@@ -185,6 +190,7 @@ function ProtectedLayout() {
     if (key === '/home') {
       setActiveModule(null);
       setPanelOpen(false);
+      setPanelManuallyClosed(false);
       navigate('/home');
       return;
     }
@@ -192,6 +198,7 @@ function ProtectedLayout() {
     const config = moduleConfig[key];
 
     setActiveModule(key);
+    setPanelManuallyClosed(false);
     setPanelOpen(hasModuleContent(config));
   };
 
@@ -245,7 +252,10 @@ function ProtectedLayout() {
             <Button
               type="text"
               icon={<CloseOutlined />}
-              onClick={() => setPanelOpen(false)}
+              onClick={() => {
+                setPanelOpen(false);
+                setPanelManuallyClosed(true);
+              }}
               style={{ color: '#d1d5db' }}
             />
           </div>

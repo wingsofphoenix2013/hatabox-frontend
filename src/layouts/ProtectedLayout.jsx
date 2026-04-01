@@ -95,6 +95,9 @@ function ProtectedLayout() {
     location.pathname === '/home' ? '/home' : activeModule || '';
 
   const currentConfig = activeModule ? moduleConfig[activeModule] : null;
+  const pathParts = location.pathname.split('/');
+  const currentId = pathParts[pathParts.length - 1];
+
   let breadcrumbItems = ['Головна'];
 
   if (location.pathname.startsWith('/production/components/')) {
@@ -102,7 +105,7 @@ function ProtectedLayout() {
       'Головна',
       'Виробництво',
       'Каталог компонентів',
-      'Деталі',
+      'Компонент ID ${currentId}',
     ];
   } else if (location.pathname === '/production/components') {
     breadcrumbItems = ['Головна', 'Виробництво', 'Каталог компонентів'];

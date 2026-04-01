@@ -140,7 +140,11 @@ function ProductionComponentsPage() {
       dataIndex: 'name',
       key: 'name',
       render: (_, record) => (
-        <Link to={`/production/components/${record.id}`}>{record.name}</Link>
+        <Link
+          to={`/production/components/${record.id}?${searchParams.toString()}`}
+        >
+          {record.name}
+        </Link>
       ),
     },
     {

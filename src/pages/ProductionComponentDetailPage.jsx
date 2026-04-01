@@ -10,6 +10,8 @@ import {
   Row,
   Skeleton,
   Typography,
+  Select,
+  Switch,
 } from 'antd';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
@@ -21,10 +23,17 @@ function ProductionComponentDetailPage() {
   const { id } = useParams();
 
   const [item, setItem] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [units, setUnits] = useState([]);
+
   const [formData, setFormData] = useState({
     name: '',
+    category: null,
     category_name: '',
+    unit: null,
+    unit_name: '',
     unit_symbol: '',
+    qr_item: false,
     description: '',
     internal_code: '',
     image: '',
@@ -36,7 +45,33 @@ function ProductionComponentDetailPage() {
 
   useEffect(() => {
     loadItem();
+    loadCategories();
+    loadUnits();
   }, [id]);
+
+  const loadCategories = async () => {
+    try {
+      const response = await api.get('categories/');
+      setCategories(
+        Array.isArray(response.data.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+      setCategories([]);
+    }
+  };
+
+  const loadUnits = async () => {
+    try {
+      const response = await api.get('units/');
+      setUnits(
+        Array.isArray(response.data.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load units:', err);
+      setUnits([]);
+    }
+  };
 
   const loadItem = async () => {
     try {
@@ -49,8 +84,12 @@ function ProductionComponentDetailPage() {
       setItem(data);
       setFormData({
         name: data.name || '',
+        category: data.category ?? null,
         category_name: data.category_name || '',
+        unit: data.unit ?? null,
+        unit_name: data.unit_name || '',
         unit_symbol: data.unit_symbol || '',
+        qr_item: !!data.qr_item,
         description: data.description || '',
         internal_code: data.internal_code || '',
         image: data.image || '',
@@ -176,7 +215,7 @@ function ProductionComponentDetailPage() {
 
         {/* Центральна колонка */}
         <Col xs={24} lg={12}>
-          <Card title="Основна інформація">
+          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
             {renderField(
               'Назва',
               isEditing ? (
@@ -199,36 +238,6 @@ function ProductionComponentDetailPage() {
             )}
 
             {renderField(
-              'Категорія',
-              isEditing ? (
-                <Input
-                  value={formData.category_name}
-                  onChange={(e) =>
-                    handleChange('category_name', e.target.value)
-                  }
-                />
-              ) : (
-                <Paragraph style={{ marginBottom: 0 }}>
-                  {formData.category_name || '—'}
-                </Paragraph>
-              ),
-            )}
-
-            {renderField(
-              'Од. вим.',
-              isEditing ? (
-                <Input
-                  value={formData.unit_symbol}
-                  onChange={(e) => handleChange('unit_symbol', e.target.value)}
-                />
-              ) : (
-                <Paragraph style={{ marginBottom: 0 }}>
-                  {formData.unit_symbol || '—'}
-                </Paragraph>
-              ),
-            )}
-
-            {renderField(
               'Опис',
               isEditing ? (
                 <TextArea
@@ -242,6 +251,146 @@ function ProductionComponentDetailPage() {
                 </Paragraph>
               ),
             )}
+          </Card>
+          <Card title="Додаткова інформація">
+            <table
+              style={{
+                width: '100%',
+                borderCollapse: 'collapse',
+                tableLayout: 'fixed',
+              }}
+            >
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      border: '1px solid #f0f0f0',
+                      background: '#fafafa',
+                      padding: '10px 12px',
+                      textAlign: 'left',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Категорія
+                  </th>
+                  <th
+                    style={{
+                      border: '1px solid #f0f0f0',
+                      background: '#fafafa',
+                      padding: '10px 12px',
+                      textAlign: 'left',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Одиниця вимірювання
+                  </th>
+                  <th
+                    style={{
+                      border: '1px solid #f0f0f0',
+                      background: '#fafafa',
+                      padding: '10px 12px',
+                      textAlign: 'left',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Позиція з QR
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr>
+                  <td
+                    style={{
+                      border: '1px solid #f0f0f0',
+                      padding: '12px',
+                      verticalAlign: 'top',
+                    }}
+                  >
+                    {isEditing ? (
+                      <Select
+                        value={formData.category}
+                        style={{ width: '100%' }}
+                        options={categories.map((category) => ({
+                          value: category.id,
+                          label: category.name,
+                        }))}
+                        onChange={(value) => {
+                          const selected = categories.find(
+                            (c) => c.id === value,
+                          );
+                          setFormData((prev) => ({
+                            ...prev,
+                            category: value,
+                            category_name: selected ? selected.name : '',
+                          }));
+                        }}
+                      />
+                    ) : (
+                      <Text>{formData.category_name || '—'}</Text>
+                    )}
+                  </td>
+
+                  <td
+                    style={{
+                      border: '1px solid #f0f0f0',
+                      padding: '12px',
+                      verticalAlign: 'top',
+                    }}
+                  >
+                    {isEditing ? (
+                      <Select
+                        value={formData.unit}
+                        style={{ width: '100%' }}
+                        options={units.map((unit) => ({
+                          value: unit.id,
+                          label: `${unit.symbol} — ${unit.name}`,
+                        }))}
+                        onChange={(value) => {
+                          const selected = units.find((u) => u.id === value);
+                          setFormData((prev) => ({
+                            ...prev,
+                            unit: value,
+                            unit_name: selected ? selected.name : '',
+                            unit_symbol: selected ? selected.symbol : '',
+                          }));
+                        }}
+                      />
+                    ) : (
+                      <Text>
+                        {formData.unit_symbol && formData.unit_name
+                          ? `${formData.unit_symbol} — ${formData.unit_name}`
+                          : '—'}
+                      </Text>
+                    )}
+                  </td>
+
+                  <td
+                    style={{
+                      border: '1px solid #f0f0f0',
+                      padding: '12px',
+                      verticalAlign: 'top',
+                    }}
+                  >
+                    {isEditing ? (
+                      <Flex align="center" gap={8}>
+                        <Switch
+                          checked={formData.qr_item}
+                          onChange={(checked) =>
+                            handleChange('qr_item', checked)
+                          }
+                        />
+                        <Text>{formData.qr_item ? 'Так' : 'Ні'}</Text>
+                      </Flex>
+                    ) : (
+                      <Flex align="center" gap={8}>
+                        <Text>{formData.qr_item ? '✅ Так' : '❌ Ні'}</Text>
+                      </Flex>
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </Card>
         </Col>
 

@@ -23,6 +23,18 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const initCSRF = async () => {
+    try {
+      await api.get('csrf/');
+    } catch (err) {
+      console.error('Failed to init CSRF:', err);
+    }
+  };
+
+  useEffect(() => {
+    initCSRF();
+  }, []);
+
   useEffect(() => {
     // не проверяем авторизацию на странице логина
     if (location.pathname === '/login') {

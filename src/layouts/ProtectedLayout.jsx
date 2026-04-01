@@ -12,7 +12,7 @@ import {
   ReadOutlined,
   CloseOutlined,
 } from '@ant-design/icons';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 const { Sider, Content } = Layout;
@@ -98,23 +98,39 @@ function ProtectedLayout() {
   const pathParts = location.pathname.split('/');
   const currentId = pathParts[pathParts.length - 1];
 
-  let breadcrumbItems = ['Головна'];
+  let breadcrumbItems = [{ title: <Link to="/home">Головна</Link> }];
 
   if (location.pathname.startsWith('/production/components/')) {
     breadcrumbItems = [
-      'Головна',
-      'Виробництво',
-      'Каталог компонентів',
-      `Компонент ID ${currentId}`,
+      { title: <Link to="/home">Головна</Link> },
+      { title: 'Виробництво' },
+      {
+        title: <Link to="/production/components">Каталог компонентів</Link>,
+      },
+      { title: `Компонент ID ${currentId}` },
     ];
   } else if (location.pathname === '/production/components') {
-    breadcrumbItems = ['Головна', 'Виробництво', 'Каталог компонентів'];
+    breadcrumbItems = [
+      { title: <Link to="/home">Головна</Link> },
+      { title: 'Виробництво' },
+      { title: 'Каталог компонентів' },
+    ];
   } else if (location.pathname === '/orders') {
-    breadcrumbItems = ['Головна', 'Закупівлі'];
+    breadcrumbItems = [
+      { title: <Link to="/home">Головна</Link> },
+      { title: 'Закупівлі' },
+    ];
   } else if (location.pathname.startsWith('/orders/')) {
-    breadcrumbItems = ['Головна', 'Закупівлі', 'Деталі замовлення'];
+    breadcrumbItems = [
+      { title: <Link to="/home">Головна</Link> },
+      { title: 'Закупівлі' },
+      { title: 'Деталі замовлення' },
+    ];
   } else if (location.pathname === '/user') {
-    breadcrumbItems = ['Головна', 'Користувач'];
+    breadcrumbItems = [
+      { title: <Link to="/home">Головна</Link> },
+      { title: 'Користувач' },
+    ];
   }
 
   const hasContent = hasModuleContent(currentConfig);
@@ -262,9 +278,7 @@ function ProtectedLayout() {
           }}
         >
           <div style={{ marginBottom: 12 }}>
-            <Breadcrumb
-              items={breadcrumbItems.map((label) => ({ title: label }))}
-            />
+            <Breadcrumb items={breadcrumbItems} />
           </div>
           <Outlet />
         </Content>

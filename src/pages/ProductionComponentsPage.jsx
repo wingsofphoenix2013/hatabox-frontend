@@ -282,8 +282,19 @@ function ProductionComponentsPage() {
               pageSize: 50,
               total: total,
               showSizeChanger: false,
-              showTotal: (total, range) =>
-                `Показано ${range[0]}–${range[1]} з ${total} результатів пошуку`,
+              showTotal: (total, range) => (
+                <span>
+                  Показано{' '}
+                  <span style={{ color: '#1677ff', fontWeight: 600 }}>
+                    {range[0]}–{range[1]}
+                  </span>{' '}
+                  з{' '}
+                  <span style={{ color: '#1677ff', fontWeight: 600 }}>
+                    {total}
+                  </span>{' '}
+                  результатів пошуку
+                </span>
+              ),
             }}
             scroll={{ x: 900 }}
           />

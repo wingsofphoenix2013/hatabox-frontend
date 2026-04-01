@@ -12,6 +12,7 @@ import {
   Typography,
   Select,
   Switch,
+  message,
 } from 'antd';
 import { QrcodeOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
@@ -43,6 +44,7 @@ function ProductionComponentDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadItem();
@@ -104,8 +106,48 @@ function ProductionComponentDetailPage() {
     }
   };
 
-  const handleToggleEdit = () => {
-    setIsEditing((prev) => !prev);
+  const handleToggleEdit = async () => {
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        unit: formData.unit,
+        qr_item: formData.qr_item,
+      };
+
+      const response = await api.patch(`items/${id}/`, payload);
+      const data = response.data;
+
+      setItem(data);
+      setFormData({
+        name: data.name || '',
+        category: data.category ?? null,
+        category_name: data.category_name || '',
+        unit: data.unit ?? null,
+        unit_name: data.unit_name || '',
+        unit_symbol: data.unit_symbol || '',
+        qr_item: !!data.qr_item,
+        description: data.description || '',
+        internal_code: data.internal_code || '',
+        image: data.image || '',
+      });
+
+      setIsEditing(false);
+      message.success('Дані компонента збережено.');
+    } catch (err) {
+      console.error('Failed to save component:', err);
+      message.error('Не вдалося зберегти зміни.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleChange = (field, value) => {
@@ -168,7 +210,7 @@ function ProductionComponentDetailPage() {
           </Text>
         </div>
 
-        <Button type="primary" onClick={handleToggleEdit}>
+        <Button type="primary" onClick={handleToggleEdit} loading={saving}>
           {isEditing ? 'Зберегти' : 'Редагувати'}
         </Button>
       </Flex>

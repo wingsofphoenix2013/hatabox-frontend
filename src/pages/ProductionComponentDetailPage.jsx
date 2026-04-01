@@ -363,11 +363,13 @@ function ProductionComponentDetailPage() {
                         }}
                       />
                     ) : (
-                      <Text>
-                        {formData.unit_symbol && formData.unit_name
-                          ? `${formData.unit_symbol} — ${formData.unit_name}`
-                          : '—'}
-                      </Text>
+                      <div style={{ textAlign: 'center' }}>
+                        <Text>
+                          {formData.unit_symbol && formData.unit_name
+                            ? `${formData.unit_symbol} — ${formData.unit_name}`
+                            : '—'}
+                        </Text>
+                      </div>
                     )}
                   </td>
 

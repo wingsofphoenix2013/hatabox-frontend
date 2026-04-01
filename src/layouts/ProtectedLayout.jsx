@@ -1,4 +1,4 @@
-import { Layout, Menu, Divider, Typography, Button } from 'antd';
+import { Layout, Menu, Divider, Typography, Button, Breadcrumb } from 'antd';
 import {
   HomeOutlined,
   ShoppingCartOutlined,
@@ -56,6 +56,13 @@ function ProtectedLayout() {
     '/service': { pages: [], actions: [], dictionaries: [] },
   };
 
+  const breadcrumbMap = {
+    '/home': ['Головна'],
+    '/orders': ['Головна', 'Закупівлі'],
+    '/production/components': ['Головна', 'Виробництво', 'Каталог компонентів'],
+    '/user': ['Головна', 'Користувач'],
+  };
+
   // helper: есть ли контент у модуля
   const hasModuleContent = (config) => {
     if (!config) return false;
@@ -88,6 +95,25 @@ function ProtectedLayout() {
     location.pathname === '/home' ? '/home' : activeModule || '';
 
   const currentConfig = activeModule ? moduleConfig[activeModule] : null;
+  let breadcrumbItems = ['Головна'];
+
+  if (location.pathname.startsWith('/production/components/')) {
+    breadcrumbItems = [
+      'Головна',
+      'Виробництво',
+      'Каталог компонентів',
+      'Деталі',
+    ];
+  } else if (location.pathname === '/production/components') {
+    breadcrumbItems = ['Головна', 'Виробництво', 'Каталог компонентів'];
+  } else if (location.pathname === '/orders') {
+    breadcrumbItems = ['Головна', 'Закупівлі'];
+  } else if (location.pathname.startsWith('/orders/')) {
+    breadcrumbItems = ['Головна', 'Закупівлі', 'Деталі замовлення'];
+  } else if (location.pathname === '/user') {
+    breadcrumbItems = ['Головна', 'Користувач'];
+  }
+
   const hasContent = hasModuleContent(currentConfig);
 
   const handleMainMenuClick = ({ key }) => {
@@ -232,6 +258,11 @@ function ProtectedLayout() {
             padding: 20,
           }}
         >
+          <div style={{ marginBottom: 12 }}>
+            <Breadcrumb
+              items={breadcrumbItems.map((label) => ({ title: label }))}
+            />
+          </div>
           <Outlet />
         </Content>
       </Layout>

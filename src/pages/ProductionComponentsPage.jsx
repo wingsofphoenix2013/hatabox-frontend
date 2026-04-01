@@ -216,7 +216,7 @@ function ProductionComponentsPage() {
         </Flex>
 
         <Card size="small">
-          <Flex justify="space-between" align="center" wrap gap={16}>
+          <Flex align="center" wrap gap={16}>
             <Flex align="center" gap={12} wrap>
               <Text>
                 Обрано: <strong>{selectedRowKeys.length}</strong>

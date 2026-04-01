@@ -133,6 +133,7 @@ function ProductionComponentCreatePage() {
       payload.append('category', String(formData.category));
       payload.append('unit', String(formData.unit));
       payload.append('qr_item', String(formData.qr_item));
+      payload.append('is_active', 'true');
 
       if (imageFile) {
         payload.append('image', imageFile);

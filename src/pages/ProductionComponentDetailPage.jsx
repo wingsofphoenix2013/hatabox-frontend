@@ -304,7 +304,7 @@ function ProductionComponentDetailPage() {
                     style={{
                       border: '1px solid #f0f0f0',
                       padding: '12px',
-                      verticalAlign: 'middle',,
+                      verticalAlign: 'middle',
                     }}
                   >
                     {isEditing ? (

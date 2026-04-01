@@ -16,12 +16,13 @@ import {
   Typography,
   Input,
 } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 
 const { Title, Text } = Typography;
 
 function ProductionComponentsPage() {
+  const navigate = useNavigate();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -210,7 +211,12 @@ function ProductionComponentsPage() {
             </Title>
           </div>
 
-          <Button type="primary" size="large" icon={<PlusOutlined />}>
+          <Button
+            type="primary"
+            size="large"
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/production/components/new')}
+          >
             Додати позицію
           </Button>
         </Flex>

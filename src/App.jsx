@@ -13,7 +13,9 @@ import ProtectedLayout from './layouts/ProtectedLayout';
 import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import LoginPage from './pages/LoginPage';
+
 import ProductionComponentsPage from './pages/ProductionComponentsPage';
+import ProductionComponentCreatePage from './pages/ProductionComponentCreatePage';
 import ProductionComponentDetailPage from './pages/ProductionComponentDetailPage';
 
 function App() {
@@ -80,6 +82,10 @@ function App() {
             <Route
               path="/production/components"
               element={<ProductionComponentsPage />}
+            />
+            <Route
+              path="/production/components/new"
+              element={<ProductionComponentCreatePage />}
             />
             <Route
               path="/production/components/:id"

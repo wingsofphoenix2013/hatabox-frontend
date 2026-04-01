@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { AppstoreAddOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  AppstoreAddOutlined,
+  PlusOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -10,6 +14,7 @@ import {
   Select,
   Table,
   Typography,
+  Input,
 } from 'antd';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
@@ -23,6 +28,7 @@ function ProductionComponentsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [searchText, setSearchText] = useState('');
   const [error, setError] = useState('');
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,7 +40,7 @@ function ProductionComponentsPage() {
 
   useEffect(() => {
     loadItems(currentPage);
-  }, [currentPage, selectedCategories]);
+  }, [currentPage, selectedCategories, searchText]);
 
   const loadCategories = async () => {
     try {
@@ -55,6 +61,10 @@ function ProductionComponentsPage() {
 
       const params = new URLSearchParams();
       params.append('page', page);
+
+      if (searchText) {
+        params.append('search', searchText);
+      }
 
       selectedCategories.forEach((categoryId) => {
         params.append('category', categoryId);
@@ -221,6 +231,20 @@ function ProductionComponentsPage() {
             </Flex>
 
             <Flex align="center" gap={12} wrap>
+              <Divider type="vertical" style={{ height: 28 }} />
+
+              <Input
+                placeholder="Пошук..."
+                allowClear
+                prefix={<SearchOutlined />}
+                style={{ width: 220 }}
+                value={searchText}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+
               <Divider type="vertical" style={{ height: 28 }} />
 
               <Select

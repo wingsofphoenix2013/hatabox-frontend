@@ -16,23 +16,31 @@ import {
   Typography,
   Input,
 } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 
 const { Title, Text } = Typography;
 
 function ProductionComponentsPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [searchText, setSearchText] = useState('');
-  const [error, setError] = useState('');
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedCategories, setSelectedCategories] = useState(
+    searchParams.getAll('category').map(Number),
+  );
+  const [searchText, setSearchText] = useState(
+    searchParams.get('search') || '',
+  );
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get('page')) || 1,
+  );
+
+  const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
@@ -42,6 +50,24 @@ function ProductionComponentsPage() {
   useEffect(() => {
     loadItems(currentPage);
   }, [currentPage, selectedCategories, searchText]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    selectedCategories.forEach((categoryId) => {
+      params.append('category', String(categoryId));
+    });
+
+    if (searchText) {
+      params.set('search', searchText);
+    }
+
+    if (currentPage > 1) {
+      params.set('page', String(currentPage));
+    }
+
+    setSearchParams(params);
+  }, [selectedCategories, searchText, currentPage, setSearchParams]);
 
   const loadCategories = async () => {
     try {

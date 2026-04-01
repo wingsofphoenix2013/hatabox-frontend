@@ -6,7 +6,7 @@ import {
   Navigate,
 } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import api from './api/client';
+import api, { setCsrfToken } from './api/client';
 
 import ProtectedLayout from './layouts/ProtectedLayout';
 
@@ -25,7 +25,8 @@ function App() {
 
   const initCSRF = async () => {
     try {
-      await api.get('csrf/');
+      const response = await api.get('csrf/');
+      setCsrfToken(response.data.csrfToken);
     } catch (err) {
       console.error('Failed to init CSRF:', err);
     }

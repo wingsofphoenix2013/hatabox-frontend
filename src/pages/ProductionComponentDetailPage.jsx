@@ -13,6 +13,7 @@ import {
   Select,
   Switch,
 } from 'antd';
+import { QrcodeOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 
@@ -293,7 +294,10 @@ function ProductionComponentDetailPage() {
                       fontWeight: 600,
                     }}
                   >
-                    Позиція з QR
+                    <Flex align="center" justify="center" gap={6}>
+                      <QrcodeOutlined />
+                      <span>Позиція з QR</span>
+                    </Flex>
                   </th>
                 </tr>
               </thead>
@@ -327,7 +331,9 @@ function ProductionComponentDetailPage() {
                         }}
                       />
                     ) : (
-                      <Text>{formData.category_name || '—'}</Text>
+                      <div style={{ textAlign: 'center' }}>
+                        <Text>{formData.category_name || '—'}</Text>
+                      </div>
                     )}
                   </td>
 
@@ -373,7 +379,7 @@ function ProductionComponentDetailPage() {
                     }}
                   >
                     {isEditing ? (
-                      <Flex align="center" gap={8}>
+                      <Flex align="center" justify="center" gap={8}>
                         <Switch
                           checked={formData.qr_item}
                           onChange={(checked) =>
@@ -383,7 +389,7 @@ function ProductionComponentDetailPage() {
                         <Text>{formData.qr_item ? 'Так' : 'Ні'}</Text>
                       </Flex>
                     ) : (
-                      <Flex align="center" gap={8}>
+                      <Flex align="center" justify="center" gap={8}>
                         <Text>{formData.qr_item ? '✅ Так' : '❌ Ні'}</Text>
                       </Flex>
                     )}

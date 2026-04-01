@@ -98,37 +98,83 @@ function ProtectedLayout() {
   const pathParts = location.pathname.split('/');
   const currentId = pathParts[pathParts.length - 1];
 
-  let breadcrumbItems = [{ title: <Link to="/home">Головна</Link> }];
+  const breadcrumbLinkStyle = {
+    textDecoration: 'underline',
+  };
+
+  let breadcrumbItems = [
+    {
+      title: (
+        <Link to="/home" style={breadcrumbLinkStyle}>
+          Головна
+        </Link>
+      ),
+    },
+  ];
 
   if (location.pathname.startsWith('/production/components/')) {
     breadcrumbItems = [
-      { title: <Link to="/home">Головна</Link> },
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
       { title: 'Виробництво' },
       {
-        title: <Link to="/production/components">Каталог компонентів</Link>,
+        title: (
+          <Link to="/production/components" style={breadcrumbLinkStyle}>
+            Каталог компонентів
+          </Link>
+        ),
       },
       { title: `Компонент ID ${currentId}` },
     ];
   } else if (location.pathname === '/production/components') {
     breadcrumbItems = [
-      { title: <Link to="/home">Головна</Link> },
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
       { title: 'Виробництво' },
       { title: 'Каталог компонентів' },
     ];
   } else if (location.pathname === '/orders') {
     breadcrumbItems = [
-      { title: <Link to="/home">Головна</Link> },
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
       { title: 'Закупівлі' },
     ];
   } else if (location.pathname.startsWith('/orders/')) {
     breadcrumbItems = [
-      { title: <Link to="/home">Головна</Link> },
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
       { title: 'Закупівлі' },
       { title: 'Деталі замовлення' },
     ];
   } else if (location.pathname === '/user') {
     breadcrumbItems = [
-      { title: <Link to="/home">Головна</Link> },
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
       { title: 'Користувач' },
     ];
   }

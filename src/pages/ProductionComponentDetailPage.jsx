@@ -267,7 +267,7 @@ function ProductionComponentDetailPage() {
                       border: '1px solid #f0f0f0',
                       background: '#fafafa',
                       padding: '10px 12px',
-                      textAlign: 'left',
+                      textAlign: 'center',
                       fontWeight: 600,
                     }}
                   >
@@ -278,7 +278,7 @@ function ProductionComponentDetailPage() {
                       border: '1px solid #f0f0f0',
                       background: '#fafafa',
                       padding: '10px 12px',
-                      textAlign: 'left',
+                      textAlign: 'center',
                       fontWeight: 600,
                     }}
                   >
@@ -289,7 +289,7 @@ function ProductionComponentDetailPage() {
                       border: '1px solid #f0f0f0',
                       background: '#fafafa',
                       padding: '10px 12px',
-                      textAlign: 'left',
+                      textAlign: 'center',
                       fontWeight: 600,
                     }}
                   >
@@ -304,7 +304,7 @@ function ProductionComponentDetailPage() {
                     style={{
                       border: '1px solid #f0f0f0',
                       padding: '12px',
-                      verticalAlign: 'top',
+                      verticalAlign: 'middle',,
                     }}
                   >
                     {isEditing ? (
@@ -335,7 +335,7 @@ function ProductionComponentDetailPage() {
                     style={{
                       border: '1px solid #f0f0f0',
                       padding: '12px',
-                      verticalAlign: 'top',
+                      verticalAlign: 'middle',
                     }}
                   >
                     {isEditing ? (
@@ -369,7 +369,7 @@ function ProductionComponentDetailPage() {
                     style={{
                       border: '1px solid #f0f0f0',
                       padding: '12px',
-                      verticalAlign: 'top',
+                      verticalAlign: 'middle',
                     }}
                   >
                     {isEditing ? (

@@ -282,6 +282,8 @@ function ProductionComponentsPage() {
               pageSize: 50,
               total: total,
               showSizeChanger: false,
+              showTotal: (total, range) =>
+                `Показано ${range[0]}–${range[1]} з ${total} результатів пошуку`,
             }}
             scroll={{ x: 900 }}
           />

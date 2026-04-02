@@ -24,6 +24,7 @@ function ProductionProductPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [items, setItems] = useState([]);
+  const [families, setFamilies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -35,6 +36,10 @@ function ProductionProductPage() {
   const [searchText, setSearchText] = useState(
     searchParams.get('search') || '',
   );
+
+  useEffect(() => {
+    loadFamilies();
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -53,6 +58,18 @@ function ProductionProductPage() {
   useEffect(() => {
     loadProducts();
   }, [productFamilyCodeFilter, searchText]);
+
+  const loadFamilies = async () => {
+    try {
+      const response = await api.get('product-families/');
+      setFamilies(
+        Array.isArray(response.data.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load product families:', err);
+      setFamilies([]);
+    }
+  };
 
   const loadProducts = async () => {
     try {
@@ -175,11 +192,18 @@ function ProductionProductPage() {
 
           <Divider type="vertical" style={{ height: 28 }} />
 
-          <Input
+          <Select
+            allowClear
+            showSearch
             placeholder="Фільтр по коду сімейства"
-            style={{ width: 220 }}
-            value={productFamilyCodeFilter}
-            onChange={(e) => setProductFamilyCodeFilter(e.target.value)}
+            style={{ width: 280 }}
+            value={productFamilyCodeFilter || undefined}
+            onChange={(value) => setProductFamilyCodeFilter(value || '')}
+            optionFilterProp="label"
+            options={families.map((family) => ({
+              value: family.code,
+              label: `${family.code} — ${family.name}`,
+            }))}
           />
 
           <Divider type="vertical" style={{ height: 28 }} />

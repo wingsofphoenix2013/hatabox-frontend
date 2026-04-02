@@ -195,10 +195,20 @@ function ProductionProductPage() {
           <Select
             allowClear
             showSearch
+            labelInValue
             placeholder="Фільтр по коду сімейства"
-            style={{ width: 280 }}
-            value={productFamilyCodeFilter || undefined}
-            onChange={(value) => setProductFamilyCodeFilter(value || '')}
+            style={{ width: 220 }}
+            value={
+              productFamilyCodeFilter
+                ? {
+                    value: productFamilyCodeFilter,
+                    label: productFamilyCodeFilter,
+                  }
+                : undefined
+            }
+            onChange={(option) =>
+              setProductFamilyCodeFilter(option?.value || '')
+            }
             optionFilterProp="label"
             options={families.map((family) => ({
               value: family.code,

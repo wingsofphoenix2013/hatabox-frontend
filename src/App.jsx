@@ -20,6 +20,7 @@ import ProductionComponentDetailPage from './pages/ProductionComponentDetailPage
 
 import ProductionProductPage from './pages/ProductionProductPage';
 import ProductionProductDetailPage from './pages/ProductionProductDetailPage';
+import ProductionProductStepDetailPage from './pages/ProductionProductStepDetailPage';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -89,6 +90,10 @@ function App() {
             <Route
               path="/production/products/:id"
               element={<ProductionProductDetailPage />}
+            />
+            <Route
+              path="/production/product-steps/:id"
+              element={<ProductionProductStepDetailPage />}
             />
 
             <Route

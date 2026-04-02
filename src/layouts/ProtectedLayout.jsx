@@ -155,6 +155,28 @@ function ProtectedLayout() {
       { title: 'Виробництво' },
       { title: 'Каталог компонентів' },
     ];
+  } else if (location.pathname.startsWith('/production/product-steps/')) {
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Виробництво' },
+      {
+        title: (
+          <Link
+            to={`/production/products${location.search}`}
+            style={breadcrumbLinkStyle}
+          >
+            Каталог продукції
+          </Link>
+        ),
+      },
+      { title: `Етап ID ${currentId}` },
+    ];
   } else if (location.pathname === '/production/products') {
     breadcrumbItems = [
       {

@@ -12,13 +12,14 @@ import {
   Typography,
 } from 'antd';
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 
 const { Title, Text, Paragraph } = Typography;
 
 function ProductionProductDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [steps, setSteps] = useState([]);
@@ -257,7 +258,13 @@ function ProductionProductDetailPage() {
                       </div>
                     </div>
 
-                    <Button disabled>Деталі</Button>
+                    <Button
+                      onClick={() =>
+                        navigate(`/production/product-steps/${step.id}`)
+                      }
+                    >
+                      Деталі
+                    </Button>
                   </Flex>
 
                   {index < steps.length - 1 && (

@@ -49,6 +49,10 @@ function ProtectedLayout() {
       actions: [],
       dictionaries: [
         {
+          label: 'Продукти',
+          path: '/production/products',
+        },
+        {
           label: 'Каталог компонентів',
           path: '/production/components',
         },

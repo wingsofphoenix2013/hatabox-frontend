@@ -18,6 +18,8 @@ import ProductionComponentsPage from './pages/ProductionComponentsPage';
 import ProductionComponentCreatePage from './pages/ProductionComponentCreatePage';
 import ProductionComponentDetailPage from './pages/ProductionComponentDetailPage';
 
+import ProductionProductPage from './pages/ProductionProductPage';
+
 function App() {
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
@@ -78,6 +80,11 @@ function App() {
 
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailPage />} />
+
+            <Route
+              path="/production/products"
+              element={<ProductionProductPage />}
+            />
 
             <Route
               path="/production/components"

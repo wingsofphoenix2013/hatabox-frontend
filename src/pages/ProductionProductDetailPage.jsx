@@ -277,6 +277,7 @@ function ProductionProductDetailPage() {
                           `/production/product-steps/${step.id}${location.search}`,
                           {
                             state: {
+                              productId: product.id,
                               productLabel: product.code,
                               stepLabel: `${step.sort_order}. ${step.name}`,
                             },

@@ -209,7 +209,17 @@ function ProtectedLayout() {
         ),
       },
       {
-        title: productLabel || 'Продукт',
+        title: productLabel ? (
+          <Link
+            to={`/production/products/${location.state?.productId || ''}${location.search}`}
+            style={breadcrumbLinkStyle}
+            state={{ productLabel }}
+          >
+            {productLabel}
+          </Link>
+        ) : (
+          'Продукт'
+        ),
       },
       {
         title: stepLabel || `Етап ID ${currentId}`,

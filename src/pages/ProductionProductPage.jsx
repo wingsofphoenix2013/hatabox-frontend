@@ -1,5 +1,5 @@
-import { Table, Input, Button, Typography, Space } from 'antd';
-import { AppstoreAddOutlined } from '@ant-design/icons';
+import { Table, Input, Button, Typography, Space, Card } from 'antd';
+import { AppstoreAddOutlined, SearchOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 
 const { Title, Text } = Typography;
@@ -51,7 +51,7 @@ function ProductionProductPage() {
       </Title>
 
       {/* Toolbar */}
-      <div style={{ marginBottom: 16 }}>
+      <Card size="small" style={{ marginBottom: 16 }}>
         <Space size="large" wrap>
           <Text>Обрано: {selectedRowKeys.length}</Text>
 
@@ -62,9 +62,13 @@ function ProductionProductPage() {
             style={{ width: 200 }}
           />
 
-          <Input placeholder="Пошук по назві" style={{ width: 240 }} />
+          <Input
+            placeholder="Пошук по назві"
+            prefix={<SearchOutlined />}
+            style={{ width: 240 }}
+          />
         </Space>
-      </div>
+      </Card>
 
       {/* Table */}
       <Table

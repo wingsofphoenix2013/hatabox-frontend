@@ -1,5 +1,5 @@
 function ProductionProductPage() {
-  return <div>Продукти</div>;
+  return <div>Каталог продукції</div>;
 }
 
 export default ProductionProductPage;

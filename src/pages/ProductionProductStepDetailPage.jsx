@@ -10,12 +10,14 @@ import {
   Typography,
   Popconfirm,
   message,
+  InputNumber,
 } from 'antd';
 import { useParams } from 'react-router-dom';
 import {
   EditOutlined,
   DeleteOutlined,
   FileAddOutlined,
+  SaveOutlined,
 } from '@ant-design/icons';
 import api from '../api/client';
 
@@ -27,6 +29,10 @@ function ProductionProductStepDetailPage() {
   const [step, setStep] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [editingRowId, setEditingRowId] = useState(null);
+  const [editingQuantity, setEditingQuantity] = useState(null);
+  const [savingRow, setSavingRow] = useState(false);
 
   useEffect(() => {
     loadStepPage();
@@ -62,6 +68,32 @@ function ProductionProductStepDetailPage() {
     }
   };
 
+  const handleStartEdit = (record) => {
+    setEditingRowId(record.id);
+    setEditingQuantity(record.quantity);
+  };
+
+  const handleSaveEdit = async (record) => {
+    try {
+      setSavingRow(true);
+
+      await api.patch(`product-step-items/${record.id}/`, {
+        quantity: editingQuantity,
+      });
+
+      message.success('Кількість оновлено');
+
+      setEditingRowId(null);
+      setEditingQuantity(null);
+
+      loadStepPage();
+    } catch (err) {
+      console.error('Update failed:', err);
+      message.error('Не вдалося оновити кількість');
+    } finally {
+      setSavingRow(false);
+    }
+  };
   const renderField = (label, content) => (
     <div style={{ marginBottom: 20 }}>
       <Text
@@ -107,7 +139,25 @@ function ProductionProductStepDetailPage() {
       key: 'edit',
       width: 56,
       align: 'center',
-      render: () => <EditOutlined style={{ color: '#8c8c8c' }} />,
+      render: (_, record) =>
+        editingRowId === record.id ? (
+          <SaveOutlined
+            style={{
+              color: savingRow ? '#bfbfbf' : '#1677ff',
+              cursor: savingRow ? 'default' : 'pointer',
+            }}
+            onClick={() => {
+              if (!savingRow) {
+                handleSaveEdit(record);
+              }
+            }}
+          />
+        ) : (
+          <EditOutlined
+            style={{ color: '#8c8c8c', cursor: 'pointer' }}
+            onClick={() => handleStartEdit(record)}
+          />
+        ),
     },
     {
       title: 'Назва Item',
@@ -120,6 +170,19 @@ function ProductionProductStepDetailPage() {
       key: 'quantity',
       width: 120,
       align: 'center',
+      render: (value, record) =>
+        editingRowId === record.id ? (
+          <InputNumber
+            min={0}
+            step={0.001}
+            precision={3}
+            value={editingQuantity}
+            onChange={(val) => setEditingQuantity(val)}
+            style={{ width: 100 }}
+          />
+        ) : (
+          value
+        ),
     },
     {
       title: 'Одиниця вимірювання',
@@ -147,8 +210,16 @@ function ProductionProductStepDetailPage() {
           onConfirm={() => handleDelete(record.id)}
           okText="Так"
           cancelText="Ні"
+          disabled={editingRowId === record.id || savingRow}
         >
-          <DeleteOutlined style={{ color: '#ff4d4f', cursor: 'pointer' }} />
+          <DeleteOutlined
+            style={{
+              color:
+                editingRowId === record.id || savingRow ? '#d9d9d9' : '#ff4d4f',
+              cursor:
+                editingRowId === record.id || savingRow ? 'default' : 'pointer',
+            }}
+          />
         </Popconfirm>
       ),
     },

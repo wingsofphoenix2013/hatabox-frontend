@@ -170,6 +170,13 @@ function ProductionProductDetailPage() {
             </div>
           </Card>
 
+          <Card title="Довідка" style={{ marginBottom: 20 }}>
+            <Flex vertical gap={12}>
+              <Button block>Загальна комплектація продукта</Button>
+              <Button block>Довідка по персоналу</Button>
+            </Flex>
+          </Card>
+
           <Card title="Статистика">
             <Text type="secondary">Блок буде реалізовано пізніше</Text>
           </Card>

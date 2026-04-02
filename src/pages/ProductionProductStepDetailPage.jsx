@@ -226,8 +226,8 @@ function ProductionProductStepDetailPage() {
           return (
             <SaveOutlined
               style={{
-                color: creatingRowLoading ? '#bfbfbf' : '#1677ff',
-                cursor: creatingRowLoading ? 'default' : 'pointer',
+                color: savingRow ? '#bfbfbf' : '#52c41a',
+                cursor: savingRow ? 'default' : 'pointer',
               }}
               onClick={() => {
                 if (!creatingRowLoading) {
@@ -241,7 +241,7 @@ function ProductionProductStepDetailPage() {
         return editingRowId === record.id ? (
           <SaveOutlined
             style={{
-              color: savingRow ? '#bfbfbf' : '#1677ff',
+              color: savingRow ? '#bfbfbf' : '#52c41a',
               cursor: savingRow ? 'default' : 'pointer',
             }}
             onClick={() => {

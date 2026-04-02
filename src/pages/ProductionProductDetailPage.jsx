@@ -205,7 +205,12 @@ function ProductionProductDetailPage() {
           <Card
             title="Етапи виробництва"
             extra={
-              <Button type="primary" disabled>
+              <Button
+                type="primary"
+                onClick={() =>
+                  navigate(`/production/products/${product.id}/new-step`)
+                }
+              >
                 Додати етап
               </Button>
             }

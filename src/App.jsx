@@ -20,6 +20,7 @@ import ProductionComponentDetailPage from './pages/ProductionComponentDetailPage
 
 import ProductionProductPage from './pages/ProductionProductPage';
 import ProductionProductDetailPage from './pages/ProductionProductDetailPage';
+import ProductionProductStepCreatePage from './pages/ProductionProductStepCreatePage';
 import ProductionProductStepDetailPage from './pages/ProductionProductStepDetailPage';
 
 function App() {
@@ -90,6 +91,10 @@ function App() {
             <Route
               path="/production/products/:id"
               element={<ProductionProductDetailPage />}
+            />
+            <Route
+              path="/production/products/:id/new-step"
+              element={<ProductionProductStepCreatePage />}
             />
             <Route
               path="/production/product-steps/:id"

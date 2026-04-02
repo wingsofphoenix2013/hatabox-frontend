@@ -1,39 +1,85 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Table, Input, Button, Typography, Space, Card, Alert } from 'antd';
-import { AppstoreAddOutlined, SearchOutlined } from '@ant-design/icons';
+import { Link, useSearchParams } from 'react-router-dom';
+import {
+  Table,
+  Input,
+  Typography,
+  Card,
+  Alert,
+  Select,
+  Divider,
+  Flex,
+} from 'antd';
+import {
+  AppstoreAddOutlined,
+  SearchOutlined,
+  CheckCircleFilled,
+  CloseCircleFilled,
+} from '@ant-design/icons';
 import api from '../api/client';
 
 const { Title, Text } = Typography;
 
 function ProductionProductPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
-  const [productFamilyCodeFilter, setProductFamilyCodeFilter] = useState('');
-  const [searchText, setSearchText] = useState('');
+  const [productFamilyCodeFilter, setProductFamilyCodeFilter] = useState(
+    searchParams.get('product_family_code') || '',
+  );
+  const [searchText, setSearchText] = useState(
+    searchParams.get('search') || '',
+  );
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (productFamilyCodeFilter) {
+      params.set('product_family_code', productFamilyCodeFilter);
+    }
+
+    if (searchText) {
+      params.set('search', searchText);
+    }
+
+    setSearchParams(params);
+  }, [productFamilyCodeFilter, searchText, setSearchParams]);
 
   useEffect(() => {
     loadProducts();
-  }, []);
+  }, [productFamilyCodeFilter, searchText]);
 
   const loadProducts = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const response = await api.get('products/');
+      const params = new URLSearchParams();
+
+      if (productFamilyCodeFilter) {
+        params.set('product_family_code', productFamilyCodeFilter);
+      }
+
+      if (searchText) {
+        params.set('search', searchText);
+      }
+
+      const response = await api.get(`products/?${params.toString()}`);
 
       setItems(
         Array.isArray(response.data.results) ? response.data.results : [],
       );
+      setSelectedRowKeys([]);
     } catch (err) {
       console.error('Failed to load products:', err);
       setError('Не вдалося завантажити каталог продукції.');
       setItems([]);
+      setSelectedRowKeys([]);
     } finally {
       setLoading(false);
     }
@@ -43,8 +89,9 @@ function ProductionProductPage() {
     {
       title: '№№',
       key: 'index',
-      render: (_, __, index) => index + 1,
       width: 70,
+      align: 'center',
+      render: (_, __, index) => index + 1,
     },
     {
       title: 'Код продукта',
@@ -55,7 +102,9 @@ function ProductionProductPage() {
       title: 'Назва та версія продукта',
       key: 'product_name_version',
       render: (_, record) => (
-        <Link to={`/production/products/${record.id}`}>
+        <Link
+          to={`/production/products/${record.id}?${searchParams.toString()}`}
+        >
           {record.product_family_name} {record.version}
         </Link>
       ),
@@ -64,26 +113,44 @@ function ProductionProductPage() {
       title: 'База',
       dataIndex: 'is_base_modification',
       key: 'is_base_modification',
-      render: (value) => (value ? 'Так' : 'Ні'),
-      width: 100,
+      width: 110,
+      align: 'center',
+      render: (value) => (
+        <Flex align="center" justify="center" gap={6}>
+          {value ? (
+            <>
+              <CheckCircleFilled style={{ color: '#52c41a' }} />
+              <span>Так</span>
+            </>
+          ) : (
+            <>
+              <CloseCircleFilled style={{ color: '#ff4d4f' }} />
+              <span>Ні</span>
+            </>
+          )}
+        </Flex>
+      ),
     },
     {
       title: 'В роботі',
       key: 'in_work',
-      render: () => 'ХХ',
       width: 120,
+      align: 'center',
+      render: () => 'ХХ',
     },
     {
       title: 'Виготовлено',
       key: 'produced',
-      render: () => 'ХХ',
       width: 140,
+      align: 'center',
+      render: () => 'ХХ',
     },
     {
       title: 'Дія',
       key: 'action',
-      render: () => <AppstoreAddOutlined />,
       width: 80,
+      align: 'center',
+      render: () => <AppstoreAddOutlined />,
     },
   ];
 
@@ -94,17 +161,28 @@ function ProductionProductPage() {
       </Title>
 
       <Card size="small" style={{ marginBottom: 16 }}>
-        <Space size="large" wrap>
-          <Text>Обрано: {selectedRowKeys.length}</Text>
+        <Flex align="center" wrap gap={12}>
+          <Text>
+            Обрано: <strong>{selectedRowKeys.length}</strong>
+          </Text>
 
-          <Button disabled>Дія</Button>
+          <Select
+            placeholder="Дії"
+            style={{ width: 160 }}
+            disabled={selectedRowKeys.length === 0}
+            options={[{ value: 'placeholder', label: 'Дії' }]}
+          />
+
+          <Divider type="vertical" style={{ height: 28 }} />
 
           <Input
             placeholder="Фільтр по коду сімейства"
-            style={{ width: 200 }}
+            style={{ width: 220 }}
             value={productFamilyCodeFilter}
             onChange={(e) => setProductFamilyCodeFilter(e.target.value)}
           />
+
+          <Divider type="vertical" style={{ height: 28 }} />
 
           <Input
             placeholder="Пошук по назві"
@@ -113,7 +191,7 @@ function ProductionProductPage() {
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
-        </Space>
+        </Flex>
       </Card>
 
       {error && (

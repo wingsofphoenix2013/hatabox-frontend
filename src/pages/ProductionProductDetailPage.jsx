@@ -12,7 +12,7 @@ import {
   Typography,
 } from 'antd';
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 
 const { Title, Text, Paragraph } = Typography;
@@ -20,6 +20,7 @@ const { Title, Text, Paragraph } = Typography;
 function ProductionProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [product, setProduct] = useState(null);
   const [steps, setSteps] = useState([]);
@@ -208,7 +209,14 @@ function ProductionProductDetailPage() {
               <Button
                 type="primary"
                 onClick={() =>
-                  navigate(`/production/products/${product.id}/new-step`)
+                  navigate(
+                    `/production/products/${product.id}/new-step${location.search}`,
+                    {
+                      state: {
+                        productLabel: product.code,
+                      },
+                    },
+                  )
                 }
               >
                 Додати етап
@@ -265,7 +273,15 @@ function ProductionProductDetailPage() {
 
                     <Button
                       onClick={() =>
-                        navigate(`/production/product-steps/${step.id}`)
+                        navigate(
+                          `/production/product-steps/${step.id}${location.search}`,
+                          {
+                            state: {
+                              productLabel: product.code,
+                              stepLabel: `${step.sort_order}. ${step.name}`,
+                            },
+                          },
+                        )
                       }
                     >
                       Деталі

@@ -61,14 +61,6 @@ function ProtectedLayout() {
     '/service': { pages: [], actions: [], dictionaries: [] },
   };
 
-  const breadcrumbMap = {
-    '/home': ['Головна'],
-    '/orders': ['Головна', 'Закупівлі'],
-    '/production/components': ['Головна', 'Виробництво', 'Каталог компонентів'],
-    '/user': ['Головна', 'Користувач'],
-  };
-
-  // helper: есть ли контент у модуля
   const hasModuleContent = (config) => {
     if (!config) return false;
     return (
@@ -110,6 +102,9 @@ function ProtectedLayout() {
   const breadcrumbLinkStyle = {
     textDecoration: 'underline',
   };
+
+  const productLabel = location.state?.productLabel;
+  const stepLabel = location.state?.stepLabel;
 
   let breadcrumbItems = [
     {
@@ -155,6 +150,44 @@ function ProtectedLayout() {
       { title: 'Виробництво' },
       { title: 'Каталог компонентів' },
     ];
+  } else if (
+    location.pathname.startsWith('/production/products/') &&
+    location.pathname.endsWith('/new-step')
+  ) {
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Виробництво' },
+      {
+        title: (
+          <Link
+            to={`/production/products${location.search}`}
+            style={breadcrumbLinkStyle}
+          >
+            Каталог продукції
+          </Link>
+        ),
+      },
+      {
+        title: productLabel ? (
+          <Link
+            to={`/production/products/${pathParts[pathParts.length - 2]}${location.search}`}
+            style={breadcrumbLinkStyle}
+            state={{ productLabel }}
+          >
+            {productLabel}
+          </Link>
+        ) : (
+          `Продукт ID ${pathParts[pathParts.length - 2]}`
+        ),
+      },
+      { title: 'Новий етап' },
+    ];
   } else if (location.pathname.startsWith('/production/product-steps/')) {
     breadcrumbItems = [
       {
@@ -175,69 +208,12 @@ function ProtectedLayout() {
           </Link>
         ),
       },
-      { title: `Етап ID ${currentId}` },
-    ];
-  } else if (location.pathname === '/production/products') {
-    breadcrumbItems = [
       {
-        title: (
-          <Link to="/home" style={breadcrumbLinkStyle}>
-            Головна
-          </Link>
-        ),
+        title: productLabel || 'Продукт',
       },
-      { title: 'Виробництво' },
-      { title: 'Каталог продукції' },
-    ];
-  } else if (
-    location.pathname.startsWith('/production/products/') &&
-    location.pathname.endsWith('/new-step')
-  ) {
-    breadcrumbItems = [
       {
-        title: (
-          <Link to="/home" style={breadcrumbLinkStyle}>
-            Головна
-          </Link>
-        ),
+        title: stepLabel || `Етап ID ${currentId}`,
       },
-      { title: 'Виробництво' },
-      {
-        title: (
-          <Link
-            to={`/production/products${location.search}`}
-            style={breadcrumbLinkStyle}
-          >
-            Каталог продукції
-          </Link>
-        ),
-      },
-      { title: 'Новий етап' },
-    ];
-  } else if (
-    location.pathname.startsWith('/production/products/') &&
-    location.pathname.endsWith('/new-step')
-  ) {
-    breadcrumbItems = [
-      {
-        title: (
-          <Link to="/home" style={breadcrumbLinkStyle}>
-            Головна
-          </Link>
-        ),
-      },
-      { title: 'Виробництво' },
-      {
-        title: (
-          <Link
-            to={`/production/products${location.search}`}
-            style={breadcrumbLinkStyle}
-          >
-            Каталог продукції
-          </Link>
-        ),
-      },
-      { title: 'Новий етап' },
     ];
   } else if (location.pathname.startsWith('/production/products/')) {
     breadcrumbItems = [
@@ -259,7 +235,7 @@ function ProtectedLayout() {
           </Link>
         ),
       },
-      { title: `Продукт ID ${currentId}` },
+      { title: productLabel || `Продукт ID ${currentId}` },
     ];
   } else if (location.pathname === '/production/products') {
     breadcrumbItems = [
@@ -329,7 +305,6 @@ function ProtectedLayout() {
 
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden' }}>
-      {/* sidebar-1 */}
       <Sider
         width={220}
         style={{
@@ -360,7 +335,6 @@ function ProtectedLayout() {
         </div>
       </Sider>
 
-      {/* sidebar-2 */}
       {panelOpen && hasContent && (
         <Sider
           width={260}
@@ -448,7 +422,6 @@ function ProtectedLayout() {
         </Sider>
       )}
 
-      {/* контент */}
       <Layout style={{ height: '100vh', overflow: 'hidden', minWidth: 0 }}>
         <Content
           style={{

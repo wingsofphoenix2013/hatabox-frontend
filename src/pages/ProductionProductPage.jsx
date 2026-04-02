@@ -121,6 +121,7 @@ function ProductionProductPage() {
       render: (_, record) => (
         <Link
           to={`/production/products/${record.id}?${searchParams.toString()}`}
+          state={{ productLabel: record.code }}
         >
           {record.product_family_name} {record.version}
         </Link>

@@ -11,6 +11,7 @@ import {
   Table,
   Typography,
 } from 'antd';
+import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 
@@ -78,7 +79,18 @@ function ProductionProductDetailPage() {
       title: 'База',
       key: 'is_base_modification',
       align: 'center',
-      render: () => (product?.is_base_modification ? 'Так' : 'Ні'),
+      render: () =>
+        product?.is_base_modification ? (
+          <Flex align="center" justify="center" gap={6}>
+            <CheckCircleFilled style={{ color: '#52c41a' }} />
+            <span>Так</span>
+          </Flex>
+        ) : (
+          <Flex align="center" justify="center" gap={6}>
+            <CloseCircleFilled style={{ color: '#ff4d4f' }} />
+            <span>Ні</span>
+          </Flex>
+        ),
     },
     {
       title: 'Розробка з',
@@ -208,11 +220,41 @@ function ProductionProductDetailPage() {
                         level={5}
                         style={{ marginTop: 0, marginBottom: 8 }}
                       >
-                        {step.name}
+                        {step.sort_order}. {step.name}
                       </Title>
-                      <Paragraph style={{ marginBottom: 0, color: '#595959' }}>
-                        {truncateText(step.description)}
-                      </Paragraph>
+
+                      <div>
+                        <div
+                          style={{
+                            float: 'left',
+                            width: 120,
+                            height: 120,
+                            border: '1px solid #f0f0f0',
+                            borderRadius: 10,
+                            background: '#ffffff',
+                            marginRight: 16,
+                            marginBottom: 8,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Text
+                            type="secondary"
+                            style={{ fontSize: 12, textAlign: 'center' }}
+                          >
+                            Ілюстрація
+                          </Text>
+                        </div>
+
+                        <Paragraph
+                          style={{ marginBottom: 0, color: '#595959' }}
+                        >
+                          {truncateText(step.description, 260)}
+                        </Paragraph>
+
+                        <div style={{ clear: 'both' }} />
+                      </div>
                     </div>
 
                     <Button disabled>Деталі</Button>

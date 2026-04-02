@@ -11,6 +11,7 @@ import {
   Popconfirm,
   message,
   InputNumber,
+  Select,
 } from 'antd';
 import { useParams } from 'react-router-dom';
 import {
@@ -33,6 +34,13 @@ function ProductionProductStepDetailPage() {
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingQuantity, setEditingQuantity] = useState(null);
   const [savingRow, setSavingRow] = useState(false);
+
+  const [isCreatingRow, setIsCreatingRow] = useState(false);
+  const [creatingItemId, setCreatingItemId] = useState(null);
+  const [creatingQuantity, setCreatingQuantity] = useState(null);
+  const [creatingItemOptions, setCreatingItemOptions] = useState([]);
+  const [creatingSelectedItem, setCreatingSelectedItem] = useState(null);
+  const [creatingRowLoading, setCreatingRowLoading] = useState(false);
 
   useEffect(() => {
     loadStepPage();
@@ -94,6 +102,80 @@ function ProductionProductStepDetailPage() {
       setSavingRow(false);
     }
   };
+  const handleSearchItems = async (searchValue) => {
+    try {
+      const query = searchValue?.trim();
+
+      if (!query) {
+        setCreatingItemOptions([]);
+        return;
+      }
+
+      const response = await api.get(
+        `items/?search=${encodeURIComponent(query)}`,
+      );
+
+      const results = Array.isArray(response.data.results)
+        ? response.data.results
+        : [];
+
+      setCreatingItemOptions(
+        results.map((item) => ({
+          value: item.id,
+          label: `${item.name}`,
+          item,
+        })),
+      );
+    } catch (err) {
+      console.error('Failed to search items:', err);
+      setCreatingItemOptions([]);
+    }
+  };
+  const handleStartCreateRow = () => {
+    setIsCreatingRow(true);
+    setCreatingItemId(null);
+    setCreatingQuantity(null);
+    setCreatingItemOptions([]);
+    setCreatingSelectedItem(null);
+  };
+  const handleCancelCreateRow = () => {
+    setIsCreatingRow(false);
+    setCreatingItemId(null);
+    setCreatingQuantity(null);
+    setCreatingItemOptions([]);
+    setCreatingSelectedItem(null);
+  };
+  const handleSaveCreateRow = async () => {
+    if (!creatingItemId) {
+      message.error('Оберіть компонент');
+      return;
+    }
+
+    if (creatingQuantity === null || creatingQuantity === undefined) {
+      message.error('Вкажіть кількість');
+      return;
+    }
+
+    try {
+      setCreatingRowLoading(true);
+
+      await api.post('product-step-items/', {
+        product_step: Number(id),
+        inv_item: creatingItemId,
+        quantity: creatingQuantity,
+      });
+
+      message.success('Компонент додано');
+
+      handleCancelCreateRow();
+      loadStepPage();
+    } catch (err) {
+      console.error('Create failed:', err);
+      message.error('Не вдалося додати компонент');
+    } finally {
+      setCreatingRowLoading(false);
+    }
+  };
   const renderField = (label, content) => (
     <div style={{ marginBottom: 20 }}>
       <Text
@@ -139,8 +221,24 @@ function ProductionProductStepDetailPage() {
       key: 'edit',
       width: 56,
       align: 'center',
-      render: (_, record) =>
-        editingRowId === record.id ? (
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return (
+            <SaveOutlined
+              style={{
+                color: creatingRowLoading ? '#bfbfbf' : '#1677ff',
+                cursor: creatingRowLoading ? 'default' : 'pointer',
+              }}
+              onClick={() => {
+                if (!creatingRowLoading) {
+                  handleSaveCreateRow();
+                }
+              }}
+            />
+          );
+        }
+
+        return editingRowId === record.id ? (
           <SaveOutlined
             style={{
               color: savingRow ? '#bfbfbf' : '#1677ff',
@@ -157,12 +255,33 @@ function ProductionProductStepDetailPage() {
             style={{ color: '#8c8c8c', cursor: 'pointer' }}
             onClick={() => handleStartEdit(record)}
           />
-        ),
+        );
+      },
     },
     {
       title: 'Назва Item',
       key: 'item_name',
-      render: (_, record) => record.inv_item_name || '—',
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return (
+            <Select
+              showSearch
+              placeholder="Оберіть компонент"
+              value={creatingItemId}
+              style={{ width: '100%' }}
+              filterOption={false}
+              onSearch={handleSearchItems}
+              onChange={(value, option) => {
+                setCreatingItemId(value);
+                setCreatingSelectedItem(option?.item || null);
+              }}
+              options={creatingItemOptions}
+            />
+          );
+        }
+
+        return record.inv_item_name || '—';
+      },
     },
     {
       title: 'Кількість',
@@ -170,8 +289,21 @@ function ProductionProductStepDetailPage() {
       key: 'quantity',
       width: 120,
       align: 'center',
-      render: (value, record) =>
-        editingRowId === record.id ? (
+      render: (value, record) => {
+        if (record.id === 'new-row') {
+          return (
+            <InputNumber
+              min={0}
+              step={0.001}
+              precision={3}
+              value={creatingQuantity}
+              onChange={(val) => setCreatingQuantity(val)}
+              style={{ width: 100 }}
+            />
+          );
+        }
+
+        return editingRowId === record.id ? (
           <InputNumber
             min={0}
             step={0.001}
@@ -182,46 +314,75 @@ function ProductionProductStepDetailPage() {
           />
         ) : (
           value
-        ),
+        );
+      },
     },
     {
       title: 'Одиниця вимірювання',
       key: 'unit',
       width: 170,
       align: 'center',
-      render: (_, record) =>
-        record.inv_item_unit_symbol || record.inv_item_unit_name
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return creatingSelectedItem?.unit_symbol ||
+            creatingSelectedItem?.unit_name
+            ? `${creatingSelectedItem.unit_symbol || ''}${
+                creatingSelectedItem.unit_symbol &&
+                creatingSelectedItem.unit_name
+                  ? ' — '
+                  : ''
+              }${creatingSelectedItem.unit_name || ''}`
+            : '—';
+        }
+
+        return record.inv_item_unit_symbol || record.inv_item_unit_name
           ? `${record.inv_item_unit_symbol || ''}${
               record.inv_item_unit_symbol && record.inv_item_unit_name
                 ? ' — '
                 : ''
             }${record.inv_item_unit_name || ''}`
-          : '—',
+          : '—';
+      },
     },
     {
       title: '',
       key: 'delete',
       width: 56,
       align: 'center',
-      render: (_, record) => (
-        <Popconfirm
-          title="Видалити компонент?"
-          description="Ви впевнені, що хочете видалити цей компонент з етапу?"
-          onConfirm={() => handleDelete(record.id)}
-          okText="Так"
-          cancelText="Ні"
-          disabled={editingRowId === record.id || savingRow}
-        >
-          <DeleteOutlined
-            style={{
-              color:
-                editingRowId === record.id || savingRow ? '#d9d9d9' : '#ff4d4f',
-              cursor:
-                editingRowId === record.id || savingRow ? 'default' : 'pointer',
-            }}
-          />
-        </Popconfirm>
-      ),
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return (
+            <DeleteOutlined
+              style={{ color: '#ff4d4f', cursor: 'pointer' }}
+              onClick={handleCancelCreateRow}
+            />
+          );
+        }
+
+        return (
+          <Popconfirm
+            title="Видалити компонент?"
+            description="Ви впевнені, що хочете видалити цей компонент з етапу?"
+            onConfirm={() => handleDelete(record.id)}
+            okText="Так"
+            cancelText="Ні"
+            disabled={editingRowId === record.id || savingRow || isCreatingRow}
+          >
+            <DeleteOutlined
+              style={{
+                color:
+                  editingRowId === record.id || savingRow || isCreatingRow
+                    ? '#d9d9d9'
+                    : '#ff4d4f',
+                cursor:
+                  editingRowId === record.id || savingRow || isCreatingRow
+                    ? 'default'
+                    : 'pointer',
+              }}
+            />
+          </Popconfirm>
+        );
+      },
     },
   ];
 
@@ -288,15 +449,33 @@ function ProductionProductStepDetailPage() {
             <Table
               rowKey="id"
               columns={stepItemsColumns}
-              dataSource={Array.isArray(step.step_items) ? step.step_items : []}
+              dataSource={[
+                ...(Array.isArray(step.step_items) ? step.step_items : []),
+                ...(isCreatingRow ? [{ id: 'new-row' }] : []),
+              ]}
               pagination={false}
               size="small"
             />
 
             <div style={{ marginTop: 16 }}>
-              <Flex align="center" gap={8}>
-                <FileAddOutlined style={{ color: '#8c8c8c' }} />
-                <Text style={{ color: '#595959' }}>Додати компонент</Text>
+              <Flex
+                align="center"
+                gap={8}
+                style={{
+                  color: isCreatingRow ? '#bfbfbf' : '#595959',
+                  cursor: isCreatingRow ? 'default' : 'pointer',
+                  width: 'fit-content',
+                }}
+                onClick={() => {
+                  if (!isCreatingRow) {
+                    handleStartCreateRow();
+                  }
+                }}
+              >
+                <FileAddOutlined />
+                <Text style={{ color: isCreatingRow ? '#bfbfbf' : '#595959' }}>
+                  Додати компонент
+                </Text>
               </Flex>
             </div>
           </Card>

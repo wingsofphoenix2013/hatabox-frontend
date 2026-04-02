@@ -1,5 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Alert, Card, Col, Flex, Row, Skeleton, Table, Typography } from 'antd';
+import {
+  Alert,
+  Card,
+  Col,
+  Flex,
+  Row,
+  Skeleton,
+  Table,
+  Typography,
+  Popconfirm,
+  message,
+} from 'antd';
 import { useParams } from 'react-router-dom';
 import {
   EditOutlined,
@@ -34,6 +45,20 @@ function ProductionProductStepDetailPage() {
       setStep(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (itemId) => {
+    try {
+      await api.delete(`product-step-items/${itemId}/`);
+
+      message.success('Компонент видалено');
+
+      // обновляем данные
+      loadStepPage();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      message.error('Не вдалося видалити компонент');
     }
   };
 
@@ -115,7 +140,17 @@ function ProductionProductStepDetailPage() {
       key: 'delete',
       width: 56,
       align: 'center',
-      render: () => <DeleteOutlined style={{ color: '#8c8c8c' }} />,
+      render: (_, record) => (
+        <Popconfirm
+          title="Видалити компонент?"
+          description="Ви впевнені, що хочете видалити цей компонент з етапу?"
+          onConfirm={() => handleDelete(record.id)}
+          okText="Так"
+          cancelText="Ні"
+        >
+          <DeleteOutlined style={{ color: '#ff4d4f', cursor: 'pointer' }} />
+        </Popconfirm>
+      ),
     },
   ];
 

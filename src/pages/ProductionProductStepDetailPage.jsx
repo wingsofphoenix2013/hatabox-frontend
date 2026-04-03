@@ -14,6 +14,7 @@ import {
   Select,
 } from 'antd';
 import { useParams } from 'react-router-dom';
+import { formatQuantity } from '../utils/formatNumber';
 import {
   EditOutlined,
   DeleteOutlined,
@@ -313,7 +314,7 @@ function ProductionProductStepDetailPage() {
             style={{ width: 100 }}
           />
         ) : (
-          value
+          formatQuantity(value)
         );
       },
     },

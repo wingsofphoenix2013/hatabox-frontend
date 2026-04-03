@@ -13,6 +13,7 @@ import {
 } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
+import { formatQuantity } from '../utils/formatNumber';
 import api from '../api/client';
 
 const { Title, Text } = Typography;
@@ -121,7 +122,8 @@ function ProductionProductMaterialPlanPage() {
             </div>
 
             <div>
-              {step.quantity} {step.unit_symbol || step.unit_name || ''}
+              {formatQuantity(step.quantity)}{' '}
+              {step.unit_symbol || step.unit_name || ''}
             </div>
           </div>
         ))}
@@ -176,7 +178,8 @@ function ProductionProductMaterialPlanPage() {
       key: 'total_quantity',
       width: 120,
       align: 'center',
-      render: (_, record) => (record.isGroupRow ? '' : record.total_quantity),
+      render: (_, record) =>
+        record.isGroupRow ? '' : formatQuantity(record.total_quantity),
     },
     {
       title: 'Од. вим.',

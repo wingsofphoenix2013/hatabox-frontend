@@ -40,7 +40,16 @@ function ProtectedLayout() {
   ];
 
   const moduleConfig = {
-    '/orders': { pages: [], actions: [], dictionaries: [] },
+    '/orders': {
+      pages: [],
+      actions: [],
+      dictionaries: [
+        {
+          label: 'Каталог постачальників',
+          path: '/orders/vendors',
+        },
+      ],
+    },
     '/inventory': { pages: [], actions: [], dictionaries: [] },
     '/sales': { pages: [], actions: [], dictionaries: [] },
     '/user': { pages: [], actions: [], dictionaries: [] },
@@ -307,6 +316,18 @@ function ProtectedLayout() {
         ),
       },
       { title: 'Закупівлі' },
+    ];
+  } else if (location.pathname === '/orders/vendors') {
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Закупівлі' },
+      { title: 'Каталог постачальників' },
     ];
   } else if (location.pathname.startsWith('/orders/')) {
     breadcrumbItems = [

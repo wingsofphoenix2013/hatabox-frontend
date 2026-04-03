@@ -14,6 +14,8 @@ import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import LoginPage from './pages/LoginPage';
 
+import VendorsPage from './pages/VendorsPage';
+
 import ProductionComponentsPage from './pages/ProductionComponentsPage';
 import ProductionComponentCreatePage from './pages/ProductionComponentCreatePage';
 import ProductionComponentDetailPage from './pages/ProductionComponentDetailPage';
@@ -83,6 +85,7 @@ function App() {
             <Route path="/home" element={<div>Головна</div>} />
 
             <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/orders/vendors" element={<VendorsPage />} />
             <Route path="/orders/:id" element={<OrderDetailPage />} />
 
             <Route

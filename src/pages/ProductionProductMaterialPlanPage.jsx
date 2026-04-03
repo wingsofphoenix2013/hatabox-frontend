@@ -58,12 +58,14 @@ function ProductionProductMaterialPlanPage() {
       groups.get(categoryName).push(item);
     });
 
-    return Array.from(groups.entries()).map(([categoryName, items]) => ({
-      categoryName,
-      items: [...items].sort((a, b) =>
-        (a.inv_item_name || '').localeCompare(b.inv_item_name || '', 'uk'),
-      ),
-    }));
+    return Array.from(groups.entries())
+      .map(([categoryName, items]) => ({
+        categoryName,
+        items: [...items].sort((a, b) =>
+          (a.inv_item_name || '').localeCompare(b.inv_item_name || '', 'uk'),
+        ),
+      }))
+      .sort((a, b) => a.categoryName.localeCompare(b.categoryName, 'uk'));
   }, [materialPlan]);
 
   const flatDataSource = useMemo(() => {
@@ -130,18 +132,21 @@ function ProductionProductMaterialPlanPage() {
       render: (_, record) => (record.isGroupRow ? '' : record.rowNumber),
     },
     {
+      title: 'Код',
+      key: 'internal_code',
+      width: 120,
+      align: 'center',
+      render: (_, record) =>
+        record.isGroupRow ? '' : record.inv_item_internal_code || '—',
+    },
+    {
       title: 'Назва',
       key: 'name',
       render: (_, record) =>
         record.isGroupRow ? (
-          ''
+          <strong>{record.categoryName}</strong>
         ) : (
-          <div>
-            <div>{record.inv_item_name}</div>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {record.inv_item_internal_code}
-            </Text>
-          </div>
+          record.inv_item_name || '—'
         ),
     },
     {

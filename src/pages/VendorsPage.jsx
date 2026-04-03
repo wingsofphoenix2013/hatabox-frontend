@@ -20,6 +20,18 @@ import api from '../api/client';
 
 const { Title, Text } = Typography;
 
+const formatPhoneUa = (value) => {
+  if (!value) return '—';
+
+  const digits = value.replace(/\D/g, '');
+
+  if (digits.length === 12 && digits.startsWith('380')) {
+    return `+${digits.slice(0, 2)} (${digits.slice(2, 5)}) ${digits.slice(5, 8)}-${digits.slice(8, 10)}-${digits.slice(10, 12)}`;
+  }
+
+  return value;
+};
+
 function VendorsPage() {
   const [items, setItems] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -81,7 +93,7 @@ function VendorsPage() {
       dataIndex: 'phone',
       key: 'phone',
       width: 180,
-      render: (value) => value || '—',
+      render: (value) => formatPhoneUa(value),
     },
     {
       title: 'E-mail',

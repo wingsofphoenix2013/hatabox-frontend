@@ -3,6 +3,7 @@ import {
   AppstoreAddOutlined,
   PlusOutlined,
   SearchOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -15,6 +16,7 @@ import {
   Select,
   Table,
   Typography,
+  message,
 } from 'antd';
 import api from '../api/client';
 
@@ -100,7 +102,28 @@ function VendorsPage() {
       dataIndex: 'email',
       key: 'email',
       width: 220,
-      render: (value) => value || '—',
+      render: (value) => {
+        if (!value) return '—';
+
+        const handleCopy = async () => {
+          try {
+            await navigator.clipboard.writeText(value);
+            message.success('E-mail скопійовано');
+          } catch {
+            message.error('Не вдалося скопіювати');
+          }
+        };
+
+        return (
+          <Flex align="center" gap={6}>
+            <span>{value}</span>
+            <CopyOutlined
+              style={{ color: '#8c8c8c', cursor: 'pointer' }}
+              onClick={handleCopy}
+            />
+          </Flex>
+        );
+      },
     },
     {
       title: 'Логотип',

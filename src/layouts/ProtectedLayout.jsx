@@ -152,6 +152,44 @@ function ProtectedLayout() {
     ];
   } else if (
     location.pathname.startsWith('/production/products/') &&
+    location.pathname.endsWith('/material-plan')
+  ) {
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Виробництво' },
+      {
+        title: (
+          <Link
+            to={`/production/products${location.search}`}
+            style={breadcrumbLinkStyle}
+          >
+            Каталог продукції
+          </Link>
+        ),
+      },
+      {
+        title: productLabel ? (
+          <Link
+            to={`/production/products/${pathParts[pathParts.length - 2]}${location.search}`}
+            style={breadcrumbLinkStyle}
+            state={{ productLabel }}
+          >
+            {productLabel}
+          </Link>
+        ) : (
+          `Продукт ID ${pathParts[pathParts.length - 2]}`
+        ),
+      },
+      { title: 'Загальна комплектація' },
+    ];
+  } else if (
+    location.pathname.startsWith('/production/products/') &&
     location.pathname.endsWith('/new-step')
   ) {
     breadcrumbItems = [

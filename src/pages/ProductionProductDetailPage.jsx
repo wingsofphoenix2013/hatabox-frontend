@@ -172,7 +172,22 @@ function ProductionProductDetailPage() {
 
           <Card title="Довідка" style={{ marginBottom: 20 }}>
             <Flex vertical gap={12}>
-              <Button block>Загальна комплектація продукта</Button>
+              <Button
+                block
+                onClick={() =>
+                  navigate(
+                    `/production/products/${product.id}/material-plan${location.search}`,
+                    {
+                      state: {
+                        productId: product.id,
+                        productLabel: product.code,
+                      },
+                    },
+                  )
+                }
+              >
+                Загальна комплектація продукта
+              </Button>
               <Button block>Довідка по персоналу</Button>
             </Flex>
           </Card>

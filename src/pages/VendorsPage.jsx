@@ -90,7 +90,12 @@ function VendorsPage() {
       dataIndex: 'name',
       key: 'name',
       render: (value, record) => (
-        <Link to={`/orders/vendors/${record.id}`}>{value}</Link>
+        <Link
+          to={`/orders/vendors/${record.id}`}
+          state={{ vendorLabel: record.name }}
+        >
+          {value}
+        </Link>
       ),
     },
     {

@@ -114,6 +114,7 @@ function ProtectedLayout() {
 
   const productLabel = location.state?.productLabel;
   const stepLabel = location.state?.stepLabel;
+  const vendorLabel = location.state?.vendorLabel;
 
   let breadcrumbItems = [
     {
@@ -346,7 +347,7 @@ function ProtectedLayout() {
           </Link>
         ),
       },
-      { title: `Постачальник ID ${currentId}` },
+      { title: vendorLabel || `Постачальник ID ${currentId}` },
     ];
   } else if (location.pathname.startsWith('/orders/')) {
     breadcrumbItems = [

@@ -31,6 +31,7 @@ const formatPhoneUa = (value) => {
 };
 
 function VendorDetailPage() {
+  const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
 

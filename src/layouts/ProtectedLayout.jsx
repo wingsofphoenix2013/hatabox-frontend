@@ -115,6 +115,7 @@ function ProtectedLayout() {
   const productLabel = location.state?.productLabel;
   const stepLabel = location.state?.stepLabel;
   const vendorLabel = location.state?.vendorLabel;
+  const isVendorEditPage = location.pathname.endsWith('/edit');
 
   let breadcrumbItems = [
     {
@@ -331,6 +332,10 @@ function ProtectedLayout() {
       { title: 'Каталог постачальників' },
     ];
   } else if (location.pathname.startsWith('/orders/vendors/')) {
+    const vendorId = isVendorEditPage
+      ? pathParts[pathParts.length - 2]
+      : currentId;
+
     breadcrumbItems = [
       {
         title: (
@@ -347,7 +352,18 @@ function ProtectedLayout() {
           </Link>
         ),
       },
-      { title: vendorLabel || `Постачальник ID ${currentId}` },
+      {
+        title: (
+          <Link
+            to={`/orders/vendors/${vendorId}`}
+            style={breadcrumbLinkStyle}
+            state={{ vendorLabel }}
+          >
+            {vendorLabel || `Постачальник ID ${vendorId}`}
+          </Link>
+        ),
+      },
+      ...(isVendorEditPage ? [{ title: 'Редагування' }] : []),
     ];
   } else if (location.pathname.startsWith('/orders/')) {
     breadcrumbItems = [

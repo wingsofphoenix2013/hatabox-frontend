@@ -13,7 +13,7 @@ import {
   Typography,
   message,
 } from 'antd';
-import { useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 
 const { Title, Text, Paragraph } = Typography;
@@ -31,7 +31,8 @@ const formatPhoneUa = (value) => {
 };
 
 function VendorDetailPage() {
-  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const [vendor, setVendor] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -170,7 +171,17 @@ function VendorDetailPage() {
           <Text type="secondary">{vendor.legal_name || '—'}</Text>
         </div>
 
-        <Button icon={<EditOutlined style={{ color: '#1677ff' }} />}>
+        <Button
+          icon={<EditOutlined style={{ color: '#1677ff' }} />}
+          onClick={() =>
+            navigate(`/orders/vendors/${vendor.id}/edit`, {
+              state: {
+                vendorLabel: vendor.name,
+                fromSearch: location.search,
+              },
+            })
+          }
+        >
           Редагувати
         </Button>
       </Flex>
@@ -255,7 +266,7 @@ function VendorDetailPage() {
             />
           </Card>
 
-          <Card title="Комплектуючі">
+          <Card title="Постачувані комплектуючі">
             <Text type="secondary">Дані з’являться пізніше</Text>
           </Card>
         </Col>

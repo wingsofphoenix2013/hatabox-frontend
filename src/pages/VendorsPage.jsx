@@ -19,7 +19,7 @@ import {
   message,
 } from 'antd';
 import api from '../api/client';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -39,6 +39,8 @@ function VendorsPage() {
   const [items, setItems] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [searchText, setSearchText] = useState('');
+
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -211,7 +213,12 @@ function VendorsPage() {
             Каталог постачальників
           </Title>
 
-          <Button type="primary" size="large" icon={<PlusOutlined />}>
+          <Button
+            type="primary"
+            size="large"
+            icon={<PlusOutlined />}
+            onClick={() => navigate('/orders/vendors/new')}
+          >
             Додати постачальника
           </Button>
         </Flex>

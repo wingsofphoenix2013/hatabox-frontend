@@ -331,6 +331,25 @@ function ProtectedLayout() {
       { title: 'Закупівлі' },
       { title: 'Каталог постачальників' },
     ];
+  } else if (location.pathname === '/orders/vendors/new') {
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Закупівлі' },
+      {
+        title: (
+          <Link to="/orders/vendors" style={breadcrumbLinkStyle}>
+            Каталог постачальників
+          </Link>
+        ),
+      },
+      { title: 'Новий постачальник' },
+    ];
   } else if (location.pathname.startsWith('/orders/vendors/')) {
     const vendorId = isVendorEditPage
       ? pathParts[pathParts.length - 2]

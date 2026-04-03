@@ -70,6 +70,7 @@ function VendorCreatePage() {
       formData.append('tax_type', values.tax_type || '');
       formData.append('edrpou', values.edrpou || '');
       formData.append('ipn', values.ipn || '');
+      formData.append('is_active', true);
 
       if (logoFile) {
         formData.append('logo', logoFile);

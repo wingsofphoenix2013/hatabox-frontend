@@ -329,6 +329,25 @@ function ProtectedLayout() {
       { title: 'Закупівлі' },
       { title: 'Каталог постачальників' },
     ];
+  } else if (location.pathname.startsWith('/orders/vendors/')) {
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Закупівлі' },
+      {
+        title: (
+          <Link to="/orders/vendors" style={breadcrumbLinkStyle}>
+            Каталог постачальників
+          </Link>
+        ),
+      },
+      { title: `Постачальник ID ${currentId}` },
+    ];
   } else if (location.pathname.startsWith('/orders/')) {
     breadcrumbItems = [
       {

@@ -19,6 +19,7 @@ import {
   message,
 } from 'antd';
 import api from '../api/client';
+import { Link } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -88,7 +89,9 @@ function VendorsPage() {
       title: 'Назва',
       dataIndex: 'name',
       key: 'name',
-      render: (value) => value,
+      render: (value, record) => (
+        <Link to={`/orders/vendors/${record.id}`}>{value}</Link>
+      ),
     },
     {
       title: 'Телефон',

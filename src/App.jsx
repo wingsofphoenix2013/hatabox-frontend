@@ -15,6 +15,7 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import LoginPage from './pages/LoginPage';
 
 import VendorsPage from './pages/VendorsPage';
+import VendorDetailPage from './pages/VendorDetailPage';
 
 import ProductionComponentsPage from './pages/ProductionComponentsPage';
 import ProductionComponentCreatePage from './pages/ProductionComponentCreatePage';
@@ -86,6 +87,7 @@ function App() {
 
             <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/vendors" element={<VendorsPage />} />
+            <Route path="/orders/vendors/:id" element={<VendorDetailPage />} />
             <Route path="/orders/:id" element={<OrderDetailPage />} />
 
             <Route

@@ -10,6 +10,7 @@ import {
   Card,
   Divider,
   Flex,
+  Image,
   Input,
   Select,
   Table,
@@ -22,6 +23,7 @@ const { Title, Text } = Typography;
 function VendorsPage() {
   const [items, setItems] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [searchText, setSearchText] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,14 +31,21 @@ function VendorsPage() {
 
   useEffect(() => {
     loadVendors();
-  }, []);
+  }, [searchText]);
 
   const loadVendors = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const response = await api.get('vendors/');
+      const params = new URLSearchParams();
+
+      if (searchText) {
+        params.append('search', searchText);
+      }
+
+      const query = params.toString();
+      const response = await api.get(`vendors/${query ? `?${query}` : ''}`);
 
       setItems(
         Array.isArray(response.data.results) ? response.data.results : [],
@@ -86,7 +95,53 @@ function VendorsPage() {
       dataIndex: 'logo',
       key: 'logo',
       width: 120,
-      render: () => '—',
+      render: (value, record) => {
+        if (!value) {
+          return (
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                border: '1px solid #f0f0f0',
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#fafafa',
+                color: '#bfbfbf',
+                fontSize: 12,
+              }}
+            >
+              —
+            </div>
+          );
+        }
+
+        return (
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              border: '1px solid #f0f0f0',
+              borderRadius: 8,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#fafafa',
+              overflow: 'hidden',
+            }}
+          >
+            <Image
+              src={value}
+              alt={record.name}
+              width={38}
+              height={38}
+              preview
+              style={{ objectFit: 'contain' }}
+            />
+          </div>
+        );
+      },
     },
     {
       title: '',
@@ -138,6 +193,8 @@ function VendorsPage() {
               allowClear
               prefix={<SearchOutlined />}
               style={{ width: 220 }}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
             />
           </Flex>
         </Card>

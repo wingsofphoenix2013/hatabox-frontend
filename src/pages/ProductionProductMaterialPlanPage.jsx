@@ -93,7 +93,7 @@ function ProductionProductMaterialPlanPage() {
     return rows;
   }, [groupedItems]);
 
-  const renderStepsPopover = (steps) => {
+  const renderStepsPopover = (steps, record) => {
     if (!steps || steps.length === 0) {
       return <Text type="secondary">Немає даних по етапах</Text>;
     }
@@ -104,21 +104,42 @@ function ProductionProductMaterialPlanPage() {
 
     return (
       <div style={{ minWidth: 240 }}>
+        {/* список этапов */}
         {sortedSteps.map((step) => (
-          <div
-            key={`${step.product_step_id}-${step.sort_order}`}
-            style={{ marginBottom: 8 }}
-          >
+          <div key={step.product_step_id} style={{ marginBottom: 8 }}>
             <div>
-              <strong>
-                {step.sort_order}. {step.product_step_name}
-              </strong>
+              <a
+                href={`/production/product-steps/${step.product_step_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <strong>
+                  {step.sort_order}. {step.product_step_name}
+                </strong>
+              </a>
             </div>
+
             <div>
               {step.quantity} {step.unit_symbol || step.unit_name || ''}
             </div>
           </div>
         ))}
+
+        {/* divider только один */}
+        <Divider style={{ margin: '8px 0' }} />
+
+        {/* ссылка на компонент */}
+        <div>
+          <Text type="secondary">
+            <a
+              href={`/production/components/${record.inv_item_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Детально про компонент
+            </a>
+          </Text>
+        </div>
       </div>
     );
   };
@@ -173,7 +194,7 @@ function ProductionProductMaterialPlanPage() {
         record.isGroupRow ? null : (
           <Popover
             trigger="click"
-            content={renderStepsPopover(record.steps)}
+            content={renderStepsPopover(record.steps, record)}
             placement="leftTop"
           >
             <InfoCircleOutlined

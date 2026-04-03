@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CopyOutlined } from '@ant-design/icons';
+import { CopyOutlined, EditOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -119,6 +119,7 @@ function VendorDetailPage() {
       title: 'Код ЄДРПОУ',
       dataIndex: 'edrpou',
       key: 'edrpou',
+      align: 'center',
       render: (value) => {
         if (!value) return '—';
 
@@ -137,6 +138,7 @@ function VendorDetailPage() {
       title: 'Код ІПН',
       dataIndex: 'ipn',
       key: 'ipn',
+      align: 'center',
       render: (value) => {
         if (!value) return '—';
 
@@ -168,7 +170,9 @@ function VendorDetailPage() {
           <Text type="secondary">{vendor.legal_name || '—'}</Text>
         </div>
 
-        <Button>Редагувати</Button>
+        <Button icon={<EditOutlined style={{ color: '#1677ff' }} />}>
+          Редагувати
+        </Button>
       </Flex>
 
       <Row gutter={20} align="top">

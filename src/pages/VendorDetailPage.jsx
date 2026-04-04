@@ -268,7 +268,7 @@ function VendorDetailPage() {
 
       await api.post('vendor-items/', {
         vendor: Number(id),
-        inv_item: values.inv_item,
+        item: values.inv_item,
         vendor_sku: values.vendor_sku,
         name: values.name,
         brand: values.brand,

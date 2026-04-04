@@ -305,7 +305,7 @@ function VendorDetailPage() {
       <Drawer
         title="Створення нового запису"
         placement="right"
-        size="default"
+        size="large"
         onClose={() => setIsDrawerOpen(false)}
         open={isDrawerOpen}
       >

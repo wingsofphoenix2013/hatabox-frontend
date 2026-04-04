@@ -310,6 +310,51 @@ function VendorDetailPage() {
     }
   };
 
+  const groupedVendorItems = useMemo(() => {
+    const groups = new Map();
+
+    vendorItems.forEach((item) => {
+      const categoryName = item.item_category_name || 'Без категорії';
+
+      if (!groups.has(categoryName)) {
+        groups.set(categoryName, []);
+      }
+
+      groups.get(categoryName).push(item);
+    });
+
+    return Array.from(groups.entries())
+      .map(([categoryName, items]) => ({
+        categoryName,
+        items: [...items],
+      }))
+      .sort((a, b) => a.categoryName.localeCompare(b.categoryName, 'uk'));
+  }, [vendorItems]);
+
+  const flatVendorItemsDataSource = useMemo(() => {
+    let rowIndex = (vendorItemsPage - 1) * 50 + 1;
+    const rows = [];
+
+    groupedVendorItems.forEach((group) => {
+      rows.push({
+        id: `group-${group.categoryName}`,
+        isGroupRow: true,
+        categoryName: group.categoryName,
+      });
+
+      group.items.forEach((item) => {
+        rows.push({
+          ...item,
+          isGroupRow: false,
+          rowNumber: rowIndex,
+        });
+        rowIndex += 1;
+      });
+    });
+
+    return rows;
+  }, [groupedVendorItems, vendorItemsPage]);
+
   const vendorItemsColumns = useMemo(
     () => [
       {
@@ -317,54 +362,60 @@ function VendorDetailPage() {
         key: 'index',
         width: 70,
         align: 'center',
-        render: (_, __, index) => (vendorItemsPage - 1) * 50 + index + 1,
+        render: (_, record) => (record.isGroupRow ? '' : record.rowNumber),
       },
       {
         title: 'Артікул',
         dataIndex: 'vendor_sku',
         key: 'vendor_sku',
         width: 220,
-        render: (value) => value || '—',
+        align: 'center',
+        render: (value, record) => (record.isGroupRow ? '' : value || '—'),
       },
       {
         title: 'Назва',
         dataIndex: 'name',
         key: 'name',
-        render: (value) => (
-          <div
-            style={{
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              maxWidth: 300,
-            }}
-            title={value}
-          >
-            {value || '—'}
-          </div>
-        ),
+        render: (value, record) =>
+          record.isGroupRow ? (
+            <strong>{record.categoryName}</strong>
+          ) : (
+            <div
+              style={{
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: 300,
+              }}
+              title={value}
+            >
+              {value || '—'}
+            </div>
+          ),
       },
       {
         title: 'Бренд',
         dataIndex: 'brand_name',
         key: 'brand_name',
         width: 180,
-        render: (value) => value || '—',
+        align: 'center',
+        render: (value, record) => (record.isGroupRow ? '' : value || '—'),
       },
       {
         title: '',
         key: 'info',
         width: 56,
         align: 'center',
-        render: (_, record) => (
-          <InfoCircleOutlined
-            style={{ color: '#8c8c8c', cursor: 'pointer' }}
-            onClick={() => {
-              setSelectedVendorItem(record);
-              setIsVendorItemDetailDrawerOpen(true);
-            }}
-          />
-        ),
+        render: (_, record) =>
+          record.isGroupRow ? null : (
+            <InfoCircleOutlined
+              style={{ color: '#8c8c8c', cursor: 'pointer' }}
+              onClick={() => {
+                setSelectedVendorItem(record);
+                setIsVendorItemDetailDrawerOpen(true);
+              }}
+            />
+          ),
       },
     ],
     [vendorItemsPage],
@@ -560,8 +611,11 @@ function VendorDetailPage() {
               rowKey="id"
               loading={itemsLoading}
               columns={vendorItemsColumns}
-              dataSource={vendorItems}
+              dataSource={flatVendorItemsDataSource}
               size="small"
+              rowClassName={(record) =>
+                record.isGroupRow ? 'vendor-items-group-row' : ''
+              }
               pagination={{
                 current: vendorItemsPage,
                 pageSize: 50,
@@ -596,7 +650,7 @@ function VendorDetailPage() {
                 onClick={openCreateDrawer}
               >
                 <FileAddOutlined />
-                <Text style={{ color: '#595959' }}>Створити новий запис</Text>
+                <Text style={{ color: '#595959' }}>Створити нову запис</Text>
               </Flex>
             </div>
           </Card>
@@ -612,7 +666,7 @@ function VendorDetailPage() {
       <Drawer
         title="Створення нового запису"
         placement="right"
-        size="default"
+        size="large"
         onClose={closeCreateDrawer}
         open={isDrawerOpen}
       >
@@ -702,10 +756,11 @@ function VendorDetailPage() {
           </Flex>
         </Form>
       </Drawer>
+
       <Drawer
         title="Детальна інформація"
         placement="right"
-        size="default"
+        size="large"
         onClose={() => {
           setIsVendorItemDetailDrawerOpen(false);
           setSelectedVendorItem(null);
@@ -714,6 +769,19 @@ function VendorDetailPage() {
       >
         <Text type="secondary">Дані з’являться пізніше</Text>
       </Drawer>
+
+      <style>
+        {`
+          .vendor-items-group-row td {
+            background: #fafafa !important;
+            font-weight: 600;
+            border-bottom: 1px solid #f0f0f0;
+          }
+          .vendor-items-group-row td:not(:first-child) {
+            border-left: none !important;
+          }
+        `}
+      </style>
     </div>
   );
 }

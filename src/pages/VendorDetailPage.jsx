@@ -330,7 +330,19 @@ function VendorDetailPage() {
         title: 'Назва',
         dataIndex: 'name',
         key: 'name',
-        render: (value) => value || '—',
+        render: (value) => (
+          <div
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: 300,
+            }}
+            title={value}
+          >
+            {value || '—'}
+          </div>
+        ),
       },
       {
         title: 'Бренд',

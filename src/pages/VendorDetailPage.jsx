@@ -12,6 +12,7 @@ import {
   Table,
   Typography,
   message,
+  Drawer,
 } from 'antd';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
@@ -38,6 +39,7 @@ function VendorDetailPage() {
   const [vendor, setVendor] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     loadVendor();
@@ -268,7 +270,29 @@ function VendorDetailPage() {
           </Card>
 
           <Card title="Постачувані комплектуючі">
-            <Text type="secondary">Дані з’являться пізніше</Text>
+            <Table
+              rowKey="id"
+              columns={[]}
+              dataSource={[]}
+              pagination={false}
+              size="small"
+            />
+
+            <div style={{ marginTop: 16 }}>
+              <Flex
+                align="center"
+                gap={8}
+                style={{
+                  color: '#595959',
+                  cursor: 'pointer',
+                  width: 'fit-content',
+                }}
+                onClick={() => setIsDrawerOpen(true)}
+              >
+                <span style={{ fontSize: 16 }}>+</span>
+                <Text>Створити нову запис</Text>
+              </Flex>
+            </div>
           </Card>
         </Col>
 
@@ -278,6 +302,15 @@ function VendorDetailPage() {
           </Card>
         </Col>
       </Row>
+      <Drawer
+        title="Створення нового запису"
+        placement="right"
+        size="default"
+        onClose={() => setIsDrawerOpen(false)}
+        open={isDrawerOpen}
+      >
+        <Text type="secondary">Форма буде реалізована пізніше</Text>
+      </Drawer>
     </div>
   );
 }

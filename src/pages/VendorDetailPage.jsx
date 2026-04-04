@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { CopyOutlined, EditOutlined, FileAddOutlined } from '@ant-design/icons';
+import {
+  CopyOutlined,
+  EditOutlined,
+  FileAddOutlined,
+  InfoCircleOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -49,6 +54,13 @@ function VendorDetailPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [drawerSaving, setDrawerSaving] = useState(false);
 
+  const [vendorItemsPage, setVendorItemsPage] = useState(1);
+  const [vendorItemsTotal, setVendorItemsTotal] = useState(0);
+
+  const [isVendorItemDetailDrawerOpen, setIsVendorItemDetailDrawerOpen] =
+    useState(false);
+  const [selectedVendorItem, setSelectedVendorItem] = useState(null);
+
   const [form] = Form.useForm();
 
   const [brandOptions, setBrandOptions] = useState([]);
@@ -67,40 +79,37 @@ function VendorDetailPage() {
       setLoading(true);
       setError('');
 
-      const [vendorResponse, vendorItemsResponse] = await Promise.all([
-        api.get(`vendors/${id}/`),
-        api.get(`vendor-items/?vendor=${id}`),
-      ]);
+      const vendorResponse = await api.get(`vendors/${id}/`);
 
       setVendor(vendorResponse.data);
-      setVendorItems(
-        Array.isArray(vendorItemsResponse.data.results)
-          ? vendorItemsResponse.data.results
-          : [],
-      );
+      await loadVendorItems(1);
     } catch (err) {
       console.error('Failed to load vendor page:', err);
       setError('Не вдалося завантажити дані постачальника.');
       setVendor(null);
       setVendorItems([]);
+      setVendorItemsTotal(0);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadVendorItems = async () => {
+  const loadVendorItems = async (page = 1) => {
     try {
       setItemsLoading(true);
 
-      const response = await api.get(`vendor-items/?vendor=${id}`);
+      const response = await api.get(`vendor-items/?vendor=${id}&page=${page}`);
 
       setVendorItems(
         Array.isArray(response.data.results) ? response.data.results : [],
       );
+      setVendorItemsTotal(response.data.count || 0);
+      setVendorItemsPage(page);
     } catch (err) {
       console.error('Failed to load vendor items:', err);
       message.error('Не вдалося оновити список комплектуючих');
       setVendorItems([]);
+      setVendorItemsTotal(0);
     } finally {
       setItemsLoading(false);
     }
@@ -278,7 +287,7 @@ function VendorDetailPage() {
       message.success('Позицію постачальника створено');
 
       closeCreateDrawer();
-      loadVendorItems();
+      loadVendorItems(1);
     } catch (err) {
       console.error('Failed to create vendor item:', err);
 
@@ -304,23 +313,23 @@ function VendorDetailPage() {
   const vendorItemsColumns = useMemo(
     () => [
       {
-        title: 'Код',
-        dataIndex: 'item_internal_code',
-        key: 'item_internal_code',
-        width: 140,
+        title: '№',
+        key: 'index',
+        width: 70,
+        align: 'center',
+        render: (_, __, index) => (vendorItemsPage - 1) * 50 + index + 1,
+      },
+      {
+        title: 'Артікул',
+        dataIndex: 'vendor_sku',
+        key: 'vendor_sku',
+        width: 220,
         render: (value) => value || '—',
       },
       {
         title: 'Назва',
         dataIndex: 'name',
         key: 'name',
-        render: (value) => value || '—',
-      },
-      {
-        title: 'SKU постачальника',
-        dataIndex: 'vendor_sku',
-        key: 'vendor_sku',
-        width: 220,
         render: (value) => value || '—',
       },
       {
@@ -331,14 +340,22 @@ function VendorDetailPage() {
         render: (value) => value || '—',
       },
       {
-        title: 'Країна',
-        dataIndex: 'country_of_origin_name',
-        key: 'country_of_origin_name',
-        width: 180,
-        render: (value) => value || '—',
+        title: '',
+        key: 'info',
+        width: 56,
+        align: 'center',
+        render: (_, record) => (
+          <InfoCircleOutlined
+            style={{ color: '#8c8c8c', cursor: 'pointer' }}
+            onClick={() => {
+              setSelectedVendorItem(record);
+              setIsVendorItemDetailDrawerOpen(true);
+            }}
+          />
+        ),
       },
     ],
-    [],
+    [vendorItemsPage],
   );
 
   const taxInfoColumns = [
@@ -532,8 +549,27 @@ function VendorDetailPage() {
               loading={itemsLoading}
               columns={vendorItemsColumns}
               dataSource={vendorItems}
-              pagination={false}
               size="small"
+              pagination={{
+                current: vendorItemsPage,
+                pageSize: 50,
+                total: vendorItemsTotal,
+                showSizeChanger: false,
+                showTotal: (total, range) => (
+                  <span>
+                    Показано{' '}
+                    <span style={{ color: '#1677ff', fontWeight: 600 }}>
+                      {range[0]}–{range[1]}
+                    </span>{' '}
+                    з{' '}
+                    <span style={{ color: '#1677ff', fontWeight: 600 }}>
+                      {total}
+                    </span>{' '}
+                    результатів
+                  </span>
+                ),
+                onChange: (page) => loadVendorItems(page),
+              }}
             />
 
             <div style={{ marginTop: 16 }}>
@@ -548,7 +584,7 @@ function VendorDetailPage() {
                 onClick={openCreateDrawer}
               >
                 <FileAddOutlined />
-                <Text style={{ color: '#595959' }}>Створити нову запис</Text>
+                <Text style={{ color: '#595959' }}>Створити новий запис</Text>
               </Flex>
             </div>
           </Card>
@@ -653,6 +689,18 @@ function VendorDetailPage() {
             </Button>
           </Flex>
         </Form>
+      </Drawer>
+      <Drawer
+        title="Детальна інформація"
+        placement="right"
+        size="default"
+        onClose={() => {
+          setIsVendorItemDetailDrawerOpen(false);
+          setSelectedVendorItem(null);
+        }}
+        open={isVendorItemDetailDrawerOpen}
+      >
+        <Text type="secondary">Дані з’являться пізніше</Text>
       </Drawer>
     </div>
   );

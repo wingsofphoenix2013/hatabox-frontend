@@ -379,6 +379,7 @@ function VendorsPage() {
             <Select
               mode="multiple"
               allowClear
+              showSearch={{ optionFilterProp: 'label' }}
               placeholder="Категорії"
               style={{ minWidth: 260 }}
               value={selectedCategories}

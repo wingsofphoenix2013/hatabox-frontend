@@ -15,11 +15,12 @@ import {
   Input,
   Select,
   Table,
+  Tag,
   Typography,
   message,
 } from 'antd';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
-import { Link, useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -36,33 +37,82 @@ const formatPhoneUa = (value) => {
 };
 
 function VendorsPage() {
-  const [items, setItems] = useState([]);
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [searchText, setSearchText] = useState('');
-
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [items, setItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [searchText, setSearchText] = useState(
+    searchParams.get('search') || '',
+  );
+  const [selectedCategories, setSelectedCategories] = useState(
+    searchParams.getAll('item_category').map(Number),
+  );
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get('page')) || 1,
+  );
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    loadVendors();
-  }, [searchText]);
+    loadCategories();
+  }, []);
 
-  const loadVendors = async () => {
+  useEffect(() => {
+    loadVendors(currentPage);
+  }, [currentPage, searchText, selectedCategories]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    selectedCategories.forEach((categoryId) => {
+      params.append('item_category', String(categoryId));
+    });
+
+    if (searchText) {
+      params.set('search', searchText);
+    }
+
+    if (currentPage > 1) {
+      params.set('page', String(currentPage));
+    }
+
+    setSearchParams(params);
+  }, [selectedCategories, searchText, currentPage, setSearchParams]);
+
+  const loadCategories = async () => {
+    try {
+      const response = await api.get('categories/');
+      setCategories(
+        Array.isArray(response.data.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load categories:', err);
+      setCategories([]);
+    }
+  };
+
+  const loadVendors = async (page) => {
     try {
       setLoading(true);
       setError('');
 
       const params = new URLSearchParams();
+      params.append('page', page);
 
       if (searchText) {
         params.append('search', searchText);
       }
 
-      const query = params.toString();
-      const response = await api.get(`vendors/${query ? `?${query}` : ''}`);
+      selectedCategories.forEach((categoryId) => {
+        params.append('item_category', String(categoryId));
+      });
+
+      const response = await api.get(`vendors/?${params.toString()}`);
 
       setItems(
         Array.isArray(response.data.results) ? response.data.results : [],
@@ -80,12 +130,18 @@ function VendorsPage() {
     }
   };
 
+  const handleTableChange = (pagination) => {
+    if (pagination.current !== currentPage) {
+      setCurrentPage(pagination.current);
+    }
+  };
+
   const columns = [
     {
       title: 'Код',
       dataIndex: 'code',
       key: 'code',
-      width: 160,
+      width: 140,
     },
     {
       title: 'Назва',
@@ -99,6 +155,27 @@ function VendorsPage() {
           {value}
         </Link>
       ),
+    },
+    {
+      title: 'Категорії',
+      dataIndex: 'item_category_names',
+      key: 'item_category_names',
+      width: 260,
+      render: (value) => {
+        const categoriesList = Array.isArray(value) ? value : [];
+
+        if (categoriesList.length === 0) {
+          return '—';
+        }
+
+        return (
+          <Flex gap={6} wrap>
+            {categoriesList.map((categoryName) => (
+              <Tag key={categoryName}>{categoryName}</Tag>
+            ))}
+          </Flex>
+        );
+      },
     },
     {
       title: 'Телефон',
@@ -244,7 +321,28 @@ function VendorsPage() {
               prefix={<SearchOutlined />}
               style={{ width: 220 }}
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+
+            <Divider type="vertical" style={{ height: 28 }} />
+
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="Категорії"
+              style={{ minWidth: 260 }}
+              value={selectedCategories}
+              onChange={(values) => {
+                setSelectedCategories(values);
+                setCurrentPage(1);
+              }}
+              options={categories.map((category) => ({
+                value: category.id,
+                label: category.name,
+              }))}
             />
           </Flex>
         </Card>
@@ -261,8 +359,10 @@ function VendorsPage() {
               selectedRowKeys,
               onChange: setSelectedRowKeys,
             }}
+            size="small"
+            onChange={handleTableChange}
             pagination={{
-              current: 1,
+              current: currentPage,
               pageSize: 50,
               total,
               showSizeChanger: false,
@@ -280,7 +380,7 @@ function VendorsPage() {
                 </span>
               ),
             }}
-            scroll={{ x: 900 }}
+            scroll={{ x: 1200 }}
           />
         </Card>
       </Flex>

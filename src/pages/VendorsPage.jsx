@@ -13,6 +13,7 @@ import {
   Flex,
   Image,
   Input,
+  Popover,
   Select,
   Table,
   Tag,
@@ -147,10 +148,20 @@ function VendorsPage() {
       title: 'Назва',
       dataIndex: 'name',
       key: 'name',
+      width: 300,
       render: (value, record) => (
         <Link
           to={`/orders/vendors/${record.id}`}
           state={{ vendorLabel: record.name }}
+          style={{
+            display: 'inline-block',
+            maxWidth: '100%',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            verticalAlign: 'bottom',
+          }}
+          title={value}
         >
           {value}
         </Link>
@@ -168,11 +179,30 @@ function VendorsPage() {
           return '—';
         }
 
-        return (
-          <Flex gap={6} wrap>
+        const visibleCategories = categoriesList.slice(0, 2);
+        const hiddenCategories = categoriesList.slice(2);
+
+        const allCategoriesContent = (
+          <Flex gap={6} wrap style={{ maxWidth: 260 }}>
             {categoriesList.map((categoryName) => (
               <Tag key={categoryName}>{categoryName}</Tag>
             ))}
+          </Flex>
+        );
+
+        return (
+          <Flex gap={6} wrap>
+            {visibleCategories.map((categoryName) => (
+              <Tag key={categoryName}>{categoryName}</Tag>
+            ))}
+
+            {hiddenCategories.length > 0 && (
+              <Popover content={allCategoriesContent} trigger="hover">
+                <Tag style={{ cursor: 'pointer' }}>
+                  +{hiddenCategories.length}
+                </Tag>
+              </Popover>
+            )}
           </Flex>
         );
       },

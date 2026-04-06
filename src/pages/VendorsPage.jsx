@@ -300,14 +300,31 @@ function VendorsPage() {
       key: 'action',
       width: 56,
       align: 'center',
-      render: () => (
-        <AppstoreAddOutlined
-          style={{
-            fontSize: 17,
-            color: '#8c8c8c',
-            cursor: 'default',
-          }}
-        />
+      render: (_, record) => (
+        <Popover
+          trigger="click"
+          placement="bottomRight"
+          content={
+            <div style={{ minWidth: 180 }}>
+              <a
+                href="#"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ display: 'block', padding: '4px 0' }}
+              >
+                Контакти постачальника
+              </a>
+            </div>
+          }
+        >
+          <AppstoreAddOutlined
+            style={{
+              fontSize: 17,
+              color: '#8c8c8c',
+              cursor: 'pointer',
+            }}
+          />
+        </Popover>
       ),
     },
   ];

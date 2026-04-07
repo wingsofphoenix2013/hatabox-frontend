@@ -179,7 +179,7 @@ function VendorCreatePage() {
 
           <Col xs={24} lg={12}>
             <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-              <Form.Item label="Код (произвольно, латиница)" name="code">
+              <Form.Item label="Код (довільно, латиница)" name="code">
                 <Input />
               </Form.Item>
 

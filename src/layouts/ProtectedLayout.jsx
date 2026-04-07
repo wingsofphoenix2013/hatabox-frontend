@@ -526,7 +526,13 @@ function ProtectedLayout() {
                 mode="inline"
                 theme="dark"
                 style={{ background: '#2a3441', borderInlineEnd: 'none' }}
-                selectedKeys={[location.pathname]}
+                selectedKeys={
+                  currentConfig.pages.some(
+                    (item) => item.path === location.pathname,
+                  )
+                    ? [location.pathname]
+                    : []
+                }
                 onClick={({ key }) => navigate(key)}
                 items={currentConfig.pages.map((item, i) => ({
                   key: item.path || 'p' + i,
@@ -547,6 +553,13 @@ function ProtectedLayout() {
                 mode="inline"
                 theme="dark"
                 style={{ background: '#2a3441', borderInlineEnd: 'none' }}
+                selectedKeys={
+                  currentConfig.actions.some(
+                    (item) => item.path === location.pathname,
+                  )
+                    ? [location.pathname]
+                    : []
+                }
                 onClick={({ key }) => navigate(key)}
                 items={currentConfig.actions.map((item, i) => ({
                   key: item.path || 'a' + i,
@@ -567,7 +580,13 @@ function ProtectedLayout() {
                 mode="inline"
                 theme="dark"
                 style={{ background: '#2a3441', borderInlineEnd: 'none' }}
-                selectedKeys={[location.pathname]}
+                selectedKeys={
+                  currentConfig.dictionaries.some(
+                    (item) => item.path === location.pathname,
+                  )
+                    ? [location.pathname]
+                    : []
+                }
                 onClick={({ key }) => navigate(key)}
                 items={currentConfig.dictionaries.map((item, i) => ({
                   key: item.path || 'd' + i,

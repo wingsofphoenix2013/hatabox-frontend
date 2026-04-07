@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  CloseCircleOutlined,
   CopyOutlined,
   EditOutlined,
   FileAddOutlined,
   InfoCircleOutlined,
+  SaveOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -60,6 +62,8 @@ function VendorDetailPage() {
   const [isVendorItemDetailDrawerOpen, setIsVendorItemDetailDrawerOpen] =
     useState(false);
   const [selectedVendorItem, setSelectedVendorItem] = useState(null);
+  const [isVendorItemDetailEditing, setIsVendorItemDetailEditing] =
+    useState(false);
 
   const [form] = Form.useForm();
 
@@ -412,6 +416,7 @@ function VendorDetailPage() {
               style={{ color: '#8c8c8c', cursor: 'pointer' }}
               onClick={() => {
                 setSelectedVendorItem(record);
+                setIsVendorItemDetailEditing(false);
                 setIsVendorItemDetailDrawerOpen(true);
               }}
             />
@@ -764,10 +769,43 @@ function VendorDetailPage() {
         onClose={() => {
           setIsVendorItemDetailDrawerOpen(false);
           setSelectedVendorItem(null);
+          setIsVendorItemDetailEditing(false);
         }}
         open={isVendorItemDetailDrawerOpen}
+        extra={
+          isVendorItemDetailEditing ? (
+            <Flex gap={8}>
+              <Button
+                danger
+                icon={<CloseCircleOutlined />}
+                onClick={() => setIsVendorItemDetailEditing(false)}
+              >
+                Відміна
+              </Button>
+
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                onClick={() => setIsVendorItemDetailEditing(false)}
+              >
+                Зберегти
+              </Button>
+            </Flex>
+          ) : (
+            <Button
+              icon={<EditOutlined style={{ color: '#1677ff' }} />}
+              onClick={() => setIsVendorItemDetailEditing(true)}
+            >
+              Редагувати
+            </Button>
+          )
+        }
       >
-        <Text type="secondary">Дані з’являться пізніше</Text>
+        <Text type="secondary">
+          {isVendorItemDetailEditing
+            ? 'Режим редагування буде реалізовано пізніше'
+            : 'Дані з’являться пізніше'}
+        </Text>
       </Drawer>
 
       <style>

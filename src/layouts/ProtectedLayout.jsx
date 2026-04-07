@@ -41,8 +41,18 @@ function ProtectedLayout() {
 
   const moduleConfig = {
     '/orders': {
-      pages: [],
-      actions: [],
+      pages: [
+        {
+          label: 'Реєстр замовлень',
+          path: '/orders/register',
+        },
+      ],
+      actions: [
+        {
+          label: 'Створити замовлення',
+          path: '/orders/new',
+        },
+      ],
       dictionaries: [
         {
           label: 'Каталог постачальників',
@@ -318,6 +328,30 @@ function ProtectedLayout() {
         ),
       },
       { title: 'Закупівлі' },
+    ];
+  } else if (location.pathname === '/orders/register') {
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Закупівлі' },
+      { title: 'Реєстр замовлень' },
+    ];
+  } else if (location.pathname === '/orders/new') {
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Закупівлі' },
+      { title: 'Створити замовлення' },
     ];
   } else if (location.pathname === '/orders/vendors') {
     breadcrumbItems = [

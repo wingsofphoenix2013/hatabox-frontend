@@ -12,6 +12,8 @@ import ProtectedLayout from './layouts/ProtectedLayout';
 
 import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
+import OrdersRegisterPage from './pages/OrdersRegisterPage';
+import OrderCreatePage from './pages/OrderCreatePage';
 import LoginPage from './pages/LoginPage';
 
 import VendorsPage from './pages/VendorsPage';
@@ -87,6 +89,9 @@ function App() {
           <Route element={<ProtectedLayout />}>
             <Route path="/home" element={<div>Головна</div>} />
 
+            <Route path="/orders/register" element={<OrdersRegisterPage />} />
+            <Route path="/orders/new" element={<OrderCreatePage />} />
+
             <Route path="/orders/vendors" element={<VendorsPage />} />
             <Route path="/orders/vendors/new" element={<VendorCreatePage />} />
             <Route path="/orders/vendors/:id" element={<VendorDetailPage />} />
@@ -94,6 +99,9 @@ function App() {
               path="/orders/vendors/:id/edit"
               element={<VendorEditPage />}
             />
+
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/orders/:id" element={<OrderDetailPage />} />
 
             <Route
               path="/production/products"

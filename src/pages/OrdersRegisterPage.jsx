@@ -3,6 +3,7 @@ import {
   AppstoreAddOutlined,
   PlusOutlined,
   SearchOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -210,18 +211,42 @@ function OrdersRegisterPage() {
       title: 'Постачальник',
       dataIndex: 'vendor_name',
       key: 'vendor_name',
-      width: 240,
-      render: (value) => (
-        <div
+      width: 260,
+      render: (value, record) => (
+        <Flex
+          align="center"
+          gap={6}
           style={{
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            minWidth: 0,
           }}
-          title={value}
         >
-          {value || '—'}
-        </div>
+          <div
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={value}
+          >
+            {value || '—'}
+          </div>
+
+          {record.vendor && (
+            <Link
+              to={`/orders/vendors/${record.vendor}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <LinkOutlined
+                style={{
+                  color: '#8c8c8c',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              />
+            </Link>
+          )}
+        </Flex>
       ),
     },
     {

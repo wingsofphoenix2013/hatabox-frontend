@@ -801,11 +801,19 @@ function VendorDetailPage() {
           )
         }
       >
-        <Text type="secondary">
-          {isVendorItemDetailEditing
-            ? 'Режим редагування буде реалізовано пізніше'
-            : 'Дані з’являться пізніше'}
-        </Text>
+        <Flex vertical gap={16}>
+          <Card title="Інформація">
+            <Text type="secondary">Дані з’являться пізніше</Text>
+          </Card>
+
+          <Card title="Статистика заказів">
+            <Text type="secondary">Дані з’являться пізніше</Text>
+          </Card>
+
+          <Card title="Статистика витрат">
+            <Text type="secondary">Дані з’являться пізніше</Text>
+          </Card>
+        </Flex>
       </Drawer>
 
       <style>

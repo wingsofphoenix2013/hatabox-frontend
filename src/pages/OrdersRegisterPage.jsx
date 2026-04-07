@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AppstoreAddOutlined,
   PlusOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
 import {
+  Alert,
   Button,
   Card,
   Divider,
   Flex,
+  Input,
   Progress,
   Select,
   Table,
@@ -16,68 +18,16 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import api from '../api/client';
 
 const { Title, Text } = Typography;
-
-const mockOrders = [
-  {
-    id: 1,
-    order_no: 'EO-2026-001',
-    vendor_name: 'ТОВ Тест',
-    status: 'draft',
-    status_name: 'Чернетка',
-    order_total_amount: 125000,
-    payment_percent: 0,
-    receipt_percent: 0,
-    is_receipt_overdue: false,
-    receipt_overdue_days: 0,
-    receipt_expected_days: 7,
-  },
-  {
-    id: 2,
-    order_no: 'EO-2026-002',
-    vendor_name: 'ТОВ Електроімпорт',
-    status: 'in_progress',
-    status_name: 'В роботі',
-    order_total_amount: 348500,
-    payment_percent: 35,
-    receipt_percent: 20,
-    is_receipt_overdue: true,
-    receipt_overdue_days: 12,
-  },
-  {
-    id: 3,
-    order_no: 'EO-2026-003',
-    vendor_name: 'ФОП Коваленко',
-    status: 'in_progress',
-    status_name: 'В роботі',
-    order_total_amount: 68400,
-    payment_percent: 80,
-    receipt_percent: 55,
-    is_receipt_overdue: false,
-    receipt_overdue_days: 0,
-    receipt_expected_days: 12,
-  },
-  {
-    id: 4,
-    order_no: 'EO-2026-004',
-    vendor_name: 'ТОВ Метиз Груп',
-    status: 'completed',
-    status_name: 'Виконано',
-    order_total_amount: 91200,
-    payment_percent: 100,
-    receipt_percent: 100,
-    is_receipt_overdue: false,
-    receipt_overdue_days: 0,
-  },
-];
 
 const formatMoney = (value) =>
   new Intl.NumberFormat('uk-UA', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value);
+  }).format(Number(value) || 0);
 
 const getStatusTagColor = (status) => {
   switch (status) {
@@ -98,23 +48,111 @@ const getProgressStrokeColor = (percent, isOverdue = false) => {
   if (isOverdue) return '#ff4d4f';
 
   if (percent === 0) return '#bfbfbf';
-
-  if (percent <= 24) return '#d9f7be'; // очень светлый зелёный
+  if (percent <= 24) return '#d9f7be';
   if (percent <= 49) return '#b7eb8f';
   if (percent <= 74) return '#95de64';
   if (percent <= 99) return '#73d13d';
 
-  return '#52c41a'; // 100%
+  return '#52c41a';
 };
 
 function OrdersRegisterPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  const [items, setItems] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [searchVendor, setSearchVendor] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState([]);
-  const [selectedPaymentRanges, setSelectedPaymentRanges] = useState([]);
-  const [selectedReceiptRanges, setSelectedReceiptRanges] = useState([]);
+
+  const [searchText, setSearchText] = useState(
+    searchParams.get('search') || '',
+  );
+  const [selectedStatuses, setSelectedStatuses] = useState(
+    searchParams.getAll('status'),
+  );
+  const [selectedPaymentRanges, setSelectedPaymentRanges] = useState(
+    searchParams.getAll('payment_range'),
+  );
+  const [selectedReceiptRanges, setSelectedReceiptRanges] = useState(
+    searchParams.getAll('receipt_range'),
+  );
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get('page')) || 1,
+  );
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    loadOrders(currentPage);
+  }, [currentPage, searchText, selectedStatuses]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    selectedStatuses.forEach((status) => {
+      params.append('status', status);
+    });
+
+    selectedPaymentRanges.forEach((range) => {
+      params.append('payment_range', range);
+    });
+
+    selectedReceiptRanges.forEach((range) => {
+      params.append('receipt_range', range);
+    });
+
+    if (searchText) {
+      params.set('search', searchText);
+    }
+
+    if (currentPage > 1) {
+      params.set('page', String(currentPage));
+    }
+
+    setSearchParams(params);
+  }, [
+    selectedStatuses,
+    selectedPaymentRanges,
+    selectedReceiptRanges,
+    searchText,
+    currentPage,
+    setSearchParams,
+  ]);
+
+  const loadOrders = async (page) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const params = new URLSearchParams();
+      params.append('page', page);
+
+      if (searchText) {
+        params.append('search', searchText);
+      }
+
+      selectedStatuses.forEach((status) => {
+        params.append('status', status);
+      });
+
+      const response = await api.get(`orders/?${params.toString()}`);
+
+      setItems(
+        Array.isArray(response.data.results) ? response.data.results : [],
+      );
+      setTotal(response.data.count || 0);
+      setSelectedRowKeys([]);
+    } catch (err) {
+      console.error('Failed to load orders:', err);
+      setError('Не вдалося завантажити реєстр замовлень.');
+      setItems([]);
+      setTotal(0);
+      setSelectedRowKeys([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const matchPercentRange = (percent, ranges, isOverdue = false) => {
     if (ranges.length === 0) return true;
@@ -129,27 +167,27 @@ function OrdersRegisterPage() {
     });
   };
 
-  const filteredOrders = mockOrders.filter((order) => {
-    const vendorMatches = order.vendor_name
-      .toLowerCase()
-      .includes(searchVendor.toLowerCase());
+  const filteredOrders = useMemo(() => {
+    return items.filter((order) => {
+      const paymentMatches = matchPercentRange(
+        Number(order.payment_percent) || 0,
+        selectedPaymentRanges,
+      );
 
-    const statusMatches =
-      selectedStatuses.length === 0 || selectedStatuses.includes(order.status);
+      const receiptMatches = matchPercentRange(
+        Number(order.receipt_percent) || 0,
+        selectedReceiptRanges,
+        Boolean(order.is_receipt_overdue),
+      );
 
-    const paymentMatches = matchPercentRange(
-      order.payment_percent,
-      selectedPaymentRanges,
-    );
+      return paymentMatches && receiptMatches;
+    });
+  }, [items, selectedPaymentRanges, selectedReceiptRanges]);
 
-    const receiptMatches = matchPercentRange(
-      order.receipt_percent,
-      selectedReceiptRanges,
-      order.is_receipt_overdue,
-    );
-
-    return vendorMatches && statusMatches && paymentMatches && receiptMatches;
-  });
+  const displayTotal =
+    selectedPaymentRanges.length > 0 || selectedReceiptRanges.length > 0
+      ? filteredOrders.length
+      : total;
 
   const columns = [
     {
@@ -157,7 +195,7 @@ function OrdersRegisterPage() {
       key: 'index',
       width: 70,
       align: 'center',
-      render: (_, __, index) => index + 1,
+      render: (_, __, index) => (currentPage - 1) * 50 + index + 1,
     },
     {
       title: 'Номер замовлення',
@@ -182,7 +220,7 @@ function OrdersRegisterPage() {
           }}
           title={value}
         >
-          {value}
+          {value || '—'}
         </div>
       ),
     },
@@ -202,7 +240,9 @@ function OrdersRegisterPage() {
       key: 'order_total_amount',
       width: 180,
       align: 'right',
-      sorter: (a, b) => a.order_total_amount - b.order_total_amount,
+      sorter: (a, b) =>
+        (Number(a.order_total_amount) || 0) -
+        (Number(b.order_total_amount) || 0),
       render: (value) => formatMoney(value),
     },
     {
@@ -210,12 +250,13 @@ function OrdersRegisterPage() {
       dataIndex: 'payment_percent',
       key: 'payment_percent',
       width: 180,
-      sorter: (a, b) => a.payment_percent - b.payment_percent,
+      sorter: (a, b) =>
+        (Number(a.payment_percent) || 0) - (Number(b.payment_percent) || 0),
       render: (value) => (
         <Progress
-          percent={value}
+          percent={Number(value) || 0}
           size="small"
-          strokeColor={getProgressStrokeColor(value)}
+          strokeColor={getProgressStrokeColor(Number(value) || 0)}
         />
       ),
     },
@@ -224,20 +265,23 @@ function OrdersRegisterPage() {
       dataIndex: 'receipt_percent',
       key: 'receipt_percent',
       width: 180,
-      sorter: (a, b) => a.receipt_percent - b.receipt_percent,
+      sorter: (a, b) =>
+        (Number(a.receipt_percent) || 0) - (Number(b.receipt_percent) || 0),
       render: (value, record) => {
+        const percent = Number(value) || 0;
+
         const progress = (
           <Progress
-            percent={value}
+            percent={percent}
             size="small"
             strokeColor={getProgressStrokeColor(
-              value,
-              record.is_receipt_overdue,
+              percent,
+              Boolean(record.is_receipt_overdue),
             )}
           />
         );
 
-        if (value === 100) {
+        if (percent === 100) {
           return progress;
         }
 
@@ -273,6 +317,12 @@ function OrdersRegisterPage() {
     },
   ];
 
+  const handleTableChange = (pagination) => {
+    if (pagination.current !== currentPage) {
+      setCurrentPage(pagination.current);
+    }
+  };
+
   return (
     <div style={{ padding: 20 }}>
       <Flex vertical gap={16}>
@@ -306,18 +356,16 @@ function OrdersRegisterPage() {
 
             <Divider type="vertical" style={{ height: 28 }} />
 
-            <Select
-              showSearch={{ optionFilterProp: 'label' }}
-              allowClear
+            <Input
               placeholder="Пошук по постачальнику"
-              suffixIcon={<SearchOutlined />}
+              allowClear
+              prefix={<SearchOutlined />}
               style={{ width: 240 }}
-              value={searchVendor || undefined}
-              onChange={(value) => setSearchVendor(value || '')}
-              options={mockOrders.map((order) => ({
-                value: order.vendor_name,
-                label: order.vendor_name,
-              }))}
+              value={searchText}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setCurrentPage(1);
+              }}
             />
 
             <Divider type="vertical" style={{ height: 28 }} />
@@ -329,7 +377,10 @@ function OrdersRegisterPage() {
               placeholder="Статус"
               style={{ minWidth: 220 }}
               value={selectedStatuses}
-              onChange={setSelectedStatuses}
+              onChange={(values) => {
+                setSelectedStatuses(values);
+                setCurrentPage(1);
+              }}
               options={[
                 { value: 'draft', label: 'Чернетка' },
                 { value: 'in_progress', label: 'В роботі' },
@@ -375,9 +426,12 @@ function OrdersRegisterPage() {
           </Flex>
         </Card>
 
+        {error && <Alert type="error" description={error} showIcon />}
+
         <Card styles={{ body: { padding: 0 } }}>
           <Table
             rowKey="id"
+            loading={loading}
             columns={columns}
             dataSource={filteredOrders}
             rowSelection={{
@@ -385,12 +439,13 @@ function OrdersRegisterPage() {
               onChange: setSelectedRowKeys,
             }}
             size="small"
+            onChange={handleTableChange}
             pagination={{
-              current: 1,
+              current: currentPage,
               pageSize: 50,
-              total: filteredOrders.length,
+              total: displayTotal,
               showSizeChanger: false,
-              showTotal: (total, range) => (
+              showTotal: (totalValue, range) => (
                 <span>
                   Показано{' '}
                   <span style={{ color: '#1677ff', fontWeight: 600 }}>
@@ -398,7 +453,7 @@ function OrdersRegisterPage() {
                   </span>{' '}
                   з{' '}
                   <span style={{ color: '#1677ff', fontWeight: 600 }}>
-                    {total}
+                    {totalValue}
                   </span>{' '}
                   результатів пошуку
                 </span>

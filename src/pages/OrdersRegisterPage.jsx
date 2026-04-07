@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AppstoreAddOutlined,
+  LinkOutlined,
   PlusOutlined,
   SearchOutlined,
-  LinkOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -57,6 +57,12 @@ const getProgressStrokeColor = (percent, isOverdue = false) => {
   return '#52c41a';
 };
 
+const getSorterOrder = (ordering, field) => {
+  if (ordering === field) return 'ascend';
+  if (ordering === `-${field}`) return 'descend';
+  return null;
+};
+
 function OrdersRegisterPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -79,6 +85,7 @@ function OrdersRegisterPage() {
   const [currentPage, setCurrentPage] = useState(
     Number(searchParams.get('page')) || 1,
   );
+  const [ordering, setOrdering] = useState(searchParams.get('ordering') || '');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -86,7 +93,14 @@ function OrdersRegisterPage() {
 
   useEffect(() => {
     loadOrders(currentPage);
-  }, [currentPage, searchText, selectedStatuses]);
+  }, [
+    currentPage,
+    searchText,
+    selectedStatuses,
+    selectedPaymentRanges,
+    selectedReceiptRanges,
+    ordering,
+  ]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -107,6 +121,10 @@ function OrdersRegisterPage() {
       params.set('search', searchText);
     }
 
+    if (ordering) {
+      params.set('ordering', ordering);
+    }
+
     if (currentPage > 1) {
       params.set('page', String(currentPage));
     }
@@ -117,6 +135,7 @@ function OrdersRegisterPage() {
     selectedPaymentRanges,
     selectedReceiptRanges,
     searchText,
+    ordering,
     currentPage,
     setSearchParams,
   ]);
@@ -127,14 +146,26 @@ function OrdersRegisterPage() {
       setError('');
 
       const params = new URLSearchParams();
-      params.append('page', page);
+      params.append('page', String(page));
 
       if (searchText) {
         params.append('search', searchText);
       }
 
+      if (ordering) {
+        params.append('ordering', ordering);
+      }
+
       selectedStatuses.forEach((status) => {
         params.append('status', status);
+      });
+
+      selectedPaymentRanges.forEach((range) => {
+        params.append('payment_range', range);
+      });
+
+      selectedReceiptRanges.forEach((range) => {
+        params.append('receipt_range', range);
       });
 
       const response = await api.get(`orders/?${params.toString()}`);
@@ -154,41 +185,6 @@ function OrdersRegisterPage() {
       setLoading(false);
     }
   };
-
-  const matchPercentRange = (percent, ranges, isOverdue = false) => {
-    if (ranges.length === 0) return true;
-
-    return ranges.some((range) => {
-      if (range === 'overdue') return isOverdue;
-      if (range === '0') return percent === 0;
-      if (range === '1-49') return percent >= 1 && percent <= 49;
-      if (range === '50-99') return percent >= 50 && percent <= 99;
-      if (range === '100') return percent === 100;
-      return false;
-    });
-  };
-
-  const filteredOrders = useMemo(() => {
-    return items.filter((order) => {
-      const paymentMatches = matchPercentRange(
-        Number(order.payment_percent) || 0,
-        selectedPaymentRanges,
-      );
-
-      const receiptMatches = matchPercentRange(
-        Number(order.receipt_percent) || 0,
-        selectedReceiptRanges,
-        Boolean(order.is_receipt_overdue),
-      );
-
-      return paymentMatches && receiptMatches;
-    });
-  }, [items, selectedPaymentRanges, selectedReceiptRanges]);
-
-  const displayTotal =
-    selectedPaymentRanges.length > 0 || selectedReceiptRanges.length > 0
-      ? filteredOrders.length
-      : total;
 
   const columns = [
     {
@@ -265,9 +261,8 @@ function OrdersRegisterPage() {
       key: 'order_total_amount',
       width: 180,
       align: 'right',
-      sorter: (a, b) =>
-        (Number(a.order_total_amount) || 0) -
-        (Number(b.order_total_amount) || 0),
+      sorter: true,
+      sortOrder: getSorterOrder(ordering, 'order_total_amount'),
       render: (value) => formatMoney(value),
     },
     {
@@ -275,23 +270,27 @@ function OrdersRegisterPage() {
       dataIndex: 'payment_percent',
       key: 'payment_percent',
       width: 180,
-      sorter: (a, b) =>
-        (Number(a.payment_percent) || 0) - (Number(b.payment_percent) || 0),
-      render: (value) => (
-        <Progress
-          percent={Number(value) || 0}
-          size="small"
-          strokeColor={getProgressStrokeColor(Number(value) || 0)}
-        />
-      ),
+      sorter: true,
+      sortOrder: getSorterOrder(ordering, 'payment_percent'),
+      render: (value) => {
+        const percent = Number(value) || 0;
+
+        return (
+          <Progress
+            percent={percent}
+            size="small"
+            strokeColor={getProgressStrokeColor(percent)}
+          />
+        );
+      },
     },
     {
       title: 'Отримання',
       dataIndex: 'receipt_percent',
       key: 'receipt_percent',
       width: 180,
-      sorter: (a, b) =>
-        (Number(a.receipt_percent) || 0) - (Number(b.receipt_percent) || 0),
+      sorter: true,
+      sortOrder: getSorterOrder(ordering, 'receipt_percent'),
       render: (value, record) => {
         const percent = Number(value) || 0;
 
@@ -342,9 +341,24 @@ function OrdersRegisterPage() {
     },
   ];
 
-  const handleTableChange = (pagination) => {
+  const handleTableChange = (pagination, _, sorter) => {
     if (pagination.current !== currentPage) {
       setCurrentPage(pagination.current);
+    }
+
+    if (!Array.isArray(sorter)) {
+      let nextOrdering = '';
+
+      if (sorter.order === 'ascend') {
+        nextOrdering = sorter.field;
+      } else if (sorter.order === 'descend') {
+        nextOrdering = `-${sorter.field}`;
+      }
+
+      if (nextOrdering !== ordering) {
+        setOrdering(nextOrdering);
+        setCurrentPage(1);
+      }
     }
   };
 
@@ -422,7 +436,10 @@ function OrdersRegisterPage() {
               placeholder="Сплачено"
               style={{ minWidth: 180 }}
               value={selectedPaymentRanges}
-              onChange={setSelectedPaymentRanges}
+              onChange={(values) => {
+                setSelectedPaymentRanges(values);
+                setCurrentPage(1);
+              }}
               options={[
                 { value: '0', label: '0%' },
                 { value: '1-49', label: '1–49%' },
@@ -439,7 +456,10 @@ function OrdersRegisterPage() {
               placeholder="Отримання"
               style={{ minWidth: 200 }}
               value={selectedReceiptRanges}
-              onChange={setSelectedReceiptRanges}
+              onChange={(values) => {
+                setSelectedReceiptRanges(values);
+                setCurrentPage(1);
+              }}
               options={[
                 { value: 'overdue', label: 'Прострочені' },
                 { value: '0', label: '0%' },
@@ -458,7 +478,7 @@ function OrdersRegisterPage() {
             rowKey="id"
             loading={loading}
             columns={columns}
-            dataSource={filteredOrders}
+            dataSource={items}
             rowSelection={{
               selectedRowKeys,
               onChange: setSelectedRowKeys,
@@ -468,7 +488,7 @@ function OrdersRegisterPage() {
             pagination={{
               current: currentPage,
               pageSize: 50,
-              total: displayTotal,
+              total,
               showSizeChanger: false,
               showTotal: (totalValue, range) => (
                 <span>

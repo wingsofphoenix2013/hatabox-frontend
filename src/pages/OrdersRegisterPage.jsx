@@ -32,6 +32,7 @@ const mockOrders = [
     receipt_percent: 0,
     is_receipt_overdue: false,
     receipt_overdue_days: 0,
+    receipt_expected_days: 7,
   },
   {
     id: 2,
@@ -56,6 +57,7 @@ const mockOrders = [
     receipt_percent: 55,
     is_receipt_overdue: false,
     receipt_overdue_days: 0,
+    receipt_expected_days: 12,
   },
   {
     id: 4,
@@ -94,10 +96,15 @@ const getStatusTagColor = (status) => {
 
 const getProgressStrokeColor = (percent, isOverdue = false) => {
   if (isOverdue) return '#ff4d4f';
+
   if (percent === 0) return '#bfbfbf';
-  if (percent < 50) return '#fa8c16';
-  if (percent < 100) return '#1677ff';
-  return '#52c41a';
+
+  if (percent <= 24) return '#d9f7be'; // очень светлый зелёный
+  if (percent <= 49) return '#b7eb8f';
+  if (percent <= 74) return '#95de64';
+  if (percent <= 99) return '#73d13d';
+
+  return '#52c41a'; // 100%
 };
 
 function OrdersRegisterPage() {
@@ -230,17 +237,23 @@ function OrdersRegisterPage() {
           />
         );
 
-        if (record.is_receipt_overdue) {
-          return (
-            <Tooltip
-              title={`Прострочено на ${record.receipt_overdue_days} дн.`}
-            >
-              <div>{progress}</div>
-            </Tooltip>
-          );
+        if (value === 100) {
+          return progress;
         }
 
-        return progress;
+        let tooltipText = null;
+
+        if (record.is_receipt_overdue) {
+          tooltipText = `Прострочено на ${record.receipt_overdue_days} дн.`;
+        } else {
+          tooltipText = `Очікується за ${record.receipt_expected_days} дн.`;
+        }
+
+        return (
+          <Tooltip title={tooltipText}>
+            <div>{progress}</div>
+          </Tooltip>
+        );
       },
     },
     {

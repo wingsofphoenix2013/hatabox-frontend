@@ -13,6 +13,7 @@ import {
   Select,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import { Link, useNavigate } from 'react-router-dom';
@@ -29,6 +30,8 @@ const mockOrders = [
     order_total_amount: 125000,
     payment_percent: 0,
     receipt_percent: 0,
+    is_receipt_overdue: false,
+    receipt_overdue_days: 0,
   },
   {
     id: 2,
@@ -39,6 +42,8 @@ const mockOrders = [
     order_total_amount: 348500,
     payment_percent: 35,
     receipt_percent: 20,
+    is_receipt_overdue: true,
+    receipt_overdue_days: 12,
   },
   {
     id: 3,
@@ -49,6 +54,8 @@ const mockOrders = [
     order_total_amount: 68400,
     payment_percent: 80,
     receipt_percent: 55,
+    is_receipt_overdue: false,
+    receipt_overdue_days: 0,
   },
   {
     id: 4,
@@ -59,6 +66,8 @@ const mockOrders = [
     order_total_amount: 91200,
     payment_percent: 100,
     receipt_percent: 100,
+    is_receipt_overdue: false,
+    receipt_overdue_days: 0,
   },
 ];
 
@@ -83,7 +92,8 @@ const getStatusTagColor = (status) => {
   }
 };
 
-const getProgressStrokeColor = (percent) => {
+const getProgressStrokeColor = (percent, isOverdue = false) => {
+  if (isOverdue) return '#ff4d4f';
   if (percent === 0) return '#bfbfbf';
   if (percent < 50) return '#fa8c16';
   if (percent < 100) return '#1677ff';
@@ -99,10 +109,11 @@ function OrdersRegisterPage() {
   const [selectedPaymentRanges, setSelectedPaymentRanges] = useState([]);
   const [selectedReceiptRanges, setSelectedReceiptRanges] = useState([]);
 
-  const matchPercentRange = (percent, ranges) => {
+  const matchPercentRange = (percent, ranges, isOverdue = false) => {
     if (ranges.length === 0) return true;
 
     return ranges.some((range) => {
+      if (range === 'overdue') return isOverdue;
       if (range === '0') return percent === 0;
       if (range === '1-49') return percent >= 1 && percent <= 49;
       if (range === '50-99') return percent >= 50 && percent <= 99;
@@ -127,6 +138,7 @@ function OrdersRegisterPage() {
     const receiptMatches = matchPercentRange(
       order.receipt_percent,
       selectedReceiptRanges,
+      order.is_receipt_overdue,
     );
 
     return vendorMatches && statusMatches && paymentMatches && receiptMatches;
@@ -183,6 +195,7 @@ function OrdersRegisterPage() {
       key: 'order_total_amount',
       width: 180,
       align: 'right',
+      sorter: (a, b) => a.order_total_amount - b.order_total_amount,
       render: (value) => formatMoney(value),
     },
     {
@@ -190,6 +203,7 @@ function OrdersRegisterPage() {
       dataIndex: 'payment_percent',
       key: 'payment_percent',
       width: 180,
+      sorter: (a, b) => a.payment_percent - b.payment_percent,
       render: (value) => (
         <Progress
           percent={value}
@@ -203,13 +217,31 @@ function OrdersRegisterPage() {
       dataIndex: 'receipt_percent',
       key: 'receipt_percent',
       width: 180,
-      render: (value) => (
-        <Progress
-          percent={value}
-          size="small"
-          strokeColor={getProgressStrokeColor(value)}
-        />
-      ),
+      sorter: (a, b) => a.receipt_percent - b.receipt_percent,
+      render: (value, record) => {
+        const progress = (
+          <Progress
+            percent={value}
+            size="small"
+            strokeColor={getProgressStrokeColor(
+              value,
+              record.is_receipt_overdue,
+            )}
+          />
+        );
+
+        if (record.is_receipt_overdue) {
+          return (
+            <Tooltip
+              title={`Прострочено на ${record.receipt_overdue_days} дн.`}
+            >
+              <div>{progress}</div>
+            </Tooltip>
+          );
+        }
+
+        return progress;
+      },
     },
     {
       title: '',
@@ -316,10 +348,11 @@ function OrdersRegisterPage() {
               mode="multiple"
               allowClear
               placeholder="Отримання"
-              style={{ minWidth: 180 }}
+              style={{ minWidth: 200 }}
               value={selectedReceiptRanges}
               onChange={setSelectedReceiptRanges}
               options={[
+                { value: 'overdue', label: 'Прострочені' },
                 { value: '0', label: '0%' },
                 { value: '1-49', label: '1–49%' },
                 { value: '50-99', label: '50–99%' },

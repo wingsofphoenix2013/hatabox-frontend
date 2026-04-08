@@ -182,9 +182,9 @@ function OrderDetailPage() {
           <Title level={2} style={{ margin: 0 }}>
             {`Заказ № ${order.order_no} від ${formatDateUa(order.created_at)}`}
           </Title>
-
+          const isDraft = order.status === 'draft';
           <Tag
-            color={getStatusTagColor(order.status)}
+            color={isDraft ? undefined : getStatusTagColor(order.status)}
             style={{
               fontSize: 20,
               lineHeight: '32px',
@@ -192,6 +192,14 @@ function OrderDetailPage() {
               paddingBlock: 6,
               borderRadius: 10,
               marginInlineEnd: 0,
+
+              ...(isDraft
+                ? {
+                    border: '1px solid #d9d9d9',
+                    background: '#fafafa',
+                    color: '#595959',
+                  }
+                : {}),
             }}
           >
             {order.status_name || '—'}

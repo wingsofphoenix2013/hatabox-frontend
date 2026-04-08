@@ -318,17 +318,6 @@ function ProtectedLayout() {
       { title: 'Виробництво' },
       { title: 'Каталог продукції' },
     ];
-  } else if (location.pathname === '/orders') {
-    breadcrumbItems = [
-      {
-        title: (
-          <Link to="/home" style={breadcrumbLinkStyle}>
-            Головна
-          </Link>
-        ),
-      },
-      { title: 'Закупівлі' },
-    ];
   } else if (location.pathname === '/orders/register') {
     breadcrumbItems = [
       {

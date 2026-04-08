@@ -8,13 +8,12 @@ import {
 import { useEffect, useState } from 'react';
 import api, { setCsrfToken } from './api/client';
 
+import LoginPage from './pages/LoginPage';
 import ProtectedLayout from './layouts/ProtectedLayout';
 
-import OrdersPage from './pages/OrdersPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import OrdersRegisterPage from './pages/OrdersRegisterPage';
 import OrderCreatePage from './pages/OrderCreatePage';
-import LoginPage from './pages/LoginPage';
 
 import VendorsPage from './pages/VendorsPage';
 import VendorDetailPage from './pages/VendorDetailPage';
@@ -100,7 +99,6 @@ function App() {
               element={<VendorEditPage />}
             />
 
-            <Route path="/orders" element={<OrdersPage />} />
             <Route path="/orders/:id" element={<OrderDetailPage />} />
 
             <Route

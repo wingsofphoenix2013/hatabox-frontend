@@ -14,6 +14,7 @@ import ProtectedLayout from './layouts/ProtectedLayout';
 import OrderDetailPage from './pages/OrderDetailPage';
 import OrdersRegisterPage from './pages/OrdersRegisterPage';
 import OrderCreatePage from './pages/OrderCreatePage';
+import OrderEditPage from './pages/OrderEditPage';
 
 import VendorsPage from './pages/VendorsPage';
 import VendorDetailPage from './pages/VendorDetailPage';
@@ -100,6 +101,7 @@ function App() {
             />
 
             <Route path="/orders/:id" element={<OrderDetailPage />} />
+            <Route path="/orders/:id/edit" element={<OrderEditPage />} />
 
             <Route
               path="/production/products"

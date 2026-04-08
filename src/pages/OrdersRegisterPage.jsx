@@ -11,7 +11,9 @@ import {
   Button,
   Card,
   Divider,
+  Drawer,
   Flex,
+  Form,
   Input,
   Progress,
   Select,
@@ -24,6 +26,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 
 const { Title, Text } = Typography;
+const { TextArea } = Input;
 
 const formatMoney = (value) =>
   new Intl.NumberFormat('uk-UA', {
@@ -91,6 +94,15 @@ function OrdersRegisterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
+
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [createSaving, setCreateSaving] = useState(false);
+
+  const [vendorOptions, setVendorOptions] = useState([]);
+  const [selectedVendor, setSelectedVendor] = useState(null);
+  const [suggestedOrderNo, setSuggestedOrderNo] = useState('');
+
+  const [form] = Form.useForm();
 
   useEffect(() => {
     loadOrders(currentPage);
@@ -184,6 +196,130 @@ function OrdersRegisterPage() {
       setSelectedRowKeys([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openCreateDrawer = () => {
+    setIsCreateDrawerOpen(true);
+    form.resetFields();
+    setVendorOptions([]);
+    setSelectedVendor(null);
+    setSuggestedOrderNo('');
+  };
+
+  const closeCreateDrawer = () => {
+    setIsCreateDrawerOpen(false);
+    form.resetFields();
+    setVendorOptions([]);
+    setSelectedVendor(null);
+    setSuggestedOrderNo('');
+  };
+
+  const handleSearchVendors = async (searchValue) => {
+    const query = searchValue?.trim();
+
+    if (!query || query.length < 2) {
+      setVendorOptions([]);
+      return;
+    }
+
+    try {
+      const response = await api.get(
+        `vendors/?search=${encodeURIComponent(query)}`,
+      );
+
+      const results = Array.isArray(response.data.results)
+        ? response.data.results
+        : [];
+
+      setVendorOptions(
+        results.map((item) => ({
+          value: item.id,
+          label: item.name,
+          item,
+        })),
+      );
+    } catch (err) {
+      console.error('Failed to search vendors:', err);
+      setVendorOptions([]);
+    }
+  };
+
+  const buildSuggestedOrderNo = async (vendor) => {
+    if (!vendor?.code) {
+      setSuggestedOrderNo('');
+      return;
+    }
+
+    try {
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = String(now.getFullYear());
+      const datePart = `${day}${month}${year}`;
+
+      const response = await api.get(`orders/?vendor=${vendor.id}`);
+
+      const existing = Array.isArray(response.data.results)
+        ? response.data.results
+        : [];
+
+      const prefix = `${vendor.code}_${datePart}_`;
+
+      const usedVariants = existing
+        .map((row) => row.order_no || '')
+        .filter((orderNo) => orderNo.startsWith(prefix))
+        .map((orderNo) => {
+          const raw = orderNo.slice(prefix.length);
+          const parsed = Number(raw);
+          return Number.isInteger(parsed) ? parsed : null;
+        })
+        .filter((value) => value !== null);
+
+      const nextVariant =
+        usedVariants.length > 0 ? Math.max(...usedVariants) + 1 : 1;
+
+      setSuggestedOrderNo(`${prefix}${nextVariant}`);
+    } catch (err) {
+      console.error('Failed to build suggested order_no:', err);
+      setSuggestedOrderNo('');
+    }
+  };
+
+  const handleSelectVendor = async (value, option) => {
+    const vendor = option?.item || null;
+
+    setSelectedVendor(vendor);
+    form.setFieldValue('vendor', value);
+
+    await buildSuggestedOrderNo(vendor);
+  };
+
+  const handleInsertSuggestedOrderNo = () => {
+    if (!suggestedOrderNo) return;
+    form.setFieldValue('order_no', suggestedOrderNo);
+  };
+
+  const handleSaveOrder = async (values) => {
+    try {
+      setCreateSaving(true);
+
+      const response = await api.post('orders/', {
+        vendor: values.vendor,
+        order_no: values.order_no,
+        comment: values.comment || '',
+        discount_amount: 0,
+        status: 'draft',
+      });
+
+      const createdOrder = response.data;
+
+      closeCreateDrawer();
+      navigate(`/orders/${createdOrder.id}/edit`);
+    } catch (err) {
+      console.error('Failed to create order:', err);
+    } finally {
+      setCreateSaving(false);
     }
   };
 
@@ -406,7 +542,7 @@ function OrdersRegisterPage() {
             type="primary"
             size="large"
             icon={<PlusOutlined />}
-            onClick={() => navigate('/orders/new')}
+            onClick={openCreateDrawer}
           >
             Додати замовлення
           </Button>
@@ -540,6 +676,73 @@ function OrdersRegisterPage() {
           />
         </Card>
       </Flex>
+
+      <Drawer
+        title="Створення нового замовлення"
+        placement="right"
+        size="large"
+        onClose={closeCreateDrawer}
+        open={isCreateDrawerOpen}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSaveOrder}>
+          <Form.Item
+            label="Постачальник"
+            name="vendor"
+            rules={[{ required: true, message: 'Оберіть постачальника' }]}
+          >
+            <Select
+              showSearch
+              filterOption={false}
+              placeholder="Почніть вводити назву постачальника"
+              onSearch={handleSearchVendors}
+              onChange={handleSelectVendor}
+              options={vendorOptions}
+            />
+          </Form.Item>
+
+          <Form.Item
+            label="Номер замовлення"
+            name="order_no"
+            rules={[{ required: true, message: 'Вкажіть номер замовлення' }]}
+          >
+            <Input
+              placeholder="Номер замовлення"
+              addonAfter={
+                <span
+                  style={{
+                    color: suggestedOrderNo ? '#1677ff' : '#bfbfbf',
+                    cursor: suggestedOrderNo ? 'pointer' : 'default',
+                  }}
+                  onClick={handleInsertSuggestedOrderNo}
+                >
+                  <CopyOutlined />
+                </span>
+              }
+            />
+          </Form.Item>
+
+          <div style={{ marginTop: -16, marginBottom: 16 }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Наприклад — {suggestedOrderNo || 'XXX_XXXXX_1'}
+            </Text>
+          </div>
+
+          <Form.Item
+            label="Коментар"
+            name="comment"
+            style={{ marginBottom: 24 }}
+          >
+            <TextArea rows={4} placeholder="Коментар до замовлення" />
+          </Form.Item>
+
+          <Flex gap={8}>
+            <Button onClick={closeCreateDrawer}>Відміна</Button>
+            <Button type="primary" htmlType="submit" loading={createSaving}>
+              Зберегти
+            </Button>
+          </Flex>
+        </Form>
+      </Drawer>
     </div>
   );
 }

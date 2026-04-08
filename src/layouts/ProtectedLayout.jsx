@@ -407,6 +407,37 @@ function ProtectedLayout() {
       },
       ...(isVendorEditPage ? [{ title: 'Редагування' }] : []),
     ];
+  }  } else if (
+    location.pathname.startsWith('/orders/') &&
+    location.pathname.endsWith('/edit')
+  ) {
+    const orderId = pathParts[pathParts.length - 2];
+
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Закупівлі' },
+      {
+        title: (
+          <Link to="/orders/register" style={breadcrumbLinkStyle}>
+            Реєстр замовлень
+          </Link>
+        ),
+      },
+      {
+        title: (
+          <Link to={`/orders/${orderId}`} style={breadcrumbLinkStyle}>
+            {`Замовлення ID ${orderId}`}
+          </Link>
+        ),
+      },
+      { title: 'Редагування' },
+    ];
   } else if (location.pathname.startsWith('/orders/')) {
     breadcrumbItems = [
       {

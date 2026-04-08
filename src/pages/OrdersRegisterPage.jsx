@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   AppstoreAddOutlined,
+  CopyOutlined,
   LinkOutlined,
   PlusOutlined,
   SearchOutlined,

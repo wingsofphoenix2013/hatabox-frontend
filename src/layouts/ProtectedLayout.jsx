@@ -407,7 +407,7 @@ function ProtectedLayout() {
       },
       ...(isVendorEditPage ? [{ title: 'Редагування' }] : []),
     ];
-  }  } else if (
+  } else if (
     location.pathname.startsWith('/orders/') &&
     location.pathname.endsWith('/edit')
   ) {

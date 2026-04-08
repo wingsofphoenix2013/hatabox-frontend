@@ -28,6 +28,7 @@ import {
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
@@ -451,7 +452,7 @@ function OrderEditPage() {
           );
         }
 
-        return record.quantity ?? '—';
+        return formatQuantity(record.quantity);
       },
     },
     {
@@ -464,9 +465,11 @@ function OrderEditPage() {
           return isDraft ? (
             <InputNumber
               min={0}
-              value={creatingPrice}
-              onChange={(val) => setCreatingPrice(val)}
+              value={editingPrice}
+              onChange={(val) => setEditingPrice(val)}
               style={{ width: 120 }}
+              formatter={(value) => (value ? `${value} ₴` : '')}
+              parser={(value) => value.replace(' ₴', '')}
             />
           ) : (
             '—'
@@ -477,14 +480,16 @@ function OrderEditPage() {
           return (
             <InputNumber
               min={0}
-              value={editingPrice}
-              onChange={(val) => setEditingPrice(val)}
+              value={creatingPrice}
+              onChange={(val) => setCreatingPrice(val)}
               style={{ width: 120 }}
+              formatter={(value) => (value ? `${value} ₴` : '')}
+              parser={(value) => value.replace(' ₴', '')}
             />
           );
         }
 
-        return record.agreed_price ?? '—';
+        return record.agreed_price ? `${record.agreed_price} ₴` : '—';
       },
     },
     {

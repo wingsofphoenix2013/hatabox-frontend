@@ -96,6 +96,7 @@ function OrderDetailPage() {
       dataIndex: 'status_name',
       key: 'status_name',
       align: 'center',
+      width: '28%',
       render: (value, record) => (
         <Tag color={getStatusTagColor(record.status)}>{value || '—'}</Tag>
       ),
@@ -105,15 +106,18 @@ function OrderDetailPage() {
       dataIndex: 'payment_percent',
       key: 'payment_percent',
       align: 'center',
+      width: '36%',
       render: (value) => {
         const percent = Number(value) || 0;
 
         return (
-          <Progress
-            percent={percent}
-            size="small"
-            strokeColor={getProgressStrokeColor(percent)}
-          />
+          <div style={{ width: '100%' }}>
+            <Progress
+              percent={percent}
+              size="small"
+              strokeColor={getProgressStrokeColor(percent)}
+            />
+          </div>
         );
       },
     },
@@ -122,18 +126,21 @@ function OrderDetailPage() {
       dataIndex: 'receipt_percent',
       key: 'receipt_percent',
       align: 'center',
+      width: '36%',
       render: (value, record) => {
         const percent = Number(value) || 0;
 
         return (
-          <Progress
-            percent={percent}
-            size="small"
-            strokeColor={getProgressStrokeColor(
-              percent,
-              Boolean(record.is_receipt_overdue),
-            )}
-          />
+          <div style={{ width: '100%' }}>
+            <Progress
+              percent={percent}
+              size="small"
+              strokeColor={getProgressStrokeColor(
+                percent,
+                Boolean(record.is_receipt_overdue),
+              )}
+            />
+          </div>
         );
       },
     },
@@ -171,18 +178,25 @@ function OrderDetailPage() {
         gap={16}
         style={{ marginBottom: 20 }}
       >
-        <div>
-          <Title level={2} style={{ margin: 0, marginBottom: 4 }}>
+        <Flex align="center" gap={12} wrap>
+          <Title level={2} style={{ margin: 0 }}>
             {`Заказ № ${order.order_no} від ${formatDateUa(order.created_at)}`}
           </Title>
 
           <Tag
             color={getStatusTagColor(order.status)}
-            style={{ fontSize: 14, paddingInline: 12, paddingBlock: 4 }}
+            style={{
+              fontSize: 20,
+              lineHeight: '32px',
+              paddingInline: 14,
+              paddingBlock: 6,
+              borderRadius: 10,
+              marginInlineEnd: 0,
+            }}
           >
             {order.status_name || '—'}
           </Tag>
-        </div>
+        </Flex>
 
         <Button
           icon={<EditOutlined style={{ color: '#1677ff' }} />}
@@ -264,6 +278,7 @@ function OrderDetailPage() {
               rowKey="id"
               pagination={false}
               size="small"
+              tableLayout="fixed"
             />
           </Card>
 

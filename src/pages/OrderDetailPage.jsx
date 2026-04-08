@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   EditOutlined,
+  FileImageOutlined,
   LinkOutlined,
   StopOutlined,
   WarningOutlined,
@@ -244,7 +245,28 @@ function OrderDetailPage() {
       title: '№ документа',
       dataIndex: 'payment_no',
       key: 'payment_no',
-      render: (value) => value || '—',
+      render: (value, record) => {
+        if (!value) return '—';
+
+        return (
+          <Flex align="center" gap={6}>
+            <span>{value}</span>
+
+            {record.status === 'paid' && (
+              <FileImageOutlined
+                style={{
+                  color: '#8c8c8c',
+                  fontSize: 14,
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  // TODO: показ скан-копії платіжки
+                }}
+              />
+            )}
+          </Flex>
+        );
+      },
     },
     {
       title: 'Статус',

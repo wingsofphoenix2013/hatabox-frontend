@@ -218,6 +218,8 @@ function OrderEditPage() {
     setCreatingQuantity(null);
     setCreatingPrice(null);
     setCreatingExpectedDeliveryDate(lastUsedExpectedDeliveryDate);
+    setVendorItemOptions([]);
+    setCreatingSelectedVendorItem(null);
   };
 
   const handleSearchVendorItems = async (searchValue) => {
@@ -237,7 +239,6 @@ function OrderEditPage() {
         ? response.data.results
         : [];
 
-      // исключаем уже добавленные товары
       const existingIds = new Set(
         (order.items || []).map((item) => item.vendor_item),
       );
@@ -342,7 +343,7 @@ function OrderEditPage() {
     {
       title: '',
       key: 'edit',
-      width: 56,
+      width: 48,
       align: 'center',
       render: (_, record) => {
         if (!canEditOrderItems) {
@@ -383,7 +384,6 @@ function OrderEditPage() {
     {
       title: 'Товар',
       key: 'vendor_item',
-      width: '52%',
       render: (_, record) => {
         if (record.id === 'new-row') {
           return (
@@ -398,7 +398,6 @@ function OrderEditPage() {
               onChange={(value, option) => {
                 setCreatingVendorItemId(value);
                 setCreatingSelectedVendorItem(option?.item || null);
-
                 setCreatingQuantity(null);
                 setCreatingPrice(null);
                 setCreatingExpectedDeliveryDate(lastUsedExpectedDeliveryDate);
@@ -423,9 +422,9 @@ function OrderEditPage() {
       },
     },
     {
-      title: 'Кількість',
+      title: 'К-сть',
       key: 'quantity',
-      width: 140,
+      width: 100,
       align: 'center',
       render: (_, record) => {
         if (record.id === 'new-row') {
@@ -434,7 +433,7 @@ function OrderEditPage() {
               min={0}
               value={creatingQuantity}
               onChange={(val) => setCreatingQuantity(val)}
-              style={{ width: 110 }}
+              style={{ width: 80 }}
             />
           ) : (
             '—'
@@ -447,7 +446,7 @@ function OrderEditPage() {
               min={0}
               value={editingQuantity}
               onChange={(val) => setEditingQuantity(val)}
-              style={{ width: 110 }}
+              style={{ width: 80 }}
             />
           );
         }
@@ -456,18 +455,18 @@ function OrderEditPage() {
       },
     },
     {
-      title: 'Ціна за одиницю',
+      title: 'Ціна',
       key: 'agreed_price',
-      width: 160,
+      width: 110,
       align: 'center',
       render: (_, record) => {
         if (record.id === 'new-row') {
           return isDraft ? (
             <InputNumber
               min={0}
-              value={editingPrice}
-              onChange={(val) => setEditingPrice(val)}
-              style={{ width: 120 }}
+              value={creatingPrice}
+              onChange={(val) => setCreatingPrice(val)}
+              style={{ width: 90 }}
               formatter={(value) => (value ? `${value} ₴` : '')}
               parser={(value) => value.replace(' ₴', '')}
             />
@@ -480,9 +479,9 @@ function OrderEditPage() {
           return (
             <InputNumber
               min={0}
-              value={creatingPrice}
-              onChange={(val) => setCreatingPrice(val)}
-              style={{ width: 120 }}
+              value={editingPrice}
+              onChange={(val) => setEditingPrice(val)}
+              style={{ width: 90 }}
               formatter={(value) => (value ? `${value} ₴` : '')}
               parser={(value) => value.replace(' ₴', '')}
             />
@@ -493,9 +492,9 @@ function OrderEditPage() {
       },
     },
     {
-      title: 'Дата поставки',
+      title: 'Поставка',
       key: 'expected_delivery_date',
-      width: 190,
+      width: 140,
       align: 'center',
       render: (_, record) => {
         if (record.id === 'new-row') {
@@ -513,7 +512,7 @@ function OrderEditPage() {
                 )
               }
               suffixIcon={<CalendarOutlined />}
-              style={{ width: 150 }}
+              style={{ width: 120 }}
             />
           ) : (
             '—'
@@ -535,7 +534,7 @@ function OrderEditPage() {
                 )
               }
               suffixIcon={<CalendarOutlined />}
-              style={{ width: 150 }}
+              style={{ width: 120 }}
             />
           );
         }
@@ -546,7 +545,7 @@ function OrderEditPage() {
     {
       title: '',
       key: 'delete',
-      width: 56,
+      width: 48,
       align: 'center',
       render: (_, record) => {
         if (!canDeleteOrderItems) {
@@ -768,6 +767,7 @@ function OrderEditPage() {
           </Card>
         </Col>
       </Row>
+
       <style>
         {`
           .order-items-table .ant-select-selector {

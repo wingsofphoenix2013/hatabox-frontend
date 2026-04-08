@@ -16,6 +16,7 @@ import {
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
@@ -33,6 +34,22 @@ const formatDateUa = (value) => {
   const year = date.getFullYear();
 
   return `${day}/${month}/${year}`;
+};
+
+const formatDateDisplay = (value) => {
+  if (!value) return '—';
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
 };
 
 const getStatusTagColor = (status) => {
@@ -195,6 +212,47 @@ function OrderDetailPage() {
     },
   ];
 
+  const orderItemsColumns = [
+    {
+      title: 'Товар',
+      key: 'vendor_item_name',
+      render: (_, record) => (
+        <div
+          style={{
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+          title={record.vendor_item_name || '—'}
+        >
+          {record.vendor_item_name || '—'}
+        </div>
+      ),
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 100,
+      align: 'center',
+      render: (_, record) => formatQuantity(record.quantity),
+    },
+    {
+      title: 'Ціна',
+      key: 'agreed_price',
+      width: 110,
+      align: 'center',
+      render: (_, record) =>
+        record.agreed_price ? `${record.agreed_price} ₴` : '—',
+    },
+    {
+      title: 'Поставка',
+      key: 'expected_delivery_date',
+      width: 140,
+      align: 'center',
+      render: (_, record) => formatDateDisplay(record.expected_delivery_date),
+    },
+  ];
+
   const isDraft = order?.status === 'draft';
 
   if (loading) {
@@ -333,20 +391,22 @@ function OrderDetailPage() {
             />
           </Card>
 
-          <Card
-            title="Оплата"
-            style={{ marginBottom: 20 }}
-            extra={
-              <Button
-                icon={<EditOutlined style={{ color: '#1677ff' }} />}
-                onClick={() => navigate(`/orders/${order.id}/edit`)}
-              >
-                Редагувати
-              </Button>
-            }
-          >
-            <Text type="secondary">No data</Text>
-          </Card>
+          {!isDraft && (
+            <Card
+              title="Оплата"
+              style={{ marginBottom: 20 }}
+              extra={
+                <Button
+                  icon={<EditOutlined style={{ color: '#1677ff' }} />}
+                  onClick={() => navigate(`/orders/${order.id}/edit`)}
+                >
+                  Редагувати
+                </Button>
+              }
+            >
+              <Text type="secondary">No data</Text>
+            </Card>
+          )}
 
           <Card
             title="Замовлення"
@@ -359,7 +419,14 @@ function OrderDetailPage() {
               </Button>
             }
           >
-            <Text type="secondary">No data</Text>
+            <Table
+              rowKey="id"
+              columns={orderItemsColumns}
+              dataSource={Array.isArray(order.items) ? order.items : []}
+              pagination={false}
+              size="small"
+              tableLayout="fixed"
+            />
           </Card>
         </Col>
       </Row>

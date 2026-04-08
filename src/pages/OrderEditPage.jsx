@@ -109,6 +109,10 @@ function OrderEditPage() {
   const [creatingExpectedDeliveryDate, setCreatingExpectedDeliveryDate] =
     useState(null);
 
+  const [vendorItemOptions, setVendorItemOptions] = useState([]);
+  const [creatingSelectedVendorItem, setCreatingSelectedVendorItem] =
+    useState(null);
+
   const [lastUsedExpectedDeliveryDate, setLastUsedExpectedDeliveryDate] =
     useState(null);
 
@@ -212,6 +216,43 @@ function OrderEditPage() {
     setCreatingExpectedDeliveryDate(lastUsedExpectedDeliveryDate);
   };
 
+  const handleSearchVendorItems = async (searchValue) => {
+    const query = searchValue?.trim();
+
+    if (!query || query.length < 2 || !order?.vendor) {
+      setVendorItemOptions([]);
+      return;
+    }
+
+    try {
+      const response = await api.get(
+        `vendor-items/?vendor=${order.vendor}&search=${encodeURIComponent(query)}`,
+      );
+
+      const results = Array.isArray(response.data.results)
+        ? response.data.results
+        : [];
+
+      // исключаем уже добавленные товары
+      const existingIds = new Set(
+        (order.items || []).map((item) => item.vendor_item),
+      );
+
+      const filtered = results.filter((item) => !existingIds.has(item.id));
+
+      setVendorItemOptions(
+        filtered.map((item) => ({
+          value: item.id,
+          label: item.name,
+          item,
+        })),
+      );
+    } catch (err) {
+      console.error('Failed to search vendor items:', err);
+      setVendorItemOptions([]);
+    }
+  };
+
   const handleCancelCreateRow = () => {
     setIsCreatingRow(false);
     setCreatingVendorItemId(null);
@@ -281,7 +322,26 @@ function OrderEditPage() {
       render: (_, record) => {
         if (record.id === 'new-row') {
           return (
-            <Text type="secondary">Пошук буде додано на наступному кроці</Text>
+            <Select
+              showSearch
+              placeholder="Оберіть товар"
+              value={creatingVendorItemId}
+              style={{ width: '100%' }}
+              filterOption={false}
+              onSearch={handleSearchVendorItems}
+              onChange={(value, option) => {
+                setCreatingVendorItemId(value);
+                setCreatingSelectedVendorItem(option?.item || null);
+
+                // сброс значений при смене товара
+                setCreatingQuantity(null);
+                setCreatingPrice(null);
+
+                // дата — берем last used
+                setCreatingExpectedDeliveryDate(lastUsedExpectedDeliveryDate);
+              }}
+              options={vendorItemOptions}
+            />
           );
         }
 

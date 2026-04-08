@@ -58,6 +58,20 @@ const formatDateDisplay = (value) => {
   return `${day}-${month}-${year}`;
 };
 
+const getPaymentStatusTagColor = (status) => {
+  switch (status) {
+    case 'draft':
+      return 'default';
+    case 'approved':
+      return 'processing';
+    case 'paid':
+      return 'success';
+    case 'cancelled':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
 const getStatusTagColor = (status) => {
   switch (status) {
     case 'draft':
@@ -239,7 +253,9 @@ function OrderDetailPage() {
       width: 140,
       align: 'center',
       render: (value, record) => (
-        <Tag color={getStatusTagColor(record.status)}>{value || '—'}</Tag>
+        <Tag color={getPaymentStatusTagColor(record.status)}>
+          {value || '—'}
+        </Tag>
       ),
     },
     {

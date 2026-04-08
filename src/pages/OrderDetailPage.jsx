@@ -255,13 +255,6 @@ function OrderDetailPage() {
             {order.status_name || '—'}
           </Tag>
         </Flex>
-
-        <Button
-          icon={<EditOutlined style={{ color: '#1677ff' }} />}
-          onClick={() => navigate(`/orders/${order.id}/edit`)}
-        >
-          Редагувати
-        </Button>
       </Flex>
 
       <Row gutter={20} align="top">
@@ -340,11 +333,32 @@ function OrderDetailPage() {
             />
           </Card>
 
-          <Card title="Оплата" style={{ marginBottom: 20 }}>
+          <Card
+            title="Оплата"
+            style={{ marginBottom: 20 }}
+            extra={
+              <Button
+                icon={<EditOutlined style={{ color: '#1677ff' }} />}
+                onClick={() => navigate(`/orders/${order.id}/edit`)}
+              >
+                Редагувати
+              </Button>
+            }
+          >
             <Text type="secondary">No data</Text>
           </Card>
 
-          <Card title="Замовлення">
+          <Card
+            title="Замовлення"
+            extra={
+              <Button
+                icon={<EditOutlined style={{ color: '#1677ff' }} />}
+                onClick={() => navigate(`/orders/${order.id}/edit`)}
+              >
+                Редагувати
+              </Button>
+            }
+          >
             <Text type="secondary">No data</Text>
           </Card>
         </Col>

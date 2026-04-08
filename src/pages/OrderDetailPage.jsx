@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react';
-import { EditOutlined, LinkOutlined, WarningOutlined } from '@ant-design/icons';
+import {
+  EditOutlined,
+  LinkOutlined,
+  StopOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
   Card,
   Col,
+  Divider,
   Flex,
   Progress,
   Row,
@@ -211,7 +217,40 @@ function OrderDetailPage() {
       },
     },
   ];
-
+  const paymentColumns = [
+    {
+      title: 'Дата',
+      dataIndex: 'payment_date',
+      key: 'payment_date',
+      width: 130,
+      align: 'center',
+      render: (value) => formatDateDisplay(value),
+    },
+    {
+      title: '№ документа',
+      dataIndex: 'payment_no',
+      key: 'payment_no',
+      render: (value) => value || '—',
+    },
+    {
+      title: 'Статус',
+      dataIndex: 'status_name',
+      key: 'status_name',
+      width: 140,
+      align: 'center',
+      render: (value, record) => (
+        <Tag color={getStatusTagColor(record.status)}>{value || '—'}</Tag>
+      ),
+    },
+    {
+      title: 'Сума',
+      dataIndex: 'payment_amount',
+      key: 'payment_amount',
+      width: 140,
+      align: 'center',
+      render: (value) => (value ? `${value} ₴` : '—'),
+    },
+  ];
   const orderItemsColumns = [
     {
       title: 'Товар',
@@ -340,6 +379,9 @@ function OrderDetailPage() {
               <Button block>Перейти до оплати</Button>
               <Button block>Перейти до замовлення</Button>
               <Button block>Перейти до історії</Button>
+              <Button block danger icon={<StopOutlined />}>
+                Відміна замовлення
+              </Button>
             </Flex>
           </Card>
 
@@ -393,7 +435,20 @@ function OrderDetailPage() {
 
           {!isDraft && (
             <Card
-              title="Оплата"
+              title={
+                <Flex align="center" gap={12} wrap>
+                  <span>Оплата</span>
+                  <Divider type="vertical" style={{ height: 20, margin: 0 }} />
+                  <Text>
+                    Баланс:{' '}
+                    <strong>
+                      {order.remaining_amount
+                        ? `${order.remaining_amount} ₴`
+                        : '0 ₴'}
+                    </strong>
+                  </Text>
+                </Flex>
+              }
               style={{ marginBottom: 20 }}
               extra={
                 <Button
@@ -404,7 +459,18 @@ function OrderDetailPage() {
                 </Button>
               }
             >
-              <Text type="secondary">No data</Text>
+              <Table
+                rowKey="id"
+                columns={paymentColumns}
+                dataSource={
+                  Array.isArray(order.payment_documents)
+                    ? order.payment_documents
+                    : []
+                }
+                pagination={false}
+                size="small"
+                tableLayout="fixed"
+              />
             </Card>
           )}
 

@@ -290,7 +290,7 @@ function OrderDetailPage() {
           </Card>
         </Col>
 
-        <Col xs={24} lg={12}>
+        <Col xs={24} lg={18}>
           <Card title="Основна інформація" style={{ marginBottom: 20 }}>
             <div style={{ marginBottom: 20 }}>
               <Text
@@ -360,12 +360,6 @@ function OrderDetailPage() {
             }
           >
             <Text type="secondary">No data</Text>
-          </Card>
-        </Col>
-
-        <Col xs={24} lg={6}>
-          <Card title="Історія">
-            <Text type="secondary">Історія змін з’явиться пізніше</Text>
           </Card>
         </Col>
       </Row>

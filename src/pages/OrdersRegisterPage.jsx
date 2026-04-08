@@ -4,6 +4,7 @@ import {
   LinkOutlined,
   PlusOutlined,
   SearchOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -293,33 +294,64 @@ function OrdersRegisterPage() {
       sortOrder: getSorterOrder(ordering, 'receipt_percent'),
       render: (value, record) => {
         const percent = Number(value) || 0;
+        const isOverdue = Boolean(record.is_receipt_overdue);
 
         const progress = (
           <Progress
             percent={percent}
             size="small"
-            strokeColor={getProgressStrokeColor(
-              percent,
-              Boolean(record.is_receipt_overdue),
-            )}
+            strokeColor={getProgressStrokeColor(percent, isOverdue)}
           />
         );
 
-        if (percent === 100) {
+        if (percent === 100 && !isOverdue) {
           return progress;
         }
 
         let tooltipText = null;
 
-        if (record.is_receipt_overdue) {
+        if (isOverdue) {
           tooltipText = `Прострочено на ${record.receipt_overdue_days} дн.`;
         } else {
           tooltipText = `Очікується за ${record.receipt_expected_days} дн.`;
         }
 
+        const content = (
+          <Flex align="center" justify="space-between" gap={8}>
+            <div style={{ flex: 1 }}>{progress}</div>
+
+            {isOverdue && (
+              <WarningOutlined
+                style={{
+                  color: '#ff4d4f',
+                  fontSize: 14,
+                  flexShrink: 0,
+                }}
+              />
+            )}
+          </Flex>
+        );
+
+        if (isOverdue) {
+          return (
+            <Tooltip title={tooltipText}>
+              <div
+                style={{
+                  background: '#fff1f0',
+                  border: '1px solid #ffccc7',
+                  borderRadius: 8,
+                  padding: '6px 8px',
+                }}
+              >
+                {content}
+              </div>
+            </Tooltip>
+          );
+        }
+
         return (
           <Tooltip title={tooltipText}>
-            <div>{progress}</div>
+            <div>{content}</div>
           </Tooltip>
         );
       },

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { EditOutlined, LinkOutlined } from '@ant-design/icons';
+import { EditOutlined, LinkOutlined, WarningOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -11,6 +11,7 @@ import {
   Skeleton,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -129,18 +130,66 @@ function OrderDetailPage() {
       width: '36%',
       render: (value, record) => {
         const percent = Number(value) || 0;
+        const isOverdue = Boolean(record.is_receipt_overdue);
+
+        const progress = (
+          <Progress
+            percent={percent}
+            size="small"
+            strokeColor={getProgressStrokeColor(percent, isOverdue)}
+          />
+        );
+
+        if (percent === 100 && !isOverdue) {
+          return <div style={{ width: '100%' }}>{progress}</div>;
+        }
+
+        let tooltipText = null;
+
+        if (isOverdue) {
+          tooltipText = `Прострочено на ${record.receipt_overdue_days} дн.`;
+        } else {
+          tooltipText = `Очікується за ${record.receipt_expected_days} дн.`;
+        }
+
+        const content = (
+          <Flex align="center" justify="space-between" gap={8}>
+            <div style={{ flex: 1 }}>{progress}</div>
+
+            {isOverdue && (
+              <WarningOutlined
+                style={{
+                  color: '#ff4d4f',
+                  fontSize: 14,
+                  flexShrink: 0,
+                }}
+              />
+            )}
+          </Flex>
+        );
+
+        if (isOverdue) {
+          return (
+            <Tooltip title={tooltipText}>
+              <div
+                style={{
+                  width: '100%',
+                  background: '#fff1f0',
+                  border: '1px solid #ffccc7',
+                  borderRadius: 8,
+                  padding: '6px 8px',
+                }}
+              >
+                {content}
+              </div>
+            </Tooltip>
+          );
+        }
 
         return (
-          <div style={{ width: '100%' }}>
-            <Progress
-              percent={percent}
-              size="small"
-              strokeColor={getProgressStrokeColor(
-                percent,
-                Boolean(record.is_receipt_overdue),
-              )}
-            />
-          </div>
+          <Tooltip title={tooltipText}>
+            <div style={{ width: '100%' }}>{content}</div>
+          </Tooltip>
         );
       },
     },

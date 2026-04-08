@@ -320,6 +320,7 @@ function OrderEditPage() {
     {
       title: 'Товар',
       key: 'vendor_item',
+      width: '52%',
       render: (_, record) => {
         if (record.id === 'new-row') {
           return (
@@ -328,17 +329,15 @@ function OrderEditPage() {
               placeholder="Оберіть товар"
               value={creatingVendorItemId}
               style={{ width: '100%' }}
+              popupMatchSelectWidth={false}
               filterOption={false}
               onSearch={handleSearchVendorItems}
               onChange={(value, option) => {
                 setCreatingVendorItemId(value);
                 setCreatingSelectedVendorItem(option?.item || null);
 
-                // сброс значений при смене товара
                 setCreatingQuantity(null);
                 setCreatingPrice(null);
-
-                // дата — берем last used
                 setCreatingExpectedDeliveryDate(lastUsedExpectedDeliveryDate);
               }}
               options={vendorItemOptions}
@@ -346,7 +345,18 @@ function OrderEditPage() {
           );
         }
 
-        return record.vendor_item_name || '—';
+        return (
+          <div
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={record.vendor_item_name || '—'}
+          >
+            {record.vendor_item_name || '—'}
+          </div>
+        );
       },
     },
     {
@@ -653,6 +663,8 @@ function OrderEditPage() {
               ]}
               pagination={false}
               size="small"
+              tableLayout="fixed"
+              className="order-items-table"
             />
 
             {canAddOrderItems && (
@@ -689,6 +701,19 @@ function OrderEditPage() {
           </Card>
         </Col>
       </Row>
+      <style>
+        {`
+          .order-items-table .ant-select-selector {
+            overflow: hidden;
+          }
+
+          .order-items-table .ant-select-selection-item {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        `}
+      </style>
     </div>
   );
 }

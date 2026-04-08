@@ -24,6 +24,7 @@ import {
   Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
@@ -109,6 +110,7 @@ function OrderEditPage() {
   const [creatingPrice, setCreatingPrice] = useState(null);
   const [creatingExpectedDeliveryDate, setCreatingExpectedDeliveryDate] =
     useState(null);
+  const [creatingRowSaving, setCreatingRowSaving] = useState(false);
 
   const [vendorItemOptions, setVendorItemOptions] = useState([]);
   const [creatingSelectedVendorItem, setCreatingSelectedVendorItem] =
@@ -260,6 +262,61 @@ function OrderEditPage() {
     setCreatingQuantity(null);
     setCreatingPrice(null);
     setCreatingExpectedDeliveryDate(null);
+    setVendorItemOptions([]);
+    setCreatingSelectedVendorItem(null);
+  };
+
+  const handleSaveCreateRow = async () => {
+    if (!creatingVendorItemId) {
+      message.error('Оберіть товар');
+      return;
+    }
+
+    if (
+      creatingQuantity === null ||
+      creatingQuantity === undefined ||
+      Number(creatingQuantity) <= 0
+    ) {
+      message.error('Кількість має бути більше 0');
+      return;
+    }
+
+    if (
+      creatingPrice === null ||
+      creatingPrice === undefined ||
+      Number(creatingPrice) <= 0
+    ) {
+      message.error('Ціна має бути більше 0');
+      return;
+    }
+
+    if (!creatingExpectedDeliveryDate) {
+      message.error('Вкажіть дату поставки');
+      return;
+    }
+
+    try {
+      setCreatingRowSaving(true);
+
+      await api.post('order-items/', {
+        order: Number(id),
+        vendor_item: creatingVendorItemId,
+        quantity: creatingQuantity,
+        agreed_price: creatingPrice,
+        expected_delivery_date: creatingExpectedDeliveryDate,
+      });
+
+      message.success('Товар додано до замовлення');
+
+      setLastUsedExpectedDeliveryDate(creatingExpectedDeliveryDate);
+      handleCancelCreateRow();
+      loadOrderPage();
+    } catch (err) {
+      console.error('Failed to create order item:', err);
+      message.error('Не вдалося додати товар');
+    } finally {
+      setCreatingRowSaving(false);
+    }
   };
 
   const handleStartEditRow = (record) => {
@@ -295,8 +352,13 @@ function OrderEditPage() {
           return (
             <SaveOutlined
               style={{
-                color: '#52c41a',
-                cursor: 'pointer',
+                color: creatingRowSaving ? '#bfbfbf' : '#52c41a',
+                cursor: creatingRowSaving ? 'default' : 'pointer',
+              }}
+              onClick={() => {
+                if (!creatingRowSaving) {
+                  handleSaveCreateRow();
+                }
               }}
             />
           );

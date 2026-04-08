@@ -338,7 +338,12 @@ function OrdersRegisterPage() {
       key: 'order_no',
       width: 180,
       render: (value, record) => (
-        <Link to={`/orders/${record.id}`}>{value}</Link>
+        <Link
+          to={`/orders/${record.id}`}
+          state={{ orderLabel: record.order_no }}
+        >
+          {value}
+        </Link>
       ),
     },
     {

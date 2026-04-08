@@ -432,11 +432,35 @@ function ProtectedLayout() {
       {
         title: (
           <Link to={`/orders/${orderId}`} style={breadcrumbLinkStyle}>
-            {`Замовлення ID ${orderId}`}
+            {location.state?.orderLabel || `Замовлення ID ${orderId}`}
           </Link>
         ),
       },
       { title: 'Редагування' },
+    ];
+  } else if (
+    location.pathname.startsWith('/orders/') &&
+    pathParts.length === 3
+  ) {
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Закупівлі' },
+      {
+        title: (
+          <Link to="/orders/register" style={breadcrumbLinkStyle}>
+            Реєстр замовлень
+          </Link>
+        ),
+      },
+      {
+        title: location.state?.orderLabel || `Замовлення ID ${currentId}`,
+      },
     ];
   } else if (location.pathname.startsWith('/orders/')) {
     breadcrumbItems = [

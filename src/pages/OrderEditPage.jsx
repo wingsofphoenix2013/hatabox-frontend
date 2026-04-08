@@ -18,6 +18,7 @@ import {
   InputNumber,
   Progress,
   Row,
+  Select,
   Skeleton,
   Table,
   Tag,

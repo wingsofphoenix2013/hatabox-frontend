@@ -499,7 +499,15 @@ function OrderDetailPage() {
                 <span>Основна інформація</span>
 
                 <Flex align="center" gap={8}>
-                  <Text strong>{order.vendor_name || '—'}</Text>
+                  <Title
+                    level={5}
+                    style={{
+                      margin: 0,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {order.vendor_name || '—'}
+                  </Title>
 
                   {order.vendor && (
                     <>

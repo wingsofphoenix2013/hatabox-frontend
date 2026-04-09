@@ -539,6 +539,29 @@ function OrderDetailPage() {
             }
             style={{ marginBottom: 20 }}
           >
+            {order.comment && (
+              <div style={{ marginBottom: 16 }}>
+                <Flex align="flex-start" gap={8}>
+                  <InfoCircleOutlined
+                    style={{
+                      color: '#8c8c8c',
+                      marginTop: 3,
+                    }}
+                  />
+
+                  <div>
+                    <Text strong style={{ display: 'block' }}>
+                      Коментар до замовлення:
+                    </Text>
+
+                    <Text style={{ whiteSpace: 'pre-wrap' }}>
+                      {order.comment}
+                    </Text>
+                  </div>
+                </Flex>
+              </div>
+            )}
+
             <Table
               columns={summaryColumns}
               dataSource={[order]}

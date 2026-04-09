@@ -173,15 +173,35 @@ function OrderDetailPage() {
     try {
       setSubmittingToWork(true);
 
-      await api.patch(`orders/${id}/`, {
-        status: 'in_progress',
-      });
+      const payload = new FormData();
+      payload.append('status', 'in_progress');
+
+      await api.patch(`orders/${id}/`, payload);
 
       message.success('Замовлення передано в роботу');
       loadOrderPage();
     } catch (err) {
       console.error('Failed to send order to work:', err);
-      message.error('Не вдалося передати замовлення в роботу');
+      console.error(
+        'Failed to send order to work response data:',
+        err?.response?.data,
+      );
+      console.error(
+        'Failed to send order to work response status:',
+        err?.response?.status,
+      );
+
+      const responseData = err?.response?.data;
+
+      const backendMessage =
+        responseData?.detail ||
+        responseData?.error ||
+        responseData?.message ||
+        (typeof responseData === 'string' ? responseData : null);
+
+      message.error(
+        backendMessage || 'Не вдалося передати замовлення в роботу',
+      );
     } finally {
       setSubmittingToWork(false);
     }

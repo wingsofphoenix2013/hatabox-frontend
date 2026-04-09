@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   EditOutlined,
   FileImageOutlined,
+  FilePdfOutlined,
   InfoCircleOutlined,
   LinkOutlined,
   StopOutlined,
@@ -14,6 +15,7 @@ import {
   Col,
   Divider,
   Flex,
+  Image,
   Popconfirm,
   Progress,
   Row,
@@ -101,6 +103,40 @@ const getProgressStrokeColor = (percent, isOverdue = false) => {
   if (percent <= 99) return '#73d13d';
 
   return '#52c41a';
+};
+
+const getFileNameFromUrl = (fileUrl) => {
+  if (!fileUrl) return '';
+
+  try {
+    const cleanUrl = fileUrl.split('?')[0];
+    const parts = cleanUrl.split('/');
+    return decodeURIComponent(parts[parts.length - 1] || '');
+  } catch {
+    return '';
+  }
+};
+
+const isPdfFile = (fileNameOrUrl = '', mimeType = '') => {
+  const normalizedName = String(fileNameOrUrl).toLowerCase();
+  const normalizedType = String(mimeType).toLowerCase();
+
+  return (
+    normalizedType === 'application/pdf' || normalizedName.endsWith('.pdf')
+  );
+};
+
+const isImageFile = (fileNameOrUrl = '', mimeType = '') => {
+  const normalizedName = String(fileNameOrUrl).toLowerCase();
+  const normalizedType = String(mimeType).toLowerCase();
+
+  return (
+    normalizedType === 'image/jpeg' ||
+    normalizedType === 'image/png' ||
+    normalizedName.endsWith('.jpg') ||
+    normalizedName.endsWith('.jpeg') ||
+    normalizedName.endsWith('.png')
+  );
 };
 
 function OrderDetailPage() {
@@ -380,6 +416,9 @@ function OrderDetailPage() {
     );
   }
 
+  const currentFileUrl = order?.image || '';
+  const currentFileName = getFileNameFromUrl(currentFileUrl);
+
   return (
     <div style={{ padding: 20 }}>
       <Flex
@@ -430,10 +469,54 @@ function OrderDetailPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
+                marginBottom: 16,
+                padding: 12,
               }}
             >
-              <Text type="secondary">Дані з’являться пізніше</Text>
+              {currentFileUrl ? (
+                isImageFile(currentFileUrl) ? (
+                  <Image
+                    src={currentFileUrl}
+                    alt="Order file"
+                    preview={false}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      margin: '0 auto',
+                      display: 'block',
+                    }}
+                  />
+                ) : (
+                  <Flex
+                    vertical
+                    align="center"
+                    justify="center"
+                    gap={12}
+                    style={{ textAlign: 'center' }}
+                  >
+                    <FilePdfOutlined
+                      style={{ fontSize: 52, color: '#cf1322' }}
+                    />
+
+                    <Text strong style={{ wordBreak: 'break-word' }}>
+                      {currentFileName || 'PDF файл'}
+                    </Text>
+                  </Flex>
+                )
+              ) : (
+                <Text type="secondary">Файл не завантажено</Text>
+              )}
             </div>
+
+            {currentFileUrl && (
+              <Button
+                block
+                onClick={() => window.open(currentFileUrl, '_blank')}
+              >
+                Відкрити файл
+              </Button>
+            )}
           </Card>
 
           <Card title="Навігація" style={{ marginBottom: 20 }}>

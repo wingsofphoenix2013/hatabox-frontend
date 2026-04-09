@@ -4,6 +4,7 @@ import {
   PlusOutlined,
   SearchOutlined,
   CopyOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -239,6 +240,27 @@ function VendorsPage() {
               onClick={handleCopy}
             />
           </Flex>
+        );
+      },
+    },
+    {
+      title: 'Сайт',
+      dataIndex: 'website',
+      key: 'website',
+      width: 90,
+      align: 'center',
+      render: (value) => {
+        if (!value) return '—';
+
+        return (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={value}
+          >
+            <LinkOutlined style={{ fontSize: 16 }} />
+          </a>
         );
       },
     },

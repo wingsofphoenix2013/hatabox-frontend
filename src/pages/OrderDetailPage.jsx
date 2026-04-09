@@ -64,6 +64,12 @@ const formatDateDisplay = (value) => {
   return `${day}-${month}-${year}`;
 };
 
+const formatMoney = (value) =>
+  new Intl.NumberFormat('uk-UA', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value) || 0);
+
 const getPaymentStatusTagColor = (status) => {
   switch (status) {
     case 'draft':
@@ -680,15 +686,20 @@ function OrderDetailPage() {
           {!isDraft && (
             <Card
               title={
-                <Flex align="center" gap={12} wrap>
+                <Flex justify="space-between" align="center" wrap>
                   <span>Оплата</span>
-                  <Divider type="vertical" style={{ height: 20, margin: 0 }} />
+
                   <Text>
                     Баланс:{' '}
-                    <strong>
-                      {order.remaining_amount
-                        ? `${order.remaining_amount} ₴`
-                        : '0 ₴'}
+                    <strong
+                      style={{
+                        color:
+                          Number(order.remaining_amount) > 0
+                            ? '#ff4d4f'
+                            : undefined,
+                      }}
+                    >
+                      {formatMoney(order.remaining_amount)} ₴
                     </strong>
                   </Text>
                 </Flex>

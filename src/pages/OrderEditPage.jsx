@@ -108,6 +108,16 @@ function OrderEditPage() {
     useState(false);
   const [lastUsedExpectedDate, setLastUsedExpectedDate] = useState(null);
 
+  const [editingOrderItemId, setEditingOrderItemId] = useState(null);
+  const [editingVendorItemId, setEditingVendorItemId] = useState(null);
+  const [editingVendorItemData, setEditingVendorItemData] = useState(null);
+  const [editingQuantity, setEditingQuantity] = useState(null);
+  const [editingPrice, setEditingPrice] = useState(null);
+  const [editingExpectedDate, setEditingExpectedDate] = useState(null);
+  const [editingVendorItemOptions, setEditingVendorItemOptions] = useState([]);
+  const [savingEditedOrderItem, setSavingEditedOrderItem] = useState(false);
+  const [deletingOrderItemId, setDeletingOrderItemId] = useState(null);
+
   useEffect(() => {
     loadOrderPage();
   }, [id]);
@@ -328,7 +338,6 @@ function OrderEditPage() {
 
       const filteredResults = results.filter((item) => {
         if (item.id === creatingVendorItemId) return true;
-
         return !existingVendorItemIds.has(item.id);
       });
 
@@ -391,6 +400,163 @@ function OrderEditPage() {
       message.error('Не вдалося додати рядок замовлення.');
     } finally {
       setCreatingOrderItemLoading(false);
+    }
+  };
+
+  const handleStartEditOrderItem = (record) => {
+    if (isCreatingOrderItem || editingOrderItemId) return;
+
+    setEditingOrderItemId(record.id);
+    setEditingVendorItemId(record.vendor_item || null);
+    setEditingVendorItemData({
+      id: record.vendor_item,
+      item_name: record.vendor_item_inv_item_name || record.vendor_item_name,
+      vendor_sku: record.vendor_item_sku || '',
+    });
+    setEditingQuantity(record.quantity ?? null);
+    setEditingPrice(record.agreed_price ?? null);
+    setEditingExpectedDate(
+      record.expected_delivery_date
+        ? dayjs(record.expected_delivery_date, 'YYYY-MM-DD')
+        : null,
+    );
+    setEditingVendorItemOptions(
+      record.vendor_item
+        ? [
+            {
+              value: record.vendor_item,
+              label:
+                record.vendor_item_inv_item_name ||
+                record.vendor_item_name ||
+                `ID ${record.vendor_item}`,
+              item: {
+                id: record.vendor_item,
+                item_name:
+                  record.vendor_item_inv_item_name || record.vendor_item_name,
+                vendor_sku: record.vendor_item_sku || '',
+              },
+            },
+          ]
+        : [],
+    );
+  };
+
+  const handleCancelEditOrderItem = () => {
+    setEditingOrderItemId(null);
+    setEditingVendorItemId(null);
+    setEditingVendorItemData(null);
+    setEditingQuantity(null);
+    setEditingPrice(null);
+    setEditingExpectedDate(null);
+    setEditingVendorItemOptions([]);
+  };
+
+  const handleSearchEditingVendorItems = async (searchValue) => {
+    const query = searchValue?.trim();
+
+    if (!query || !order?.vendor) {
+      setEditingVendorItemOptions([]);
+      return;
+    }
+
+    try {
+      const response = await api.get(
+        `vendor-items/?search=${encodeURIComponent(query)}&vendor=${order.vendor}`,
+      );
+
+      const results = Array.isArray(response.data.results)
+        ? response.data.results
+        : [];
+
+      const existingVendorItemIds = new Set(
+        (Array.isArray(order?.items) ? order.items : []).map((item) =>
+          item.id === editingOrderItemId ? null : item.vendor_item,
+        ),
+      );
+
+      const filteredResults = results.filter((item) => {
+        if (item.id === editingVendorItemId) return true;
+        return !existingVendorItemIds.has(item.id);
+      });
+
+      setEditingVendorItemOptions(
+        filteredResults.map((item) => ({
+          value: item.id,
+          label: item.item_name || item.name || `ID ${item.id}`,
+          item,
+        })),
+      );
+    } catch (err) {
+      console.error('Failed to search vendor items for editing:', err);
+      setEditingVendorItemOptions([]);
+    }
+  };
+
+  const handleSaveEditedOrderItem = async (record) => {
+    if (!editingVendorItemId) {
+      message.error('Оберіть позицію постачальника.');
+      return;
+    }
+
+    if (
+      editingQuantity === null ||
+      editingQuantity === undefined ||
+      Number(editingQuantity) <= 0
+    ) {
+      message.error('Кількість повинна бути більшою за 0.');
+      return;
+    }
+
+    if (editingPrice === null || editingPrice === undefined) {
+      message.error('Вкажіть ціну.');
+      return;
+    }
+
+    if (!editingExpectedDate) {
+      message.error('Вкажіть дату очікуваної поставки.');
+      return;
+    }
+
+    try {
+      setSavingEditedOrderItem(true);
+
+      await api.patch(`order-items/${record.id}/`, {
+        vendor_item: editingVendorItemId,
+        quantity: editingQuantity,
+        agreed_price: editingPrice,
+        expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
+      });
+
+      setLastUsedExpectedDate(editingExpectedDate.format('YYYY-MM-DD'));
+      message.success('Рядок замовлення оновлено.');
+
+      handleCancelEditOrderItem();
+      loadOrderPage();
+    } catch (err) {
+      console.error('Failed to update order item:', err);
+      message.error('Не вдалося оновити рядок замовлення.');
+    } finally {
+      setSavingEditedOrderItem(false);
+    }
+  };
+
+  const handleDeleteOrderItem = async (itemId) => {
+    try {
+      setDeletingOrderItemId(itemId);
+
+      await api.delete(`order-items/${itemId}/`);
+      message.success('Рядок замовлення видалено.');
+
+      if (editingOrderItemId === itemId) {
+        handleCancelEditOrderItem();
+      }
+
+      loadOrderPage();
+    } catch (err) {
+      console.error('Failed to delete order item:', err);
+      message.error('Не вдалося видалити рядок замовлення.');
+    } finally {
+      setDeletingOrderItemId(null);
     }
   };
 
@@ -521,7 +687,41 @@ function OrderEditPage() {
           );
         }
 
-        return null;
+        if (editingOrderItemId === record.id) {
+          return (
+            <SaveOutlined
+              style={{
+                color: savingEditedOrderItem ? '#bfbfbf' : '#52c41a',
+                cursor: savingEditedOrderItem ? 'default' : 'pointer',
+              }}
+              onClick={() => {
+                if (!savingEditedOrderItem) {
+                  handleSaveEditedOrderItem(record);
+                }
+              }}
+            />
+          );
+        }
+
+        return (
+          <EditOutlined
+            style={{
+              color:
+                isCreatingOrderItem || editingOrderItemId
+                  ? '#d9d9d9'
+                  : '#1677ff',
+              cursor:
+                isCreatingOrderItem || editingOrderItemId
+                  ? 'default'
+                  : 'pointer',
+            }}
+            onClick={() => {
+              if (!isCreatingOrderItem && !editingOrderItemId) {
+                handleStartEditOrderItem(record);
+              }
+            }}
+          />
+        );
       },
     },
     {
@@ -564,6 +764,28 @@ function OrderEditPage() {
           );
         }
 
+        if (editingOrderItemId === record.id) {
+          return (
+            <Select
+              showSearch
+              value={editingVendorItemId}
+              placeholder="Почніть вводити назву"
+              style={{ width: '100%' }}
+              filterOption={false}
+              onSearch={handleSearchEditingVendorItems}
+              onChange={(value, option) => {
+                setEditingVendorItemId(value);
+                setEditingVendorItemData(option?.item || null);
+                setEditingQuantity(null);
+                setEditingPrice(null);
+                setEditingExpectedDate(null);
+              }}
+              options={editingVendorItemOptions}
+              optionLabelProp="label"
+            />
+          );
+        }
+
         return (
           record.vendor_item_inv_item_name || record.vendor_item_name || '—'
         );
@@ -577,6 +799,10 @@ function OrderEditPage() {
       render: (_, record) => {
         if (record.id === 'new-row') {
           return creatingVendorItemData?.vendor_sku || '—';
+        }
+
+        if (editingOrderItemId === record.id) {
+          return editingVendorItemData?.vendor_sku || '—';
         }
 
         return record.vendor_item_sku || '—';
@@ -596,6 +822,19 @@ function OrderEditPage() {
               controls={false}
               value={creatingQuantity}
               onChange={(value) => setCreatingQuantity(value)}
+              style={{ width: 100 }}
+            />
+          );
+        }
+
+        if (editingOrderItemId === record.id) {
+          return (
+            <InputNumber
+              min={0.001}
+              step={0.001}
+              controls={false}
+              value={editingQuantity}
+              onChange={(value) => setEditingQuantity(value)}
               style={{ width: 100 }}
             />
           );
@@ -624,6 +863,20 @@ function OrderEditPage() {
           );
         }
 
+        if (editingOrderItemId === record.id) {
+          return (
+            <InputNumber
+              min={0}
+              step={0.01}
+              precision={2}
+              controls={false}
+              value={editingPrice}
+              onChange={(value) => setEditingPrice(value)}
+              style={{ width: 110 }}
+            />
+          );
+        }
+
         return record.agreed_price !== null && record.agreed_price !== undefined
           ? `${record.agreed_price} ₴`
           : '—';
@@ -641,6 +894,18 @@ function OrderEditPage() {
               value={creatingExpectedDate}
               format="DD-MM-YYYY"
               onChange={(value) => setCreatingExpectedDate(value)}
+              style={{ width: '100%' }}
+              suffixIcon={<CalendarOutlined />}
+            />
+          );
+        }
+
+        if (editingOrderItemId === record.id) {
+          return (
+            <DatePicker
+              value={editingExpectedDate}
+              format="DD-MM-YYYY"
+              onChange={(value) => setEditingExpectedDate(value)}
               style={{ width: '100%' }}
               suffixIcon={<CalendarOutlined />}
             />
@@ -668,7 +933,46 @@ function OrderEditPage() {
           );
         }
 
-        return null;
+        if (editingOrderItemId === record.id) {
+          return (
+            <DeleteOutlined
+              style={{ color: '#ff4d4f', cursor: 'pointer' }}
+              onClick={handleCancelEditOrderItem}
+            />
+          );
+        }
+
+        return (
+          <Popconfirm
+            title="Видалити рядок?"
+            description="Ви впевнені, що хочете видалити цей рядок замовлення?"
+            onConfirm={() => handleDeleteOrderItem(record.id)}
+            okText="Так"
+            cancelText="Ні"
+            disabled={
+              isCreatingOrderItem ||
+              Boolean(editingOrderItemId) ||
+              deletingOrderItemId === record.id
+            }
+          >
+            <DeleteOutlined
+              style={{
+                color:
+                  isCreatingOrderItem ||
+                  Boolean(editingOrderItemId) ||
+                  deletingOrderItemId === record.id
+                    ? '#d9d9d9'
+                    : '#ff4d4f',
+                cursor:
+                  isCreatingOrderItem ||
+                  Boolean(editingOrderItemId) ||
+                  deletingOrderItemId === record.id
+                    ? 'default'
+                    : 'pointer',
+              }}
+            />
+          </Popconfirm>
+        );
       },
     },
   ];
@@ -1024,12 +1328,18 @@ function OrderEditPage() {
                   align="center"
                   gap={8}
                   style={{
-                    color: isCreatingOrderItem ? '#bfbfbf' : '#1677ff',
-                    cursor: isCreatingOrderItem ? 'default' : 'pointer',
+                    color:
+                      isCreatingOrderItem || editingOrderItemId
+                        ? '#bfbfbf'
+                        : '#1677ff',
+                    cursor:
+                      isCreatingOrderItem || editingOrderItemId
+                        ? 'default'
+                        : 'pointer',
                     width: 'fit-content',
                   }}
                   onClick={() => {
-                    if (!isCreatingOrderItem) {
+                    if (!isCreatingOrderItem && !editingOrderItemId) {
                       handleStartCreateOrderItem();
                     }
                   }}
@@ -1037,7 +1347,10 @@ function OrderEditPage() {
                   <FileAddOutlined />
                   <Text
                     style={{
-                      color: isCreatingOrderItem ? '#bfbfbf' : '#000',
+                      color:
+                        isCreatingOrderItem || editingOrderItemId
+                          ? '#bfbfbf'
+                          : '#000',
                     }}
                   >
                     Створити новий запис

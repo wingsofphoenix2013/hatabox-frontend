@@ -77,21 +77,6 @@ const getStatusTagColor = (status) => {
   }
 };
 
-const getStatusTagColor = (status) => {
-  switch (status) {
-    case 'draft':
-      return 'default';
-    case 'in_progress':
-      return 'processing';
-    case 'completed':
-      return 'success';
-    case 'cancelled':
-      return 'error';
-    default:
-      return 'default';
-  }
-};
-
 const getPaymentStatusTagColor = (status) => {
   switch (status) {
     case 'draft':

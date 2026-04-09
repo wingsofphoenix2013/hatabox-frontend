@@ -123,15 +123,6 @@ const getFileNameFromUrl = (fileUrl) => {
   }
 };
 
-const isPdfFile = (fileNameOrUrl = '', mimeType = '') => {
-  const normalizedName = String(fileNameOrUrl).toLowerCase();
-  const normalizedType = String(mimeType).toLowerCase();
-
-  return (
-    normalizedType === 'application/pdf' || normalizedName.endsWith('.pdf')
-  );
-};
-
 const isImageFile = (fileNameOrUrl = '', mimeType = '') => {
   const normalizedName = String(fileNameOrUrl).toLowerCase();
   const normalizedType = String(mimeType).toLowerCase();

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   EditOutlined,
   FileImageOutlined,
+  InfoCircleOutlined,
   LinkOutlined,
   StopOutlined,
   WarningOutlined,
@@ -492,38 +493,44 @@ function OrderDetailPage() {
         </Col>
 
         <Col xs={24} lg={18}>
-          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-            <div style={{ marginBottom: 20 }}>
-              <Text
-                type="secondary"
-                style={{ display: 'block', marginBottom: 6, fontSize: 12 }}
-              >
-                Назва постачальника
-              </Text>
+          <Card
+            title={
+              <Flex justify="space-between" align="center">
+                <span>Основна інформація</span>
 
-              <Flex align="center" gap={8}>
-                <Title level={4} style={{ margin: 0 }}>
-                  {order.vendor_name || '—'}
-                </Title>
+                <Flex align="center" gap={8}>
+                  <Text strong>{order.vendor_name || '—'}</Text>
 
-                {order.vendor && (
-                  <Link
-                    to={`/orders/vendors/${order.vendor}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <LinkOutlined
-                      style={{
-                        color: '#8c8c8c',
-                        fontSize: 16,
-                        cursor: 'pointer',
-                      }}
-                    />
-                  </Link>
-                )}
+                  {order.vendor && (
+                    <>
+                      <Link
+                        to={`/orders/vendors/${order.vendor}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <InfoCircleOutlined
+                          style={{
+                            color: '#1677ff',
+                            fontSize: 16,
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </Link>
+
+                      <LinkOutlined
+                        style={{
+                          color: '#8c8c8c',
+                          fontSize: 16,
+                          cursor: 'pointer',
+                        }}
+                      />
+                    </>
+                  )}
+                </Flex>
               </Flex>
-            </div>
-
+            }
+            style={{ marginBottom: 20 }}
+          >
             <Table
               columns={summaryColumns}
               dataSource={[order]}

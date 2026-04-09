@@ -320,8 +320,20 @@ function OrderEditPage() {
         ? response.data.results
         : [];
 
+      const existingVendorItemIds = new Set(
+        (Array.isArray(order?.items) ? order.items : []).map(
+          (item) => item.vendor_item,
+        ),
+      );
+
+      const filteredResults = results.filter((item) => {
+        if (item.id === creatingVendorItemId) return true;
+
+        return !existingVendorItemIds.has(item.id);
+      });
+
       setCreatingVendorItemOptions(
-        results.map((item) => ({
+        filteredResults.map((item) => ({
           value: item.id,
           label: item.item_name || item.name || `ID ${item.id}`,
           item,
@@ -1025,7 +1037,7 @@ function OrderEditPage() {
                   <FileAddOutlined />
                   <Text
                     style={{
-                      color: isCreatingOrderItem ? '#bfbfbf' : '#1677ff',
+                      color: isCreatingOrderItem ? '#bfbfbf' : '#000',
                     }}
                   >
                     Створити новий запис

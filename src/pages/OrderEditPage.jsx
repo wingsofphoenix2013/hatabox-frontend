@@ -34,6 +34,7 @@ import {
   message,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
+import { formatQuantity } from '../utils/formatNumber';
 import api from '../api/client';
 
 const { Title, Text } = Typography;
@@ -588,7 +589,7 @@ function OrderEditPage() {
           );
         }
 
-        return record.quantity ?? '—';
+        return formatQuantity(record.quantity);
       },
     },
     {

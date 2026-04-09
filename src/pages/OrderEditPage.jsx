@@ -407,6 +407,7 @@ function OrderEditPage() {
 
   const handleStartEditOrderItem = (record) => {
     if (isCreatingOrderItem || editingOrderItemId) return;
+    if (!isDraft && !isInProgress) return;
 
     setEditingOrderItemId(record.id);
     setEditingVendorItemId(record.vendor_item || null);
@@ -495,39 +496,47 @@ function OrderEditPage() {
   };
 
   const handleSaveEditedOrderItem = async (record) => {
-    if (!editingVendorItemId) {
-      message.error('Оберіть позицію постачальника.');
-      return;
-    }
-
-    if (
-      editingQuantity === null ||
-      editingQuantity === undefined ||
-      Number(editingQuantity) <= 0
-    ) {
-      message.error('Кількість повинна бути більшою за 0.');
-      return;
-    }
-
-    if (editingPrice === null || editingPrice === undefined) {
-      message.error('Вкажіть ціну.');
-      return;
-    }
-
     if (!editingExpectedDate) {
       message.error('Вкажіть дату очікуваної поставки.');
       return;
     }
 
+    if (isDraft) {
+      if (!editingVendorItemId) {
+        message.error('Оберіть позицію постачальника.');
+        return;
+      }
+
+      if (
+        editingQuantity === null ||
+        editingQuantity === undefined ||
+        Number(editingQuantity) <= 0
+      ) {
+        message.error('Кількість повинна бути більшою за 0.');
+        return;
+      }
+
+      if (editingPrice === null || editingPrice === undefined) {
+        message.error('Вкажіть ціну.');
+        return;
+      }
+    }
+
     try {
       setSavingEditedOrderItem(true);
 
-      await api.patch(`order-items/${record.id}/`, {
-        vendor_item: editingVendorItemId,
-        quantity: editingQuantity,
-        agreed_price: editingPrice,
-        expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
-      });
+      if (isInProgress) {
+        await api.patch(`order-items/${record.id}/`, {
+          expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
+        });
+      } else {
+        await api.patch(`order-items/${record.id}/`, {
+          vendor_item: editingVendorItemId,
+          quantity: editingQuantity,
+          agreed_price: editingPrice,
+          expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
+        });
+      }
 
       setLastUsedExpectedDate(editingExpectedDate.format('YYYY-MM-DD'));
       message.success('Рядок замовлення оновлено.');
@@ -709,16 +718,24 @@ function OrderEditPage() {
           <EditOutlined
             style={{
               color:
-                isCreatingOrderItem || editingOrderItemId
+                isCreatingOrderItem ||
+                editingOrderItemId ||
+                (!isDraft && !isInProgress)
                   ? '#d9d9d9'
                   : '#1677ff',
               cursor:
-                isCreatingOrderItem || editingOrderItemId
+                isCreatingOrderItem ||
+                editingOrderItemId ||
+                (!isDraft && !isInProgress)
                   ? 'default'
                   : 'pointer',
             }}
             onClick={() => {
-              if (!isCreatingOrderItem && !editingOrderItemId) {
+              if (
+                !isCreatingOrderItem &&
+                !editingOrderItemId &&
+                (isDraft || isInProgress)
+              ) {
                 handleStartEditOrderItem(record);
               }
             }}
@@ -766,7 +783,7 @@ function OrderEditPage() {
           );
         }
 
-        if (editingOrderItemId === record.id) {
+        if (editingOrderItemId === record.id && isDraft) {
           return (
             <Select
               showSearch
@@ -803,7 +820,7 @@ function OrderEditPage() {
           return creatingVendorItemData?.vendor_sku || '—';
         }
 
-        if (editingOrderItemId === record.id) {
+        if (editingOrderItemId === record.id && isDraft) {
           return editingVendorItemData?.vendor_sku || '—';
         }
 
@@ -829,7 +846,7 @@ function OrderEditPage() {
           );
         }
 
-        if (editingOrderItemId === record.id) {
+        if (editingOrderItemId === record.id && isDraft) {
           return (
             <InputNumber
               min={0.001}
@@ -865,7 +882,7 @@ function OrderEditPage() {
           );
         }
 
-        if (editingOrderItemId === record.id) {
+        if (editingOrderItemId === record.id && isDraft) {
           return (
             <InputNumber
               min={0}
@@ -910,6 +927,12 @@ function OrderEditPage() {
               onChange={(value) => setEditingExpectedDate(value)}
               style={{ width: '100%' }}
               suffixIcon={<CalendarOutlined />}
+              disabledDate={(current) =>
+                isInProgress
+                  ? current &&
+                    current.startOf('day').isBefore(dayjs().startOf('day'))
+                  : false
+              }
             />
           );
         }
@@ -941,6 +964,12 @@ function OrderEditPage() {
               style={{ color: '#ff4d4f', cursor: 'pointer' }}
               onClick={handleCancelEditOrderItem}
             />
+          );
+        }
+
+        if (!isDraft) {
+          return (
+            <DeleteOutlined style={{ color: '#d9d9d9', cursor: 'default' }} />
           );
         }
 
@@ -1004,6 +1033,7 @@ function OrderEditPage() {
   }
 
   const isDraft = order.status === 'draft';
+  const isInProgress = order.status === 'in_progress';
 
   const isNavigationBlocked =
     Boolean(selectedFile) ||
@@ -1340,7 +1370,7 @@ function OrderEditPage() {
               size="small"
             />
 
-            {order.status === 'draft' && (
+            {isDraft && (
               <div style={{ marginTop: 16 }}>
                 <Flex
                   align="center"

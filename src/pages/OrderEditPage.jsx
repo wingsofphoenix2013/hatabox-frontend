@@ -221,6 +221,8 @@ function OrderEditPage() {
     );
   }
 
+  const isDraft = order.status === 'draft';
+
   return (
     <div style={{ padding: 20 }}>
       <Flex
@@ -235,7 +237,7 @@ function OrderEditPage() {
           </Title>
 
           <Tag
-            color={getStatusTagColor(order.status)}
+            color={isDraft ? undefined : getStatusTagColor(order.status)}
             style={{
               fontSize: 20,
               lineHeight: '32px',
@@ -243,6 +245,13 @@ function OrderEditPage() {
               paddingBlock: 6,
               borderRadius: 10,
               marginInlineEnd: 0,
+              ...(isDraft
+                ? {
+                    border: '1px solid #d9d9d9',
+                    background: '#fafafa',
+                    color: '#595959',
+                  }
+                : {}),
             }}
           >
             {order.status_name || '—'}
@@ -251,6 +260,30 @@ function OrderEditPage() {
       </Flex>
 
       <Row gutter={20} align="top">
+        <Col xs={24} lg={6}>
+          <Card title="Файли" style={{ marginBottom: 20 }}>
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: '1 / 1',
+                border: '1px solid #f0f0f0',
+                borderRadius: 12,
+                background: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
+            >
+              <Text type="secondary">Дані з’являться пізніше</Text>
+            </div>
+          </Card>
+
+          <Card title="Статистика">
+            <Text type="secondary">Дані з’являться пізніше</Text>
+          </Card>
+        </Col>
+
         <Col xs={24} lg={18}>
           <Card
             title={
@@ -330,30 +363,6 @@ function OrderEditPage() {
               size="small"
               tableLayout="fixed"
             />
-          </Card>
-        </Col>
-
-        <Col xs={24} lg={6}>
-          <Card title="Файли" style={{ marginBottom: 20 }}>
-            <div
-              style={{
-                width: '100%',
-                aspectRatio: '1 / 1',
-                border: '1px solid #f0f0f0',
-                borderRadius: 12,
-                background: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-              }}
-            >
-              <Text type="secondary">Дані з’являться пізніше</Text>
-            </div>
-          </Card>
-
-          <Card title="Статистика">
-            <Text type="secondary">Дані з’являться пізніше</Text>
           </Card>
         </Col>
       </Row>

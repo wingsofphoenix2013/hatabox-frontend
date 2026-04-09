@@ -13,6 +13,7 @@ import {
   Col,
   Divider,
   Flex,
+  Popconfirm,
   Progress,
   Row,
   Skeleton,
@@ -20,6 +21,7 @@ import {
   Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
@@ -108,6 +110,7 @@ function OrderDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [submittingToWork, setSubmittingToWork] = useState(false);
 
   useEffect(() => {
     loadOrderPage();
@@ -126,6 +129,24 @@ function OrderDetailPage() {
       setOrder(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendToWork = async () => {
+    try {
+      setSubmittingToWork(true);
+
+      await api.patch(`orders/${id}/`, {
+        status: 'in_progress',
+      });
+
+      message.success('Замовлення передано в роботу');
+      loadOrderPage();
+    } catch (err) {
+      console.error('Failed to send order to work:', err);
+      message.error('Не вдалося передати замовлення в роботу');
+    } finally {
+      setSubmittingToWork(false);
     }
   };
 
@@ -414,6 +435,25 @@ function OrderDetailPage() {
 
           <Card title="Навігація" style={{ marginBottom: 20 }}>
             <Flex vertical gap={8}>
+              {isDraft && (
+                <>
+                  <Popconfirm
+                    title="Увага!"
+                    description="Ви не зможете редагувати склад замовлення після передачі його в роботу! Ви впевнені, що склад замовлення вже остаточний?"
+                    okText="Так"
+                    cancelText="Ні"
+                    onConfirm={handleSendToWork}
+                    disabled={submittingToWork}
+                  >
+                    <Button block type="primary" loading={submittingToWork}>
+                      Передати в роботу
+                    </Button>
+                  </Popconfirm>
+
+                  <Divider style={{ margin: '4px 0 8px 0' }} />
+                </>
+              )}
+
               <Button block>Перейти до оплати</Button>
               <Button block>Перейти до замовлення</Button>
               <Button block>Перейти до історії</Button>

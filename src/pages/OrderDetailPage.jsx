@@ -540,7 +540,15 @@ function OrderDetailPage() {
             style={{ marginBottom: 20 }}
           >
             {order.comment && (
-              <div style={{ marginBottom: 16 }}>
+              <div
+                style={{
+                  marginBottom: 16,
+                  padding: '10px 12px',
+                  background: '#fafafa',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: 8,
+                }}
+              >
                 <Flex align="flex-start" gap={8}>
                   <InfoCircleOutlined
                     style={{
@@ -549,15 +557,9 @@ function OrderDetailPage() {
                     }}
                   />
 
-                  <div>
-                    <Text strong style={{ display: 'block' }}>
-                      Коментар до замовлення:
-                    </Text>
-
-                    <Text style={{ whiteSpace: 'pre-wrap' }}>
-                      {order.comment}
-                    </Text>
-                  </div>
+                  <Text style={{ whiteSpace: 'pre-wrap' }}>
+                    <Text strong>Коментар до замовлення:</Text> {order.comment}
+                  </Text>
                 </Flex>
               </div>
             )}

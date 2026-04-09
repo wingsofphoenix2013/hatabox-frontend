@@ -56,6 +56,12 @@ const formatDateUa = (value) => {
   return `${day}/${month}/${year}`;
 };
 
+const formatMoney = (value) =>
+  new Intl.NumberFormat('uk-UA', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value) || 0);
+
 const getStatusTagColor = (status) => {
   switch (status) {
     case 'draft':
@@ -63,6 +69,36 @@ const getStatusTagColor = (status) => {
     case 'in_progress':
       return 'processing';
     case 'completed':
+      return 'success';
+    case 'cancelled':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const getStatusTagColor = (status) => {
+  switch (status) {
+    case 'draft':
+      return 'default';
+    case 'in_progress':
+      return 'processing';
+    case 'completed':
+      return 'success';
+    case 'cancelled':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const getPaymentStatusTagColor = (status) => {
+  switch (status) {
+    case 'draft':
+      return 'default';
+    case 'approved':
+      return 'processing';
+    case 'paid':
       return 'success';
     case 'cancelled':
       return 'error';
@@ -672,6 +708,48 @@ function OrderEditPage() {
           </Tooltip>
         );
       },
+    },
+  ];
+
+  const paymentColumns = [
+    {
+      title: 'Дата',
+      dataIndex: 'payment_date',
+      key: 'payment_date',
+      width: 130,
+      align: 'center',
+      render: (value) => {
+        if (!value) return '—';
+
+        const date = dayjs(value, 'YYYY-MM-DD');
+        return date.isValid() ? date.format('DD-MM-YYYY') : '—';
+      },
+    },
+    {
+      title: '№ документа',
+      dataIndex: 'payment_no',
+      key: 'payment_no',
+      render: (value) => value || '—',
+    },
+    {
+      title: 'Статус',
+      dataIndex: 'status_name',
+      key: 'status_name',
+      width: 140,
+      align: 'center',
+      render: (value, record) => (
+        <Tag color={getPaymentStatusTagColor(record.status)}>
+          {value || '—'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Сума',
+      dataIndex: 'payment_amount',
+      key: 'payment_amount',
+      width: 160,
+      align: 'center',
+      render: (value) => `${formatMoney(value)} ₴`,
     },
   ];
 
@@ -1352,10 +1430,40 @@ function OrderEditPage() {
             />
           </Card>
 
-          <Card title="Оплата" style={{ marginBottom: 20 }}>
-            <Text type="secondary">
-              Редагування платежів буде доступне на наступному етапі
-            </Text>
+          <Card
+            title={
+              <Flex justify="space-between" align="center" wrap>
+                <span>Оплата</span>
+
+                <Text>
+                  Баланс:{' '}
+                  <strong
+                    style={{
+                      color:
+                        Number(order.remaining_amount) > 0
+                          ? '#ff4d4f'
+                          : undefined,
+                    }}
+                  >
+                    {formatMoney(order.remaining_amount)} ₴
+                  </strong>
+                </Text>
+              </Flex>
+            }
+            style={{ marginBottom: 20 }}
+          >
+            <Table
+              rowKey="id"
+              columns={paymentColumns}
+              dataSource={
+                Array.isArray(order.payment_documents)
+                  ? order.payment_documents
+                  : []
+              }
+              pagination={false}
+              size="small"
+              tableLayout="fixed"
+            />
           </Card>
 
           <Card title="Замовлення">

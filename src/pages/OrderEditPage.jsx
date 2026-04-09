@@ -1,57 +1,41 @@
 import { useEffect, useState } from 'react';
-import dayjs from 'dayjs';
 import {
-  CalendarOutlined,
-  DeleteOutlined,
-  EditOutlined,
   InfoCircleOutlined,
   LinkOutlined,
-  SaveOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
-  Button,
   Card,
   Col,
-  DatePicker,
-  Divider,
   Flex,
-  InputNumber,
-  message,
-  Popconfirm,
   Progress,
   Row,
-  Select,
   Skeleton,
   Table,
   Tag,
   Tooltip,
   Typography,
 } from 'antd';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
-import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
-/* ================= helpers ================= */
-
 const formatDateUa = (value) => {
   if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return `${String(d.getDate()).padStart(2, '0')}/${String(
-    d.getMonth() + 1,
-  ).padStart(2, '0')}/${d.getFullYear()}`;
-};
 
-const formatDateDisplay = (value) => {
-  if (!value) return '—';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '—';
-  return `${String(d.getDate()).padStart(2, '0')}-${String(
-    d.getMonth() + 1,
-  ).padStart(2, '0')}-${d.getFullYear()}`;
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+
+  return `${day}/${month}/${year}`;
 };
 
 const getStatusTagColor = (status) => {
@@ -71,323 +55,305 @@ const getStatusTagColor = (status) => {
 
 const getProgressStrokeColor = (percent, isOverdue = false) => {
   if (isOverdue) return '#ff4d4f';
+
   if (percent === 0) return '#bfbfbf';
   if (percent <= 24) return '#d9f7be';
   if (percent <= 49) return '#b7eb8f';
   if (percent <= 74) return '#95de64';
   if (percent <= 99) return '#73d13d';
+
   return '#52c41a';
 };
 
-/* ================= component ================= */
-
 function OrderEditPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  /* editing */
-  const [editingRowId, setEditingRowId] = useState(null);
-  const [editingQuantity, setEditingQuantity] = useState(null);
-  const [editingPrice, setEditingPrice] = useState(null);
-  const [editingDate, setEditingDate] = useState(null);
-
-  /* creating */
-  const [isCreatingRow, setIsCreatingRow] = useState(false);
-  const [creatingVendorItemId, setCreatingVendorItemId] = useState(null);
-  const [creatingQuantity, setCreatingQuantity] = useState(null);
-  const [creatingPrice, setCreatingPrice] = useState(null);
-  const [creatingDate, setCreatingDate] = useState(null);
-
-  const [vendorItemOptions, setVendorItemOptions] = useState([]);
-
-  const [lastUsedDate, setLastUsedDate] = useState(null);
-
   useEffect(() => {
-    load();
+    loadOrderPage();
   }, [id]);
 
-  const load = async () => {
+  const loadOrderPage = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`orders/${id}/`);
-      setOrder(res.data);
-    } catch (e) {
-      setError('Не вдалося завантажити дані');
+      setError('');
+
+      const response = await api.get(`orders/${id}/`);
+      setOrder(response.data);
+    } catch (err) {
+      console.error('Failed to load order edit page:', err);
+      setError('Не вдалося завантажити дані замовлення.');
+      setOrder(null);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= create ================= */
-
-  const handleStartCreate = () => {
-    setIsCreatingRow(true);
-    setCreatingVendorItemId(null);
-    setCreatingQuantity(null);
-    setCreatingPrice(null);
-    setCreatingDate(lastUsedDate);
-  };
-
-  const handleSaveCreate = async () => {
-    if (!creatingVendorItemId) {
-      message.error('Оберіть товар');
-      return;
-    }
-
-    if (!creatingQuantity || creatingQuantity <= 0) {
-      message.error('Кількість має бути > 0');
-      return;
-    }
-
-    if (!creatingPrice || creatingPrice <= 0) {
-      message.error('Вкажіть ціну');
-      return;
-    }
-
-    try {
-      await api.post('order-items/', {
-        order: Number(id),
-        vendor_item: creatingVendorItemId,
-        quantity: creatingQuantity,
-        agreed_price: creatingPrice,
-        expected_delivery_date: creatingDate,
-      });
-
-      setLastUsedDate(creatingDate);
-      setIsCreatingRow(false);
-      load();
-    } catch {
-      message.error('Не вдалося створити позицію');
-    }
-  };
-
-  /* ================= edit ================= */
-
-  const handleStartEdit = (r) => {
-    setEditingRowId(r.id);
-    setEditingQuantity(Number(r.quantity));
-    setEditingPrice(Number(r.agreed_price));
-    setEditingDate(r.expected_delivery_date);
-  };
-
-  const handleSaveEdit = async (r) => {
-    try {
-      await api.patch(`order-items/${r.id}/`, {
-        quantity: editingQuantity,
-        agreed_price: editingPrice,
-        expected_delivery_date: editingDate,
-      });
-
-      setLastUsedDate(editingDate);
-      setEditingRowId(null);
-      load();
-    } catch {
-      message.error('Не вдалося зберегти');
-    }
-  };
-
-  /* ================= search vendor items ================= */
-
-  const handleSearch = async (q) => {
-    if (!q || q.length < 2) return;
-
-    const res = await api.get(
-      `vendor-items/?vendor=${order.vendor}&search=${q}`,
-    );
-
-    const existing = new Set(order.items.map((i) => i.vendor_item));
-
-    setVendorItemOptions(
-      res.data.results
-        .filter((i) => !existing.has(i.id))
-        .map((i) => ({
-          value: i.id,
-          label: i.name,
-        })),
-    );
-  };
-
-  /* ================= table ================= */
-
-  const columns = [
+  const summaryColumns = [
     {
-      title: '',
-      width: 50,
+      title: 'Статус',
+      dataIndex: 'status_name',
+      key: 'status_name',
       align: 'center',
-      render: (_, r) => {
-        if (r.id === 'new') {
-          return <SaveOutlined onClick={handleSaveCreate} />;
-        }
+      width: '28%',
+      render: (value, record) => (
+        <Tag color={getStatusTagColor(record.status)}>{value || '—'}</Tag>
+      ),
+    },
+    {
+      title: 'Оплата',
+      dataIndex: 'payment_percent',
+      key: 'payment_percent',
+      align: 'center',
+      width: '36%',
+      render: (value) => {
+        const percent = Number(value) || 0;
 
-        return editingRowId === r.id ? (
-          <SaveOutlined onClick={() => handleSaveEdit(r)} />
-        ) : (
-          <EditOutlined onClick={() => handleStartEdit(r)} />
+        return (
+          <div style={{ width: '100%' }}>
+            <Progress
+              percent={percent}
+              size="small"
+              strokeColor={getProgressStrokeColor(percent)}
+            />
+          </div>
         );
       },
     },
     {
-      title: 'Товар',
-      render: (_, r) => {
-        if (r.id === 'new') {
+      title: 'Отримання',
+      dataIndex: 'receipt_percent',
+      key: 'receipt_percent',
+      align: 'center',
+      width: '36%',
+      render: (value, record) => {
+        const percent = Number(value) || 0;
+        const isOverdue = Boolean(record.is_receipt_overdue);
+
+        const progress = (
+          <Progress
+            percent={percent}
+            size="small"
+            strokeColor={getProgressStrokeColor(percent, isOverdue)}
+          />
+        );
+
+        if (percent === 100 && !isOverdue) {
+          return <div style={{ width: '100%' }}>{progress}</div>;
+        }
+
+        let tooltipText = null;
+
+        if (isOverdue) {
+          tooltipText = `Прострочено на ${record.receipt_overdue_days} дн.`;
+        } else {
+          tooltipText = `Очікується за ${record.receipt_expected_days} дн.`;
+        }
+
+        const content = (
+          <Flex align="center" justify="space-between" gap={8}>
+            <div style={{ flex: 1 }}>{progress}</div>
+
+            {isOverdue && (
+              <WarningOutlined
+                style={{
+                  color: '#ff4d4f',
+                  fontSize: 14,
+                  flexShrink: 0,
+                }}
+              />
+            )}
+          </Flex>
+        );
+
+        if (isOverdue) {
           return (
-            <Select
-              showSearch
-              onSearch={handleSearch}
-              onChange={(v) => setCreatingVendorItemId(v)}
-              options={vendorItemOptions}
-            />
+            <Tooltip title={tooltipText}>
+              <div
+                style={{
+                  width: '100%',
+                  background: '#fff1f0',
+                  border: '1px solid #ffccc7',
+                  borderRadius: 8,
+                  padding: '6px 8px',
+                }}
+              >
+                {content}
+              </div>
+            </Tooltip>
           );
         }
 
-        return r.vendor_item_name;
+        return (
+          <Tooltip title={tooltipText}>
+            <div style={{ width: '100%' }}>{content}</div>
+          </Tooltip>
+        );
       },
-    },
-    {
-      title: 'К-сть',
-      width: 100,
-      align: 'center',
-      render: (_, r) =>
-        editingRowId === r.id ? (
-          <InputNumber value={editingQuantity} onChange={setEditingQuantity} />
-        ) : r.id === 'new' ? (
-          <InputNumber
-            value={creatingQuantity}
-            onChange={setCreatingQuantity}
-          />
-        ) : (
-          formatQuantity(r.quantity)
-        ),
-    },
-    {
-      title: 'Ціна',
-      width: 110,
-      align: 'center',
-      render: (_, r) =>
-        editingRowId === r.id ? (
-          <InputNumber value={editingPrice} onChange={setEditingPrice} />
-        ) : r.id === 'new' ? (
-          <InputNumber value={creatingPrice} onChange={setCreatingPrice} />
-        ) : (
-          `${r.agreed_price} ₴`
-        ),
-    },
-    {
-      title: 'Поставка',
-      width: 140,
-      align: 'center',
-      render: (_, r) =>
-        editingRowId === r.id ? (
-          <DatePicker
-            value={editingDate ? dayjs(editingDate) : null}
-            onChange={(d) => setEditingDate(d?.format('YYYY-MM-DD'))}
-          />
-        ) : r.id === 'new' ? (
-          <DatePicker
-            value={creatingDate ? dayjs(creatingDate) : null}
-            onChange={(d) => setCreatingDate(d?.format('YYYY-MM-DD'))}
-          />
-        ) : (
-          formatDateDisplay(r.expected_delivery_date)
-        ),
-    },
-    {
-      title: '',
-      width: 50,
-      render: (_, r) =>
-        r.id === 'new' ? (
-          <DeleteOutlined onClick={() => setIsCreatingRow(false)} />
-        ) : (
-          <DeleteOutlined />
-        ),
     },
   ];
 
-  /* ================= render ================= */
+  if (loading) {
+    return (
+      <div style={{ padding: 20 }}>
+        <Skeleton active paragraph={{ rows: 10 }} />
+      </div>
+    );
+  }
 
-  if (loading) return <Skeleton />;
-  if (!order) return <Alert message="Not found" />;
+  if (error && !order) {
+    return (
+      <div style={{ padding: 20 }}>
+        <Alert type="error" description={error} showIcon />
+      </div>
+    );
+  }
+
+  if (!order) {
+    return (
+      <div style={{ padding: 20 }}>
+        <Alert type="warning" description="Замовлення не знайдено." showIcon />
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 20 }}>
-      <Title level={2}>
-        Редагування № {order.order_no} від {formatDateUa(order.created_at)}
-      </Title>
+      <Flex
+        justify="space-between"
+        align="flex-start"
+        gap={16}
+        style={{ marginBottom: 20 }}
+      >
+        <Flex align="center" gap={12} wrap>
+          <Title level={2} style={{ margin: 0 }}>
+            {`Редагування замовлення № ${order.order_no} від ${formatDateUa(order.created_at)}`}
+          </Title>
 
-      <Row gutter={20}>
-        <Col lg={6}>
-          <Card title="Навігація">
-            <Button block onClick={() => navigate(`/orders/${id}`)}>
-              Перегляд
-            </Button>
-          </Card>
-        </Col>
+          <Tag
+            color={getStatusTagColor(order.status)}
+            style={{
+              fontSize: 20,
+              lineHeight: '32px',
+              paddingInline: 14,
+              paddingBlock: 6,
+              borderRadius: 10,
+              marginInlineEnd: 0,
+            }}
+          >
+            {order.status_name || '—'}
+          </Tag>
+        </Flex>
+      </Flex>
 
-        <Col lg={18}>
+      <Row gutter={20} align="top">
+        <Col xs={24} lg={18}>
           <Card
             title={
-              <Flex justify="space-between">
+              <Flex justify="space-between" align="center">
                 <span>Основна інформація</span>
 
-                <Flex gap={8}>
-                  <Title level={5} style={{ margin: 0 }}>
-                    {order.vendor_name}
+                <Flex align="center" gap={8}>
+                  <Title
+                    level={5}
+                    style={{
+                      margin: 0,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {order.vendor_name || '—'}
                   </Title>
 
-                  <Link to={`/orders/vendors/${order.vendor}`} target="_blank">
-                    <InfoCircleOutlined />
-                  </Link>
+                  {order.vendor && (
+                    <>
+                      <Link
+                        to={`/orders/vendors/${order.vendor}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <InfoCircleOutlined
+                          style={{
+                            color: '#1677ff',
+                            fontSize: 16,
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </Link>
+
+                      <LinkOutlined
+                        style={{
+                          color: '#8c8c8c',
+                          fontSize: 16,
+                          cursor: 'pointer',
+                        }}
+                      />
+                    </>
+                  )}
                 </Flex>
               </Flex>
             }
           >
-            <Table
-              columns={[
-                {
-                  title: 'Статус',
-                  render: () => (
-                    <Tag color={getStatusTagColor(order.status)}>
-                      {order.status_name}
-                    </Tag>
-                  ),
-                },
-                {
-                  title: 'Оплата',
-                  render: () => <Progress percent={order.payment_percent} />,
-                },
-                {
-                  title: 'Отримання',
-                  render: () => <Progress percent={order.receipt_percent} />,
-                },
-              ]}
-              dataSource={[order]}
-              pagination={false}
-            />
-          </Card>
+            {order.comment && (
+              <div
+                style={{
+                  marginBottom: 16,
+                  padding: '10px 12px',
+                  background: '#fafafa',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: 8,
+                }}
+              >
+                <Flex align="flex-start" gap={8}>
+                  <InfoCircleOutlined
+                    style={{
+                      color: '#8c8c8c',
+                      marginTop: 3,
+                    }}
+                  />
 
-          <Card title="Замовлення">
+                  <Text style={{ whiteSpace: 'pre-wrap' }}>
+                    <Text strong>Коментар до замовлення:</Text> {order.comment}
+                  </Text>
+                </Flex>
+              </div>
+            )}
+
             <Table
-              columns={columns}
-              dataSource={[
-                ...order.items,
-                ...(isCreatingRow ? [{ id: 'new' }] : []),
-              ]}
+              columns={summaryColumns}
+              dataSource={[order]}
               rowKey="id"
               pagination={false}
+              size="small"
+              tableLayout="fixed"
             />
+          </Card>
+        </Col>
 
-            <Button
-              icon={<EditOutlined />}
-              onClick={handleStartCreate}
-              disabled={isCreatingRow}
+        <Col xs={24} lg={6}>
+          <Card title="Файли" style={{ marginBottom: 20 }}>
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: '1 / 1',
+                border: '1px solid #f0f0f0',
+                borderRadius: 12,
+                background: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}
             >
-              Додати товар
-            </Button>
+              <Text type="secondary">Дані з’являться пізніше</Text>
+            </div>
+          </Card>
+
+          <Card title="Статистика">
+            <Text type="secondary">Дані з’являться пізніше</Text>
           </Card>
         </Col>
       </Row>

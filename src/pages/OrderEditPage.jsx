@@ -643,6 +643,7 @@ function OrderEditPage() {
                 </Flex>
               </Flex>
             }
+            style={{ marginBottom: 20 }}
           >
             {order.comment && (
               <div
@@ -677,6 +678,18 @@ function OrderEditPage() {
               size="small"
               tableLayout="fixed"
             />
+          </Card>
+
+          <Card title="Оплата" style={{ marginBottom: 20 }}>
+            <Text type="secondary">
+              Редагування платежів буде доступне на наступному етапі
+            </Text>
+          </Card>
+
+          <Card title="Замовлення">
+            <Text type="secondary">
+              Редагування складу замовлення буде доступне на наступному етапі
+            </Text>
           </Card>
         </Col>
       </Row>

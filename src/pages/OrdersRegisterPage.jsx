@@ -22,6 +22,7 @@ import {
   Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
@@ -305,20 +306,29 @@ function OrdersRegisterPage() {
     try {
       setCreateSaving(true);
 
-      const response = await api.post('orders/', {
-        vendor: values.vendor,
-        order_no: values.order_no,
-        comment: values.comment || '',
-        discount_amount: 0,
-        status: 'draft',
-      });
+      const payload = new FormData();
+      payload.append('vendor', String(values.vendor));
+      payload.append('order_no', values.order_no);
+      payload.append('comment', values.comment || '');
+      payload.append('discount_amount', '0');
+      payload.append('status', 'draft');
+
+      const response = await api.post('orders/', payload);
 
       const createdOrder = response.data;
 
+      message.success('Замовлення створено.');
       closeCreateDrawer();
       navigate(`/orders/${createdOrder.id}/edit`);
     } catch (err) {
       console.error('Failed to create order:', err);
+
+      const backendMessage =
+        err?.response?.data?.detail ||
+        err?.response?.data?.order_no?.[0] ||
+        err?.response?.data?.vendor?.[0];
+
+      message.error(backendMessage || 'Не вдалося створити замовлення.');
     } finally {
       setCreateSaving(false);
     }

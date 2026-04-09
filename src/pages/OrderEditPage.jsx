@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import dayjs from 'dayjs';
 import {
+  CalendarOutlined,
   DeleteOutlined,
+  FileAddOutlined,
   FileImageOutlined,
   FilePdfOutlined,
   InfoCircleOutlined,
   LinkOutlined,
+  SaveOutlined,
   UploadOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
@@ -13,11 +17,14 @@ import {
   Button,
   Card,
   Col,
+  DatePicker,
   Flex,
   Image,
+  InputNumber,
   Popconfirm,
   Progress,
   Row,
+  Select,
   Skeleton,
   Table,
   Tag,
@@ -87,6 +94,19 @@ function OrderEditPage() {
   const [uploadingFile, setUploadingFile] = useState(false);
   const [deletingFile, setDeletingFile] = useState(false);
 
+  const [isCreatingOrderItem, setIsCreatingOrderItem] = useState(false);
+  const [creatingVendorItemId, setCreatingVendorItemId] = useState(null);
+  const [creatingVendorItemData, setCreatingVendorItemData] = useState(null);
+  const [creatingQuantity, setCreatingQuantity] = useState(null);
+  const [creatingPrice, setCreatingPrice] = useState(null);
+  const [creatingExpectedDate, setCreatingExpectedDate] = useState(null);
+  const [creatingVendorItemOptions, setCreatingVendorItemOptions] = useState(
+    [],
+  );
+  const [creatingOrderItemLoading, setCreatingOrderItemLoading] =
+    useState(false);
+  const [lastUsedExpectedDate, setLastUsedExpectedDate] = useState(null);
+
   useEffect(() => {
     loadOrderPage();
   }, [id]);
@@ -107,6 +127,15 @@ function OrderEditPage() {
       const response = await api.get(`orders/${id}/`);
       setOrder(response.data);
       resetSelectedFile();
+
+      const items = Array.isArray(response.data?.items)
+        ? response.data.items
+        : [];
+      const lastItemWithDate = [...items]
+        .reverse()
+        .find((item) => item.expected_delivery_date);
+
+      setLastUsedExpectedDate(lastItemWithDate?.expected_delivery_date || null);
     } catch (err) {
       console.error('Failed to load order edit page:', err);
       setError('Не вдалося завантажити дані замовлення.');
@@ -249,6 +278,109 @@ function OrderEditPage() {
     }
   };
 
+  const handleStartCreateOrderItem = () => {
+    if (isCreatingOrderItem) return;
+
+    setIsCreatingOrderItem(true);
+    setCreatingVendorItemId(null);
+    setCreatingVendorItemData(null);
+    setCreatingQuantity(null);
+    setCreatingPrice(null);
+    setCreatingVendorItemOptions([]);
+    setCreatingExpectedDate(
+      lastUsedExpectedDate ? dayjs(lastUsedExpectedDate, 'YYYY-MM-DD') : null,
+    );
+  };
+
+  const handleCancelCreateOrderItem = () => {
+    setIsCreatingOrderItem(false);
+    setCreatingVendorItemId(null);
+    setCreatingVendorItemData(null);
+    setCreatingQuantity(null);
+    setCreatingPrice(null);
+    setCreatingExpectedDate(null);
+    setCreatingVendorItemOptions([]);
+  };
+
+  const handleSearchVendorItems = async (searchValue) => {
+    const query = searchValue?.trim();
+
+    if (!query || !order?.vendor) {
+      setCreatingVendorItemOptions([]);
+      return;
+    }
+
+    try {
+      const response = await api.get(
+        `vendor-items/?search=${encodeURIComponent(query)}&vendor=${order.vendor}`,
+      );
+
+      const results = Array.isArray(response.data.results)
+        ? response.data.results
+        : [];
+
+      setCreatingVendorItemOptions(
+        results.map((item) => ({
+          value: item.id,
+          label: item.item_name || item.name || `ID ${item.id}`,
+          item,
+        })),
+      );
+    } catch (err) {
+      console.error('Failed to search vendor items:', err);
+      setCreatingVendorItemOptions([]);
+    }
+  };
+
+  const handleSaveCreateOrderItem = async () => {
+    if (!creatingVendorItemId) {
+      message.error('Оберіть позицію постачальника.');
+      return;
+    }
+
+    if (
+      creatingQuantity === null ||
+      creatingQuantity === undefined ||
+      Number(creatingQuantity) <= 0
+    ) {
+      message.error('Кількість повинна бути більшою за 0.');
+      return;
+    }
+
+    if (creatingPrice === null || creatingPrice === undefined) {
+      message.error('Вкажіть ціну.');
+      return;
+    }
+
+    if (!creatingExpectedDate) {
+      message.error('Вкажіть дату очікуваної поставки.');
+      return;
+    }
+
+    try {
+      setCreatingOrderItemLoading(true);
+
+      await api.post('order-items/', {
+        order: Number(id),
+        vendor_item: creatingVendorItemId,
+        quantity: creatingQuantity,
+        agreed_price: creatingPrice,
+        expected_delivery_date: creatingExpectedDate.format('YYYY-MM-DD'),
+      });
+
+      setLastUsedExpectedDate(creatingExpectedDate.format('YYYY-MM-DD'));
+      message.success('Рядок замовлення додано.');
+
+      handleCancelCreateOrderItem();
+      loadOrderPage();
+    } catch (err) {
+      console.error('Failed to create order item:', err);
+      message.error('Не вдалося додати рядок замовлення.');
+    } finally {
+      setCreatingOrderItemLoading(false);
+    }
+  };
+
   const summaryColumns = [
     {
       title: 'Статус',
@@ -349,6 +481,181 @@ function OrderEditPage() {
             <div style={{ width: '100%' }}>{content}</div>
           </Tooltip>
         );
+      },
+    },
+  ];
+
+  const orderItemsColumns = [
+    {
+      title: '',
+      key: 'edit',
+      width: 56,
+      align: 'center',
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return (
+            <SaveOutlined
+              style={{
+                color: creatingOrderItemLoading ? '#bfbfbf' : '#52c41a',
+                cursor: creatingOrderItemLoading ? 'default' : 'pointer',
+              }}
+              onClick={() => {
+                if (!creatingOrderItemLoading) {
+                  handleSaveCreateOrderItem();
+                }
+              }}
+            />
+          );
+        }
+
+        return null;
+      },
+    },
+    {
+      title: '№',
+      key: 'index',
+      width: 70,
+      align: 'center',
+      render: (_, record, index) => {
+        const itemsCount = Array.isArray(order?.items) ? order.items.length : 0;
+
+        if (record.id === 'new-row') {
+          return itemsCount + 1;
+        }
+
+        return index + 1;
+      },
+    },
+    {
+      title: 'Назва компонента',
+      key: 'vendor_item_name',
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return (
+            <Select
+              showSearch
+              value={creatingVendorItemId}
+              placeholder="Почніть вводити назву"
+              style={{ width: '100%' }}
+              filterOption={false}
+              onSearch={handleSearchVendorItems}
+              onChange={(value, option) => {
+                setCreatingVendorItemId(value);
+                setCreatingVendorItemData(option?.item || null);
+                setCreatingQuantity(null);
+                setCreatingPrice(null);
+              }}
+              options={creatingVendorItemOptions}
+              optionLabelProp="label"
+            />
+          );
+        }
+
+        return (
+          record.vendor_item_inv_item_name || record.vendor_item_name || '—'
+        );
+      },
+    },
+    {
+      title: 'vendor_sku',
+      key: 'vendor_item_sku',
+      width: 140,
+      align: 'center',
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return creatingVendorItemData?.vendor_sku || '—';
+        }
+
+        return record.vendor_item_sku || '—';
+      },
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return (
+            <InputNumber
+              min={0.001}
+              step={0.001}
+              controls={false}
+              value={creatingQuantity}
+              onChange={(value) => setCreatingQuantity(value)}
+              style={{ width: 100 }}
+            />
+          );
+        }
+
+        return record.quantity ?? '—';
+      },
+    },
+    {
+      title: 'Ціна',
+      key: 'agreed_price',
+      width: 140,
+      align: 'center',
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return (
+            <InputNumber
+              min={0}
+              step={0.01}
+              precision={2}
+              controls={false}
+              value={creatingPrice}
+              onChange={(value) => setCreatingPrice(value)}
+              style={{ width: 110 }}
+            />
+          );
+        }
+
+        return record.agreed_price !== null && record.agreed_price !== undefined
+          ? `${record.agreed_price} ₴`
+          : '—';
+      },
+    },
+    {
+      title: 'Поставка',
+      key: 'expected_delivery_date',
+      width: 170,
+      align: 'center',
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return (
+            <DatePicker
+              value={creatingExpectedDate}
+              format="DD-MM-YYYY"
+              onChange={(value) => setCreatingExpectedDate(value)}
+              style={{ width: '100%' }}
+              suffixIcon={<CalendarOutlined />}
+            />
+          );
+        }
+
+        if (!record.expected_delivery_date) return '—';
+
+        const date = dayjs(record.expected_delivery_date, 'YYYY-MM-DD');
+        return date.isValid() ? date.format('DD-MM-YYYY') : '—';
+      },
+    },
+    {
+      title: '',
+      key: 'delete',
+      width: 56,
+      align: 'center',
+      render: (_, record) => {
+        if (record.id === 'new-row') {
+          return (
+            <DeleteOutlined
+              style={{ color: '#ff4d4f', cursor: 'pointer' }}
+              onClick={handleCancelCreateOrderItem}
+            />
+          );
+        }
+
+        return null;
       },
     },
   ];
@@ -687,9 +994,44 @@ function OrderEditPage() {
           </Card>
 
           <Card title="Замовлення">
-            <Text type="secondary">
-              Редагування складу замовлення буде доступне на наступному етапі
-            </Text>
+            <Table
+              rowKey="id"
+              columns={orderItemsColumns}
+              dataSource={[
+                ...(Array.isArray(order.items) ? order.items : []),
+                ...(isCreatingOrderItem ? [{ id: 'new-row' }] : []),
+              ]}
+              pagination={false}
+              size="small"
+            />
+
+            {order.status === 'draft' && (
+              <div style={{ marginTop: 16 }}>
+                <Flex
+                  align="center"
+                  gap={8}
+                  style={{
+                    color: isCreatingOrderItem ? '#bfbfbf' : '#1677ff',
+                    cursor: isCreatingOrderItem ? 'default' : 'pointer',
+                    width: 'fit-content',
+                  }}
+                  onClick={() => {
+                    if (!isCreatingOrderItem) {
+                      handleStartCreateOrderItem();
+                    }
+                  }}
+                >
+                  <FileAddOutlined />
+                  <Text
+                    style={{
+                      color: isCreatingOrderItem ? '#bfbfbf' : '#1677ff',
+                    }}
+                  >
+                    Створити новий запис
+                  </Text>
+                </Flex>
+              </div>
+            )}
           </Card>
         </Col>
       </Row>

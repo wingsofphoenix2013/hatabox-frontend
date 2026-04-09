@@ -323,10 +323,24 @@ function OrdersRegisterPage() {
     } catch (err) {
       console.error('Failed to create order:', err);
 
+      console.error(
+        'Failed to create order response data:',
+        err?.response?.data,
+      );
+      console.error(
+        'Failed to create order response status:',
+        err?.response?.status,
+      );
+
+      const responseData = err?.response?.data;
+
       const backendMessage =
-        err?.response?.data?.detail ||
-        err?.response?.data?.order_no?.[0] ||
-        err?.response?.data?.vendor?.[0];
+        responseData?.detail ||
+        responseData?.error ||
+        responseData?.message ||
+        responseData?.order_no?.[0] ||
+        responseData?.vendor?.[0] ||
+        (typeof responseData === 'string' ? responseData : null);
 
       message.error(backendMessage || 'Не вдалося створити замовлення.');
     } finally {

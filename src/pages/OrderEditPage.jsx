@@ -34,7 +34,7 @@ import {
   Upload,
   message,
 } from 'antd';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { formatQuantity } from '../utils/formatNumber';
 import api from '../api/client';
 
@@ -85,6 +85,7 @@ const getProgressStrokeColor = (percent, isOverdue = false) => {
 
 function OrderEditPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
 
@@ -1004,6 +1005,16 @@ function OrderEditPage() {
 
   const isDraft = order.status === 'draft';
 
+  const isNavigationBlocked =
+    Boolean(selectedFile) ||
+    uploadingFile ||
+    deletingFile ||
+    isCreatingOrderItem ||
+    creatingOrderItemLoading ||
+    Boolean(editingOrderItemId) ||
+    savingEditedOrderItem ||
+    Boolean(deletingOrderItemId);
+
   return (
     <div style={{ padding: 20 }}>
       <Flex
@@ -1218,8 +1229,14 @@ function OrderEditPage() {
             )}
           </Card>
 
-          <Card title="Статистика">
-            <Text type="secondary">Дані з’являться пізніше</Text>
+          <Card title="Навігація">
+            <Button
+              block
+              disabled={isNavigationBlocked}
+              onClick={() => navigate(`/orders/${order.id}`)}
+            >
+              В режим перегляду
+            </Button>
           </Card>
         </Col>
 

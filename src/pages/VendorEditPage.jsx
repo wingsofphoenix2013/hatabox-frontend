@@ -60,6 +60,7 @@ function VendorEditPage() {
         legal_name: vendorData.legal_name || '',
         phone: vendorData.phone || '',
         email: vendorData.email || '',
+        website: vendorData.website || '',
         tax_type: vendorData.tax_type || undefined,
         edrpou: vendorData.edrpou || '',
         ipn: vendorData.ipn || '',
@@ -92,6 +93,7 @@ function VendorEditPage() {
         legal_name: values.legal_name,
         phone: values.phone,
         email: values.email,
+        website: values.website,
         tax_type: values.tax_type,
         edrpou: values.edrpou,
         ipn: values.ipn,
@@ -243,9 +245,17 @@ function VendorEditPage() {
               <Form.Item
                 label="Адрес e-mail"
                 name="email"
-                style={{ marginBottom: 0 }}
+                style={{ marginBottom: 20 }}
               >
                 <Input />
+              </Form.Item>
+
+              <Form.Item
+                label="Сайт"
+                name="website"
+                style={{ marginBottom: 0 }}
+              >
+                <Input placeholder="https://example.com" />
               </Form.Item>
             </Card>
 

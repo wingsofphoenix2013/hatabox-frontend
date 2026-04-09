@@ -67,6 +67,7 @@ function VendorCreatePage() {
       formData.append('legal_name', values.legal_name || '');
       formData.append('phone', values.phone || '');
       formData.append('email', values.email || '');
+      formData.append('website', values.website || '');
       formData.append('tax_type', values.tax_type || '');
       formData.append('edrpou', values.edrpou || '');
       formData.append('ipn', values.ipn || '');
@@ -197,6 +198,10 @@ function VendorCreatePage() {
 
               <Form.Item label="Адрес e-mail" name="email">
                 <Input />
+              </Form.Item>
+
+              <Form.Item label="Сайт" name="website">
+                <Input placeholder="https://example.com" />
               </Form.Item>
             </Card>
 

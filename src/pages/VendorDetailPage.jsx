@@ -5,6 +5,7 @@ import {
   EditOutlined,
   FileAddOutlined,
   InfoCircleOutlined,
+  LinkOutlined,
   SaveOutlined,
 } from '@ant-design/icons';
 import {
@@ -595,6 +596,25 @@ function VendorDetailPage() {
                     }
                   />
                 </Flex>
+              ) : (
+                <Paragraph style={{ marginBottom: 0 }}>—</Paragraph>
+              ),
+            )}
+
+            {renderField(
+              'Сайт',
+              vendor.website ? (
+                <a
+                  href={vendor.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={vendor.website}
+                >
+                  <Flex align="center" gap={6}>
+                    <LinkOutlined style={{ color: '#1677ff' }} />
+                    <span>{vendor.website}</span>
+                  </Flex>
+                </a>
               ) : (
                 <Paragraph style={{ marginBottom: 0 }}>—</Paragraph>
               ),

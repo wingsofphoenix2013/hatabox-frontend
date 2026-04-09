@@ -1,14 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  DeleteOutlined,
+  FileImageOutlined,
+  FilePdfOutlined,
   InfoCircleOutlined,
   LinkOutlined,
+  UploadOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
+  Button,
   Card,
   Col,
   Flex,
+  Image,
+  Popconfirm,
   Progress,
   Row,
   Skeleton,
@@ -16,6 +23,8 @@ import {
   Tag,
   Tooltip,
   Typography,
+  Upload,
+  message,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
@@ -73,9 +82,22 @@ function OrderEditPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFilePreview, setSelectedFilePreview] = useState('');
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [deletingFile, setDeletingFile] = useState(false);
+
   useEffect(() => {
     loadOrderPage();
   }, [id]);
+
+  useEffect(() => {
+    return () => {
+      if (selectedFilePreview) {
+        URL.revokeObjectURL(selectedFilePreview);
+      }
+    };
+  }, [selectedFilePreview]);
 
   const loadOrderPage = async () => {
     try {
@@ -84,12 +106,146 @@ function OrderEditPage() {
 
       const response = await api.get(`orders/${id}/`);
       setOrder(response.data);
+      resetSelectedFile();
     } catch (err) {
       console.error('Failed to load order edit page:', err);
       setError('Не вдалося завантажити дані замовлення.');
       setOrder(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const MAX_FILE_SIZE_MB = 30;
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+  const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+
+  const currentFileUrl = order?.image || '';
+  const selectedFileName = selectedFile?.name || '';
+  const currentFileName = useMemo(() => {
+    if (!currentFileUrl) return '';
+
+    try {
+      const cleanUrl = currentFileUrl.split('?')[0];
+      const parts = cleanUrl.split('/');
+      return decodeURIComponent(parts[parts.length - 1] || '');
+    } catch {
+      return '';
+    }
+  }, [currentFileUrl]);
+
+  const isPdfFile = (fileNameOrUrl = '', mimeType = '') => {
+    const normalizedName = String(fileNameOrUrl).toLowerCase();
+    const normalizedType = String(mimeType).toLowerCase();
+
+    return (
+      normalizedType === 'application/pdf' || normalizedName.endsWith('.pdf')
+    );
+  };
+
+  const isImageFile = (fileNameOrUrl = '', mimeType = '') => {
+    const normalizedName = String(fileNameOrUrl).toLowerCase();
+    const normalizedType = String(mimeType).toLowerCase();
+
+    return (
+      normalizedType === 'image/jpeg' ||
+      normalizedType === 'image/png' ||
+      normalizedName.endsWith('.jpg') ||
+      normalizedName.endsWith('.jpeg') ||
+      normalizedName.endsWith('.png')
+    );
+  };
+
+  const resetSelectedFile = () => {
+    setSelectedFile(null);
+    setSelectedFilePreview('');
+  };
+
+  const handleFileChange = ({ fileList }) => {
+    const fileObj = fileList[0]?.originFileObj || null;
+
+    if (!fileObj) {
+      resetSelectedFile();
+      return;
+    }
+
+    if (!ACCEPTED_FILE_TYPES.includes(fileObj.type)) {
+      message.error('Дозволено завантажувати лише JPG, JPEG, PNG або PDF.');
+      resetSelectedFile();
+      return;
+    }
+
+    if (fileObj.size > MAX_FILE_SIZE_BYTES) {
+      message.error(
+        `Розмір файлу не повинен перевищувати ${MAX_FILE_SIZE_MB} МБ.`,
+      );
+      resetSelectedFile();
+      return;
+    }
+
+    if (selectedFilePreview) {
+      URL.revokeObjectURL(selectedFilePreview);
+    }
+
+    setSelectedFile(fileObj);
+
+    if (isImageFile(fileObj.name, fileObj.type)) {
+      setSelectedFilePreview(URL.createObjectURL(fileObj));
+    } else {
+      setSelectedFilePreview('');
+    }
+  };
+
+  const handleUploadFile = async () => {
+    if (!selectedFile) {
+      message.error('Спочатку оберіть файл.');
+      return;
+    }
+
+    try {
+      setUploadingFile(true);
+
+      const payload = new FormData();
+      payload.append('image', selectedFile);
+
+      const response = await api.patch(`orders/${id}/`, payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setOrder(response.data);
+      resetSelectedFile();
+      message.success('Файл успішно завантажено.');
+    } catch (err) {
+      console.error('Failed to upload order file:', err);
+      message.error('Не вдалося завантажити файл.');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDeleteFile = async () => {
+    try {
+      setDeletingFile(true);
+
+      const payload = new FormData();
+      payload.append('clear_image', 'true');
+
+      const response = await api.patch(`orders/${id}/`, payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setOrder(response.data);
+      resetSelectedFile();
+      message.success('Файл видалено.');
+    } catch (err) {
+      console.error('Failed to delete order file:', err);
+      message.error('Не вдалося видалити файл.');
+    } finally {
+      setDeletingFile(false);
     }
   };
 
@@ -273,10 +429,168 @@ function OrderEditPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
+                marginBottom: 16,
+                padding: 12,
               }}
             >
-              <Text type="secondary">Дані з’являться пізніше</Text>
+              {currentFileUrl ? (
+                isImageFile(currentFileUrl) ? (
+                  <Image
+                    src={currentFileUrl}
+                    alt="Order file"
+                    preview={false}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      margin: '0 auto',
+                      display: 'block',
+                    }}
+                  />
+                ) : (
+                  <Flex
+                    vertical
+                    align="center"
+                    justify="center"
+                    gap={12}
+                    style={{ textAlign: 'center' }}
+                  >
+                    <FilePdfOutlined
+                      style={{ fontSize: 52, color: '#cf1322' }}
+                    />
+                    <Text strong style={{ wordBreak: 'break-word' }}>
+                      {currentFileName || 'PDF файл'}
+                    </Text>
+                  </Flex>
+                )
+              ) : selectedFile ? (
+                isImageFile(selectedFile.name, selectedFile.type) &&
+                selectedFilePreview ? (
+                  <Image
+                    src={selectedFilePreview}
+                    alt="Selected file preview"
+                    preview={false}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      margin: '0 auto',
+                      display: 'block',
+                    }}
+                  />
+                ) : (
+                  <Flex
+                    vertical
+                    align="center"
+                    justify="center"
+                    gap={12}
+                    style={{ textAlign: 'center' }}
+                  >
+                    {isPdfFile(selectedFile.name, selectedFile.type) ? (
+                      <FilePdfOutlined
+                        style={{ fontSize: 52, color: '#cf1322' }}
+                      />
+                    ) : (
+                      <FileImageOutlined
+                        style={{ fontSize: 52, color: '#1677ff' }}
+                      />
+                    )}
+
+                    <Text strong style={{ wordBreak: 'break-word' }}>
+                      {selectedFileName}
+                    </Text>
+                  </Flex>
+                )
+              ) : (
+                <Text type="secondary">Файл не завантажено</Text>
+              )}
             </div>
+
+            {currentFileUrl ? (
+              <Flex vertical gap={8}>
+                <Button
+                  block
+                  onClick={() => window.open(currentFileUrl, '_blank')}
+                >
+                  Відкрити файл
+                </Button>
+
+                <Popconfirm
+                  title="Видалити файл?"
+                  description="Після видалення можна буде завантажити новий файл."
+                  okText="Так"
+                  cancelText="Ні"
+                  onConfirm={handleDeleteFile}
+                  disabled={deletingFile}
+                >
+                  <Button
+                    block
+                    danger
+                    icon={<DeleteOutlined />}
+                    loading={deletingFile}
+                  >
+                    Видалити файл
+                  </Button>
+                </Popconfirm>
+              </Flex>
+            ) : (
+              <Flex vertical gap={8}>
+                <Upload
+                  beforeUpload={() => false}
+                  maxCount={1}
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={handleFileChange}
+                  showUploadList={false}
+                >
+                  <Button block icon={<UploadOutlined />}>
+                    Обрати файл
+                  </Button>
+                </Upload>
+
+                {selectedFile && (
+                  <>
+                    <div
+                      style={{
+                        padding: '10px 12px',
+                        background: '#fafafa',
+                        border: '1px solid #f0f0f0',
+                        borderRadius: 8,
+                      }}
+                    >
+                      <Text
+                        strong
+                        style={{ display: 'block', marginBottom: 4 }}
+                      >
+                        Обраний файл
+                      </Text>
+                      <Text style={{ wordBreak: 'break-word' }}>
+                        {selectedFileName}
+                      </Text>
+                      <div style={{ marginTop: 4 }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          Максимальний розмір: {MAX_FILE_SIZE_MB} МБ
+                        </Text>
+                      </div>
+                    </div>
+
+                    <Flex vertical gap={8}>
+                      <Button
+                        type="primary"
+                        block
+                        loading={uploadingFile}
+                        onClick={handleUploadFile}
+                      >
+                        Завантажити файл
+                      </Button>
+
+                      <Button block onClick={resetSelectedFile}>
+                        Скасувати
+                      </Button>
+                    </Flex>
+                  </>
+                )}
+              </Flex>
+            )}
           </Card>
 
           <Card title="Статистика">

@@ -32,6 +32,7 @@ import {
   Tooltip,
   Typography,
   Upload,
+  Switch,
   message,
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -158,6 +159,9 @@ function OrderEditPage() {
   const [savingEditedOrderItem, setSavingEditedOrderItem] = useState(false);
   const [deletingOrderItemId, setDeletingOrderItemId] = useState(null);
 
+  const [vendorVat, setVendorVat] = useState(false);
+  const [priceWithVat, setPriceWithVat] = useState(true); // просто UI-заглушка
+
   useEffect(() => {
     loadOrderPage();
   }, [id]);
@@ -178,6 +182,18 @@ function OrderEditPage() {
       const response = await api.get(`orders/${id}/`);
       setOrder(response.data);
       resetSelectedFile();
+
+      if (response.data?.vendor) {
+        try {
+          const vendorResponse = await api.get(
+            `vendors/${response.data.vendor}/`,
+          );
+          setVendorVat(Boolean(vendorResponse.data?.vat));
+        } catch (e) {
+          console.error('Failed to load vendor:', e);
+          setVendorVat(false);
+        }
+      }
 
       const items = Array.isArray(response.data?.items)
         ? response.data.items
@@ -1356,42 +1372,56 @@ function OrderEditPage() {
               <Flex justify="space-between" align="center">
                 <span>Основна інформація</span>
 
-                <Flex align="center" gap={8}>
-                  <Title
-                    level={5}
-                    style={{
-                      margin: 0,
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    {order.vendor_name || '—'}
-                  </Title>
+                <Flex align="center" gap={16}>
+                  {vendorVat && (
+                    <Flex align="center" gap={8}>
+                      <Text>Ціна з ПДВ</Text>
+                      <Switch
+                        checked={priceWithVat}
+                        onChange={setPriceWithVat}
+                        checkedChildren="Так"
+                        unCheckedChildren="Ні"
+                      />
+                    </Flex>
+                  )}
 
-                  {order.vendor && (
-                    <>
-                      <Link
-                        to={`/orders/vendors/${order.vendor}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <InfoCircleOutlined
+                  <Flex align="center" gap={8}>
+                    <Title
+                      level={5}
+                      style={{
+                        margin: 0,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      {order.vendor_name || '—'}
+                    </Title>
+
+                    {order.vendor && (
+                      <>
+                        <Link
+                          to={`/orders/vendors/${order.vendor}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <InfoCircleOutlined
+                            style={{
+                              color: '#1677ff',
+                              fontSize: 16,
+                              cursor: 'pointer',
+                            }}
+                          />
+                        </Link>
+
+                        <LinkOutlined
                           style={{
-                            color: '#1677ff',
+                            color: '#8c8c8c',
                             fontSize: 16,
                             cursor: 'pointer',
                           }}
                         />
-                      </Link>
-
-                      <LinkOutlined
-                        style={{
-                          color: '#8c8c8c',
-                          fontSize: 16,
-                          cursor: 'pointer',
-                        }}
-                      />
-                    </>
-                  )}
+                      </>
+                    )}
+                  </Flex>
                 </Flex>
               </Flex>
             }

@@ -879,7 +879,6 @@ function VendorDetailPage() {
       </Drawer>
 
       <Drawer
-              <Drawer
         title="Створити новий рахунок"
         placement="right"
         size="large"

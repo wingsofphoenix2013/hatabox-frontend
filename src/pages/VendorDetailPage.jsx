@@ -22,6 +22,7 @@ import {
   Row,
   Select,
   Skeleton,
+  Switch,
   Table,
   Typography,
   message,
@@ -61,6 +62,7 @@ function VendorDetailPage() {
   const [isPaymentDetailsDrawerOpen, setIsPaymentDetailsDrawerOpen] =
     useState(false);
   const [drawerSaving, setDrawerSaving] = useState(false);
+  const [paymentDetailsSaving, setPaymentDetailsSaving] = useState(false);
 
   const [vendorItemsPage, setVendorItemsPage] = useState(1);
   const [vendorItemsTotal, setVendorItemsTotal] = useState(0);
@@ -72,6 +74,7 @@ function VendorDetailPage() {
     useState(false);
 
   const [form] = Form.useForm();
+  const [paymentDetailsForm] = Form.useForm();
 
   const [brandOptions, setBrandOptions] = useState([]);
   const [countryOptions, setCountryOptions] = useState([]);
@@ -213,6 +216,59 @@ function VendorDetailPage() {
     setSuggestedVendorSku('');
     setInvItemOptions([]);
     setIsNameTouched(false);
+  };
+
+  const openPaymentDetailsDrawer = () => {
+    paymentDetailsForm.resetFields();
+    paymentDetailsForm.setFieldsValue({
+      label: '',
+      iban: '',
+      is_default: vendorPaymentDetails.length === 0,
+    });
+    setIsPaymentDetailsDrawerOpen(true);
+  };
+
+  const closePaymentDetailsDrawer = () => {
+    setIsPaymentDetailsDrawerOpen(false);
+    paymentDetailsForm.resetFields();
+  };
+
+  const handleSavePaymentDetails = async (values) => {
+    try {
+      setPaymentDetailsSaving(true);
+
+      await api.post('vendor-payment-details/', {
+        vendor: Number(id),
+        label: values.label,
+        iban: values.iban,
+        is_default:
+          vendorPaymentDetails.length === 0 ? true : !!values.is_default,
+      });
+
+      message.success('Банківський рахунок створено');
+
+      closePaymentDetailsDrawer();
+      await loadVendorPaymentDetails();
+    } catch (err) {
+      console.error('Failed to create vendor payment details:', err);
+
+      const data = err?.response?.data;
+
+      if (data && typeof data === 'object') {
+        const fieldErrors = Object.entries(data)
+          .map(([field, msgs]) => {
+            const text = Array.isArray(msgs) ? msgs.join(', ') : String(msgs);
+            return `${field}: ${text}`;
+          })
+          .join(' | ');
+
+        message.error(fieldErrors || 'Не вдалося створити банківський рахунок');
+      } else {
+        message.error('Не вдалося створити банківський рахунок');
+      }
+    } finally {
+      setPaymentDetailsSaving(false);
+    }
   };
 
   const handleSearchInvItems = async (searchValue) => {
@@ -719,7 +775,7 @@ function VendorDetailPage() {
                   cursor: 'pointer',
                   width: 'fit-content',
                 }}
-                onClick={() => setIsPaymentDetailsDrawerOpen(true)}
+                onClick={openPaymentDetailsDrawer}
               >
                 <FileAddOutlined />
                 <Text style={{ color: '#595959' }}>Додати новий рахунок</Text>
@@ -882,10 +938,67 @@ function VendorDetailPage() {
         title="Створити новий рахунок"
         placement="right"
         size="large"
-        onClose={() => setIsPaymentDetailsDrawerOpen(false)}
+        onClose={closePaymentDetailsDrawer}
         open={isPaymentDetailsDrawerOpen}
       >
-        <Text type="secondary">Форма створення рахунку з’явиться пізніше</Text>
+        <Form
+          layout="vertical"
+          form={paymentDetailsForm}
+          onFinish={handleSavePaymentDetails}
+        >
+          <Form.Item
+            label="Назва рахунку"
+            name="label"
+            rules={[{ required: true, message: 'Вкажіть назву рахунку' }]}
+          >
+            <Input placeholder="Наприклад: Загальний р/р" />
+          </Form.Item>
+
+          <Form.Item
+            label="IBAN"
+            name="iban"
+            normalize={(value) =>
+              value ? value.replace(/\s+/g, '').toUpperCase() : value
+            }
+            rules={[
+              { required: true, message: 'Вкажіть IBAN' },
+              {
+                pattern: /^UA\d{27}$/,
+                message: 'IBAN має бути у форматі UA + 27 цифр (29 символів)',
+              },
+            ]}
+          >
+            <Input placeholder="UA123456789012345678901234567" maxLength={29} />
+          </Form.Item>
+
+          <Form.Item
+            label="Основний рахунок"
+            name="is_default"
+            valuePropName="checked"
+            style={{ marginBottom: 8 }}
+          >
+            <Switch disabled={vendorPaymentDetails.length === 0} />
+          </Form.Item>
+
+          {vendorPaymentDetails.length === 0 && (
+            <div style={{ marginTop: 0, marginBottom: 16 }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Перший рахунок постачальника автоматично є основним
+              </Text>
+            </div>
+          )}
+
+          <Flex gap={8}>
+            <Button onClick={closePaymentDetailsDrawer}>Відміна</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={paymentDetailsSaving}
+            >
+              Зберегти
+            </Button>
+          </Flex>
+        </Form>
       </Drawer>
 
       <Drawer

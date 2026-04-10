@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  CheckCircleOutlined,
   CloseCircleOutlined,
   CopyOutlined,
   EditOutlined,
@@ -49,12 +50,16 @@ function VendorDetailPage() {
 
   const [vendor, setVendor] = useState(null);
   const [vendorItems, setVendorItems] = useState([]);
+  const [vendorPaymentDetails, setVendorPaymentDetails] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [paymentDetailsLoading, setPaymentDetailsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isPaymentDetailsDrawerOpen, setIsPaymentDetailsDrawerOpen] =
+    useState(false);
   const [drawerSaving, setDrawerSaving] = useState(false);
 
   const [vendorItemsPage, setVendorItemsPage] = useState(1);
@@ -87,13 +92,14 @@ function VendorDetailPage() {
       const vendorResponse = await api.get(`vendors/${id}/`);
 
       setVendor(vendorResponse.data);
-      await loadVendorItems(1);
+      await Promise.all([loadVendorItems(1), loadVendorPaymentDetails()]);
     } catch (err) {
       console.error('Failed to load vendor page:', err);
       setError('Не вдалося завантажити дані постачальника.');
       setVendor(null);
       setVendorItems([]);
       setVendorItemsTotal(0);
+      setVendorPaymentDetails([]);
     } finally {
       setLoading(false);
     }
@@ -117,6 +123,24 @@ function VendorDetailPage() {
       setVendorItemsTotal(0);
     } finally {
       setItemsLoading(false);
+    }
+  };
+
+  const loadVendorPaymentDetails = async () => {
+    try {
+      setPaymentDetailsLoading(true);
+
+      const response = await api.get(`vendor-payment-details/?vendor=${id}`);
+
+      setVendorPaymentDetails(
+        Array.isArray(response.data.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load vendor payment details:', err);
+      message.error('Не вдалося завантажити банківські реквізити');
+      setVendorPaymentDetails([]);
+    } finally {
+      setPaymentDetailsLoading(false);
     }
   };
 
@@ -474,6 +498,51 @@ function VendorDetailPage() {
     },
   ];
 
+  const paymentDetailsColumns = [
+    {
+      title: 'Назва',
+      dataIndex: 'label',
+      key: 'label',
+      render: (value) => value || '—',
+    },
+    {
+      title: 'IBAN',
+      dataIndex: 'iban',
+      key: 'iban',
+      render: (value) => {
+        if (!value) return '—';
+
+        return (
+          <Flex align="center" gap={6}>
+            <span>{value}</span>
+            <CopyOutlined
+              style={{ color: '#8c8c8c', cursor: 'pointer' }}
+              onClick={() => handleCopy(value, 'IBAN скопійовано')}
+            />
+          </Flex>
+        );
+      },
+    },
+    {
+      title: 'Головний',
+      dataIndex: 'is_default',
+      key: 'is_default',
+      align: 'center',
+      render: (value) =>
+        value ? (
+          <Flex align="center" justify="center" gap={6}>
+            <CheckCircleOutlined style={{ color: '#52c41a' }} />
+            <span>Так</span>
+          </Flex>
+        ) : (
+          <Flex align="center" justify="center" gap={6}>
+            <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+            <span>Ні</span>
+          </Flex>
+        ),
+    },
+  ];
+
   if (loading) {
     return (
       <div style={{ padding: 20 }}>
@@ -631,6 +700,33 @@ function VendorDetailPage() {
             />
           </Card>
 
+          <Card title="Банківські реквізити" style={{ marginBottom: 20 }}>
+            <Table
+              columns={paymentDetailsColumns}
+              dataSource={vendorPaymentDetails}
+              rowKey="id"
+              loading={paymentDetailsLoading}
+              pagination={false}
+              size="small"
+            />
+
+            <div style={{ marginTop: 16 }}>
+              <Flex
+                align="center"
+                gap={8}
+                style={{
+                  color: '#595959',
+                  cursor: 'pointer',
+                  width: 'fit-content',
+                }}
+                onClick={() => setIsPaymentDetailsDrawerOpen(true)}
+              >
+                <FileAddOutlined />
+                <Text style={{ color: '#595959' }}>Додати новий рахунок</Text>
+              </Flex>
+            </div>
+          </Card>
+
           <Card title="Постачувані комплектуючі">
             <Table
               rowKey="id"
@@ -780,6 +876,17 @@ function VendorDetailPage() {
             </Button>
           </Flex>
         </Form>
+      </Drawer>
+
+      <Drawer
+              <Drawer
+        title="Створити новий рахунок"
+        placement="right"
+        size="large"
+        onClose={() => setIsPaymentDetailsDrawerOpen(false)}
+        open={isPaymentDetailsDrawerOpen}
+      >
+        <Text type="secondary">Форма створення рахунку з’явиться пізніше</Text>
       </Drawer>
 
       <Drawer

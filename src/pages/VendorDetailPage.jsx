@@ -530,6 +530,24 @@ function VendorDetailPage() {
       render: (value) => value || '—',
     },
     {
+      title: 'ПДВ',
+      dataIndex: 'vat',
+      key: 'vat',
+      align: 'center',
+      render: (value) =>
+        value ? (
+          <Flex align="center" justify="center" gap={6}>
+            <CheckCircleOutlined style={{ color: '#52c41a' }} />
+            <span>Так</span>
+          </Flex>
+        ) : (
+          <Flex align="center" justify="center" gap={6}>
+            <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+            <span>Ні</span>
+          </Flex>
+        ),
+    },
+    {
       title: 'Код ЄДРПОУ',
       dataIndex: 'edrpou',
       key: 'edrpou',

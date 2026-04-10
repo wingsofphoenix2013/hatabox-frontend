@@ -1372,56 +1372,42 @@ function OrderEditPage() {
               <Flex justify="space-between" align="center">
                 <span>Основна інформація</span>
 
-                <Flex align="center" gap={16}>
-                  {vendorVat && (
-                    <Flex align="center" gap={8}>
-                      <Text>Ціна з ПДВ</Text>
-                      <Switch
-                        checked={priceWithVat}
-                        onChange={setPriceWithVat}
-                        checkedChildren="Так"
-                        unCheckedChildren="Ні"
-                      />
-                    </Flex>
-                  )}
+                <Flex align="center" gap={8}>
+                  <Title
+                    level={5}
+                    style={{
+                      margin: 0,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {order.vendor_name || '—'}
+                  </Title>
 
-                  <Flex align="center" gap={8}>
-                    <Title
-                      level={5}
-                      style={{
-                        margin: 0,
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      {order.vendor_name || '—'}
-                    </Title>
-
-                    {order.vendor && (
-                      <>
-                        <Link
-                          to={`/orders/vendors/${order.vendor}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <InfoCircleOutlined
-                            style={{
-                              color: '#1677ff',
-                              fontSize: 16,
-                              cursor: 'pointer',
-                            }}
-                          />
-                        </Link>
-
-                        <LinkOutlined
+                  {order.vendor && (
+                    <>
+                      <Link
+                        to={`/orders/vendors/${order.vendor}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <InfoCircleOutlined
                           style={{
-                            color: '#8c8c8c',
+                            color: '#1677ff',
                             fontSize: 16,
                             cursor: 'pointer',
                           }}
                         />
-                      </>
-                    )}
-                  </Flex>
+                      </Link>
+
+                      <LinkOutlined
+                        style={{
+                          color: '#8c8c8c',
+                          fontSize: 16,
+                          cursor: 'pointer',
+                        }}
+                      />
+                    </>
+                  )}
                 </Flex>
               </Flex>
             }
@@ -1498,7 +1484,25 @@ function OrderEditPage() {
             />
           </Card>
 
-          <Card title="Замовлення">
+          <Card
+            title={
+              <Flex justify="space-between" align="center" wrap>
+                <span>Замовлення</span>
+
+                {vendorVat && (
+                  <Flex align="center" gap={8}>
+                    <Text>Ціна з ПДВ</Text>
+                    <Switch
+                      checked={priceWithVat}
+                      onChange={setPriceWithVat}
+                      checkedChildren="Так"
+                      unCheckedChildren="Ні"
+                    />
+                  </Flex>
+                )}
+              </Flex>
+            }
+          >
             <Table
               rowKey="id"
               columns={orderItemsColumns}

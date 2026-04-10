@@ -367,7 +367,7 @@ function OrderEditPage() {
       setCreatingVendorItemOptions(
         filteredResults.map((item) => ({
           value: item.id,
-          label: item.item_name || item.name || `ID ${item.id}`,
+          label: item.name || item.item_name || `ID ${item.id}`,
           item,
         })),
       );
@@ -434,7 +434,7 @@ function OrderEditPage() {
     setEditingVendorItemId(record.vendor_item || null);
     setEditingVendorItemData({
       id: record.vendor_item,
-      item_name: record.vendor_item_inv_item_name || record.vendor_item_name,
+      item_name: record.vendor_item_name || record.vendor_item_inv_item_name,
       vendor_sku: record.vendor_item_sku || '',
     });
     setEditingQuantity(record.quantity ?? null);
@@ -450,13 +450,13 @@ function OrderEditPage() {
             {
               value: record.vendor_item,
               label:
-                record.vendor_item_inv_item_name ||
                 record.vendor_item_name ||
+                record.vendor_item_inv_item_name ||
                 `ID ${record.vendor_item}`,
               item: {
                 id: record.vendor_item,
                 item_name:
-                  record.vendor_item_inv_item_name || record.vendor_item_name,
+                  record.vendor_item_name || record.vendor_item_inv_item_name,
                 vendor_sku: record.vendor_item_sku || '',
               },
             },
@@ -506,7 +506,7 @@ function OrderEditPage() {
       setEditingVendorItemOptions(
         filteredResults.map((item) => ({
           value: item.id,
-          label: item.item_name || item.name || `ID ${item.id}`,
+          label: item.name || item.item_name || `ID ${item.id}`,
           item,
         })),
       );
@@ -869,7 +869,7 @@ function OrderEditPage() {
         }
 
         return (
-          record.vendor_item_inv_item_name || record.vendor_item_name || '—'
+          record.vendor_item_name || record.vendor_item_inv_item_name || '—'
         );
       },
     },

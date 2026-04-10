@@ -12,6 +12,7 @@ import {
   Row,
   Select,
   Skeleton,
+  Switch,
   Typography,
   message,
 } from 'antd';
@@ -61,6 +62,7 @@ function VendorEditPage() {
         phone: vendorData.phone || '',
         email: vendorData.email || '',
         website: vendorData.website || '',
+        vat: !!vendorData.vat,
         tax_type: vendorData.tax_type || undefined,
         edrpou: vendorData.edrpou || '',
         ipn: vendorData.ipn || '',
@@ -94,6 +96,7 @@ function VendorEditPage() {
         phone: values.phone,
         email: values.email,
         website: values.website,
+        vat: values.vat,
         tax_type: values.tax_type,
         edrpou: values.edrpou,
         ipn: values.ipn,
@@ -282,13 +285,22 @@ function VendorEditPage() {
                 <Input />
               </Form.Item>
 
-              <Form.Item label="Код ІПН" name="ipn" style={{ marginBottom: 0 }}>
+              <Form.Item
+                label="Код ІПН"
+                name="ipn"
+                style={{ marginBottom: 20 }}
+              >
                 <Input />
               </Form.Item>
-            </Card>
 
-            <Card title="Постачувані комплектуючі">
-              <Text type="secondary">Дані з’являться пізніше</Text>
+              <Form.Item
+                label="Платник ПДВ"
+                name="vat"
+                valuePropName="checked"
+                style={{ marginBottom: 0 }}
+              >
+                <Switch />
+              </Form.Item>
             </Card>
           </Col>
 

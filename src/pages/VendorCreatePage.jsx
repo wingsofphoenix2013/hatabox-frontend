@@ -12,6 +12,7 @@ import {
   Row,
   Select,
   Skeleton,
+  Switch,
   Typography,
   Upload,
   message,
@@ -68,6 +69,7 @@ function VendorCreatePage() {
       formData.append('phone', values.phone || '');
       formData.append('email', values.email || '');
       formData.append('website', values.website || '');
+      formData.append('vat', values.vat ? 'true' : 'false');
       formData.append('tax_type', values.tax_type || '');
       formData.append('edrpou', values.edrpou || '');
       formData.append('ipn', values.ipn || '');
@@ -104,7 +106,12 @@ function VendorCreatePage() {
 
   return (
     <div style={{ padding: 20 }}>
-      <Form form={form} layout="vertical" onFinish={handleSave}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSave}
+        initialValues={{ vat: false }}
+      >
         <Flex
           justify="space-between"
           align="flex-start"
@@ -221,6 +228,10 @@ function VendorCreatePage() {
 
               <Form.Item label="Код ІПН" name="ipn">
                 <Input />
+              </Form.Item>
+
+              <Form.Item label="Платник ПДВ" name="vat" valuePropName="checked">
+                <Switch />
               </Form.Item>
             </Card>
 

@@ -147,6 +147,21 @@ function VendorDetailPage() {
     }
   };
 
+  const handleSetDefaultPayment = async (record) => {
+    try {
+      await api.patch(`vendor-payment-details/${record.id}/`, {
+        is_default: true,
+      });
+
+      message.success('Основний рахунок оновлено');
+
+      await loadVendorPaymentDetails();
+    } catch (err) {
+      console.error('Failed to set default payment details:', err);
+      message.error('Не вдалося оновити основний рахунок');
+    }
+  };
+
   const handleCopy = async (value, successText = 'Скопійовано') => {
     if (!value) return;
 
@@ -584,14 +599,20 @@ function VendorDetailPage() {
       dataIndex: 'is_default',
       key: 'is_default',
       align: 'center',
-      render: (value) =>
+      render: (value, record) =>
         value ? (
           <Flex align="center" justify="center" gap={6}>
             <CheckCircleOutlined style={{ color: '#52c41a' }} />
             <span>Так</span>
           </Flex>
         ) : (
-          <Flex align="center" justify="center" gap={6}>
+          <Flex
+            align="center"
+            justify="center"
+            gap={6}
+            style={{ cursor: 'pointer' }}
+            onClick={() => handleSetDefaultPayment(record)}
+          >
             <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
             <span>Ні</span>
           </Flex>

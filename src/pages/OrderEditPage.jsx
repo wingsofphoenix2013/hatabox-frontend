@@ -56,6 +56,23 @@ const formatDateUa = (value) => {
   return `${day}/${month}/${year}`;
 };
 
+const formatPurchasePrice = (value) => {
+  if (value === null || value === undefined || value === '') {
+    return '—';
+  }
+
+  const num = Number(value);
+
+  if (Number.isNaN(num)) {
+    return value;
+  }
+
+  return new Intl.NumberFormat('uk-UA', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4,
+  }).format(num);
+};
+
 const formatMoney = (value) =>
   new Intl.NumberFormat('uk-UA', {
     minimumFractionDigits: 2,
@@ -935,12 +952,12 @@ function OrderEditPage() {
           return (
             <InputNumber
               min={0}
-              step={0.01}
-              precision={2}
+              step={0.0001}
+              precision={4}
               controls={false}
               value={creatingPrice}
               onChange={(value) => setCreatingPrice(value)}
-              style={{ width: 110 }}
+              style={{ width: 120 }}
             />
           );
         }
@@ -949,18 +966,18 @@ function OrderEditPage() {
           return (
             <InputNumber
               min={0}
-              step={0.01}
-              precision={2}
+              step={0.0001}
+              precision={4}
               controls={false}
               value={editingPrice}
               onChange={(value) => setEditingPrice(value)}
-              style={{ width: 110 }}
+              style={{ width: 120 }}
             />
           );
         }
 
         return record.agreed_price !== null && record.agreed_price !== undefined
-          ? `${record.agreed_price} ₴`
+          ? `${formatPurchasePrice(record.agreed_price)} ₴`
           : '—';
       },
     },

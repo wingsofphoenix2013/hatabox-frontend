@@ -80,6 +80,44 @@ const formatMoney = (value) =>
     maximumFractionDigits: 2,
   }).format(Number(value) || 0);
 
+const roundTo4 = (value) => {
+  const num = Number(value);
+
+  if (Number.isNaN(num)) {
+    return 0;
+  }
+
+  return Math.round(num * 10000) / 10000;
+};
+
+const toStoredAgreedPrice = (inputPrice, pricesIncludeVat) => {
+  const num = Number(inputPrice);
+
+  if (Number.isNaN(num)) {
+    return inputPrice;
+  }
+
+  if (pricesIncludeVat) {
+    return roundTo4(num);
+  }
+
+  return roundTo4(num * 1.2);
+};
+
+const toDisplayedInputPrice = (storedPrice, pricesIncludeVat) => {
+  const num = Number(storedPrice);
+
+  if (Number.isNaN(num)) {
+    return storedPrice;
+  }
+
+  if (pricesIncludeVat) {
+    return roundTo4(num);
+  }
+
+  return roundTo4(num / 1.2);
+};
+
 const getStatusTagColor = (status) => {
   switch (status) {
     case 'draft':
@@ -441,7 +479,7 @@ function OrderEditPage() {
         order: Number(id),
         vendor_item: creatingVendorItemId,
         quantity: creatingQuantity,
-        agreed_price: creatingPrice,
+        agreed_price: toStoredAgreedPrice(creatingPrice, pricesIncludeVat),
         expected_delivery_date: creatingExpectedDate.format('YYYY-MM-DD'),
       });
 
@@ -470,7 +508,11 @@ function OrderEditPage() {
       vendor_sku: record.vendor_item_sku || '',
     });
     setEditingQuantity(record.quantity ?? null);
-    setEditingPrice(record.agreed_price ?? null);
+    setEditingPrice(
+      record.agreed_price !== null && record.agreed_price !== undefined
+        ? toDisplayedInputPrice(record.agreed_price, pricesIncludeVat)
+        : null,
+    );
     setEditingExpectedDate(
       record.expected_delivery_date
         ? dayjs(record.expected_delivery_date, 'YYYY-MM-DD')
@@ -586,7 +628,7 @@ function OrderEditPage() {
         await api.patch(`order-items/${record.id}/`, {
           vendor_item: editingVendorItemId,
           quantity: editingQuantity,
-          agreed_price: editingPrice,
+          agreed_price: toStoredAgreedPrice(editingPrice, pricesIncludeVat),
           expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
         });
       }
@@ -958,7 +1000,7 @@ function OrderEditPage() {
       },
     },
     {
-      title: 'Ціна',
+      title: pricesIncludeVat ? 'Ціна' : 'Ціна без ПДВ',
       key: 'agreed_price',
       width: 140,
       align: 'center',
@@ -992,7 +1034,9 @@ function OrderEditPage() {
         }
 
         return record.agreed_price !== null && record.agreed_price !== undefined
-          ? `${formatPurchasePrice(record.agreed_price)} ₴`
+          ? `${formatPurchasePrice(
+              toDisplayedInputPrice(record.agreed_price, pricesIncludeVat),
+            )} ₴`
           : '—';
       },
     },
@@ -1129,6 +1173,7 @@ function OrderEditPage() {
 
   const isDraft = order.status === 'draft';
   const isInProgress = order.status === 'in_progress';
+  const pricesIncludeVat = Boolean(order.prices_include_vat);
 
   const isNavigationBlocked =
     Boolean(selectedFile) ||

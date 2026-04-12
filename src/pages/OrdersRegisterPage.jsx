@@ -103,6 +103,7 @@ function OrdersRegisterPage() {
   const [vendorOptions, setVendorOptions] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [suggestedOrderNo, setSuggestedOrderNo] = useState('');
+  const [selectedVendorVat, setSelectedVendorVat] = useState(null);
 
   const [form] = Form.useForm();
 
@@ -207,6 +208,7 @@ function OrdersRegisterPage() {
     setVendorOptions([]);
     setSelectedVendor(null);
     setSuggestedOrderNo('');
+    setSelectedVendorVat(null);
   };
 
   const closeCreateDrawer = () => {
@@ -215,6 +217,7 @@ function OrdersRegisterPage() {
     setVendorOptions([]);
     setSelectedVendor(null);
     setSuggestedOrderNo('');
+    setSelectedVendorVat(null);
   };
 
   const handleSearchVendors = async (searchValue) => {
@@ -292,7 +295,14 @@ function OrdersRegisterPage() {
     const vendor = option?.item || null;
 
     setSelectedVendor(vendor);
+    setSelectedVendorVat(vendor?.vat ?? null);
     form.setFieldValue('vendor', value);
+
+    if (vendor?.vat === false) {
+      form.setFieldValue('invoice_price_format', 'without_vat');
+    } else {
+      form.setFieldValue('invoice_price_format', undefined);
+    }
 
     await buildSuggestedOrderNo(vendor);
   };
@@ -306,12 +316,18 @@ function OrdersRegisterPage() {
     try {
       setCreateSaving(true);
 
+      const pricesIncludeVat =
+        selectedVendorVat === true
+          ? values.invoice_price_format === 'with_vat'
+          : false;
+
       const payload = new FormData();
       payload.append('vendor', String(values.vendor));
       payload.append('order_no', values.order_no);
       payload.append('comment', values.comment || '');
       payload.append('discount_amount', '0');
       payload.append('status', 'draft');
+      payload.append('prices_include_vat', String(pricesIncludeVat));
 
       const response = await api.post('orders/', payload);
 
@@ -756,6 +772,39 @@ function OrdersRegisterPage() {
               Наприклад — {suggestedOrderNo || 'XXX_XXXXX_1'}
             </Text>
           </div>
+
+          <Form.Item
+            label="Формат рахунку постачальника"
+            name="invoice_price_format"
+            rules={[
+              {
+                validator: async (_, value) => {
+                  if (selectedVendorVat === true && !value) {
+                    throw new Error('Оберіть формат рахунку постачальника');
+                  }
+                },
+              },
+            ]}
+          >
+            <Select
+              placeholder={
+                selectedVendor
+                  ? 'Оберіть формат рахунку'
+                  : 'Спочатку оберіть постачальника'
+              }
+              disabled={!selectedVendor || selectedVendorVat === false}
+              options={[
+                {
+                  value: 'without_vat',
+                  label: 'Ціна у рахунку без ПДВ',
+                },
+                {
+                  value: 'with_vat',
+                  label: 'Ціна у рахунку з ПДВ',
+                },
+              ]}
+            />
+          </Form.Item>
 
           <Form.Item
             label="Коментар"

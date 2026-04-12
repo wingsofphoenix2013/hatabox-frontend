@@ -666,6 +666,10 @@ function OrderEditPage() {
     }
   };
 
+  const isDraft = order?.status === 'draft';
+  const isInProgress = order?.status === 'in_progress';
+  const pricesIncludeVat = Boolean(order?.prices_include_vat);
+
   const summaryColumns = [
     {
       title: 'Статус',
@@ -1170,10 +1174,6 @@ function OrderEditPage() {
       </div>
     );
   }
-
-  const isDraft = order.status === 'draft';
-  const isInProgress = order.status === 'in_progress';
-  const pricesIncludeVat = Boolean(order.prices_include_vat);
 
   const isNavigationBlocked =
     Boolean(selectedFile) ||

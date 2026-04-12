@@ -1558,42 +1558,58 @@ function OrderEditPage() {
               size="small"
             />
 
-            {isDraft && (
-              <div style={{ marginTop: 16 }}>
-                <Flex
-                  align="center"
-                  gap={8}
-                  style={{
-                    color:
-                      isCreatingOrderItem || editingOrderItemId
-                        ? '#bfbfbf'
-                        : '#1677ff',
-                    cursor:
-                      isCreatingOrderItem || editingOrderItemId
-                        ? 'default'
-                        : 'pointer',
-                    width: 'fit-content',
-                  }}
-                  onClick={() => {
-                    if (!isCreatingOrderItem && !editingOrderItemId) {
-                      handleStartCreateOrderItem();
-                    }
-                  }}
-                >
-                  <FileAddOutlined />
-                  <Text
-                    style={{
-                      color:
-                        isCreatingOrderItem || editingOrderItemId
-                          ? '#bfbfbf'
-                          : '#000',
-                    }}
-                  >
-                    Створити новий запис
+            <div style={{ marginTop: 16 }}>
+              <Flex justify="space-between" align="flex-end" gap={16} wrap>
+                <div>
+                  {isDraft && (
+                    <Flex
+                      align="center"
+                      gap={8}
+                      style={{
+                        color:
+                          isCreatingOrderItem || editingOrderItemId
+                            ? '#bfbfbf'
+                            : '#1677ff',
+                        cursor:
+                          isCreatingOrderItem || editingOrderItemId
+                            ? 'default'
+                            : 'pointer',
+                        width: 'fit-content',
+                      }}
+                      onClick={() => {
+                        if (!isCreatingOrderItem && !editingOrderItemId) {
+                          handleStartCreateOrderItem();
+                        }
+                      }}
+                    >
+                      <FileAddOutlined />
+                      <Text
+                        style={{
+                          color:
+                            isCreatingOrderItem || editingOrderItemId
+                              ? '#bfbfbf'
+                              : '#000',
+                        }}
+                      >
+                        Створити новий запис
+                      </Text>
+                    </Flex>
+                  )}
+                </div>
+
+                <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                  <Text style={{ fontSize: 18, color: '#000' }}>
+                    Рахунок на {formatMoney(order.order_total_amount)} ₴
                   </Text>
-                </Flex>
-              </div>
-            )}
+
+                  <div>
+                    <Text style={{ fontSize: 16, color: '#000' }}>
+                      (у тому числі ПДВ {formatMoney(order.vat_amount)} ₴)
+                    </Text>
+                  </div>
+                </div>
+              </Flex>
+            </div>
           </Card>
         </Col>
       </Row>

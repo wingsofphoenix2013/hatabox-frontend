@@ -1598,15 +1598,12 @@ function OrderEditPage() {
                 </div>
 
                 <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-                  <Text style={{ fontSize: 18, color: '#000' }}>
-                    Рахунок на {formatMoney(order.order_total_amount)} ₴
+                  <Text style={{ fontSize: 14, color: '#000' }}>
+                    Рахунок на{' '}
+                    <strong>{formatMoney(order.order_total_amount)} ₴</strong>{' '}
+                    (у т.ч. ПДВ{' '}
+                    <strong>{formatMoney(order.vat_amount)} ₴</strong>)
                   </Text>
-
-                  <div>
-                    <Text style={{ fontSize: 16, color: '#000' }}>
-                      (у тому числі ПДВ {formatMoney(order.vat_amount)} ₴)
-                    </Text>
-                  </div>
                 </div>
               </Flex>
             </div>

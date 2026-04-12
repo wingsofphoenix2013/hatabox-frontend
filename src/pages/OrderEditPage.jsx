@@ -160,7 +160,6 @@ function OrderEditPage() {
   const [deletingOrderItemId, setDeletingOrderItemId] = useState(null);
 
   const [vendorVat, setVendorVat] = useState(false);
-  const [priceWithVat, setPriceWithVat] = useState(true); // просто UI-заглушка
 
   useEffect(() => {
     loadOrderPage();
@@ -1491,10 +1490,10 @@ function OrderEditPage() {
 
                 {vendorVat && (
                   <Flex align="center" gap={8}>
-                    <Text>Ціна з ПДВ</Text>
+                    <Text>Ціна у рахунку враховує ПДВ</Text>
                     <Switch
-                      checked={priceWithVat}
-                      onChange={setPriceWithVat}
+                      checked={Boolean(order.prices_include_vat)}
+                      disabled
                       checkedChildren="Так"
                       unCheckedChildren="Ні"
                     />

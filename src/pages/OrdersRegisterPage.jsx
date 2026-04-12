@@ -796,11 +796,27 @@ function OrdersRegisterPage() {
               options={[
                 {
                   value: 'without_vat',
-                  label: 'Ціна у рахунку без ПДВ',
+                  label: (
+                    <span>
+                      Ціна у рахунку{' '}
+                      <span style={{ color: '#ff4d4f', fontWeight: 600 }}>
+                        без
+                      </span>{' '}
+                      ПДВ
+                    </span>
+                  ),
                 },
                 {
                   value: 'with_vat',
-                  label: 'Ціна у рахунку з ПДВ',
+                  label: (
+                    <span>
+                      Ціна у рахунку{' '}
+                      <span style={{ color: '#52c41a', fontWeight: 600 }}>
+                        з
+                      </span>{' '}
+                      ПДВ
+                    </span>
+                  ),
                 },
               ]}
             />

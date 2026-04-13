@@ -320,18 +320,22 @@ function OrderDetailPage() {
     try {
       setSavingPayment(true);
 
-      const payload = {
-        status: editingPaymentStatus,
-        payment_amount: editingPaymentAmount,
-      };
+      const payload = new FormData();
+      payload.append('status', editingPaymentStatus);
+      payload.append('payment_amount', String(editingPaymentAmount));
 
       if (editingPaymentStatus === 'paid') {
-        payload.payment_date = editingPaymentDate.format('YYYY-MM-DD');
+        payload.append('payment_date', editingPaymentDate.format('YYYY-MM-DD'));
       }
 
       const response = await api.patch(
         `payment-documents/${selectedPaymentDocument.id}/`,
         payload,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
       );
 
       message.success('Платіжну інструкцію оновлено.');
@@ -993,28 +997,28 @@ function OrderDetailPage() {
                     precision={2}
                     value={editingPaymentAmount}
                     onChange={setEditingPaymentAmount}
-                    addonAfter="₴"
                     disabled={selectedPaymentDocument.status === 'paid'}
                   />
                 </div>
-
-                <Flex justify="flex-end" gap={8}>
-                  <Button onClick={handleClosePaymentsDrawer}>Відміна</Button>
-                  <Button
-                    type="primary"
-                    loading={savingPayment}
-                    onClick={handleSavePayment}
-                    disabled={
-                      selectedPaymentDocument.status === 'paid' ||
-                      selectedPaymentDocument.status === 'cancelled'
-                    }
-                  >
-                    Зберегти
-                  </Button>
-                </Flex>
               </Flex>
             </Card>
           )}
+
+          <Flex justify="flex-end" gap={8}>
+            <Button onClick={handleClosePaymentsDrawer}>Відміна</Button>
+            <Button
+              type="primary"
+              loading={savingPayment}
+              onClick={handleSavePayment}
+              disabled={
+                !selectedPaymentDocument ||
+                selectedPaymentDocument.status === 'paid' ||
+                selectedPaymentDocument.status === 'cancelled'
+              }
+            >
+              Зберегти
+            </Button>
+          </Flex>
         </Flex>
       </Drawer>
     </div>

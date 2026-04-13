@@ -54,6 +54,7 @@ import {
   PAYMENT_STATUS_LABELS,
 } from '../constants/orderStatus';
 import { getFileNameFromUrl, isImageFile } from '../utils/fileHelpers';
+import { getReceiptDocumentTotal } from '../utils/orderCalculations';
 
 const { Title, Text } = Typography;
 
@@ -557,24 +558,6 @@ function OrderDetailPage() {
     },
   ];
 
-  const getReceiptDocumentTotal = (receiptDocument) => {
-    const docItems = Array.isArray(receiptDocument?.items)
-      ? receiptDocument.items
-      : [];
-    const orderItems = Array.isArray(order?.items) ? order.items : [];
-
-    return docItems.reduce((sum, receiptItem) => {
-      const sourceOrderItem = orderItems.find(
-        (item) => item.id === receiptItem.order_item,
-      );
-
-      const agreedPrice = Number(sourceOrderItem?.agreed_price) || 0;
-      const receivedQuantity = Number(receiptItem?.received_quantity) || 0;
-
-      return sum + agreedPrice * receivedQuantity;
-    }, 0);
-  };
-
   const receiptColumns = [
     {
       title: 'Дата',
@@ -658,7 +641,13 @@ function OrderDetailPage() {
         return (
           <Popover content={popoverContent} trigger="click">
             <Button type="link" style={{ padding: 0 }}>
-              {formatMoney(getReceiptDocumentTotal(record))} ₴
+              {formatMoney(
+                getReceiptDocumentTotal(
+                  record,
+                  Array.isArray(order?.items) ? order.items : [],
+                ),
+              )}{' '}
+              ₴
             </Button>
           </Popover>
         );

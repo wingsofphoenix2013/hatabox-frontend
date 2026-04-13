@@ -576,8 +576,6 @@ function OrderDetailPage() {
                   >
                     Редагувати оплати
                   </Button>
-
-                  <Divider style={{ margin: '4px 0 8px 0' }} />
                 </>
               )}
 

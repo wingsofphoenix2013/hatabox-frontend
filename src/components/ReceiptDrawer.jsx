@@ -237,13 +237,14 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     {
       title: 'Назва компонента',
       key: 'order_item_name',
+      width: 280,
       render: (_, record) => {
         if (record.id === 'new-row') {
           return (
             <Select
               showSearch
-              placeholder="Оберіть товар із замовлення"
-              style={{ width: '100%' }}
+              placeholder="Оберіть товар"
+              style={{ width: '100%', fontSize: 13 }}
               value={receiptOrderItemId}
               onChange={(value) => {
                 setReceiptOrderItemId(value);
@@ -255,10 +256,24 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
           );
         }
 
-        return (
+        const name =
           record.order_item_vendor_item_name ||
           record.order_item_inv_item_name ||
-          '—'
+          '—';
+
+        return (
+          <div
+            style={{
+              maxWidth: 260,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              fontSize: 13,
+            }}
+            title={name}
+          >
+            {name}
+          </div>
         );
       },
     },
@@ -279,7 +294,7 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     {
       title: 'К-сть',
       key: 'received_quantity',
-      width: 140,
+      width: 110,
       align: 'center',
       render: (_, record) => {
         if (record.id === 'new-row') {
@@ -293,9 +308,10 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
               }
               step={0.001}
               controls={false}
+              size="small"
               value={receiptQuantity}
               onChange={setReceiptQuantity}
-              style={{ width: 120 }}
+              style={{ width: 90 }}
             />
           );
         }

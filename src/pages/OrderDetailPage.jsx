@@ -22,8 +22,10 @@ import {
   Drawer,
   Flex,
   Image,
+  Input,
   InputNumber,
   Popconfirm,
+  Popover,
   Progress,
   Row,
   Select,
@@ -180,6 +182,7 @@ function OrderDetailPage() {
   const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
+  const [receiptDocuments, setReceiptDocuments] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -207,6 +210,8 @@ function OrderDetailPage() {
   const isDraft = order?.status === 'draft';
   const isInProgress = order?.status === 'in_progress';
   const hasOrderItems = Array.isArray(order?.items) && order.items.length > 0;
+  const hasReceiptDocuments =
+    Array.isArray(receiptDocuments) && receiptDocuments.length > 0;
   const canSendToWork = isDraft && hasOrderItems;
 
   const selectedPaymentDocument = useMemo(() => {
@@ -279,6 +284,19 @@ function OrderDetailPage() {
     loadRecipientAccounts();
   }, [isPaymentsDrawerOpen, order?.vendor]);
 
+  const loadReceiptDocuments = async (orderId) => {
+    try {
+      const response = await api.get(`receipt-documents/?order=${orderId}`);
+
+      setReceiptDocuments(
+        Array.isArray(response.data?.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load receipt documents:', err);
+      setReceiptDocuments([]);
+    }
+  };
+
   const loadOrderPage = async ({ silent = false } = {}) => {
     try {
       if (!silent) {
@@ -289,6 +307,7 @@ function OrderDetailPage() {
 
       const response = await api.get(`orders/${id}/`);
       setOrder(response.data);
+      await loadReceiptDocuments(response.data.id);
     } catch (err) {
       console.error('Failed to load order page:', err);
       setError('Не вдалося завантажити дані замовлення.');
@@ -642,6 +661,115 @@ function OrderDetailPage() {
     },
   ];
 
+  const getReceiptDocumentTotal = (receiptDocument) => {
+    const docItems = Array.isArray(receiptDocument?.items)
+      ? receiptDocument.items
+      : [];
+    const orderItems = Array.isArray(order?.items) ? order.items : [];
+
+    return docItems.reduce((sum, receiptItem) => {
+      const sourceOrderItem = orderItems.find(
+        (item) => item.id === receiptItem.order_item,
+      );
+
+      const agreedPrice = Number(sourceOrderItem?.agreed_price) || 0;
+      const receivedQuantity = Number(receiptItem?.received_quantity) || 0;
+
+      return sum + agreedPrice * receivedQuantity;
+    }, 0);
+  };
+
+  const receiptColumns = [
+    {
+      title: 'Дата',
+      dataIndex: 'receipt_date',
+      key: 'receipt_date',
+      width: 130,
+      align: 'center',
+      render: (value) => formatDateDisplay(value),
+    },
+    {
+      title: '№ документа',
+      dataIndex: 'receipt_no',
+      key: 'receipt_no',
+      render: (value, record) => {
+        if (!value) return '—';
+
+        return (
+          <Flex align="center" gap={6}>
+            <span>{value}</span>
+
+            {record.image && (
+              <FileImageOutlined
+                style={{
+                  color: '#1677ff',
+                  fontSize: 14,
+                  cursor: 'pointer',
+                }}
+                onClick={() => window.open(record.image, '_blank')}
+              />
+            )}
+          </Flex>
+        );
+      },
+    },
+    {
+      title: 'Сума',
+      key: 'receipt_total',
+      width: 180,
+      align: 'center',
+      render: (_, record) => {
+        const docItems = Array.isArray(record?.items) ? record.items : [];
+
+        const popoverContent = (
+          <Flex vertical gap={8} style={{ minWidth: 280 }}>
+            {docItems.length > 0 ? (
+              docItems.map((item) => (
+                <Flex
+                  key={item.id}
+                  justify="space-between"
+                  align="center"
+                  gap={16}
+                >
+                  <div
+                    style={{
+                      minWidth: 0,
+                      flex: 1,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                    title={
+                      item.order_item_vendor_item_name ||
+                      item.order_item_inv_item_name ||
+                      '—'
+                    }
+                  >
+                    {item.order_item_vendor_item_name ||
+                      item.order_item_inv_item_name ||
+                      '—'}
+                  </div>
+
+                  <Text>{formatQuantity(item.received_quantity)}</Text>
+                </Flex>
+              ))
+            ) : (
+              <Text type="secondary">Немає рядків</Text>
+            )}
+          </Flex>
+        );
+
+        return (
+          <Popover content={popoverContent} trigger="click">
+            <Button type="link" style={{ padding: 0 }}>
+              {formatMoney(getReceiptDocumentTotal(record))} ₴
+            </Button>
+          </Popover>
+        );
+      },
+    },
+  ];
+
   const orderItemsColumns = [
     {
       title: 'Товар',
@@ -967,6 +1095,19 @@ function OrderDetailPage() {
               tableLayout="fixed"
             />
           </Card>
+
+          {isInProgress && hasReceiptDocuments && (
+            <Card title="Отримання" style={{ marginBottom: 20 }}>
+              <Table
+                rowKey="id"
+                columns={receiptColumns}
+                dataSource={receiptDocuments}
+                pagination={false}
+                size="small"
+                tableLayout="fixed"
+              />
+            </Card>
+          )}
 
           {!isDraft && (
             <Card

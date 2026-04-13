@@ -938,76 +938,78 @@ function OrderDetailPage() {
             )}
           </Card>
 
-          <Card title="Навігація" style={{ marginBottom: 20 }}>
-            <Flex vertical gap={8}>
-              {isDraft && (
-                <>
-                  {canSendToWork ? (
-                    <Popconfirm
-                      title="Увага!"
-                      description="Ви не зможете редагувати склад замовлення після передачі його в роботу! Ви впевнені, що склад замовлення вже остаточний?"
-                      okText="Так"
-                      cancelText="Ні"
-                      onConfirm={handleSendToWork}
-                      disabled={submittingToWork}
-                    >
-                      <Button block type="primary" loading={submittingToWork}>
+          {order?.status !== 'completed' && (
+            <Card title="Навігація" style={{ marginBottom: 20 }}>
+              <Flex vertical gap={8}>
+                {isDraft && (
+                  <>
+                    {canSendToWork ? (
+                      <Popconfirm
+                        title="Увага!"
+                        description="Ви не зможете редагувати склад замовлення після передачі його в роботу! Ви впевнені, що склад замовлення вже остаточний?"
+                        okText="Так"
+                        cancelText="Ні"
+                        onConfirm={handleSendToWork}
+                        disabled={submittingToWork}
+                      >
+                        <Button block type="primary" loading={submittingToWork}>
+                          Передати в роботу
+                        </Button>
+                      </Popconfirm>
+                    ) : (
+                      <Button block type="primary" disabled>
                         Передати в роботу
                       </Button>
-                    </Popconfirm>
-                  ) : (
-                    <Button block type="primary" disabled>
-                      Передати в роботу
-                    </Button>
-                  )}
+                    )}
 
-                  <Divider style={{ margin: '4px 0 8px 0' }} />
-                </>
-              )}
+                    <Divider style={{ margin: '4px 0 8px 0' }} />
+                  </>
+                )}
 
-              {isInProgress && (
+                {isInProgress && (
+                  <Button
+                    block
+                    icon={<DownloadOutlined style={{ color: '#1677ff' }} />}
+                    onClick={handleOpenReceiptDrawer}
+                  >
+                    Отримання товару
+                  </Button>
+                )}
+
+                {isInProgress && (
+                  <Button
+                    block
+                    icon={<BankOutlined style={{ color: '#1677ff' }} />}
+                    onClick={handleOpenPaymentsDrawer}
+                  >
+                    Редагувати оплати
+                  </Button>
+                )}
+
                 <Button
                   block
-                  icon={<DownloadOutlined style={{ color: '#1677ff' }} />}
-                  onClick={() => setIsReceiptDrawerOpen(true)}
+                  icon={<EditOutlined style={{ color: '#1677ff' }} />}
+                  onClick={() => navigate(`/orders/${order.id}/edit`)}
                 >
-                  Отримання товару
+                  Редагувати замовлення
                 </Button>
-              )}
 
-              {isInProgress && (
-                <Button
-                  block
-                  icon={<BankOutlined style={{ color: '#1677ff' }} />}
-                  onClick={handleOpenPaymentsDrawer}
+                <Divider style={{ margin: '4px 0 8px 0' }} />
+
+                <Popconfirm
+                  title="Увага!"
+                  description="Ця операція незворотна! Ви впевнені?"
+                  okText="Так"
+                  cancelText="Ні"
+                  onConfirm={() => {}}
                 >
-                  Редагувати оплати
-                </Button>
-              )}
-
-              <Button
-                block
-                icon={<EditOutlined style={{ color: '#1677ff' }} />}
-                onClick={() => navigate(`/orders/${order.id}/edit`)}
-              >
-                Редагувати замовлення
-              </Button>
-
-              <Divider style={{ margin: '4px 0 8px 0' }} />
-
-              <Popconfirm
-                title="Увага!"
-                description="Ця операція незворотна! Ви впевнені?"
-                okText="Так"
-                cancelText="Ні"
-                onConfirm={() => {}}
-              >
-                <Button block danger icon={<StopOutlined />}>
-                  Відміна замовлення
-                </Button>
-              </Popconfirm>
-            </Flex>
-          </Card>
+                  <Button block danger icon={<StopOutlined />}>
+                    Відміна замовлення
+                  </Button>
+                </Popconfirm>
+              </Flex>
+            </Card>
+          )}
 
           <Card title="Статистика">
             <Text type="secondary">Дані з’являться пізніше</Text>
@@ -1096,7 +1098,7 @@ function OrderDetailPage() {
             />
           </Card>
 
-          {isInProgress && hasReceiptDocuments && (
+          {!isDraft && hasReceiptDocuments && (
             <Card title="Отримання" style={{ marginBottom: 20 }}>
               <Table
                 rowKey="id"

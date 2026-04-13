@@ -66,11 +66,7 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       .filter((item) => !currentReceiptOrderItemIds.has(item.id))
       .map((item) => ({
         value: item.id,
-        label: `${
-          item.vendor_item_name || item.vendor_item_inv_item_name || '—'
-        } | Замовлено ${formatQuantity(item.quantity)} | Отримано ${formatQuantity(
-          item.received_quantity,
-        )} | Залишок ${formatQuantity(item.remaining_quantity)}`,
+        label: item.vendor_item_name || item.vendor_item_inv_item_name || '—',
       }));
   }, [order, receiptDocumentItems]);
 

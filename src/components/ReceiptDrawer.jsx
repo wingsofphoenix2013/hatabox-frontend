@@ -139,12 +139,15 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
         },
       });
 
-      setCreatedReceiptDocument(response.data);
+      const createdDocument = response.data;
+      setCreatedReceiptDocument(createdDocument);
       message.success('Видаткову накладну зареєстровано.');
 
       if (onReceiptSaved) {
         await onReceiptSaved();
       }
+
+      await loadReceiptDocument(createdDocument.id);
     } catch (err) {
       console.error('Failed to create receipt document:', err);
 

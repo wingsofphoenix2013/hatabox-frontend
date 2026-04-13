@@ -41,88 +41,20 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import ReceiptDrawer from '../components/ReceiptDrawer';
 import { formatQuantity } from '../utils/formatNumber';
+import {
+  formatDateDisplay,
+  formatDateUa,
+  formatMoney,
+} from '../utils/orderFormatters';
+import {
+  getAvailablePaymentStatusOptions,
+  getPaymentStatusTagColor,
+  getProgressStrokeColor,
+  getStatusTagColor,
+  PAYMENT_STATUS_LABELS,
+} from '../constants/orderStatus';
 
 const { Title, Text } = Typography;
-
-const formatDateUa = (value) => {
-  if (!value) return '—';
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return '—';
-  }
-
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-
-  return `${day}/${month}/${year}`;
-};
-
-const formatDateDisplay = (value) => {
-  if (!value) return '—';
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return '—';
-  }
-
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-
-  return `${day}-${month}-${year}`;
-};
-
-const formatMoney = (value) =>
-  new Intl.NumberFormat('uk-UA', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(value) || 0);
-
-const getPaymentStatusTagColor = (status) => {
-  switch (status) {
-    case 'draft':
-      return 'default';
-    case 'approved':
-      return 'processing';
-    case 'paid':
-      return 'success';
-    case 'cancelled':
-      return 'error';
-    default:
-      return 'default';
-  }
-};
-
-const getStatusTagColor = (status) => {
-  switch (status) {
-    case 'draft':
-      return 'default';
-    case 'in_progress':
-      return 'processing';
-    case 'completed':
-      return 'success';
-    case 'cancelled':
-      return 'error';
-    default:
-      return 'default';
-  }
-};
-
-const getProgressStrokeColor = (percent, isOverdue = false) => {
-  if (isOverdue) return '#ff4d4f';
-
-  if (percent === 0) return '#bfbfbf';
-  if (percent <= 24) return '#d9f7be';
-  if (percent <= 49) return '#b7eb8f';
-  if (percent <= 74) return '#95de64';
-  if (percent <= 99) return '#73d13d';
-
-  return '#52c41a';
-};
 
 const getFileNameFromUrl = (fileUrl) => {
   if (!fileUrl) return '';
@@ -147,34 +79,6 @@ const isImageFile = (fileNameOrUrl = '', mimeType = '') => {
     normalizedName.endsWith('.jpeg') ||
     normalizedName.endsWith('.png')
   );
-};
-
-const PAYMENT_STATUS_LABELS = {
-  draft: 'Чернетка',
-  approved: 'Погоджено',
-  paid: 'Сплачено',
-  cancelled: 'Скасовано',
-};
-
-const getAvailablePaymentStatusOptions = (status) => {
-  switch (status) {
-    case 'draft':
-      return [
-        { value: 'draft', label: 'Чернетка' },
-        { value: 'approved', label: 'Погоджено' },
-      ];
-    case 'approved':
-      return [
-        { value: 'approved', label: 'Погоджено' },
-        { value: 'paid', label: 'Сплачено' },
-      ];
-    case 'paid':
-      return [{ value: 'paid', label: 'Сплачено' }];
-    case 'cancelled':
-      return [{ value: 'cancelled', label: 'Скасовано' }];
-    default:
-      return [];
-  }
 };
 
 function OrderDetailPage() {

@@ -986,7 +986,7 @@ function OrderDetailPage() {
                   <Button
                     block
                     icon={<DownloadOutlined style={{ color: '#1677ff' }} />}
-                    onClick={handleOpenReceiptDrawer}
+                    onClick={() => setIsReceiptDrawerOpen(true)}
                   >
                     Отримання товару
                   </Button>

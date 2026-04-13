@@ -8,6 +8,7 @@ import {
   InfoCircleOutlined,
   LinkOutlined,
   StopOutlined,
+  UploadOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import {
@@ -30,6 +31,7 @@ import {
   Tag,
   Tooltip,
   Typography,
+  Upload,
   message,
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -188,6 +190,13 @@ function OrderDetailPage() {
   const [editingPaymentAmount, setEditingPaymentAmount] = useState(null);
   const [savingPayment, setSavingPayment] = useState(false);
 
+  const [recipientAccountOptions, setRecipientAccountOptions] = useState([]);
+  const [recipientAccountsLoading, setRecipientAccountsLoading] =
+    useState(false);
+  const [selectedRecipientAccountId, setSelectedRecipientAccountId] =
+    useState(null);
+  const [paymentTransferFile, setPaymentTransferFile] = useState(null);
+
   useEffect(() => {
     loadOrderPage();
   }, [id]);
@@ -210,6 +219,8 @@ function OrderDetailPage() {
       setEditingPaymentStatus(null);
       setEditingPaymentDate(null);
       setEditingPaymentAmount(null);
+      setSelectedRecipientAccountId(null);
+      setPaymentTransferFile(null);
       return;
     }
 
@@ -225,7 +236,45 @@ function OrderDetailPage() {
         ? Number(selectedPaymentDocument.payment_amount)
         : null,
     );
+    setSelectedRecipientAccountId(null);
+    setPaymentTransferFile(null);
   }, [selectedPaymentDocument]);
+
+  useEffect(() => {
+    const loadRecipientAccounts = async () => {
+      if (!isPaymentsDrawerOpen || !order?.vendor) {
+        setRecipientAccountOptions([]);
+        setSelectedRecipientAccountId(null);
+        return;
+      }
+
+      try {
+        setRecipientAccountsLoading(true);
+
+        const response = await api.get(
+          `vendor-payment-details/?vendor=${order.vendor}&is_active=true`,
+        );
+
+        const results = Array.isArray(response.data.results)
+          ? response.data.results
+          : [];
+
+        setRecipientAccountOptions(
+          results.map((item) => ({
+            value: item.id,
+            label: `${item.label || '—'} — ${item.iban || '—'}`,
+          })),
+        );
+      } catch (err) {
+        console.error('Failed to load vendor payment details:', err);
+        setRecipientAccountOptions([]);
+      } finally {
+        setRecipientAccountsLoading(false);
+      }
+    };
+
+    loadRecipientAccounts();
+  }, [isPaymentsDrawerOpen, order?.vendor]);
 
   const loadOrderPage = async () => {
     try {
@@ -287,6 +336,10 @@ function OrderDetailPage() {
     setEditingPaymentStatus(null);
     setEditingPaymentDate(null);
     setEditingPaymentAmount(null);
+    setRecipientAccountOptions([]);
+    setRecipientAccountsLoading(false);
+    setSelectedRecipientAccountId(null);
+    setPaymentTransferFile(null);
   };
 
   const handleClosePaymentsDrawer = () => {
@@ -295,6 +348,29 @@ function OrderDetailPage() {
     setEditingPaymentStatus(null);
     setEditingPaymentDate(null);
     setEditingPaymentAmount(null);
+    setRecipientAccountOptions([]);
+    setRecipientAccountsLoading(false);
+    setSelectedRecipientAccountId(null);
+    setPaymentTransferFile(null);
+  };
+
+  const handlePaymentTransferFileChange = ({ fileList }) => {
+    const fileObj = fileList[0]?.originFileObj || null;
+
+    if (!fileObj) {
+      setPaymentTransferFile(null);
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+
+    if (!allowedTypes.includes(fileObj.type)) {
+      message.error('Дозволено завантажувати лише JPG, JPEG, PNG або PDF.');
+      setPaymentTransferFile(null);
+      return;
+    }
+
+    setPaymentTransferFile(fileObj);
   };
 
   const handleSavePayment = async () => {
@@ -312,9 +388,21 @@ function OrderDetailPage() {
       return;
     }
 
-    if (editingPaymentStatus === 'paid' && !editingPaymentDate) {
-      message.error('Вкажіть дату платежу.');
-      return;
+    if (editingPaymentStatus === 'paid') {
+      if (!selectedRecipientAccountId) {
+        message.error('Оберіть розрахунковий рахунок отримувача.');
+        return;
+      }
+
+      if (!editingPaymentDate) {
+        message.error('Вкажіть дату платежу.');
+        return;
+      }
+
+      if (!paymentTransferFile) {
+        message.error('Завантажте файл переказу.');
+        return;
+      }
     }
 
     try {
@@ -326,6 +414,7 @@ function OrderDetailPage() {
 
       if (editingPaymentStatus === 'paid') {
         payload.append('payment_date', editingPaymentDate.format('YYYY-MM-DD'));
+        payload.append('image', paymentTransferFile);
       }
 
       const response = await api.patch(
@@ -356,6 +445,9 @@ function OrderDetailPage() {
       );
 
       await loadOrderPage();
+
+      setSelectedRecipientAccountId(null);
+      setPaymentTransferFile(null);
     } catch (err) {
       console.error('Failed to update payment document:', err);
 
@@ -965,28 +1057,6 @@ function OrderDetailPage() {
                       marginBottom: 8,
                     }}
                   >
-                    Дата платежу
-                  </Text>
-
-                  <DatePicker
-                    style={{ width: '100%' }}
-                    format="DD-MM-YYYY"
-                    value={editingPaymentDate}
-                    onChange={setEditingPaymentDate}
-                    disabled={
-                      editingPaymentStatus !== 'paid' ||
-                      selectedPaymentDocument.status === 'paid'
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Text
-                    style={{
-                      display: 'block',
-                      marginBottom: 8,
-                    }}
-                  >
                     Сума платежу
                   </Text>
 
@@ -1004,6 +1074,113 @@ function OrderDetailPage() {
             </Card>
           )}
 
+          {selectedPaymentDocument &&
+            selectedPaymentDocument.status === 'approved' && (
+              <Card title="3. Переказ">
+                <Flex vertical gap={16}>
+                  <div>
+                    <Text
+                      style={{
+                        display: 'block',
+                        marginBottom: 8,
+                      }}
+                    >
+                      Розрахунковий рахунок отримувача
+                    </Text>
+
+                    <Select
+                      style={{ width: '100%' }}
+                      placeholder={
+                        recipientAccountsLoading
+                          ? 'Завантаження рахунків...'
+                          : recipientAccountOptions.length > 0
+                            ? 'Оберіть рахунок'
+                            : 'У постачальника немає активних рахунків'
+                      }
+                      value={selectedRecipientAccountId}
+                      onChange={setSelectedRecipientAccountId}
+                      options={recipientAccountOptions}
+                      loading={recipientAccountsLoading}
+                      disabled={
+                        editingPaymentStatus !== 'paid' ||
+                        recipientAccountsLoading ||
+                        recipientAccountOptions.length === 0
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Text
+                      style={{
+                        display: 'block',
+                        marginBottom: 8,
+                      }}
+                    >
+                      Дата платежу
+                    </Text>
+
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      format="DD-MM-YYYY"
+                      value={editingPaymentDate}
+                      onChange={setEditingPaymentDate}
+                      disabled={editingPaymentStatus !== 'paid'}
+                    />
+                  </div>
+
+                  <div>
+                    <Text
+                      style={{
+                        display: 'block',
+                        marginBottom: 8,
+                      }}
+                    >
+                      Файл переказу
+                    </Text>
+
+                    <Upload
+                      beforeUpload={() => false}
+                      maxCount={1}
+                      accept=".jpg,.jpeg,.png,.pdf"
+                      onChange={handlePaymentTransferFileChange}
+                      showUploadList
+                      fileList={
+                        paymentTransferFile
+                          ? [
+                              {
+                                uid:
+                                  paymentTransferFile.uid ||
+                                  paymentTransferFile.name,
+                                name: paymentTransferFile.name,
+                                status: 'done',
+                              },
+                            ]
+                          : []
+                      }
+                      disabled={editingPaymentStatus !== 'paid'}
+                    >
+                      <Button
+                        icon={<UploadOutlined />}
+                        disabled={editingPaymentStatus !== 'paid'}
+                      >
+                        Обрати файл
+                      </Button>
+                    </Upload>
+                  </div>
+
+                  {editingPaymentStatus === 'paid' &&
+                    recipientAccountOptions.length === 0 &&
+                    !recipientAccountsLoading && (
+                      <Alert
+                        type="warning"
+                        showIcon
+                        message="У постачальника немає активних розрахункових рахунків"
+                      />
+                    )}
+                </Flex>
+              </Card>
+            )}
+
           <Flex justify="flex-end" gap={8}>
             <Button onClick={handleClosePaymentsDrawer}>Відміна</Button>
             <Button
@@ -1013,7 +1190,12 @@ function OrderDetailPage() {
               disabled={
                 !selectedPaymentDocument ||
                 selectedPaymentDocument.status === 'paid' ||
-                selectedPaymentDocument.status === 'cancelled'
+                selectedPaymentDocument.status === 'cancelled' ||
+                (editingPaymentStatus === 'paid' &&
+                  (!selectedRecipientAccountId ||
+                    !editingPaymentDate ||
+                    !paymentTransferFile ||
+                    recipientAccountOptions.length === 0))
               }
             >
               Зберегти

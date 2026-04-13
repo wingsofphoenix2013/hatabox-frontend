@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import {
   BankOutlined,
+  DownloadOutlined,
   EditOutlined,
   FileImageOutlined,
   FilePdfOutlined,
@@ -183,6 +184,7 @@ function OrderDetailPage() {
   const [error, setError] = useState('');
   const [submittingToWork, setSubmittingToWork] = useState(false);
   const [isPaymentsDrawerOpen, setIsPaymentsDrawerOpen] = useState(false);
+  const [isReceiptDrawerOpen, setIsReceiptDrawerOpen] = useState(false);
 
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
   const [editingPaymentStatus, setEditingPaymentStatus] = useState(null);
@@ -832,6 +834,16 @@ function OrderDetailPage() {
               {isInProgress && (
                 <Button
                   block
+                  icon={<DownloadOutlined style={{ color: '#1677ff' }} />}
+                  onClick={() => setIsReceiptDrawerOpen(true)}
+                >
+                  Прийом товару
+                </Button>
+              )}
+
+              {isInProgress && (
+                <Button
+                  block
                   icon={<BankOutlined style={{ color: '#1677ff' }} />}
                   onClick={handleOpenPaymentsDrawer}
                 >
@@ -1000,6 +1012,18 @@ function OrderDetailPage() {
           </Card>
         </Col>
       </Row>
+
+      <Drawer
+        title="Прийом товару"
+        placement="right"
+        size="large"
+        open={isReceiptDrawerOpen}
+        onClose={() => setIsReceiptDrawerOpen(false)}
+      >
+        <Text type="secondary">
+          Функціонал прийому товару буде реалізовано пізніше
+        </Text>
+      </Drawer>
 
       <Drawer
         title="Редагувати оплати"

@@ -183,6 +183,7 @@ function OrderDetailPage() {
 
   const [order, setOrder] = useState(null);
   const [receiptDocuments, setReceiptDocuments] = useState([]);
+  const [vendorWebsite, setVendorWebsite] = useState('');
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -297,6 +298,21 @@ function OrderDetailPage() {
     }
   };
 
+  const loadVendorWebsite = async (vendorId) => {
+    if (!vendorId) {
+      setVendorWebsite('');
+      return;
+    }
+
+    try {
+      const response = await api.get(`vendors/${vendorId}/`);
+      setVendorWebsite(response.data?.website || '');
+    } catch (err) {
+      console.error('Failed to load vendor website:', err);
+      setVendorWebsite('');
+    }
+  };
+
   const loadOrderPage = async ({ silent = false } = {}) => {
     try {
       if (!silent) {
@@ -308,10 +324,12 @@ function OrderDetailPage() {
       const response = await api.get(`orders/${id}/`);
       setOrder(response.data);
       await loadReceiptDocuments(response.data.id);
+      await loadVendorWebsite(response.data.vendor);
     } catch (err) {
       console.error('Failed to load order page:', err);
       setError('Не вдалося завантажити дані замовлення.');
       setOrder(null);
+      setVendorWebsite('');
     } finally {
       if (!silent) {
         setLoading(false);
@@ -1047,13 +1065,16 @@ function OrderDetailPage() {
                         />
                       </Link>
 
-                      <LinkOutlined
-                        style={{
-                          color: '#8c8c8c',
-                          fontSize: 16,
-                          cursor: 'pointer',
-                        }}
-                      />
+                      {vendorWebsite && (
+                        <LinkOutlined
+                          style={{
+                            color: '#1677ff',
+                            fontSize: 16,
+                            cursor: 'pointer',
+                          }}
+                          onClick={() => window.open(vendorWebsite, '_blank')}
+                        />
+                      )}
                     </>
                   )}
                 </Flex>

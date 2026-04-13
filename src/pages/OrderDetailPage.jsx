@@ -623,16 +623,14 @@ function OrderDetailPage() {
           <Flex align="center" gap={6}>
             <span>{value}</span>
 
-            {record.status === 'paid' && (
+            {record.status === 'paid' && record.image && (
               <FileImageOutlined
                 style={{
-                  color: '#8c8c8c',
+                  color: '#1677ff',
                   fontSize: 14,
                   cursor: 'pointer',
                 }}
-                onClick={() => {
-                  // TODO: показ скан-копії платіжки
-                }}
+                onClick={() => window.open(record.image, '_blank')}
               />
             )}
           </Flex>

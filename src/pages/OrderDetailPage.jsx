@@ -37,6 +37,7 @@ import {
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
+import ReceiptDrawer from '../components/ReceiptDrawer';
 import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
@@ -837,7 +838,7 @@ function OrderDetailPage() {
                   icon={<DownloadOutlined style={{ color: '#1677ff' }} />}
                   onClick={() => setIsReceiptDrawerOpen(true)}
                 >
-                  Прийом товару
+                  Отримання товару
                 </Button>
               )}
 
@@ -1013,17 +1014,12 @@ function OrderDetailPage() {
         </Col>
       </Row>
 
-      <Drawer
-        title="Прийом товару"
-        placement="right"
-        size="large"
+      <ReceiptDrawer
         open={isReceiptDrawerOpen}
         onClose={() => setIsReceiptDrawerOpen(false)}
-      >
-        <Text type="secondary">
-          Функціонал прийому товару буде реалізовано пізніше
-        </Text>
-      </Drawer>
+        order={order}
+        onReceiptSaved={loadOrderPage}
+      />
 
       <Drawer
         title="Редагувати оплати"

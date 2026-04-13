@@ -11,7 +11,6 @@ import {
   InputNumber,
   Select,
   Table,
-  Text,
   Typography,
   Upload,
   message,
@@ -19,7 +18,7 @@ import {
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
 
-const { Text: AntText } = Typography;
+const { Text } = Typography;
 
 function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   const [receiptNo, setReceiptNo] = useState('');
@@ -332,7 +331,7 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
           );
         }
 
-        return <AntText type="secondary">Збережено</AntText>;
+        return <Text type="secondary">Збережено</Text>;
       },
     },
   ];
@@ -349,9 +348,9 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
         <Card title="1. Зареєструйте видаткову накладну">
           <Flex vertical gap={16}>
             <div>
-              <AntText style={{ display: 'block', marginBottom: 8 }}>
+              <Text style={{ display: 'block', marginBottom: 8 }}>
                 Номер документа
-              </AntText>
+              </Text>
               <Input
                 value={receiptNo}
                 onChange={(e) => setReceiptNo(e.target.value)}
@@ -361,9 +360,9 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
             </div>
 
             <div>
-              <AntText style={{ display: 'block', marginBottom: 8 }}>
+              <Text style={{ display: 'block', marginBottom: 8 }}>
                 Дата отримання товару
-              </AntText>
+              </Text>
               <DatePicker
                 style={{ width: '100%' }}
                 format="DD-MM-YYYY"
@@ -374,9 +373,9 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
             </div>
 
             <div>
-              <AntText style={{ display: 'block', marginBottom: 8 }}>
+              <Text style={{ display: 'block', marginBottom: 8 }}>
                 Файл накладної
-              </AntText>
+              </Text>
               <Upload
                 beforeUpload={() => false}
                 maxCount={1}

@@ -22,3 +22,26 @@ export const isImageFile = (fileNameOrUrl = '', mimeType = '') => {
     normalizedName.endsWith('.png')
   );
 };
+
+export const ALLOWED_FILE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+];
+
+export const validateFileType = (file, allowedTypes = ALLOWED_FILE_TYPES) => {
+  if (!file) return { valid: false };
+
+  if (!allowedTypes.includes(file.type)) {
+    return {
+      valid: false,
+      error: 'Дозволено завантажувати лише JPG, JPEG, PNG або PDF.',
+    };
+  }
+
+  return { valid: true };
+};
+
+export const extractFileFromUploadEvent = (fileList) => {
+  return fileList?.[0]?.originFileObj || null;
+};

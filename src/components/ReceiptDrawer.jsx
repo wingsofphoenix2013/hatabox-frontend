@@ -17,6 +17,11 @@ import {
 } from 'antd';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
+import { getApiErrorMessage } from '../utils/apiError';
+import {
+  extractFileFromUploadEvent,
+  validateFileType,
+} from '../utils/fileHelpers';
 
 const { Text } = Typography;
 
@@ -85,17 +90,17 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   };
 
   const handleReceiptFileChange = ({ fileList }) => {
-    const fileObj = fileList[0]?.originFileObj || null;
+    const fileObj = extractFileFromUploadEvent(fileList);
 
     if (!fileObj) {
       setReceiptFile(null);
       return;
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    const { valid, error } = validateFileType(fileObj);
 
-    if (!allowedTypes.includes(fileObj.type)) {
-      message.error('Дозволено завантажувати лише JPG, JPEG, PNG або PDF.');
+    if (!valid) {
+      message.error(error);
       setReceiptFile(null);
       return;
     }
@@ -149,14 +154,11 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
 
       const responseData = err?.response?.data;
 
-      const backendMessage =
-        responseData?.detail ||
-        responseData?.error ||
-        responseData?.message ||
-        responseData?.receipt_no?.[0] ||
-        responseData?.receipt_date?.[0] ||
-        responseData?.image?.[0] ||
-        (typeof responseData === 'string' ? responseData : null);
+      const backendMessage = getApiErrorMessage(responseData, [
+        'receipt_no',
+        'receipt_date',
+        'image',
+      ]);
 
       message.error(
         backendMessage || 'Не вдалося зареєструвати видаткову накладну.',
@@ -219,13 +221,10 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
 
       const responseData = err?.response?.data;
 
-      const backendMessage =
-        responseData?.detail ||
-        responseData?.error ||
-        responseData?.message ||
-        responseData?.received_quantity?.[0] ||
-        responseData?.order_item?.[0] ||
-        (typeof responseData === 'string' ? responseData : null);
+      const backendMessage = getApiErrorMessage(responseData, [
+        'received_quantity',
+        'order_item',
+      ]);
 
       message.error(backendMessage || 'Не вдалося додати рядок отримання.');
     } finally {

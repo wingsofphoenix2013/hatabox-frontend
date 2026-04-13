@@ -55,6 +55,11 @@ import {
 } from '../constants/orderStatus';
 import { getFileNameFromUrl, isImageFile } from '../utils/fileHelpers';
 import { getReceiptDocumentTotal } from '../utils/orderCalculations';
+import { getApiErrorMessage } from '../utils/apiError';
+import {
+  extractFileFromUploadEvent,
+  validateFileType,
+} from '../utils/fileHelpers';
 
 const { Title, Text } = Typography;
 
@@ -242,11 +247,7 @@ function OrderDetailPage() {
 
       const responseData = err?.response?.data;
 
-      const backendMessage =
-        responseData?.detail ||
-        responseData?.error ||
-        responseData?.message ||
-        (typeof responseData === 'string' ? responseData : null);
+      const backendMessage = getApiErrorMessage(responseData);
 
       message.error(
         backendMessage || 'Не вдалося передати замовлення в роботу',
@@ -281,17 +282,17 @@ function OrderDetailPage() {
   };
 
   const handlePaymentTransferFileChange = ({ fileList }) => {
-    const fileObj = fileList[0]?.originFileObj || null;
+    const fileObj = extractFileFromUploadEvent(fileList);
 
     if (!fileObj) {
       setPaymentTransferFile(null);
       return;
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+    const { valid, error } = validateFileType(fileObj);
 
-    if (!allowedTypes.includes(fileObj.type)) {
-      message.error('Дозволено завантажувати лише JPG, JPEG, PNG або PDF.');
+    if (!valid) {
+      message.error(error);
       setPaymentTransferFile(null);
       return;
     }
@@ -381,14 +382,11 @@ function OrderDetailPage() {
 
       const responseData = err?.response?.data;
 
-      const backendMessage =
-        responseData?.detail ||
-        responseData?.error ||
-        responseData?.message ||
-        responseData?.payment_amount?.[0] ||
-        responseData?.payment_date?.[0] ||
-        responseData?.status?.[0] ||
-        (typeof responseData === 'string' ? responseData : null);
+      const backendMessage = getApiErrorMessage(responseData, [
+        'payment_amount',
+        'payment_date',
+        'status',
+      ]);
 
       message.error(
         backendMessage || 'Не вдалося оновити платіжну інструкцію.',

@@ -279,9 +279,12 @@ function OrderDetailPage() {
     loadRecipientAccounts();
   }, [isPaymentsDrawerOpen, order?.vendor]);
 
-  const loadOrderPage = async () => {
+  const loadOrderPage = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
+
       setError('');
 
       const response = await api.get(`orders/${id}/`);
@@ -291,7 +294,9 @@ function OrderDetailPage() {
       setError('Не вдалося завантажити дані замовлення.');
       setOrder(null);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
@@ -447,7 +452,7 @@ function OrderDetailPage() {
           : null,
       );
 
-      await loadOrderPage();
+      await loadOrderPage({ silent: true });
 
       setSelectedRecipientAccountId(null);
       setPaymentTransferFile(null);
@@ -1018,7 +1023,7 @@ function OrderDetailPage() {
         open={isReceiptDrawerOpen}
         onClose={() => setIsReceiptDrawerOpen(false)}
         order={order}
-        onReceiptSaved={loadOrderPage}
+        onReceiptSaved={() => loadOrderPage({ silent: true })}
       />
 
       <Drawer

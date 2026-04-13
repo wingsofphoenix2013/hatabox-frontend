@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  BankOutlined,
   EditOutlined,
   FileImageOutlined,
   FilePdfOutlined,
@@ -14,6 +15,7 @@ import {
   Card,
   Col,
   Divider,
+  Drawer,
   Flex,
   Image,
   Popconfirm,
@@ -145,6 +147,7 @@ function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [submittingToWork, setSubmittingToWork] = useState(false);
+  const [isPaymentsDrawerOpen, setIsPaymentsDrawerOpen] = useState(false);
 
   useEffect(() => {
     loadOrderPage();
@@ -406,6 +409,7 @@ function OrderDetailPage() {
   ];
 
   const isDraft = order?.status === 'draft';
+  const isInProgress = order?.status === 'in_progress';
   const hasOrderItems = Array.isArray(order?.items) && order.items.length > 0;
   const canSendToWork = isDraft && hasOrderItems;
 
@@ -558,6 +562,20 @@ function OrderDetailPage() {
                       Передати в роботу
                     </Button>
                   )}
+
+                  <Divider style={{ margin: '4px 0 8px 0' }} />
+                </>
+              )}
+
+              {isInProgress && (
+                <>
+                  <Button
+                    block
+                    icon={<BankOutlined style={{ color: '#1677ff' }} />}
+                    onClick={() => setIsPaymentsDrawerOpen(true)}
+                  >
+                    Редагувати оплати
+                  </Button>
 
                   <Divider style={{ margin: '4px 0 8px 0' }} />
                 </>
@@ -724,6 +742,15 @@ function OrderDetailPage() {
           </Card>
         </Col>
       </Row>
+      <Drawer
+        title="Редагувати оплати"
+        placement="right"
+        size="large"
+        open={isPaymentsDrawerOpen}
+        onClose={() => setIsPaymentsDrawerOpen(false)}
+      >
+        <Text type="secondary">Вміст з’явиться пізніше</Text>
+      </Drawer>
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import dayjs from 'dayjs';
 import {
   BankOutlined,
   EditOutlined,
@@ -14,13 +15,16 @@ import {
   Button,
   Card,
   Col,
+  DatePicker,
   Divider,
   Drawer,
   Flex,
   Image,
+  InputNumber,
   Popconfirm,
   Progress,
   Row,
+  Select,
   Skeleton,
   Table,
   Tag,
@@ -86,6 +90,7 @@ const getPaymentStatusTagColor = (status) => {
       return 'default';
   }
 };
+
 const getStatusTagColor = (status) => {
   switch (status) {
     case 'draft':
@@ -138,6 +143,34 @@ const isImageFile = (fileNameOrUrl = '', mimeType = '') => {
   );
 };
 
+const PAYMENT_STATUS_LABELS = {
+  draft: 'Чернетка',
+  approved: 'Погоджено',
+  paid: 'Сплачено',
+  cancelled: 'Скасовано',
+};
+
+const getAvailablePaymentStatusOptions = (status) => {
+  switch (status) {
+    case 'draft':
+      return [
+        { value: 'draft', label: 'Чернетка' },
+        { value: 'approved', label: 'Погоджено' },
+      ];
+    case 'approved':
+      return [
+        { value: 'approved', label: 'Погоджено' },
+        { value: 'paid', label: 'Сплачено' },
+      ];
+    case 'paid':
+      return [{ value: 'paid', label: 'Сплачено' }];
+    case 'cancelled':
+      return [{ value: 'cancelled', label: 'Скасовано' }];
+    default:
+      return [];
+  }
+};
+
 function OrderDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -149,9 +182,50 @@ function OrderDetailPage() {
   const [submittingToWork, setSubmittingToWork] = useState(false);
   const [isPaymentsDrawerOpen, setIsPaymentsDrawerOpen] = useState(false);
 
+  const [selectedPaymentId, setSelectedPaymentId] = useState(null);
+  const [editingPaymentStatus, setEditingPaymentStatus] = useState(null);
+  const [editingPaymentDate, setEditingPaymentDate] = useState(null);
+  const [editingPaymentAmount, setEditingPaymentAmount] = useState(null);
+  const [savingPayment, setSavingPayment] = useState(false);
+
   useEffect(() => {
     loadOrderPage();
   }, [id]);
+
+  const isDraft = order?.status === 'draft';
+  const isInProgress = order?.status === 'in_progress';
+  const hasOrderItems = Array.isArray(order?.items) && order.items.length > 0;
+  const canSendToWork = isDraft && hasOrderItems;
+
+  const selectedPaymentDocument = useMemo(() => {
+    const docs = Array.isArray(order?.payment_documents)
+      ? order.payment_documents
+      : [];
+
+    return docs.find((item) => item.id === selectedPaymentId) || null;
+  }, [order, selectedPaymentId]);
+
+  useEffect(() => {
+    if (!selectedPaymentDocument) {
+      setEditingPaymentStatus(null);
+      setEditingPaymentDate(null);
+      setEditingPaymentAmount(null);
+      return;
+    }
+
+    setEditingPaymentStatus(selectedPaymentDocument.status || null);
+    setEditingPaymentDate(
+      selectedPaymentDocument.payment_date
+        ? dayjs(selectedPaymentDocument.payment_date, 'YYYY-MM-DD')
+        : null,
+    );
+    setEditingPaymentAmount(
+      selectedPaymentDocument.payment_amount !== null &&
+        selectedPaymentDocument.payment_amount !== undefined
+        ? Number(selectedPaymentDocument.payment_amount)
+        : null,
+    );
+  }, [selectedPaymentDocument]);
 
   const loadOrderPage = async () => {
     try {
@@ -204,6 +278,99 @@ function OrderDetailPage() {
       );
     } finally {
       setSubmittingToWork(false);
+    }
+  };
+
+  const handleOpenPaymentsDrawer = () => {
+    setIsPaymentsDrawerOpen(true);
+    setSelectedPaymentId(null);
+    setEditingPaymentStatus(null);
+    setEditingPaymentDate(null);
+    setEditingPaymentAmount(null);
+  };
+
+  const handleClosePaymentsDrawer = () => {
+    setIsPaymentsDrawerOpen(false);
+    setSelectedPaymentId(null);
+    setEditingPaymentStatus(null);
+    setEditingPaymentDate(null);
+    setEditingPaymentAmount(null);
+  };
+
+  const handleSavePayment = async () => {
+    if (!selectedPaymentDocument) {
+      message.error('Оберіть платіжну інструкцію.');
+      return;
+    }
+
+    if (
+      editingPaymentAmount === null ||
+      editingPaymentAmount === undefined ||
+      Number(editingPaymentAmount) <= 0
+    ) {
+      message.error('Сума платежу повинна бути більшою за 0.');
+      return;
+    }
+
+    if (editingPaymentStatus === 'paid' && !editingPaymentDate) {
+      message.error('Вкажіть дату платежу.');
+      return;
+    }
+
+    try {
+      setSavingPayment(true);
+
+      const payload = {
+        status: editingPaymentStatus,
+        payment_amount: editingPaymentAmount,
+      };
+
+      if (editingPaymentStatus === 'paid') {
+        payload.payment_date = editingPaymentDate.format('YYYY-MM-DD');
+      }
+
+      const response = await api.patch(
+        `payment-documents/${selectedPaymentDocument.id}/`,
+        payload,
+      );
+
+      message.success('Платіжну інструкцію оновлено.');
+
+      const updatedPayment = response.data;
+
+      setEditingPaymentStatus(updatedPayment.status || null);
+      setEditingPaymentDate(
+        updatedPayment.payment_date
+          ? dayjs(updatedPayment.payment_date, 'YYYY-MM-DD')
+          : null,
+      );
+      setEditingPaymentAmount(
+        updatedPayment.payment_amount !== null &&
+          updatedPayment.payment_amount !== undefined
+          ? Number(updatedPayment.payment_amount)
+          : null,
+      );
+
+      await loadOrderPage();
+    } catch (err) {
+      console.error('Failed to update payment document:', err);
+
+      const responseData = err?.response?.data;
+
+      const backendMessage =
+        responseData?.detail ||
+        responseData?.error ||
+        responseData?.message ||
+        responseData?.payment_amount?.[0] ||
+        responseData?.payment_date?.[0] ||
+        responseData?.status?.[0] ||
+        (typeof responseData === 'string' ? responseData : null);
+
+      message.error(
+        backendMessage || 'Не вдалося оновити платіжну інструкцію.',
+      );
+    } finally {
+      setSavingPayment(false);
     }
   };
 
@@ -310,6 +477,7 @@ function OrderDetailPage() {
       },
     },
   ];
+
   const paymentColumns = [
     {
       title: 'Дата',
@@ -367,6 +535,7 @@ function OrderDetailPage() {
       render: (value) => (value ? `${value} ₴` : '—'),
     },
   ];
+
   const orderItemsColumns = [
     {
       title: 'Товар',
@@ -407,11 +576,6 @@ function OrderDetailPage() {
       render: (_, record) => formatDateDisplay(record.expected_delivery_date),
     },
   ];
-
-  const isDraft = order?.status === 'draft';
-  const isInProgress = order?.status === 'in_progress';
-  const hasOrderItems = Array.isArray(order?.items) && order.items.length > 0;
-  const canSendToWork = isDraft && hasOrderItems;
 
   if (loading) {
     return (
@@ -568,15 +732,13 @@ function OrderDetailPage() {
               )}
 
               {isInProgress && (
-                <>
-                  <Button
-                    block
-                    icon={<BankOutlined style={{ color: '#1677ff' }} />}
-                    onClick={() => setIsPaymentsDrawerOpen(true)}
-                  >
-                    Редагувати оплати
-                  </Button>
-                </>
+                <Button
+                  block
+                  icon={<BankOutlined style={{ color: '#1677ff' }} />}
+                  onClick={handleOpenPaymentsDrawer}
+                >
+                  Редагувати оплати
+                </Button>
               )}
 
               <Button
@@ -740,14 +902,120 @@ function OrderDetailPage() {
           </Card>
         </Col>
       </Row>
+
       <Drawer
         title="Редагувати оплати"
         placement="right"
         size="large"
         open={isPaymentsDrawerOpen}
-        onClose={() => setIsPaymentsDrawerOpen(false)}
+        onClose={handleClosePaymentsDrawer}
       >
-        <Text type="secondary">Вміст з’явиться пізніше</Text>
+        <Flex vertical gap={16}>
+          <Card title="1. Оберіть платіжну інструкцію">
+            <Select
+              placeholder="Оберіть платіжну інструкцію"
+              style={{ width: '100%' }}
+              value={selectedPaymentId}
+              onChange={setSelectedPaymentId}
+              options={(Array.isArray(order?.payment_documents)
+                ? order.payment_documents
+                : []
+              ).map((item) => ({
+                value: item.id,
+                label: `${item.payment_no || '—'} — ${item.status_name || PAYMENT_STATUS_LABELS[item.status] || '—'}`,
+              }))}
+            />
+          </Card>
+
+          {selectedPaymentDocument && (
+            <Card title="2. Основна інформація">
+              <Flex vertical gap={16}>
+                <div>
+                  <Text
+                    style={{
+                      display: 'block',
+                      marginBottom: 8,
+                    }}
+                  >
+                    Статус платежу
+                  </Text>
+
+                  <Select
+                    style={{ width: '100%' }}
+                    value={editingPaymentStatus}
+                    onChange={setEditingPaymentStatus}
+                    options={getAvailablePaymentStatusOptions(
+                      selectedPaymentDocument.status,
+                    )}
+                    disabled={
+                      selectedPaymentDocument.status === 'paid' ||
+                      selectedPaymentDocument.status === 'cancelled'
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Text
+                    style={{
+                      display: 'block',
+                      marginBottom: 8,
+                    }}
+                  >
+                    Дата платежу
+                  </Text>
+
+                  <DatePicker
+                    style={{ width: '100%' }}
+                    format="DD-MM-YYYY"
+                    value={editingPaymentDate}
+                    onChange={setEditingPaymentDate}
+                    disabled={
+                      editingPaymentStatus !== 'paid' ||
+                      selectedPaymentDocument.status === 'paid'
+                    }
+                  />
+                </div>
+
+                <div>
+                  <Text
+                    style={{
+                      display: 'block',
+                      marginBottom: 8,
+                    }}
+                  >
+                    Сума платежу
+                  </Text>
+
+                  <InputNumber
+                    style={{ width: '100%' }}
+                    min={0.01}
+                    step={0.01}
+                    precision={2}
+                    value={editingPaymentAmount}
+                    onChange={setEditingPaymentAmount}
+                    addonAfter="₴"
+                    disabled={selectedPaymentDocument.status === 'paid'}
+                  />
+                </div>
+
+                <Flex justify="flex-end" gap={8}>
+                  <Button onClick={handleClosePaymentsDrawer}>Відміна</Button>
+                  <Button
+                    type="primary"
+                    loading={savingPayment}
+                    onClick={handleSavePayment}
+                    disabled={
+                      selectedPaymentDocument.status === 'paid' ||
+                      selectedPaymentDocument.status === 'cancelled'
+                    }
+                  >
+                    Зберегти
+                  </Button>
+                </Flex>
+              </Flex>
+            </Card>
+          )}
+        </Flex>
       </Drawer>
     </div>
   );

@@ -79,11 +79,7 @@ function VendorCreatePage() {
         formData.append('logo', logoFile);
       }
 
-      await api.post('vendors/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await api.post('vendors/', formData);
 
       message.success('Постачальника створено');
 

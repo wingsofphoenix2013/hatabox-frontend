@@ -448,6 +448,8 @@ function OrderDetailPage() {
 
       setSelectedRecipientAccountId(null);
       setPaymentTransferFile(null);
+
+      handleClosePaymentsDrawer();
     } catch (err) {
       console.error('Failed to update payment document:', err);
 

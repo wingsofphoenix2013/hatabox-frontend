@@ -24,6 +24,12 @@ function PdfPreview({ fileUrl, width = 220 }) {
       <Document
         file={fileUrl}
         loading={<Spin />}
+        onSourceError={(error) => {
+          console.error('PDF source error:', error);
+        }}
+        onLoadError={(error) => {
+          console.error('PDF load error:', error);
+        }}
         error={
           <Alert
             type="warning"

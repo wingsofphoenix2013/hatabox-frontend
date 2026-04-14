@@ -814,6 +814,13 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
             dataSource={items}
             pagination={false}
             size="small"
+            components={{
+              body: {
+                cell: (props) => (
+                  <td {...props} style={{ fontSize: 12, padding: '6px 8px' }} />
+                ),
+              },
+            }}
           />
         </Card>
 

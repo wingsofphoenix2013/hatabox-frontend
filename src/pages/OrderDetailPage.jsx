@@ -1056,23 +1056,27 @@ function OrderDetailPage() {
         open={isPaymentsDrawerOpen}
         onClose={handleClosePaymentsDrawer}
         order={order}
-        selectedPaymentId={selectedPaymentId}
-        setSelectedPaymentId={setSelectedPaymentId}
-        selectedPaymentDocument={selectedPaymentDocument}
-        editingPaymentStatus={editingPaymentStatus}
-        setEditingPaymentStatus={setEditingPaymentStatus}
-        editingPaymentDate={editingPaymentDate}
-        setEditingPaymentDate={setEditingPaymentDate}
-        editingPaymentAmount={editingPaymentAmount}
-        setEditingPaymentAmount={setEditingPaymentAmount}
+        paymentState={{
+          selectedPaymentId,
+          selectedPaymentDocument,
+          editingPaymentStatus,
+          editingPaymentDate,
+          editingPaymentAmount,
+          selectedRecipientAccountId,
+          paymentTransferFile,
+        }}
+        paymentActions={{
+          setSelectedPaymentId,
+          setEditingPaymentStatus,
+          setEditingPaymentDate,
+          setEditingPaymentAmount,
+          setSelectedRecipientAccountId,
+        }}
         recipientAccountOptions={recipientAccountOptions}
         recipientAccountsLoading={recipientAccountsLoading}
-        selectedRecipientAccountId={selectedRecipientAccountId}
-        setSelectedRecipientAccountId={setSelectedRecipientAccountId}
-        paymentTransferFile={paymentTransferFile}
-        handlePaymentTransferFileChange={handlePaymentTransferFileChange}
         savingPayment={savingPayment}
         handleSavePayment={handleSavePayment}
+        handlePaymentTransferFileChange={handlePaymentTransferFileChange}
         getPaymentStatusTagColor={getPaymentStatusTagColor}
         getAvailablePaymentStatusOptions={getAvailablePaymentStatusOptions}
         PAYMENT_STATUS_LABELS={PAYMENT_STATUS_LABELS}

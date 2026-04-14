@@ -19,39 +19,39 @@ function OrderPaymentsDrawer({
   open,
   onClose,
   order,
-
-  selectedPaymentId,
-  setSelectedPaymentId,
-  selectedPaymentDocument,
-
-  editingPaymentStatus,
-  setEditingPaymentStatus,
-  editingPaymentDate,
-  setEditingPaymentDate,
-  editingPaymentAmount,
-  setEditingPaymentAmount,
-
+  paymentState,
+  paymentActions,
   recipientAccountOptions,
   recipientAccountsLoading,
-  selectedRecipientAccountId,
-  setSelectedRecipientAccountId,
-
-  paymentTransferFile,
-  handlePaymentTransferFileChange,
-
   savingPayment,
   handleSavePayment,
-
+  handlePaymentTransferFileChange,
   getPaymentStatusTagColor,
   getAvailablePaymentStatusOptions,
   PAYMENT_STATUS_LABELS,
-
   formatMoney,
   formatDateDisplay,
 }) {
   const paymentDocuments = Array.isArray(order?.payment_documents)
     ? order.payment_documents
     : [];
+  const {
+    selectedPaymentId,
+    selectedPaymentDocument,
+    editingPaymentStatus,
+    editingPaymentDate,
+    editingPaymentAmount,
+    selectedRecipientAccountId,
+    paymentTransferFile,
+  } = paymentState;
+
+  const {
+    setSelectedPaymentId,
+    setEditingPaymentStatus,
+    setEditingPaymentDate,
+    setEditingPaymentAmount,
+    setSelectedRecipientAccountId,
+  } = paymentActions;
 
   return (
     <Drawer

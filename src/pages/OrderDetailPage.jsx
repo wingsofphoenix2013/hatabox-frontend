@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import {
   BankOutlined,
+  DeleteOutlined,
   DownloadOutlined,
   FileImageOutlined,
   FilePdfOutlined,
@@ -9,6 +10,7 @@ import {
   LinkOutlined,
   SettingOutlined,
   StopOutlined,
+  UploadOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import {
@@ -28,6 +30,7 @@ import {
   Tag,
   Tooltip,
   Typography,
+  Upload,
   message,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
@@ -50,13 +53,14 @@ import {
   getStatusTagColor,
   PAYMENT_STATUS_LABELS,
 } from '../constants/orderStatus';
-import { getFileNameFromUrl, isImageFile } from '../utils/fileHelpers';
-import { getReceiptDocumentTotal } from '../utils/orderCalculations';
-import { getApiErrorMessage } from '../utils/apiError';
 import {
   extractFileFromUploadEvent,
+  getFileNameFromUrl,
+  isImageFile,
   validateFileType,
 } from '../utils/fileHelpers';
+import { getReceiptDocumentTotal } from '../utils/orderCalculations';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const { Title, Text } = Typography;
 
@@ -70,6 +74,11 @@ function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [submittingToWork, setSubmittingToWork] = useState(false);
+
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFilePreview, setSelectedFilePreview] = useState('');
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [deletingFile, setDeletingFile] = useState(false);
 
   const [isPaymentsDrawerOpen, setIsPaymentsDrawerOpen] = useState(false);
   const [isReceiptDrawerOpen, setIsReceiptDrawerOpen] = useState(false);
@@ -88,10 +97,22 @@ function OrderDetailPage() {
     useState(null);
   const [paymentTransferFile, setPaymentTransferFile] = useState(null);
 
+  const MAX_FILE_SIZE_MB = 30;
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+  const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+
   useEffect(() => {
     loadOrderPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    return () => {
+      if (selectedFilePreview) {
+        URL.revokeObjectURL(selectedFilePreview);
+      }
+    };
+  }, [selectedFilePreview]);
 
   const isDraft = order?.status === 'draft';
   const isInProgress = order?.status === 'in_progress';
@@ -222,6 +243,125 @@ function OrderDetailPage() {
     }
   };
 
+  const resetSelectedFile = () => {
+    if (selectedFilePreview) {
+      URL.revokeObjectURL(selectedFilePreview);
+    }
+
+    setSelectedFile(null);
+    setSelectedFilePreview('');
+  };
+
+  const isPdfFile = (fileNameOrUrl = '', mimeType = '') => {
+    const normalizedName = String(fileNameOrUrl).toLowerCase();
+    const normalizedType = String(mimeType).toLowerCase();
+
+    return (
+      normalizedType === 'application/pdf' || normalizedName.endsWith('.pdf')
+    );
+  };
+
+  const handleFileChange = ({ fileList }) => {
+    const fileObj = extractFileFromUploadEvent(fileList);
+
+    if (!fileObj) {
+      resetSelectedFile();
+      return;
+    }
+
+    const { valid, error: validationError } = validateFileType(
+      fileObj,
+      ACCEPTED_FILE_TYPES,
+    );
+
+    if (!valid) {
+      message.error(validationError);
+      resetSelectedFile();
+      return;
+    }
+
+    if (fileObj.size > MAX_FILE_SIZE_BYTES) {
+      message.error(
+        `Розмір файлу не повинен перевищувати ${MAX_FILE_SIZE_MB} МБ.`,
+      );
+      resetSelectedFile();
+      return;
+    }
+
+    if (selectedFilePreview) {
+      URL.revokeObjectURL(selectedFilePreview);
+    }
+
+    setSelectedFile(fileObj);
+
+    if (isImageFile(fileObj.name, fileObj.type)) {
+      setSelectedFilePreview(URL.createObjectURL(fileObj));
+    } else {
+      setSelectedFilePreview('');
+    }
+  };
+
+  const handleUploadFile = async () => {
+    if (!selectedFile) {
+      message.error('Спочатку оберіть файл.');
+      return;
+    }
+
+    try {
+      setUploadingFile(true);
+
+      const payload = new FormData();
+      payload.append('image', selectedFile);
+
+      const response = await api.patch(`orders/${id}/`, payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setOrder(response.data);
+      resetSelectedFile();
+      message.success('Файл успішно завантажено.');
+    } catch (err) {
+      console.error('Failed to upload order file:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData, ['image']);
+
+      message.error(backendMessage || 'Не вдалося завантажити файл.');
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDeleteFile = async () => {
+    try {
+      setDeletingFile(true);
+
+      const payload = new FormData();
+      payload.append('clear_image', 'true');
+
+      const response = await api.patch(`orders/${id}/`, payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setOrder(response.data);
+      resetSelectedFile();
+      message.success('Файл видалено.');
+    } catch (err) {
+      console.error('Failed to delete order file:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData);
+
+      message.error(backendMessage || 'Не вдалося видалити файл.');
+    } finally {
+      setDeletingFile(false);
+    }
+  };
+
   const handleSendToWork = async () => {
     try {
       setSubmittingToWork(true);
@@ -245,7 +385,6 @@ function OrderDetailPage() {
       );
 
       const responseData = err?.response?.data;
-
       const backendMessage = getApiErrorMessage(responseData);
 
       message.error(
@@ -288,10 +427,10 @@ function OrderDetailPage() {
       return;
     }
 
-    const { valid, error } = validateFileType(fileObj);
+    const { valid, error: validationError } = validateFileType(fileObj);
 
     if (!valid) {
-      message.error(error);
+      message.error(validationError);
       setPaymentTransferFile(null);
       return;
     }
@@ -380,7 +519,6 @@ function OrderDetailPage() {
       console.error('Failed to update payment document:', err);
 
       const responseData = err?.response?.data;
-
       const backendMessage = getApiErrorMessage(responseData, [
         'payment_amount',
         'payment_date',
@@ -719,6 +857,7 @@ function OrderDetailPage() {
 
   const currentFileUrl = order?.image || '';
   const currentFileName = getFileNameFromUrl(currentFileUrl);
+  const selectedFileName = selectedFile?.name || '';
 
   return (
     <div style={{ padding: 20 }}>
@@ -805,18 +944,135 @@ function OrderDetailPage() {
                     </Text>
                   </Flex>
                 )
+              ) : selectedFile ? (
+                isImageFile(selectedFile.name, selectedFile.type) &&
+                selectedFilePreview ? (
+                  <Image
+                    src={selectedFilePreview}
+                    alt="Selected file preview"
+                    preview={false}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      margin: '0 auto',
+                      display: 'block',
+                    }}
+                  />
+                ) : (
+                  <Flex
+                    vertical
+                    align="center"
+                    justify="center"
+                    gap={12}
+                    style={{ textAlign: 'center' }}
+                  >
+                    {isPdfFile(selectedFile.name, selectedFile.type) ? (
+                      <FilePdfOutlined
+                        style={{ fontSize: 52, color: '#cf1322' }}
+                      />
+                    ) : (
+                      <FileImageOutlined
+                        style={{ fontSize: 52, color: '#1677ff' }}
+                      />
+                    )}
+
+                    <Text strong style={{ wordBreak: 'break-word' }}>
+                      {selectedFileName}
+                    </Text>
+                  </Flex>
+                )
               ) : (
                 <Text type="secondary">Файл не завантажено</Text>
               )}
             </div>
 
-            {currentFileUrl && (
-              <Button
-                block
-                onClick={() => window.open(currentFileUrl, '_blank')}
-              >
-                Відкрити файл
-              </Button>
+            {currentFileUrl ? (
+              <Flex vertical gap={8}>
+                <Button
+                  block
+                  onClick={() => window.open(currentFileUrl, '_blank')}
+                >
+                  Відкрити файл
+                </Button>
+
+                <Popconfirm
+                  title="Видалити файл?"
+                  description="Після видалення можна буде завантажити новий файл."
+                  okText="Так"
+                  cancelText="Ні"
+                  onConfirm={handleDeleteFile}
+                  disabled={deletingFile}
+                >
+                  <Button
+                    block
+                    danger
+                    icon={<DeleteOutlined />}
+                    loading={deletingFile}
+                  >
+                    Видалити файл
+                  </Button>
+                </Popconfirm>
+              </Flex>
+            ) : (
+              <Flex vertical gap={8}>
+                <Upload
+                  beforeUpload={() => false}
+                  maxCount={1}
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={handleFileChange}
+                  showUploadList={false}
+                >
+                  <Button block icon={<UploadOutlined />}>
+                    Обрати файл
+                  </Button>
+                </Upload>
+
+                {selectedFile && (
+                  <>
+                    <div
+                      style={{
+                        padding: '10px 12px',
+                        background: '#fafafa',
+                        border: '1px solid #f0f0f0',
+                        borderRadius: 8,
+                      }}
+                    >
+                      <Text
+                        strong
+                        style={{ display: 'block', marginBottom: 4 }}
+                      >
+                        Обраний файл
+                      </Text>
+
+                      <Text style={{ wordBreak: 'break-word' }}>
+                        {selectedFileName}
+                      </Text>
+
+                      <div style={{ marginTop: 4 }}>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          Максимальний розмір: {MAX_FILE_SIZE_MB} МБ
+                        </Text>
+                      </div>
+                    </div>
+
+                    <Flex vertical gap={8}>
+                      <Button
+                        type="primary"
+                        block
+                        loading={uploadingFile}
+                        onClick={handleUploadFile}
+                      >
+                        Завантажити файл
+                      </Button>
+
+                      <Button block onClick={resetSelectedFile}>
+                        Скасувати
+                      </Button>
+                    </Flex>
+                  </>
+                )}
+              </Flex>
             )}
           </Card>
 

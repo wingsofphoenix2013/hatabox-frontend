@@ -3,7 +3,6 @@ import dayjs from 'dayjs';
 import {
   BankOutlined,
   DownloadOutlined,
-  EditOutlined,
   FileImageOutlined,
   FilePdfOutlined,
   InfoCircleOutlined,
@@ -31,7 +30,7 @@ import {
   Typography,
   message,
 } from 'antd';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
 
 import OrderReceiptDrawer from '../components/OrderReceiptDrawer';
@@ -63,7 +62,6 @@ const { Title, Text } = Typography;
 
 function OrderDetailPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
   const [receiptDocuments, setReceiptDocuments] = useState([]);
@@ -869,14 +867,6 @@ function OrderDetailPage() {
                     Редагувати оплати
                   </Button>
                 )}
-
-                <Button
-                  block
-                  icon={<EditOutlined style={{ color: '#1677ff' }} />}
-                  onClick={() => navigate(`/orders/${order.id}/edit`)}
-                >
-                  Редагувати замовлення
-                </Button>
 
                 <Button
                   block

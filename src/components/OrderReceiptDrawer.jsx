@@ -25,7 +25,7 @@ import {
 
 const { Text } = Typography;
 
-function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
+function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   // state
   const [receiptNo, setReceiptNo] = useState('');
   const [receiptDate, setReceiptDate] = useState(null);
@@ -498,4 +498,4 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   );
 }
 
-export default ReceiptDrawer;
+export default OrderReceiptDrawer;

@@ -5,7 +5,6 @@ import {
   DeleteOutlined,
   DownloadOutlined,
   FileImageOutlined,
-  FilePdfOutlined,
   InfoCircleOutlined,
   LinkOutlined,
   SettingOutlined,
@@ -39,6 +38,8 @@ import api from '../api/client';
 import OrderReceiptDrawer from '../components/OrderReceiptDrawer';
 import OrderPaymentsDrawer from '../components/OrderPaymentsDrawer';
 import OrderItemsDrawer from '../components/OrderItemsDrawer';
+
+import PdfPreview from '../components/PdfPreview';
 
 import { formatQuantity } from '../utils/formatNumber';
 import {
@@ -294,11 +295,7 @@ function OrderDetailPage() {
 
     setSelectedFile(fileObj);
 
-    if (isImageFile(fileObj.name, fileObj.type)) {
-      setSelectedFilePreview(URL.createObjectURL(fileObj));
-    } else {
-      setSelectedFilePreview('');
-    }
+    setSelectedFilePreview(URL.createObjectURL(fileObj));
   };
 
   const handleUploadFile = async () => {
@@ -933,13 +930,14 @@ function OrderDetailPage() {
                     align="center"
                     justify="center"
                     gap={12}
-                    style={{ textAlign: 'center' }}
+                    style={{ width: '100%' }}
                   >
-                    <FilePdfOutlined
-                      style={{ fontSize: 52, color: '#cf1322' }}
-                    />
+                    <PdfPreview fileUrl={currentFileUrl} width={220} />
 
-                    <Text strong style={{ wordBreak: 'break-word' }}>
+                    <Text
+                      strong
+                      style={{ wordBreak: 'break-word', textAlign: 'center' }}
+                    >
                       {currentFileName || 'PDF файл'}
                     </Text>
                   </Flex>
@@ -959,6 +957,24 @@ function OrderDetailPage() {
                       display: 'block',
                     }}
                   />
+                ) : isPdfFile(selectedFile.name, selectedFile.type) &&
+                  selectedFilePreview ? (
+                  <Flex
+                    vertical
+                    align="center"
+                    justify="center"
+                    gap={12}
+                    style={{ width: '100%' }}
+                  >
+                    <PdfPreview fileUrl={selectedFilePreview} width={220} />
+
+                    <Text
+                      strong
+                      style={{ wordBreak: 'break-word', textAlign: 'center' }}
+                    >
+                      {selectedFileName}
+                    </Text>
+                  </Flex>
                 ) : (
                   <Flex
                     vertical
@@ -967,15 +983,9 @@ function OrderDetailPage() {
                     gap={12}
                     style={{ textAlign: 'center' }}
                   >
-                    {isPdfFile(selectedFile.name, selectedFile.type) ? (
-                      <FilePdfOutlined
-                        style={{ fontSize: 52, color: '#cf1322' }}
-                      />
-                    ) : (
-                      <FileImageOutlined
-                        style={{ fontSize: 52, color: '#1677ff' }}
-                      />
-                    )}
+                    <FileImageOutlined
+                      style={{ fontSize: 52, color: '#1677ff' }}
+                    />
 
                     <Text strong style={{ wordBreak: 'break-word' }}>
                       {selectedFileName}

@@ -50,6 +50,16 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     setReceiptQuantity(null);
     setSavingReceiptItem(false);
   };
+  const resetReceiptItemForm = () => {
+    setReceiptOrderItemId(null);
+    setReceiptQuantity(null);
+  };
+
+  const notifyReceiptSaved = async () => {
+    if (onReceiptSaved) {
+      await onReceiptSaved();
+    }
+  };
 
   // effects
   useEffect(() => {
@@ -158,10 +168,7 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       setCreatedReceiptDocument(createdDocument);
       message.success('Видаткову накладну зареєстровано.');
 
-      if (onReceiptSaved) {
-        await onReceiptSaved();
-      }
-
+      await notifyReceiptSaved();
       await loadReceiptDocument(createdDocument.id);
     } catch (err) {
       console.error('Failed to create receipt document:', err);
@@ -221,14 +228,10 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
 
       message.success('Рядок отримання додано.');
 
-      setReceiptOrderItemId(null);
-      setReceiptQuantity(null);
+      resetReceiptItemForm();
 
       await loadReceiptDocument(createdReceiptDocument.id);
-
-      if (onReceiptSaved) {
-        await onReceiptSaved();
-      }
+      await notifyReceiptSaved();
     } catch (err) {
       console.error('Failed to create receipt item:', err);
 

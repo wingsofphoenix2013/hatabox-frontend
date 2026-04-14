@@ -418,13 +418,23 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
     }
   };
 
+  const cellStyle = (dimmed) => ({
+    opacity: dimmed ? 0.45 : 1,
+    textAlign: 'center',
+  });
+
+  const leftCellStyle = (dimmed) => ({
+    opacity: dimmed ? 0.45 : 1,
+    textAlign: 'left',
+  });
+
   const columns = [
     {
       title: '№',
       key: 'index',
       width: 70,
       align: 'center',
-      render: (_, __, index) => index + 1,
+      render: (_, __, index) => <div style={cellStyle(false)}>{index + 1}</div>,
     },
     {
       title: 'Назва компонента',
@@ -433,9 +443,7 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
       render: (value, record) => {
         const isRowDimmed = isEditingMode && editingItemId !== record.id;
 
-        return (
-          <div style={{ opacity: isRowDimmed ? 0.45 : 1 }}>{value || '—'}</div>
-        );
+        return <div style={leftCellStyle(isRowDimmed)}>{value || '—'}</div>;
       },
     },
     {
@@ -447,9 +455,7 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
       render: (value, record) => {
         const isRowDimmed = isEditingMode && editingItemId !== record.id;
 
-        return (
-          <div style={{ opacity: isRowDimmed ? 0.45 : 1 }}>{value || '—'}</div>
-        );
+        return <div style={cellStyle(isRowDimmed)}>{value || '—'}</div>;
       },
     },
     {
@@ -462,9 +468,7 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
         const isRowDimmed = isEditingMode && editingItemId !== record.id;
 
         return (
-          <div style={{ opacity: isRowDimmed ? 0.45 : 1 }}>
-            {formatQuantity(value)}
-          </div>
+          <div style={cellStyle(isRowDimmed)}>{formatQuantity(value)}</div>
         );
       },
     },
@@ -478,7 +482,7 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
         const isRowDimmed = isEditingMode && editingItemId !== record.id;
 
         return (
-          <div style={{ opacity: isRowDimmed ? 0.45 : 1 }}>
+          <div style={cellStyle(isRowDimmed)}>
             {`${formatPurchasePrice(
               toDisplayedInputPrice(value, pricesIncludeVat),
             )} ₴`}
@@ -496,13 +500,13 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
         const isRowDimmed = isEditingMode && editingItemId !== record.id;
 
         if (!value) {
-          return <div style={{ opacity: isRowDimmed ? 0.45 : 1 }}>—</div>;
+          return <div style={cellStyle(isRowDimmed)}>—</div>;
         }
 
         const date = dayjs(value, 'YYYY-MM-DD');
 
         return (
-          <div style={{ opacity: isRowDimmed ? 0.45 : 1 }}>
+          <div style={cellStyle(isRowDimmed)}>
             {date.isValid() ? date.format('DD-MM-YYYY') : '—'}
           </div>
         );
@@ -525,7 +529,7 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
         const showDelete = canDeleteItem;
 
         return (
-          <Space size="middle" style={{ opacity: isOtherRowDimmed ? 0.45 : 1 }}>
+          <Space size="middle" style={cellStyle(isOtherRowDimmed)}>
             {showEdit && (
               <EditOutlined
                 style={{

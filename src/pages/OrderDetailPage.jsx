@@ -8,6 +8,7 @@ import {
   FilePdfOutlined,
   InfoCircleOutlined,
   LinkOutlined,
+  SettingOutlined,
   StopOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
@@ -35,6 +36,7 @@ import api from '../api/client';
 
 import OrderReceiptDrawer from '../components/OrderReceiptDrawer';
 import OrderPaymentsDrawer from '../components/OrderPaymentsDrawer';
+import OrderItemsDrawer from '../components/OrderItemsDrawer';
 
 import { formatQuantity } from '../utils/formatNumber';
 import {
@@ -70,8 +72,10 @@ function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [submittingToWork, setSubmittingToWork] = useState(false);
+
   const [isPaymentsDrawerOpen, setIsPaymentsDrawerOpen] = useState(false);
   const [isReceiptDrawerOpen, setIsReceiptDrawerOpen] = useState(false);
+  const [isOrderItemsDrawerOpen, setIsOrderItemsDrawerOpen] = useState(false);
 
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
   const [editingPaymentStatus, setEditingPaymentStatus] = useState(null);
@@ -874,6 +878,14 @@ function OrderDetailPage() {
                   Редагувати замовлення
                 </Button>
 
+                <Button
+                  block
+                  icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                  onClick={() => setIsOrderItemsDrawerOpen(true)}
+                >
+                  Комплектація замовлення
+                </Button>
+
                 <Divider style={{ margin: '4px 0 8px 0' }} />
 
                 <Popconfirm
@@ -1082,6 +1094,12 @@ function OrderDetailPage() {
         PAYMENT_STATUS_LABELS={PAYMENT_STATUS_LABELS}
         formatMoney={formatMoney}
         formatDateDisplay={formatDateDisplay}
+      />
+
+      <OrderItemsDrawer
+        open={isOrderItemsDrawerOpen}
+        onClose={() => setIsOrderItemsDrawerOpen(false)}
+        order={order}
       />
     </div>
   );

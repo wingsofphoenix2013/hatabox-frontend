@@ -9,5 +9,8 @@ export function formatQuantity(value) {
     return value;
   }
 
-  return num.toString();
+  return new Intl.NumberFormat('uk-UA', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 3,
+  }).format(num);
 }

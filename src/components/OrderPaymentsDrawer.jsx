@@ -9,9 +9,11 @@ import {
   InputNumber,
   Select,
   Tag,
-  Text,
+  Typography,
   Upload,
 } from 'antd';
+
+const { Text } = Typography;
 
 function OrderPaymentsDrawer({
   open,

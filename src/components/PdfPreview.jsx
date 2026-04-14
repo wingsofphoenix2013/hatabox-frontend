@@ -9,7 +9,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url,
 ).toString();
 
-function PdfPreview({ fileUrl, width = 220 }) {
+function PdfPreview({ fileUrl, width = 220, clickable = false }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [pageCount, setPageCount] = useState(null);
 
@@ -33,6 +33,12 @@ function PdfPreview({ fileUrl, width = 220 }) {
         width: '100%',
         display: 'flex',
         justifyContent: 'center',
+        cursor: clickable ? 'pointer' : 'default',
+      }}
+      onClick={() => {
+        if (clickable && fileUrl) {
+          window.open(fileUrl, '_blank');
+        }
       }}
     >
       <Flex vertical align="center" gap={8} style={{ width: '100%' }}>

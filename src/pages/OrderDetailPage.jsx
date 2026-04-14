@@ -932,7 +932,11 @@ function OrderDetailPage() {
                     gap={12}
                     style={{ width: '100%' }}
                   >
-                    <PdfPreview fileUrl={currentFileUrl} width={220} />
+                    <PdfPreview
+                      fileUrl={currentFileUrl}
+                      width={220}
+                      clickable
+                    />
 
                     <Text
                       strong
@@ -966,7 +970,11 @@ function OrderDetailPage() {
                     gap={12}
                     style={{ width: '100%' }}
                   >
-                    <PdfPreview fileUrl={selectedFilePreview} width={220} />
+                    <PdfPreview
+                      fileUrl={selectedFilePreview}
+                      width={220}
+                      clickable
+                    />
 
                     <Text
                       strong

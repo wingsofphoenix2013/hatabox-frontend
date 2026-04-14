@@ -1,6 +1,11 @@
 import { useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  InfoCircleOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -394,10 +399,47 @@ function OrderItemsDrawer({ open, onClose, order }) {
                 </div>
 
                 <div style={{ flex: '1 1 220px' }}>
-                  <InfoCell
-                    label="Номенклатурна одиниця"
-                    value={selectedVendorItem?.inv_item_name}
-                  />
+                  <Text
+                    type="secondary"
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      lineHeight: 1.2,
+                      marginBottom: 4,
+                    }}
+                  >
+                    Номенклатурна одиниця
+                  </Text>
+
+                  <Flex align="center" gap={6} wrap>
+                    <InfoCircleOutlined
+                      style={{
+                        color: '#1677ff',
+                        fontSize: 14,
+                        cursor: selectedVendorItem ? 'pointer' : 'default',
+                        opacity: selectedVendorItem ? 1 : 0.45,
+                      }}
+                      onClick={() => {
+                        if (selectedVendorItem) {
+                          window.open(
+                            `/inventory/items/${selectedVendorItem.value}`,
+                            '_blank',
+                          );
+                        }
+                      }}
+                    />
+
+                    <Text
+                      style={{
+                        display: 'block',
+                        fontSize: 13,
+                        lineHeight: 1.3,
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {selectedVendorItem?.inv_item_name || '—'}
+                    </Text>
+                  </Flex>
                 </div>
 
                 <div style={{ flex: '0 1 140px' }}>
@@ -417,7 +459,7 @@ function OrderItemsDrawer({ open, onClose, order }) {
                       marginBottom: 4,
                     }}
                   >
-                    Конвертація
+                    Конвертація одиниць виміру
                   </Text>
 
                   <Switch

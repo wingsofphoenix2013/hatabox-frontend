@@ -26,21 +26,33 @@ const MOCK_VENDOR_ITEMS = [
     value: 101,
     label: 'Амортизатор газовий передній',
     vendor_sku: 'AGP-001',
+    inv_item_name: 'Амортизатор передній газовий',
+    unit_name: 'Штуки',
+    conversion_enabled: true,
   },
   {
     value: 102,
     label: 'Пружина підвіски задня',
     vendor_sku: 'PZ-204',
+    inv_item_name: 'Пружина задньої підвіски',
+    unit_name: 'Штуки',
+    conversion_enabled: false,
   },
   {
     value: 103,
     label: 'Опора амортизатора',
     vendor_sku: 'OA-778',
+    inv_item_name: 'Опора амортизатора верхня',
+    unit_name: 'Штуки',
+    conversion_enabled: false,
   },
   {
     value: 104,
     label: 'Сайлентблок важеля',
     vendor_sku: 'SV-450',
+    inv_item_name: 'Сайлентблок важеля підвіски',
+    unit_name: 'Штуки',
+    conversion_enabled: true,
   },
 ];
 
@@ -97,6 +109,35 @@ const formatPurchasePrice = (value) => {
   }).format(num);
 };
 
+function InfoCell({ label, value, compact = false }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <Text
+        type="secondary"
+        style={{
+          display: 'block',
+          fontSize: compact ? 11 : 12,
+          lineHeight: 1.2,
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </Text>
+
+      <Text
+        style={{
+          display: 'block',
+          fontSize: compact ? 12 : 13,
+          lineHeight: 1.3,
+          wordBreak: 'break-word',
+        }}
+      >
+        {value || '—'}
+      </Text>
+    </div>
+  );
+}
+
 function OrderItemsDrawer({ open, onClose, order }) {
   const [pricesIncludeVat, setPricesIncludeVat] = useState(
     Boolean(order?.prices_include_vat),
@@ -129,6 +170,8 @@ function OrderItemsDrawer({ open, onClose, order }) {
 
     return orderTotalAmount / 6;
   }, [orderTotalAmount, pricesIncludeVat]);
+
+  const priceLabel = pricesIncludeVat ? 'Ціна з ПДВ' : 'Ціна без ПДВ';
 
   const resetForm = () => {
     setSelectedVendorItemId(null);
@@ -188,7 +231,7 @@ function OrderItemsDrawer({ open, onClose, order }) {
       render: (value) => value || '—',
     },
     {
-      title: 'vendor_sku',
+      title: 'Артікул',
       dataIndex: 'vendor_item_sku',
       key: 'vendor_item_sku',
       width: 140,
@@ -204,7 +247,7 @@ function OrderItemsDrawer({ open, onClose, order }) {
       render: (value) => formatQuantity(value),
     },
     {
-      title: pricesIncludeVat ? 'Ціна' : 'Ціна без ПДВ',
+      title: priceLabel,
       dataIndex: 'agreed_price',
       key: 'agreed_price',
       width: 150,
@@ -219,6 +262,7 @@ function OrderItemsDrawer({ open, onClose, order }) {
       align: 'center',
       render: (value) => {
         if (!value) return '—';
+
         const date = dayjs(value, 'YYYY-MM-DD');
         return date.isValid() ? date.format('DD-MM-YYYY') : '—';
       },
@@ -256,7 +300,7 @@ function OrderItemsDrawer({ open, onClose, order }) {
         <Card
           title={
             <Flex justify="space-between" align="center" wrap gap={12}>
-              <span>1. Додати рядок замовлення</span>
+              <span>1. Компонент</span>
 
               <Flex align="center" gap={8}>
                 <Text>Ціна у рахунку враховує ПДВ</Text>
@@ -271,6 +315,7 @@ function OrderItemsDrawer({ open, onClose, order }) {
           }
         >
           <Flex vertical gap={16}>
+            {/* ROW 1 */}
             <div>
               <Text style={{ display: 'block', marginBottom: 8 }}>
                 Позиція постачальника
@@ -286,15 +331,9 @@ function OrderItemsDrawer({ open, onClose, order }) {
               />
             </div>
 
-            <div>
-              <Text style={{ display: 'block', marginBottom: 8 }}>
-                vendor_sku
-              </Text>
-              <Tag>{selectedVendorItem?.vendor_sku || '—'}</Tag>
-            </div>
-
+            {/* ROW 2 */}
             <Flex gap={16} wrap>
-              <div style={{ flex: 1, minWidth: 180 }}>
+              <div style={{ flex: 1, minWidth: 160 }}>
                 <Text style={{ display: 'block', marginBottom: 8 }}>
                   Кількість
                 </Text>
@@ -310,7 +349,7 @@ function OrderItemsDrawer({ open, onClose, order }) {
 
               <div style={{ flex: 1, minWidth: 180 }}>
                 <Text style={{ display: 'block', marginBottom: 8 }}>
-                  {pricesIncludeVat ? 'Ціна' : 'Ціна без ПДВ'}
+                  {priceLabel}
                 </Text>
                 <InputNumber
                   min={0}
@@ -335,6 +374,61 @@ function OrderItemsDrawer({ open, onClose, order }) {
                 />
               </div>
             </Flex>
+
+            {/* ROW 3 */}
+            <div
+              style={{
+                padding: '10px 12px',
+                border: '1px solid #f0f0f0',
+                borderRadius: 8,
+                background: '#fafafa',
+              }}
+            >
+              <Flex wrap gap={16}>
+                <div style={{ flex: '1 1 160px' }}>
+                  <InfoCell
+                    label="Артікул"
+                    value={selectedVendorItem?.vendor_sku}
+                    compact
+                  />
+                </div>
+
+                <div style={{ flex: '1 1 220px' }}>
+                  <InfoCell
+                    label="Номенклатурна одиниця"
+                    value={selectedVendorItem?.inv_item_name}
+                  />
+                </div>
+
+                <div style={{ flex: '0 1 140px' }}>
+                  <InfoCell
+                    label="Одиниця"
+                    value={selectedVendorItem?.unit_name}
+                  />
+                </div>
+
+                <div style={{ flex: '0 1 140px' }}>
+                  <Text
+                    type="secondary"
+                    style={{
+                      display: 'block',
+                      fontSize: 12,
+                      lineHeight: 1.2,
+                      marginBottom: 4,
+                    }}
+                  >
+                    Конвертація
+                  </Text>
+
+                  <Switch
+                    checked={Boolean(selectedVendorItem?.conversion_enabled)}
+                    checkedChildren="Так"
+                    unCheckedChildren="Ні"
+                    disabled
+                  />
+                </div>
+              </Flex>
+            </div>
 
             <Flex justify="flex-end" gap={8}>
               <Button onClick={resetForm}>Очистити</Button>

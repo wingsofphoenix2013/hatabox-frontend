@@ -19,29 +19,40 @@ function OrderPaymentsDrawer({
   open,
   onClose,
   order,
+
   selectedPaymentId,
   setSelectedPaymentId,
   selectedPaymentDocument,
+
   editingPaymentStatus,
   setEditingPaymentStatus,
   editingPaymentDate,
   setEditingPaymentDate,
   editingPaymentAmount,
   setEditingPaymentAmount,
+
   recipientAccountOptions,
   recipientAccountsLoading,
   selectedRecipientAccountId,
   setSelectedRecipientAccountId,
+
   paymentTransferFile,
   handlePaymentTransferFileChange,
+
   savingPayment,
   handleSavePayment,
+
   getPaymentStatusTagColor,
   getAvailablePaymentStatusOptions,
   PAYMENT_STATUS_LABELS,
+
   formatMoney,
   formatDateDisplay,
 }) {
+  const paymentDocuments = Array.isArray(order?.payment_documents)
+    ? order.payment_documents
+    : [];
+
   return (
     <Drawer
       title="Редагувати оплати"
@@ -51,32 +62,29 @@ function OrderPaymentsDrawer({
       onClose={onClose}
     >
       <Flex vertical gap={16}>
+        {/* STEP 1 */}
         <Card title="1. Оберіть платіжну інструкцію">
           <Select
             placeholder="Оберіть платіжну інструкцію"
             style={{ width: '100%' }}
             value={selectedPaymentId}
             onChange={setSelectedPaymentId}
-            options={(Array.isArray(order?.payment_documents)
-              ? order.payment_documents
-              : []
-            ).map((item) => ({
+            options={paymentDocuments.map((item) => ({
               value: item.id,
-              label: `${item.payment_no || '—'} — ${item.status_name || PAYMENT_STATUS_LABELS[item.status] || '—'}`,
+              label: `${item.payment_no || '—'} — ${
+                item.status_name || PAYMENT_STATUS_LABELS[item.status] || '—'
+              }`,
             }))}
           />
         </Card>
 
+        {/* STEP 2 */}
         {selectedPaymentDocument && (
           <Card title="2. Основна інформація">
             <Flex vertical gap={16}>
+              {/* STATUS */}
               <div>
-                <Text
-                  style={{
-                    display: 'block',
-                    marginBottom: 8,
-                  }}
-                >
+                <Text style={{ display: 'block', marginBottom: 8 }}>
                   Статус платежу
                 </Text>
 
@@ -101,13 +109,9 @@ function OrderPaymentsDrawer({
                 )}
               </div>
 
+              {/* AMOUNT */}
               <div>
-                <Text
-                  style={{
-                    display: 'block',
-                    marginBottom: 8,
-                  }}
-                >
+                <Text style={{ display: 'block', marginBottom: 8 }}>
                   Сума платежу
                 </Text>
 
@@ -130,6 +134,7 @@ function OrderPaymentsDrawer({
           </Card>
         )}
 
+        {/* STEP 3 */}
         {selectedPaymentDocument &&
           (selectedPaymentDocument.status === 'approved' ||
             selectedPaymentDocument.status === 'paid') && (
@@ -137,13 +142,9 @@ function OrderPaymentsDrawer({
               <Flex vertical gap={16}>
                 {selectedPaymentDocument.status === 'approved' ? (
                   <>
+                    {/* ACCOUNT */}
                     <div>
-                      <Text
-                        style={{
-                          display: 'block',
-                          marginBottom: 8,
-                        }}
-                      >
+                      <Text style={{ display: 'block', marginBottom: 8 }}>
                         Розрахунковий рахунок отримувача
                       </Text>
 
@@ -168,13 +169,9 @@ function OrderPaymentsDrawer({
                       />
                     </div>
 
+                    {/* DATE */}
                     <div>
-                      <Text
-                        style={{
-                          display: 'block',
-                          marginBottom: 8,
-                        }}
-                      >
+                      <Text style={{ display: 'block', marginBottom: 8 }}>
                         Дата платежу
                       </Text>
 
@@ -187,13 +184,9 @@ function OrderPaymentsDrawer({
                       />
                     </div>
 
+                    {/* FILE */}
                     <div>
-                      <Text
-                        style={{
-                          display: 'block',
-                          marginBottom: 8,
-                        }}
-                      >
+                      <Text style={{ display: 'block', marginBottom: 8 }}>
                         Файл переказу
                       </Text>
 
@@ -227,6 +220,7 @@ function OrderPaymentsDrawer({
                       </Upload>
                     </div>
 
+                    {/* WARNING */}
                     {editingPaymentStatus === 'paid' &&
                       recipientAccountOptions.length === 0 &&
                       !recipientAccountsLoading && (
@@ -239,13 +233,9 @@ function OrderPaymentsDrawer({
                   </>
                 ) : (
                   <>
+                    {/* DATE VIEW */}
                     <div>
-                      <Text
-                        style={{
-                          display: 'block',
-                          marginBottom: 8,
-                        }}
-                      >
+                      <Text style={{ display: 'block', marginBottom: 8 }}>
                         Дата платежу
                       </Text>
 
@@ -256,13 +246,9 @@ function OrderPaymentsDrawer({
                       </Text>
                     </div>
 
+                    {/* FILE VIEW */}
                     <div>
-                      <Text
-                        style={{
-                          display: 'block',
-                          marginBottom: 8,
-                        }}
-                      >
+                      <Text style={{ display: 'block', marginBottom: 8 }}>
                         Файл переказу
                       </Text>
 
@@ -284,6 +270,7 @@ function OrderPaymentsDrawer({
             </Card>
           )}
 
+        {/* ACTIONS */}
         <Flex justify="flex-end" gap={8}>
           <Button onClick={onClose}>Відміна</Button>
 

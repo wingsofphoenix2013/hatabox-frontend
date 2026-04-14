@@ -176,38 +176,6 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
     );
   }, [items, editingItemId]);
 
-  useEffect(() => {
-    if (open && canEditAllFields) {
-      loadVendorItems();
-    }
-  }, [open, canEditAllFields, loadVendorItems]);
-
-  const orderTotalAmount = Number(order?.order_total_amount) || 0;
-  const vatAmount = Number(order?.vat_amount) || 0;
-
-  const resetForm = () => {
-    setSelectedVendorItemId(null);
-    setSelectedVendorItem(null);
-    setQuantity(null);
-    setPrice(null);
-    setExpectedDate(null);
-    setRequiresUnitConversion(false);
-    setEditingItemId(null);
-    setVendorItemOptions([]);
-    setVendorItemsLoading(false);
-  };
-
-  const handleCloseDrawer = () => {
-    resetForm();
-    onClose();
-  };
-
-  const notifyOrderUpdated = async () => {
-    if (onOrderUpdated) {
-      await onOrderUpdated();
-    }
-  };
-
   const loadVendorItems = useCallback(async () => {
     if (!order?.vendor || !canEditAllFields) {
       setVendorItemOptions([]);
@@ -250,6 +218,38 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
     selectedVendorItemId,
     availableVendorItemIds,
   ]);
+
+  useEffect(() => {
+    if (open && canEditAllFields) {
+      loadVendorItems();
+    }
+  }, [open, canEditAllFields, loadVendorItems]);
+
+  const orderTotalAmount = Number(order?.order_total_amount) || 0;
+  const vatAmount = Number(order?.vat_amount) || 0;
+
+  const resetForm = () => {
+    setSelectedVendorItemId(null);
+    setSelectedVendorItem(null);
+    setQuantity(null);
+    setPrice(null);
+    setExpectedDate(null);
+    setRequiresUnitConversion(false);
+    setEditingItemId(null);
+    setVendorItemOptions([]);
+    setVendorItemsLoading(false);
+  };
+
+  const handleCloseDrawer = () => {
+    resetForm();
+    onClose();
+  };
+
+  const notifyOrderUpdated = async () => {
+    if (onOrderUpdated) {
+      await onOrderUpdated();
+    }
+  };
 
   const handleSearchVendorItems = async () => {};
 

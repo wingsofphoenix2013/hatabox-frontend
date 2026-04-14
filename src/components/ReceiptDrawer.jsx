@@ -37,16 +37,21 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   const [receiptQuantity, setReceiptQuantity] = useState(null);
   const [savingReceiptItem, setSavingReceiptItem] = useState(false);
 
+  const resetReceiptDrawerState = () => {
+    setReceiptNo('');
+    setReceiptDate(null);
+    setReceiptFile(null);
+    setCreatingReceiptDocument(false);
+    setCreatedReceiptDocument(null);
+    setReceiptDocumentLoading(false);
+    setReceiptOrderItemId(null);
+    setReceiptQuantity(null);
+    setSavingReceiptItem(false);
+  };
+
   useEffect(() => {
     if (!open) {
-      setReceiptNo('');
-      setReceiptDate(null);
-      setReceiptFile(null);
-      setCreatingReceiptDocument(false);
-      setCreatedReceiptDocument(null);
-      setReceiptDocumentLoading(false);
-      setReceiptOrderItemId(null);
-      setReceiptQuantity(null);
+      resetReceiptDrawerState();
     }
   }, [open]);
 

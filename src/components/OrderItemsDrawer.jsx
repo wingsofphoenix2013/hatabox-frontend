@@ -721,7 +721,7 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
                       onClick={() => {
                         if (selectedVendorItem?.item) {
                           window.open(
-                            `/inventory/items/${selectedVendorItem.item}`,
+                            `/production/components/${selectedVendorItem.item}`,
                             '_blank',
                           );
                         }

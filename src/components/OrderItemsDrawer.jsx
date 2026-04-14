@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import {
   DeleteOutlined,
@@ -176,6 +176,12 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
     );
   }, [items, editingItemId]);
 
+  useEffect(() => {
+    if (open && canEditAllFields) {
+      loadVendorItems();
+    }
+  }, [open, canEditAllFields, loadVendorItems]);
+
   const orderTotalAmount = Number(order?.order_total_amount) || 0;
   const vatAmount = Number(order?.vat_amount) || 0;
 
@@ -202,10 +208,8 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
     }
   };
 
-  const handleSearchVendorItems = async (searchValue) => {
-    const query = searchValue?.trim();
-
-    if (!query || !order?.vendor || !canEditAllFields) {
+  const loadVendorItems = useCallback(async () => {
+    if (!order?.vendor || !canEditAllFields) {
       setVendorItemOptions([]);
       return;
     }
@@ -213,9 +217,7 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
     try {
       setVendorItemsLoading(true);
 
-      const response = await api.get(
-        `vendor-items/?vendor=${order.vendor}&search=${encodeURIComponent(query)}`,
-      );
+      const response = await api.get(`vendor-items/?vendor=${order.vendor}`);
 
       const results = Array.isArray(response.data?.results)
         ? response.data.results
@@ -237,12 +239,19 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
         })),
       );
     } catch (err) {
-      console.error('Failed to search vendor items:', err);
+      console.error('Failed to load vendor items:', err);
       setVendorItemOptions([]);
     } finally {
       setVendorItemsLoading(false);
     }
-  };
+  }, [
+    order?.vendor,
+    canEditAllFields,
+    selectedVendorItemId,
+    availableVendorItemIds,
+  ]);
+
+  const handleSearchVendorItems = async () => {};
 
   const handleStartEditItem = (record) => {
     if (!canEditItem || isEditingMode) {
@@ -607,7 +616,7 @@ function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
                 style={{ width: '100%' }}
                 value={selectedVendorItemId}
                 onSearch={handleSearchVendorItems}
-                filterOption={false}
+                filterOption
                 optionFilterProp="label"
                 options={vendorItemOptions}
                 loading={vendorItemsLoading}

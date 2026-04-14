@@ -22,90 +22,11 @@ import {
   Typography,
   message,
 } from 'antd';
+import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 import { formatQuantity } from '../utils/formatNumber';
 
 const { Text, Title } = Typography;
-
-const MOCK_VENDOR_ITEMS = [
-  {
-    value: 101,
-    label: 'Амортизатор газовий передній',
-    vendor_sku: 'AGP-001',
-    inv_item_id: 5001,
-    inv_item_name: 'Амортизатор передній газовий',
-    unit_name: 'Штуки',
-    conversion_enabled: true,
-  },
-  {
-    value: 102,
-    label: 'Пружина підвіски задня',
-    vendor_sku: 'PZ-204',
-    inv_item_id: 5002,
-    inv_item_name: 'Пружина задньої підвіски',
-    unit_name: 'Штуки',
-    conversion_enabled: false,
-  },
-  {
-    value: 103,
-    label: 'Опора амортизатора',
-    vendor_sku: 'OA-778',
-    inv_item_id: 5003,
-    inv_item_name: 'Опора амортизатора верхня',
-    unit_name: 'Штуки',
-    conversion_enabled: false,
-  },
-  {
-    value: 104,
-    label: 'Сайлентблок важеля',
-    vendor_sku: 'SV-450',
-    inv_item_id: 5004,
-    inv_item_name: 'Сайлентблок важеля підвіски',
-    unit_name: 'Штуки',
-    conversion_enabled: true,
-  },
-];
-
-const MOCK_ORDER_ITEMS = [
-  {
-    id: 1,
-    vendor_item: 101,
-    vendor_item_name: 'Амортизатор газовий передній',
-    vendor_item_sku: 'AGP-001',
-    inv_item_id: 5001,
-    inv_item_name: 'Амортизатор передній газовий',
-    unit_name: 'Штуки',
-    conversion_enabled: true,
-    quantity: 4,
-    agreed_price: 1250.5,
-    expected_delivery_date: '2026-04-20',
-  },
-  {
-    id: 2,
-    vendor_item: 102,
-    vendor_item_name: 'Пружина підвіски задня',
-    vendor_item_sku: 'PZ-204',
-    inv_item_id: 5002,
-    inv_item_name: 'Пружина задньої підвіски',
-    unit_name: 'Штуки',
-    conversion_enabled: false,
-    quantity: 2,
-    agreed_price: 890,
-    expected_delivery_date: '2026-04-22',
-  },
-  {
-    id: 3,
-    vendor_item: 103,
-    vendor_item_name: 'Опора амортизатора',
-    vendor_item_sku: 'OA-778',
-    inv_item_id: 5003,
-    inv_item_name: 'Опора амортизатора верхня',
-    unit_name: 'Штуки',
-    conversion_enabled: false,
-    quantity: 6,
-    agreed_price: 215.75,
-    expected_delivery_date: '2026-04-25',
-  },
-];
 
 const compactLabelStyle = {
   display: 'block',
@@ -151,6 +72,44 @@ const formatPurchasePrice = (value) => {
   }).format(num);
 };
 
+const roundTo4 = (value) => {
+  const num = Number(value);
+
+  if (Number.isNaN(num)) {
+    return 0;
+  }
+
+  return Math.round(num * 10000) / 10000;
+};
+
+const toStoredAgreedPrice = (inputPrice, pricesIncludeVat) => {
+  const num = Number(inputPrice);
+
+  if (Number.isNaN(num)) {
+    return inputPrice;
+  }
+
+  if (pricesIncludeVat) {
+    return roundTo4(num);
+  }
+
+  return roundTo4(num * 1.2);
+};
+
+const toDisplayedInputPrice = (storedPrice, pricesIncludeVat) => {
+  const num = Number(storedPrice);
+
+  if (Number.isNaN(num)) {
+    return storedPrice;
+  }
+
+  if (pricesIncludeVat) {
+    return roundTo4(num);
+  }
+
+  return roundTo4(num / 1.2);
+};
+
 function InfoCell({ label, value, compact = false }) {
   return (
     <div style={{ minWidth: 0 }}>
@@ -172,118 +131,211 @@ function InfoCell({ label, value, compact = false }) {
   );
 }
 
-function OrderItemsDrawer({ open, onClose, order }) {
-  const [pricesIncludeVat, setPricesIncludeVat] = useState(
-    Boolean(order?.prices_include_vat),
-  );
-  const [items, setItems] = useState(MOCK_ORDER_ITEMS);
+function OrderItemsDrawer({ open, onClose, order, onOrderUpdated }) {
+  const [vendorItemOptions, setVendorItemOptions] = useState([]);
+  const [vendorItemsLoading, setVendorItemsLoading] = useState(false);
 
   const [selectedVendorItemId, setSelectedVendorItemId] = useState(null);
+  const [selectedVendorItem, setSelectedVendorItem] = useState(null);
   const [quantity, setQuantity] = useState(null);
   const [price, setPrice] = useState(null);
   const [expectedDate, setExpectedDate] = useState(null);
+  const [requiresUnitConversion, setRequiresUnitConversion] = useState(false);
 
   const [editingItemId, setEditingItemId] = useState(null);
+
+  const [savingItem, setSavingItem] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState(null);
+
+  const items = useMemo(() => {
+    return Array.isArray(order?.items) ? order.items : [];
+  }, [order]);
 
   const orderStatus = order?.status || 'draft';
   const isDraft = orderStatus === 'draft';
   const isInProgress = orderStatus === 'in_progress';
-  const canEditAnyField = isDraft;
-  const canEditOnlyDate = isInProgress;
+  const isCompleted = orderStatus === 'completed';
+  const isCancelled = orderStatus === 'cancelled';
+
+  const canCreateItem = isDraft;
   const canEditItem = isDraft || isInProgress;
   const canDeleteItem = isDraft;
+  const canEditAllFields = isDraft;
+  const canEditOnlyDate = isInProgress;
+  const pricesIncludeVat = Boolean(order?.prices_include_vat);
 
-  const selectedVendorItem = useMemo(() => {
-    return (
-      MOCK_VENDOR_ITEMS.find((item) => item.value === selectedVendorItemId) ||
-      null
-    );
-  }, [selectedVendorItemId]);
-
-  const orderTotalAmount = useMemo(() => {
-    return items.reduce((sum, item) => {
-      return sum + Number(item.quantity || 0) * Number(item.agreed_price || 0);
-    }, 0);
-  }, [items]);
-
-  const vatAmount = useMemo(() => {
-    if (!pricesIncludeVat) {
-      return 0;
-    }
-
-    return orderTotalAmount / 6;
-  }, [orderTotalAmount, pricesIncludeVat]);
-
-  const priceLabel = pricesIncludeVat ? 'Ціна з ПДВ' : 'Ціна без ПДВ';
   const isEditingMode = Boolean(editingItemId);
   const submitButtonText = isEditingMode ? 'Зберегти зміни' : 'Додати рядок';
+  const priceLabel = pricesIncludeVat ? 'Ціна з ПДВ' : 'Ціна без ПДВ';
 
-  const availableVendorItemOptions = useMemo(() => {
-    const takenIds = new Set(
+  const availableVendorItemIds = useMemo(() => {
+    return new Set(
       items
         .filter((item) => item.id !== editingItemId)
         .map((item) => item.vendor_item),
     );
-
-    return MOCK_VENDOR_ITEMS.filter((item) => !takenIds.has(item.value)).map(
-      (item) => ({
-        value: item.value,
-        label: item.label,
-      }),
-    );
   }, [items, editingItemId]);
+
+  const orderTotalAmount = Number(order?.order_total_amount) || 0;
+  const vatAmount = Number(order?.vat_amount) || 0;
 
   const resetForm = () => {
     setSelectedVendorItemId(null);
+    setSelectedVendorItem(null);
     setQuantity(null);
     setPrice(null);
     setExpectedDate(null);
+    setRequiresUnitConversion(false);
     setEditingItemId(null);
-  };
-
-  const resetDrawerState = () => {
-    setPricesIncludeVat(Boolean(order?.prices_include_vat));
-    setItems(MOCK_ORDER_ITEMS);
-    resetForm();
+    setVendorItemOptions([]);
+    setVendorItemsLoading(false);
   };
 
   const handleCloseDrawer = () => {
-    resetDrawerState();
+    resetForm();
     onClose();
   };
 
-  const handleEditItem = (record) => {
+  const notifyOrderUpdated = async () => {
+    if (onOrderUpdated) {
+      await onOrderUpdated();
+    }
+  };
+
+  const handleSearchVendorItems = async (searchValue) => {
+    const query = searchValue?.trim();
+
+    if (!query || !order?.vendor || !canEditAllFields) {
+      setVendorItemOptions([]);
+      return;
+    }
+
+    try {
+      setVendorItemsLoading(true);
+
+      const response = await api.get(
+        `vendor-items/?vendor=${order.vendor}&search=${encodeURIComponent(query)}`,
+      );
+
+      const results = Array.isArray(response.data?.results)
+        ? response.data.results
+        : [];
+
+      const filtered = results.filter((item) => {
+        if (item.id === selectedVendorItemId) {
+          return true;
+        }
+
+        return !availableVendorItemIds.has(item.id);
+      });
+
+      setVendorItemOptions(
+        filtered.map((item) => ({
+          value: item.id,
+          label: item.name || item.item_name || `ID ${item.id}`,
+          item,
+        })),
+      );
+    } catch (err) {
+      console.error('Failed to search vendor items:', err);
+      setVendorItemOptions([]);
+    } finally {
+      setVendorItemsLoading(false);
+    }
+  };
+
+  const handleStartEditItem = (record) => {
     if (!canEditItem || isEditingMode) {
       return;
     }
 
     setEditingItemId(record.id);
     setSelectedVendorItemId(record.vendor_item);
-    setQuantity(record.quantity);
-    setPrice(record.agreed_price);
+    setSelectedVendorItem({
+      id: record.vendor_item,
+      value: record.vendor_item,
+      label: record.vendor_item_name || record.vendor_item_inv_item_name || '—',
+      vendor_sku: record.vendor_item_sku || '',
+      item: record.vendor_item_inv_item_id,
+      item_name: record.vendor_item_inv_item_name || '',
+      item_unit_name: record.vendor_item_inv_item_unit_name || '',
+      item_unit_symbol: record.vendor_item_inv_item_unit_symbol || '',
+      name: record.vendor_item_name || record.vendor_item_inv_item_name || '',
+    });
+    setQuantity(
+      record.quantity !== null && record.quantity !== undefined
+        ? Number(record.quantity)
+        : null,
+    );
+    setPrice(
+      record.agreed_price !== null && record.agreed_price !== undefined
+        ? toDisplayedInputPrice(record.agreed_price, pricesIncludeVat)
+        : null,
+    );
     setExpectedDate(
       record.expected_delivery_date
         ? dayjs(record.expected_delivery_date, 'YYYY-MM-DD')
         : null,
     );
+    setRequiresUnitConversion(Boolean(record.requires_unit_conversion));
+    setVendorItemOptions([
+      {
+        value: record.vendor_item,
+        label:
+          record.vendor_item_name || record.vendor_item_inv_item_name || '—',
+        item: {
+          id: record.vendor_item,
+          vendor_sku: record.vendor_item_sku || '',
+          item: record.vendor_item_inv_item_id,
+          item_name: record.vendor_item_inv_item_name || '',
+          item_unit_name: record.vendor_item_inv_item_unit_name || '',
+          item_unit_symbol: record.vendor_item_inv_item_unit_symbol || '',
+          name:
+            record.vendor_item_name || record.vendor_item_inv_item_name || '—',
+        },
+      },
+    ]);
   };
 
-  const handleDeleteItem = (itemId) => {
+  const handleDeleteItem = async (itemId) => {
     if (!canDeleteItem || isEditingMode) {
       return;
     }
 
-    setItems((prev) => prev.filter((item) => item.id !== itemId));
-    message.success('Тестовий рядок видалено.');
+    try {
+      setDeletingItemId(itemId);
+
+      await api.delete(`order-items/${itemId}/`);
+      message.success('Рядок замовлення видалено.');
+
+      await notifyOrderUpdated();
+    } catch (err) {
+      console.error('Failed to delete order item:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData);
+
+      message.error(backendMessage || 'Не вдалося видалити рядок замовлення.');
+    } finally {
+      setDeletingItemId(null);
+    }
   };
 
-  const handleSubmit = () => {
-    if (!selectedVendorItemId) {
-      message.error('Оберіть позицію постачальника.');
+  const handleSubmit = async () => {
+    if (!isEditingMode && !canCreateItem) {
       return;
     }
 
-    if (canEditAnyField) {
+    if (isEditingMode && !canEditItem) {
+      return;
+    }
+
+    if (canEditAllFields) {
+      if (!selectedVendorItemId) {
+        message.error('Оберіть позицію постачальника.');
+        return;
+      }
+
       if (
         quantity === null ||
         quantity === undefined ||
@@ -293,8 +345,8 @@ function OrderItemsDrawer({ open, onClose, order }) {
         return;
       }
 
-      if (price === null || price === undefined || Number(price) < 0) {
-        message.error('Вкажіть коректну ціну.');
+      if (price === null || price === undefined) {
+        message.error('Вкажіть ціну.');
         return;
       }
     }
@@ -304,65 +356,57 @@ function OrderItemsDrawer({ open, onClose, order }) {
       return;
     }
 
-    if (isEditingMode) {
-      setItems((prev) =>
-        prev.map((item) => {
-          if (item.id !== editingItemId) {
-            return item;
-          }
+    try {
+      setSavingItem(true);
 
-          return {
-            ...item,
-            vendor_item: canEditAnyField
-              ? selectedVendorItem.value
-              : item.vendor_item,
-            vendor_item_name: canEditAnyField
-              ? selectedVendorItem.label
-              : item.vendor_item_name,
-            vendor_item_sku: canEditAnyField
-              ? selectedVendorItem.vendor_sku
-              : item.vendor_item_sku,
-            inv_item_id: canEditAnyField
-              ? selectedVendorItem.inv_item_id
-              : item.inv_item_id,
-            inv_item_name: canEditAnyField
-              ? selectedVendorItem.inv_item_name
-              : item.inv_item_name,
-            unit_name: canEditAnyField
-              ? selectedVendorItem.unit_name
-              : item.unit_name,
-            conversion_enabled: canEditAnyField
-              ? selectedVendorItem.conversion_enabled
-              : item.conversion_enabled,
-            quantity: canEditAnyField ? Number(quantity) : item.quantity,
-            agreed_price: canEditAnyField ? Number(price) : item.agreed_price,
+      if (isEditingMode) {
+        if (canEditOnlyDate) {
+          await api.patch(`order-items/${editingItemId}/`, {
             expected_delivery_date: expectedDate.format('YYYY-MM-DD'),
-          };
-        }),
-      );
+          });
+        } else {
+          await api.patch(`order-items/${editingItemId}/`, {
+            vendor_item: selectedVendorItemId,
+            quantity,
+            agreed_price: toStoredAgreedPrice(price, pricesIncludeVat),
+            requires_unit_conversion: requiresUnitConversion,
+            expected_delivery_date: expectedDate.format('YYYY-MM-DD'),
+          });
+        }
 
-      message.success('Тестовий рядок оновлено.');
+        message.success('Рядок замовлення оновлено.');
+      } else {
+        await api.post('order-items/', {
+          order: Number(order.id),
+          vendor_item: selectedVendorItemId,
+          quantity,
+          agreed_price: toStoredAgreedPrice(price, pricesIncludeVat),
+          requires_unit_conversion: requiresUnitConversion,
+          expected_delivery_date: expectedDate.format('YYYY-MM-DD'),
+        });
+
+        message.success('Рядок замовлення додано.');
+      }
+
       resetForm();
-      return;
+      await notifyOrderUpdated();
+    } catch (err) {
+      console.error('Failed to save order item:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData, [
+        'vendor_item',
+        'quantity',
+        'agreed_price',
+        'requires_unit_conversion',
+        'expected_delivery_date',
+        'order',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося зберегти рядок замовлення.');
+    } finally {
+      setSavingItem(false);
     }
-
-    const newItem = {
-      id: Date.now(),
-      vendor_item: selectedVendorItem.value,
-      vendor_item_name: selectedVendorItem.label,
-      vendor_item_sku: selectedVendorItem.vendor_sku,
-      inv_item_id: selectedVendorItem.inv_item_id,
-      inv_item_name: selectedVendorItem.inv_item_name,
-      unit_name: selectedVendorItem.unit_name,
-      conversion_enabled: selectedVendorItem.conversion_enabled,
-      quantity: Number(quantity),
-      agreed_price: Number(price),
-      expected_delivery_date: expectedDate.format('YYYY-MM-DD'),
-    };
-
-    setItems((prev) => [...prev, newItem]);
-    message.success('Тестовий рядок додано.');
-    resetForm();
   };
 
   const columns = [
@@ -419,14 +463,16 @@ function OrderItemsDrawer({ open, onClose, order }) {
       title: priceLabel,
       dataIndex: 'agreed_price',
       key: 'agreed_price',
-      width: 150,
+      width: 160,
       align: 'center',
       render: (value, record) => {
         const isRowDimmed = isEditingMode && editingItemId !== record.id;
 
         return (
           <div style={{ opacity: isRowDimmed ? 0.45 : 1 }}>
-            {`${formatPurchasePrice(value)} ₴`}
+            {`${formatPurchasePrice(
+              toDisplayedInputPrice(value, pricesIncludeVat),
+            )} ₴`}
           </div>
         );
       },
@@ -459,49 +505,56 @@ function OrderItemsDrawer({ open, onClose, order }) {
       width: 90,
       align: 'center',
       render: (_, record) => {
+        if (isCompleted || isCancelled) {
+          return null;
+        }
+
         const isThisRowEditing = editingItemId === record.id;
         const isOtherRowDimmed = isEditingMode && !isThisRowEditing;
 
-        const editDisabled = !canEditItem || isOtherRowDimmed;
-        const deleteDisabled = !canDeleteItem || isOtherRowDimmed;
+        const showEdit = canEditItem;
+        const showDelete = canDeleteItem;
 
         return (
           <Space size="middle" style={{ opacity: isOtherRowDimmed ? 0.45 : 1 }}>
-            <EditOutlined
-              style={{
-                color: editDisabled ? '#d9d9d9' : '#1677ff',
-                cursor: editDisabled ? 'default' : 'pointer',
-              }}
-              onClick={() => {
-                if (!editDisabled) {
-                  handleEditItem(record);
-                }
-              }}
-            />
-
-            {deleteDisabled ? (
-              <DeleteOutlined
+            {showEdit && (
+              <EditOutlined
                 style={{
-                  color: '#d9d9d9',
-                  cursor: 'default',
+                  color: isOtherRowDimmed ? '#d9d9d9' : '#1677ff',
+                  cursor: isOtherRowDimmed ? 'default' : 'pointer',
+                }}
+                onClick={() => {
+                  if (!isOtherRowDimmed) {
+                    handleStartEditItem(record);
+                  }
                 }}
               />
-            ) : (
-              <Popconfirm
-                title="Видалити рядок?"
-                description="Ви впевнені, що хочете видалити цей тестовий рядок?"
-                okText="Так"
-                cancelText="Ні"
-                onConfirm={() => handleDeleteItem(record.id)}
-              >
+            )}
+
+            {showDelete &&
+              (isOtherRowDimmed || deletingItemId === record.id ? (
                 <DeleteOutlined
                   style={{
-                    color: '#ff4d4f',
-                    cursor: 'pointer',
+                    color: '#d9d9d9',
+                    cursor: 'default',
                   }}
                 />
-              </Popconfirm>
-            )}
+              ) : (
+                <Popconfirm
+                  title="Видалити рядок?"
+                  description="Ви впевнені, що хочете видалити цей рядок замовлення?"
+                  okText="Так"
+                  cancelText="Ні"
+                  onConfirm={() => handleDeleteItem(record.id)}
+                >
+                  <DeleteOutlined
+                    style={{
+                      color: '#ff4d4f',
+                      cursor: 'pointer',
+                    }}
+                  />
+                </Popconfirm>
+              ))}
           </Space>
         );
       },
@@ -517,12 +570,14 @@ function OrderItemsDrawer({ open, onClose, order }) {
       onClose={handleCloseDrawer}
     >
       <Flex vertical gap={16}>
-        <Alert
-          type="info"
-          showIcon
-          message="Прототип без API"
-          description="Поведінка додавання, редагування і видалення працює локально для візуальної оцінки."
-        />
+        {!isDraft && !isInProgress && (
+          <Alert
+            type="warning"
+            showIcon
+            message="Редагування недоступне"
+            description="Для цього статусу замовлення змінювати склад не можна."
+          />
+        )}
 
         <Card
           title={
@@ -535,10 +590,9 @@ function OrderItemsDrawer({ open, onClose, order }) {
                 </Text>
                 <Switch
                   checked={pricesIncludeVat}
-                  onChange={setPricesIncludeVat}
                   checkedChildren="Так"
                   unCheckedChildren="Ні"
-                  disabled={isEditingMode && canEditOnlyDate}
+                  disabled
                 />
               </Flex>
             </Flex>
@@ -552,11 +606,24 @@ function OrderItemsDrawer({ open, onClose, order }) {
                 placeholder="Оберіть позицію"
                 style={{ width: '100%' }}
                 value={selectedVendorItemId}
-                onChange={setSelectedVendorItemId}
-                options={availableVendorItemOptions}
+                onSearch={handleSearchVendorItems}
+                filterOption={false}
                 optionFilterProp="label"
+                options={vendorItemOptions}
+                loading={vendorItemsLoading}
+                onChange={(value, option) => {
+                  setSelectedVendorItemId(value);
+                  setSelectedVendorItem(option?.item || null);
+
+                  if (!isEditingMode) {
+                    setQuantity(null);
+                    setPrice(null);
+                    setExpectedDate(null);
+                    setRequiresUnitConversion(false);
+                  }
+                }}
                 disabled={
-                  !canEditAnyField || (isEditingMode && canEditOnlyDate)
+                  !canEditAllFields || (isEditingMode && canEditOnlyDate)
                 }
               />
             </div>
@@ -572,7 +639,7 @@ function OrderItemsDrawer({ open, onClose, order }) {
                   onChange={setQuantity}
                   style={{ width: '100%' }}
                   disabled={
-                    !canEditAnyField || (isEditingMode && canEditOnlyDate)
+                    !canEditAllFields || (isEditingMode && canEditOnlyDate)
                   }
                 />
               </div>
@@ -588,7 +655,7 @@ function OrderItemsDrawer({ open, onClose, order }) {
                   onChange={setPrice}
                   style={{ width: '100%' }}
                   disabled={
-                    !canEditAnyField || (isEditingMode && canEditOnlyDate)
+                    !canEditAllFields || (isEditingMode && canEditOnlyDate)
                   }
                 />
               </div>
@@ -600,6 +667,12 @@ function OrderItemsDrawer({ open, onClose, order }) {
                   format="DD-MM-YYYY"
                   onChange={setExpectedDate}
                   style={{ width: '100%' }}
+                  disabledDate={(current) =>
+                    canEditOnlyDate
+                      ? current &&
+                        current.startOf('day').isBefore(dayjs().startOf('day'))
+                      : false
+                  }
                 />
               </div>
             </Flex>
@@ -631,13 +704,15 @@ function OrderItemsDrawer({ open, onClose, order }) {
                       style={{
                         color: '#1677ff',
                         fontSize: 13,
-                        cursor: selectedVendorItem ? 'pointer' : 'default',
-                        opacity: selectedVendorItem ? 1 : 0.45,
+                        cursor: selectedVendorItem?.item
+                          ? 'pointer'
+                          : 'default',
+                        opacity: selectedVendorItem?.item ? 1 : 0.45,
                       }}
                       onClick={() => {
-                        if (selectedVendorItem?.inv_item_id) {
+                        if (selectedVendorItem?.item) {
                           window.open(
-                            `/inventory/items/${selectedVendorItem.inv_item_id}`,
+                            `/inventory/items/${selectedVendorItem.item}`,
                             '_blank',
                           );
                         }
@@ -645,7 +720,7 @@ function OrderItemsDrawer({ open, onClose, order }) {
                     />
 
                     <Text style={compactValueStyle}>
-                      {selectedVendorItem?.inv_item_name || '—'}
+                      {selectedVendorItem?.item_name || '—'}
                     </Text>
                   </Flex>
                 </div>
@@ -653,7 +728,10 @@ function OrderItemsDrawer({ open, onClose, order }) {
                 <div style={{ flex: '0 1 120px' }}>
                   <InfoCell
                     label="Одиниця"
-                    value={selectedVendorItem?.unit_name}
+                    value={
+                      selectedVendorItem?.item_unit_symbol ||
+                      selectedVendorItem?.item_unit_name
+                    }
                     compact
                   />
                 </div>
@@ -664,10 +742,13 @@ function OrderItemsDrawer({ open, onClose, order }) {
                   </Text>
 
                   <Switch
-                    checked={Boolean(selectedVendorItem?.conversion_enabled)}
+                    checked={requiresUnitConversion}
                     checkedChildren="Так"
                     unCheckedChildren="Ні"
-                    disabled
+                    onChange={setRequiresUnitConversion}
+                    disabled={
+                      !canEditAllFields || (isEditingMode && canEditOnlyDate)
+                    }
                   />
                 </div>
               </Flex>
@@ -679,8 +760,12 @@ function OrderItemsDrawer({ open, onClose, order }) {
               <Button
                 type="primary"
                 icon={isEditingMode ? undefined : <PlusOutlined />}
+                loading={savingItem}
                 onClick={handleSubmit}
-                disabled={!canEditItem && !isEditingMode}
+                disabled={
+                  (!canCreateItem && !isEditingMode) ||
+                  (!canEditItem && isEditingMode)
+                }
               >
                 {submitButtonText}
               </Button>

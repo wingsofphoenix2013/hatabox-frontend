@@ -1100,6 +1100,7 @@ function OrderDetailPage() {
         open={isOrderItemsDrawerOpen}
         onClose={() => setIsOrderItemsDrawerOpen(false)}
         order={order}
+        onOrderUpdated={() => loadOrderPage({ silent: true })}
       />
     </div>
   );

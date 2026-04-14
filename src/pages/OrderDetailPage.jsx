@@ -916,12 +916,21 @@ function OrderDetailPage() {
                     src={currentFileUrl}
                     alt="Order file"
                     preview={false}
+                    onClick={() => window.open(currentFileUrl, '_blank')}
                     style={{
                       maxWidth: '100%',
                       maxHeight: '100%',
                       objectFit: 'contain',
                       margin: '0 auto',
                       display: 'block',
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = '0.85';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = '1';
                     }}
                   />
                 ) : (
@@ -959,6 +968,13 @@ function OrderDetailPage() {
                       objectFit: 'contain',
                       margin: '0 auto',
                       display: 'block',
+                      transition: 'opacity 0.2s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = '0.85';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = '1';
                     }}
                   />
                 ) : isPdfFile(selectedFile.name, selectedFile.type) &&
@@ -1007,13 +1023,6 @@ function OrderDetailPage() {
 
             {currentFileUrl ? (
               <Flex vertical gap={8}>
-                <Button
-                  block
-                  onClick={() => window.open(currentFileUrl, '_blank')}
-                >
-                  Відкрити файл
-                </Button>
-
                 <Popconfirm
                   title="Видалити файл?"
                   description="Після видалення можна буде завантажити новий файл."

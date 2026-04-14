@@ -34,10 +34,21 @@ function PdfPreview({ fileUrl, width = 220, clickable = false }) {
         display: 'flex',
         justifyContent: 'center',
         cursor: clickable ? 'pointer' : 'default',
+        transition: 'opacity 0.2s ease',
       }}
       onClick={() => {
         if (clickable && fileUrl) {
           window.open(fileUrl, '_blank');
+        }
+      }}
+      onMouseEnter={(e) => {
+        if (clickable) {
+          e.currentTarget.style.opacity = '0.85';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (clickable) {
+          e.currentTarget.style.opacity = '1';
         }
       }}
     >

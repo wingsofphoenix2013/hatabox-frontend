@@ -35,6 +35,7 @@ function OrderPaymentsDrawer({
   const paymentDocuments = Array.isArray(order?.payment_documents)
     ? order.payment_documents
     : [];
+
   const {
     selectedPaymentId,
     selectedPaymentDocument,
@@ -52,6 +53,21 @@ function OrderPaymentsDrawer({
     setEditingPaymentAmount,
     setSelectedRecipientAccountId,
   } = paymentActions;
+
+  const labelStyle = {
+    display: 'block',
+    marginBottom: 8,
+  };
+
+  const isPaid = selectedPaymentDocument?.status === 'paid';
+  const isApproved = selectedPaymentDocument?.status === 'approved';
+
+  const isPaymentFormInvalid =
+    editingPaymentStatus === 'paid' &&
+    (!selectedRecipientAccountId ||
+      !editingPaymentDate ||
+      !paymentTransferFile ||
+      recipientAccountOptions.length === 0);
 
   return (
     <Drawer
@@ -84,11 +100,9 @@ function OrderPaymentsDrawer({
             <Flex vertical gap={16}>
               {/* STATUS */}
               <div>
-                <Text style={{ display: 'block', marginBottom: 8 }}>
-                  Статус платежу
-                </Text>
+                <Text style={labelStyle}>Статус платежу</Text>
 
-                {selectedPaymentDocument.status === 'paid' ? (
+                {isPaid ? (
                   <Tag
                     color={getPaymentStatusTagColor(
                       selectedPaymentDocument.status,
@@ -111,11 +125,9 @@ function OrderPaymentsDrawer({
 
               {/* AMOUNT */}
               <div>
-                <Text style={{ display: 'block', marginBottom: 8 }}>
-                  Сума платежу
-                </Text>
+                <Text style={labelStyle}>Сума платежу</Text>
 
-                {selectedPaymentDocument.status === 'paid' ? (
+                {isPaid ? (
                   <Text>
                     {formatMoney(selectedPaymentDocument.payment_amount)} ₴
                   </Text>
@@ -135,160 +147,141 @@ function OrderPaymentsDrawer({
         )}
 
         {/* STEP 3 */}
-        {selectedPaymentDocument &&
-          (selectedPaymentDocument.status === 'approved' ||
-            selectedPaymentDocument.status === 'paid') && (
-            <Card title="3. Переказ">
-              <Flex vertical gap={16}>
-                {selectedPaymentDocument.status === 'approved' ? (
-                  <>
-                    {/* ACCOUNT */}
-                    <div>
-                      <Text style={{ display: 'block', marginBottom: 8 }}>
-                        Розрахунковий рахунок отримувача
-                      </Text>
+        {selectedPaymentDocument && (isApproved || isPaid) && (
+          <Card title="3. Переказ">
+            <Flex vertical gap={16}>
+              {isApproved ? (
+                <>
+                  {/* ACCOUNT */}
+                  <div>
+                    <Text style={labelStyle}>
+                      Розрахунковий рахунок отримувача
+                    </Text>
 
-                      <Select
-                        style={{ width: '100%' }}
-                        placeholder={
-                          recipientAccountsLoading
-                            ? 'Завантаження рахунків...'
-                            : recipientAccountOptions.length > 0
-                              ? 'Оберіть рахунок'
-                              : 'У постачальника немає активних рахунків'
-                        }
-                        value={selectedRecipientAccountId}
-                        onChange={setSelectedRecipientAccountId}
-                        options={recipientAccountOptions}
-                        loading={recipientAccountsLoading}
-                        disabled={
-                          editingPaymentStatus !== 'paid' ||
-                          recipientAccountsLoading ||
-                          recipientAccountOptions.length === 0
-                        }
-                      />
-                    </div>
+                    <Select
+                      style={{ width: '100%' }}
+                      placeholder={
+                        recipientAccountsLoading
+                          ? 'Завантаження рахунків...'
+                          : recipientAccountOptions.length > 0
+                            ? 'Оберіть рахунок'
+                            : 'У постачальника немає активних рахунків'
+                      }
+                      value={selectedRecipientAccountId}
+                      onChange={setSelectedRecipientAccountId}
+                      options={recipientAccountOptions}
+                      loading={recipientAccountsLoading}
+                      disabled={
+                        editingPaymentStatus !== 'paid' ||
+                        recipientAccountsLoading ||
+                        recipientAccountOptions.length === 0
+                      }
+                    />
+                  </div>
 
-                    {/* DATE */}
-                    <div>
-                      <Text style={{ display: 'block', marginBottom: 8 }}>
-                        Дата платежу
-                      </Text>
+                  {/* DATE */}
+                  <div>
+                    <Text style={labelStyle}>Дата платежу</Text>
 
-                      <DatePicker
-                        style={{ width: '100%' }}
-                        format="DD-MM-YYYY"
-                        value={editingPaymentDate}
-                        onChange={setEditingPaymentDate}
-                        disabled={editingPaymentStatus !== 'paid'}
-                      />
-                    </div>
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      format="DD-MM-YYYY"
+                      value={editingPaymentDate}
+                      onChange={setEditingPaymentDate}
+                      disabled={editingPaymentStatus !== 'paid'}
+                    />
+                  </div>
 
-                    {/* FILE */}
-                    <div>
-                      <Text style={{ display: 'block', marginBottom: 8 }}>
-                        Файл переказу
-                      </Text>
+                  {/* FILE */}
+                  <div>
+                    <Text style={labelStyle}>Файл переказу</Text>
 
-                      <Upload
-                        beforeUpload={() => false}
-                        maxCount={1}
-                        accept=".jpg,.jpeg,.png,.pdf"
-                        onChange={handlePaymentTransferFileChange}
-                        showUploadList
-                        fileList={
-                          paymentTransferFile
-                            ? [
-                                {
-                                  uid:
-                                    paymentTransferFile.uid ||
-                                    paymentTransferFile.name,
-                                  name: paymentTransferFile.name,
-                                  status: 'done',
-                                },
-                              ]
-                            : []
-                        }
+                    <Upload
+                      beforeUpload={() => false}
+                      maxCount={1}
+                      accept=".jpg,.jpeg,.png,.pdf"
+                      onChange={handlePaymentTransferFileChange}
+                      showUploadList
+                      fileList={
+                        paymentTransferFile
+                          ? [
+                              {
+                                uid:
+                                  paymentTransferFile.uid ||
+                                  paymentTransferFile.name,
+                                name: paymentTransferFile.name,
+                                status: 'done',
+                              },
+                            ]
+                          : []
+                      }
+                      disabled={editingPaymentStatus !== 'paid'}
+                    >
+                      <Button
+                        icon={<UploadOutlined />}
                         disabled={editingPaymentStatus !== 'paid'}
                       >
-                        <Button
-                          icon={<UploadOutlined />}
-                          disabled={editingPaymentStatus !== 'paid'}
-                        >
-                          Обрати файл
-                        </Button>
-                      </Upload>
-                    </div>
+                        Обрати файл
+                      </Button>
+                    </Upload>
+                  </div>
 
-                    {/* WARNING */}
-                    {editingPaymentStatus === 'paid' &&
-                      recipientAccountOptions.length === 0 &&
-                      !recipientAccountsLoading && (
-                        <Alert
-                          type="warning"
-                          showIcon
-                          message="У постачальника немає активних розрахункових рахунків"
-                        />
-                      )}
-                  </>
-                ) : (
-                  <>
-                    {/* DATE VIEW */}
-                    <div>
-                      <Text style={{ display: 'block', marginBottom: 8 }}>
-                        Дата платежу
-                      </Text>
+                  {/* WARNING */}
+                  {editingPaymentStatus === 'paid' &&
+                    recipientAccountOptions.length === 0 &&
+                    !recipientAccountsLoading && (
+                      <Alert
+                        type="warning"
+                        showIcon
+                        message="У постачальника немає активних розрахункових рахунків"
+                      />
+                    )}
+                </>
+              ) : (
+                <>
+                  {/* DATE VIEW */}
+                  <div>
+                    <Text style={labelStyle}>Дата платежу</Text>
 
-                      <Text>
-                        {formatDateDisplay(
-                          selectedPaymentDocument.payment_date,
-                        )}
-                      </Text>
-                    </div>
+                    <Text>
+                      {formatDateDisplay(selectedPaymentDocument.payment_date)}
+                    </Text>
+                  </div>
 
-                    {/* FILE VIEW */}
-                    <div>
-                      <Text style={{ display: 'block', marginBottom: 8 }}>
-                        Файл переказу
-                      </Text>
+                  {/* FILE VIEW */}
+                  <div>
+                    <Text style={labelStyle}>Файл переказу</Text>
 
-                      {selectedPaymentDocument.image ? (
-                        <Button
-                          onClick={() =>
-                            window.open(selectedPaymentDocument.image, '_blank')
-                          }
-                        >
-                          Відкрити файл
-                        </Button>
-                      ) : (
-                        <Text type="secondary">Файл не завантажено</Text>
-                      )}
-                    </div>
-                  </>
-                )}
-              </Flex>
-            </Card>
-          )}
+                    {selectedPaymentDocument.image ? (
+                      <Button
+                        onClick={() =>
+                          window.open(selectedPaymentDocument.image, '_blank')
+                        }
+                      >
+                        Відкрити файл
+                      </Button>
+                    ) : (
+                      <Text type="secondary">Файл не завантажено</Text>
+                    )}
+                  </div>
+                </>
+              )}
+            </Flex>
+          </Card>
+        )}
 
         {/* ACTIONS */}
         <Flex justify="flex-end" gap={8}>
           <Button onClick={onClose}>Відміна</Button>
 
           {selectedPaymentDocument &&
-            selectedPaymentDocument.status !== 'paid' &&
+            !isPaid &&
             selectedPaymentDocument.status !== 'cancelled' && (
               <Button
                 type="primary"
                 loading={savingPayment}
                 onClick={handleSavePayment}
-                disabled={
-                  (editingPaymentStatus === 'paid' &&
-                    (!selectedRecipientAccountId ||
-                      !editingPaymentDate ||
-                      !paymentTransferFile ||
-                      recipientAccountOptions.length === 0)) ||
-                  !selectedPaymentDocument
-                }
+                disabled={isPaymentFormInvalid || !selectedPaymentDocument}
               >
                 Зберегти
               </Button>

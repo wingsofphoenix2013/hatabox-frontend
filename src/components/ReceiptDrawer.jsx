@@ -16,8 +16,8 @@ import {
   message,
 } from 'antd';
 import api from '../api/client';
-import { formatQuantity } from '../utils/formatNumber';
 import { getApiErrorMessage } from '../utils/apiError';
+import { formatQuantity } from '../utils/formatNumber';
 import {
   extractFileFromUploadEvent,
   validateFileType,
@@ -26,6 +26,7 @@ import {
 const { Text } = Typography;
 
 function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
+  // state
   const [receiptNo, setReceiptNo] = useState('');
   const [receiptDate, setReceiptDate] = useState(null);
   const [receiptFile, setReceiptFile] = useState(null);
@@ -37,6 +38,7 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   const [receiptQuantity, setReceiptQuantity] = useState(null);
   const [savingReceiptItem, setSavingReceiptItem] = useState(false);
 
+  // reset
   const resetReceiptDrawerState = () => {
     setReceiptNo('');
     setReceiptDate(null);
@@ -49,18 +51,23 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     setSavingReceiptItem(false);
   };
 
+  // effects
   useEffect(() => {
     if (!open) {
       resetReceiptDrawerState();
     }
   }, [open]);
 
-  const receiptDocumentItems = Array.isArray(createdReceiptDocument?.items)
-    ? createdReceiptDocument.items
-    : [];
+  // derived data
+  const receiptDocumentItems = useMemo(() => {
+    return Array.isArray(createdReceiptDocument?.items)
+      ? createdReceiptDocument.items
+      : [];
+  }, [createdReceiptDocument]);
 
   const selectedReceiptOrderItem = useMemo(() => {
     const items = Array.isArray(order?.items) ? order.items : [];
+
     return items.find((item) => item.id === receiptOrderItemId) || null;
   }, [order, receiptOrderItemId]);
 
@@ -80,6 +87,7 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       }));
   }, [order, receiptDocumentItems]);
 
+  // handlers
   const loadReceiptDocument = async (receiptDocumentId) => {
     try {
       setReceiptDocumentLoading(true);
@@ -146,6 +154,7 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       });
 
       const createdDocument = response.data;
+
       setCreatedReceiptDocument(createdDocument);
       message.success('Видаткову накладну зареєстровано.');
 
@@ -158,7 +167,6 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       console.error('Failed to create receipt document:', err);
 
       const responseData = err?.response?.data;
-
       const backendMessage = getApiErrorMessage(responseData, [
         'receipt_no',
         'receipt_date',
@@ -225,7 +233,6 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       console.error('Failed to create receipt item:', err);
 
       const responseData = err?.response?.data;
-
       const backendMessage = getApiErrorMessage(responseData, [
         'received_quantity',
         'order_item',
@@ -237,6 +244,7 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     }
   };
 
+  // table config
   const receiptItemsColumns = [
     {
       title: 'Назва компонента',
@@ -289,6 +297,7 @@ function ReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       render: (_, record) => {
         if (record.id === 'new-row') {
           if (!selectedReceiptOrderItem) return '—';
+
           return formatQuantity(selectedReceiptOrderItem.remaining_quantity);
         }
 

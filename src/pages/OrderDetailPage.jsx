@@ -11,6 +11,9 @@ import {
   StopOutlined,
   UploadOutlined,
   WarningOutlined,
+  CheckCircleFilled,
+  CloseCircleFilled,
+  AppstoreAddOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -18,6 +21,7 @@ import {
   Card,
   Col,
   Divider,
+  Dropdown,
   Flex,
   Image,
   Popconfirm,
@@ -60,7 +64,6 @@ import {
   isImageFile,
   validateFileType,
 } from '../utils/fileHelpers';
-import { getReceiptDocumentTotal } from '../utils/orderCalculations';
 import { getApiErrorMessage } from '../utils/apiError';
 
 const { Title, Text } = Typography;
@@ -725,63 +728,85 @@ function OrderDetailPage() {
       },
     },
     {
-      title: 'Сума',
-      key: 'receipt_total',
-      width: 180,
+      title: 'Обробка',
+      key: 'completed',
+      width: 120,
       align: 'center',
       render: (_, record) => {
-        const docItems = Array.isArray(record?.items) ? record.items : [];
-
-        const popoverContent = (
-          <Flex vertical gap={8} style={{ minWidth: 280 }}>
-            {docItems.length > 0 ? (
-              docItems.map((item) => (
-                <Flex
-                  key={item.id}
-                  justify="space-between"
-                  align="center"
-                  gap={16}
-                >
-                  <div
-                    style={{
-                      minWidth: 0,
-                      flex: 1,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    title={
-                      item.order_item_vendor_item_name ||
-                      item.order_item_inv_item_name ||
-                      '—'
-                    }
-                  >
-                    {item.order_item_vendor_item_name ||
-                      item.order_item_inv_item_name ||
-                      '—'}
-                  </div>
-
-                  <Text>{formatQuantity(item.received_quantity)}</Text>
-                </Flex>
-              ))
-            ) : (
-              <Text type="secondary">Немає рядків</Text>
-            )}
-          </Flex>
-        );
+        const isCompleted = Boolean(record.completed);
 
         return (
-          <Popover content={popoverContent} trigger="click">
-            <Button type="link" style={{ padding: 0 }}>
-              {formatMoney(
-                getReceiptDocumentTotal(
-                  record,
-                  Array.isArray(order?.items) ? order.items : [],
-                ),
-              )}{' '}
-              ₴
-            </Button>
-          </Popover>
+          <Tooltip title={isCompleted ? 'Оброблена' : 'Чернетка'}>
+            {isCompleted ? (
+              <CheckCircleFilled style={{ color: '#52c41a', fontSize: 16 }} />
+            ) : (
+              <CloseCircleFilled style={{ color: '#ff4d4f', fontSize: 16 }} />
+            )}
+          </Tooltip>
+        );
+      },
+    },
+    {
+      title: 'Склад',
+      key: 'sent_to_warehouse',
+      width: 120,
+      align: 'center',
+      render: (_, record) => {
+        const isSent = Boolean(record.sent_to_warehouse);
+
+        return (
+          <Tooltip
+            title={isSent ? 'Передано на склад' : 'Не передано на склад'}
+          >
+            {isSent ? (
+              <CheckCircleFilled style={{ color: '#52c41a', fontSize: 16 }} />
+            ) : (
+              <CloseCircleFilled style={{ color: '#ff4d4f', fontSize: 16 }} />
+            )}
+          </Tooltip>
+        );
+      },
+    },
+    {
+      title: 'Дія',
+      key: 'actions',
+      width: 100,
+      align: 'center',
+      render: (_, record) => {
+        const items = [
+          {
+            key: '1',
+            label: 'Тестова дія 1',
+            onClick: () => {
+              console.log('Action 1', record.id);
+            },
+          },
+          {
+            key: '2',
+            label: 'Тестова дія 2',
+            onClick: () => {
+              console.log('Action 2', record.id);
+            },
+          },
+          {
+            key: '3',
+            label: 'Тестова дія 3',
+            onClick: () => {
+              console.log('Action 3', record.id);
+            },
+          },
+        ];
+
+        return (
+          <Dropdown menu={{ items }} trigger={['click']}>
+            <AppstoreAddOutlined
+              style={{
+                fontSize: 18,
+                color: '#1677ff',
+                cursor: 'pointer',
+              }}
+            />
+          </Dropdown>
         );
       },
     },

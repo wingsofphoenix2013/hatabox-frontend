@@ -626,18 +626,32 @@ function OrdersRegisterPage() {
           loadingOrderActionId === record.id &&
           loadingOrderActionType === 'receipt';
 
-        const items = [
-          {
+        const items = [];
+
+        if (record.status !== 'draft') {
+          items.push({
             key: 'receipt',
             label: 'Прибуткові накладні',
             onClick: () => {
               handleOpenOrderAction(record.id, 'receipt');
             },
-          },
-        ];
+          });
+        }
 
         if (isLoading) {
           return <Spin size="small" />;
+        }
+
+        if (items.length === 0) {
+          return (
+            <AppstoreAddOutlined
+              style={{
+                fontSize: 17,
+                color: '#d9d9d9',
+                cursor: 'default',
+              }}
+            />
+          );
         }
 
         return (

@@ -802,7 +802,7 @@ function OrderDetailPage() {
             <AppstoreAddOutlined
               style={{
                 fontSize: 18,
-                color: '#1677ff',
+                color: '#8c8c8c',
                 cursor: 'pointer',
               }}
             />

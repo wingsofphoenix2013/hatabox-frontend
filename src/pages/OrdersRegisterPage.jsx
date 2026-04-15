@@ -3,7 +3,7 @@ import {
   AppstoreAddOutlined,
   CopyOutlined,
   ExclamationCircleOutlined,
-  LinkOutlined,
+  InfoCircleOutlined,
   PlusOutlined,
   SearchOutlined,
   WarningOutlined,
@@ -417,9 +417,9 @@ function OrdersRegisterPage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <LinkOutlined
+              <InfoCircleOutlined
                 style={{
-                  color: '#8c8c8c',
+                  color: '#1677ff',
                   fontSize: 13,
                   cursor: 'pointer',
                 }}

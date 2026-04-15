@@ -1171,31 +1171,6 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                   message="Прибуткова накладна оброблена. Склад накладної доступний лише для перегляду."
                 />
               )}
-              {!isActiveReceiptCompleted && (
-                <Flex vertical gap={8} align="flex-start">
-                  <Button
-                    type="primary"
-                    disabled={!canCompleteReceipt}
-                    onClick={handleCompleteReceipt}
-                  >
-                    Позначити як оброблену
-                  </Button>
-
-                  {!canCompleteReceipt && (
-                    <Alert
-                      type="warning"
-                      showIcon
-                      message={
-                        !hasReceiptFile && !hasReceiptItems
-                          ? 'Завантажте файл та додайте хоча б одну позицію.'
-                          : !hasReceiptFile
-                            ? 'Завантажте файл прибуткової накладної.'
-                            : 'Додайте хоча б одну позицію до накладної.'
-                      }
-                    />
-                  )}
-                </Flex>
-              )}
             </Flex>
           </Card>
         )}
@@ -1246,6 +1221,45 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                     message="У цій прибутковій накладній немає рядків."
                   />
                 )}
+            </Flex>
+          </Card>
+        )}
+        {activeReceiptDocument && (
+          <Card title="4. Фіксація прибуткової накладної">
+            <Flex vertical gap={12} align="flex-start">
+              {!isActiveReceiptCompleted && (
+                <>
+                  <Button
+                    type="primary"
+                    disabled={!canCompleteReceipt}
+                    onClick={handleCompleteReceipt}
+                  >
+                    Позначити як оброблену
+                  </Button>
+
+                  {!canCompleteReceipt && (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message={
+                        !hasReceiptFile && !hasReceiptItems
+                          ? 'Завантажте файл та додайте хоча б одну позицію.'
+                          : !hasReceiptFile
+                            ? 'Завантажте файл прибуткової накладної.'
+                            : 'Додайте хоча б одну позицію до накладної.'
+                      }
+                    />
+                  )}
+                </>
+              )}
+
+              {isActiveReceiptCompleted && (
+                <Alert
+                  type="info"
+                  showIcon
+                  message="Прибуткова накладна зафіксована та доступна лише для перегляду."
+                />
+              )}
             </Flex>
           </Card>
         )}

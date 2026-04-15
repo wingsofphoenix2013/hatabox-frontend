@@ -839,7 +839,8 @@ function OrdersRegisterPage() {
       render: (_, record) => {
         const isLoading =
           loadingOrderActionId === record.id &&
-          loadingOrderActionType === 'receipt';
+          (loadingOrderActionType === 'receipt' ||
+            loadingOrderActionType === 'payments');
 
         const items = [];
 
@@ -849,6 +850,14 @@ function OrdersRegisterPage() {
             label: 'Прибуткові накладні',
             onClick: () => {
               handleOpenOrderAction(record.id, 'receipt');
+            },
+          });
+
+          items.push({
+            key: 'payments',
+            label: 'Платіжні документи',
+            onClick: () => {
+              handleOpenOrderAction(record.id, 'payments');
             },
           });
         }

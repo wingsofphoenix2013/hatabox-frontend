@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import { UploadOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  SaveOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -11,6 +16,7 @@ import {
   Flex,
   Input,
   InputNumber,
+  Popconfirm,
   Select,
   Table,
   Typography,
@@ -48,6 +54,10 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   const [receiptQuantity, setReceiptQuantity] = useState(null);
   const [savingReceiptItem, setSavingReceiptItem] = useState(false);
 
+  const [editingReceiptItemId, setEditingReceiptItemId] = useState(null);
+  const [editingReceiptQuantity, setEditingReceiptQuantity] = useState(null);
+  const [deletingReceiptItemId, setDeletingReceiptItemId] = useState(null);
+
   const resetReceiptCreateForm = () => {
     setReceiptNo('');
     setReceiptDate(null);
@@ -59,6 +69,11 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     setReceiptOrderItemId(null);
     setReceiptQuantity(null);
     setSavingReceiptItem(false);
+  };
+
+  const resetReceiptItemEditing = () => {
+    setEditingReceiptItemId(null);
+    setEditingReceiptQuantity(null);
   };
 
   const resetReceiptDrawerState = () => {
@@ -75,6 +90,9 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     setReceiptDocumentLoading(false);
 
     resetReceiptItemForm();
+    resetReceiptItemEditing();
+
+    setDeletingReceiptItemId(null);
   };
 
   const notifyReceiptSaved = async () => {
@@ -187,6 +205,38 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     return items.find((item) => item.id === receiptOrderItemId) || null;
   }, [order, receiptOrderItemId]);
 
+  const editingReceiptItem = useMemo(() => {
+    return receiptDocumentItems.find(
+      (item) => item.id === editingReceiptItemId,
+    );
+  }, [receiptDocumentItems, editingReceiptItemId]);
+
+  const editingOrderItem = useMemo(() => {
+    if (!editingReceiptItem) return null;
+
+    const items = Array.isArray(order?.items) ? order.items : [];
+    return (
+      items.find((item) => item.id === editingReceiptItem.order_item) || null
+    );
+  }, [order, editingReceiptItem]);
+
+  const getEditableRemainingForItem = (orderItem) => {
+    if (!orderItem) return null;
+
+    if (
+      editingReceiptItem &&
+      editingOrderItem &&
+      editingOrderItem.id === orderItem.id
+    ) {
+      return (
+        Number(orderItem.remaining_quantity || 0) +
+        Number(editingReceiptItem.received_quantity || 0)
+      );
+    }
+
+    return Number(orderItem.remaining_quantity || 0);
+  };
+
   const receiptOrderItemOptions = useMemo(() => {
     const currentReceiptOrderItemIds = new Set(
       receiptDocumentItems.map((item) => item.order_item),
@@ -230,6 +280,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     setIsCreatingNewReceipt(false);
     resetReceiptCreateForm();
     resetReceiptItemForm();
+    resetReceiptItemEditing();
     await loadReceiptDocument(value);
   };
 
@@ -245,6 +296,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     setSelectedExistingReceiptId(null);
     setActiveReceiptDocument(null);
     resetReceiptItemForm();
+    resetReceiptItemEditing();
     resetReceiptCreateForm();
     setIsCreatingNewReceipt(true);
   };
@@ -331,9 +383,6 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     }
 
     if (isActiveReceiptCompleted) {
-      message.error(
-        'Редагування недоступне: прибуткова накладна вже оброблена.',
-      );
       return;
     }
 
@@ -372,6 +421,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       message.success('Рядок отримання додано.');
 
       resetReceiptItemForm();
+      resetReceiptItemEditing();
 
       await Promise.all([
         loadReceiptDocument(activeReceiptDocument.id),
@@ -393,6 +443,121 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       setSavingReceiptItem(false);
     }
   };
+
+  const handleStartEditReceiptItem = (record) => {
+    if (isActiveReceiptCompleted) {
+      return;
+    }
+
+    setEditingReceiptItemId(record.id);
+    setEditingReceiptQuantity(
+      record.received_quantity !== null &&
+        record.received_quantity !== undefined
+        ? Number(record.received_quantity)
+        : null,
+    );
+  };
+
+  const handleSaveEditedReceiptItem = async (record) => {
+    if (isActiveReceiptCompleted) {
+      return;
+    }
+
+    if (
+      editingReceiptQuantity === null ||
+      editingReceiptQuantity === undefined ||
+      Number(editingReceiptQuantity) <= 0
+    ) {
+      message.error('Кількість повинна бути більшою за 0.');
+      return;
+    }
+
+    const currentOrderItem = Array.isArray(order?.items)
+      ? order.items.find((item) => item.id === record.order_item)
+      : null;
+
+    const maxAllowedQuantity = getEditableRemainingForItem(currentOrderItem);
+
+    if (
+      maxAllowedQuantity !== null &&
+      Number(editingReceiptQuantity) > Number(maxAllowedQuantity)
+    ) {
+      message.error('Кількість перевищує доступний залишок до отримання.');
+      return;
+    }
+
+    try {
+      await api.patch(`receipt-items/${record.id}/`, {
+        received_quantity: editingReceiptQuantity,
+      });
+
+      message.success('Рядок отримання оновлено.');
+
+      resetReceiptItemEditing();
+
+      await Promise.all([
+        loadReceiptDocument(activeReceiptDocument.id),
+        loadReceiptDocuments(order.id),
+      ]);
+
+      await notifyReceiptSaved();
+    } catch (err) {
+      console.error('Failed to update receipt item:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData, [
+        'received_quantity',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося оновити рядок отримання.');
+    }
+  };
+
+  const handleDeleteReceiptItem = async (record) => {
+    if (isActiveReceiptCompleted) {
+      return;
+    }
+
+    try {
+      setDeletingReceiptItemId(record.id);
+
+      await api.delete(`receipt-items/${record.id}/`);
+
+      message.success('Рядок отримання видалено.');
+
+      if (editingReceiptItemId === record.id) {
+        resetReceiptItemEditing();
+      }
+
+      await Promise.all([
+        loadReceiptDocument(activeReceiptDocument.id),
+        loadReceiptDocuments(order.id),
+      ]);
+
+      await notifyReceiptSaved();
+    } catch (err) {
+      console.error('Failed to delete receipt item:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData);
+
+      message.error(backendMessage || 'Не вдалося видалити рядок отримання.');
+    } finally {
+      setDeletingReceiptItemId(null);
+    }
+  };
+
+  const getActionIconStyle = (color) => ({
+    fontSize: 16,
+    color,
+    cursor: 'pointer',
+  });
+
+  const getDisabledActionIconStyle = () => ({
+    fontSize: 16,
+    color: '#bfbfbf',
+    cursor: 'not-allowed',
+  });
 
   const receiptItemsColumns = [
     {
@@ -446,11 +611,21 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       render: (_, record) => {
         if (record.id === 'new-row') {
           if (!selectedReceiptOrderItem) return '—';
-
           return formatQuantity(selectedReceiptOrderItem.remaining_quantity);
         }
 
-        return '—';
+        const currentOrderItem = Array.isArray(order?.items)
+          ? order.items.find((item) => item.id === record.order_item)
+          : null;
+
+        if (!currentOrderItem) return '—';
+
+        const remainingValue =
+          editingReceiptItemId === record.id
+            ? getEditableRemainingForItem(currentOrderItem)
+            : Number(currentOrderItem.remaining_quantity || 0);
+
+        return formatQuantity(remainingValue);
       },
     },
     {
@@ -473,6 +648,28 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
               size="small"
               value={receiptQuantity}
               onChange={setReceiptQuantity}
+              style={{ width: 90 }}
+            />
+          );
+        }
+
+        if (editingReceiptItemId === record.id) {
+          const currentOrderItem = Array.isArray(order?.items)
+            ? order.items.find((item) => item.id === record.order_item)
+            : null;
+
+          const maxAllowedQuantity =
+            getEditableRemainingForItem(currentOrderItem);
+
+          return (
+            <InputNumber
+              min={0.001}
+              max={maxAllowedQuantity || undefined}
+              step={0.001}
+              controls={false}
+              size="small"
+              value={editingReceiptQuantity}
+              onChange={setEditingReceiptQuantity}
               style={{ width: 90 }}
             />
           );
@@ -503,18 +700,60 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                     Number(selectedReceiptOrderItem.remaining_quantity))
               }
             >
-              Зберегти
+              Додати
             </Button>
           );
         }
 
-        return <Text type="secondary">Збережено</Text>;
+        if (isActiveReceiptCompleted) {
+          return (
+            <Flex justify="center" align="center" gap={12}>
+              <EditOutlined style={getDisabledActionIconStyle()} />
+              <DeleteOutlined style={getDisabledActionIconStyle()} />
+            </Flex>
+          );
+        }
+
+        if (editingReceiptItemId === record.id) {
+          return (
+            <Flex justify="center" align="center" gap={12}>
+              <SaveOutlined
+                style={getActionIconStyle('#52c41a')}
+                onClick={() => handleSaveEditedReceiptItem(record)}
+              />
+
+              <DeleteOutlined style={getDisabledActionIconStyle()} />
+            </Flex>
+          );
+        }
+
+        return (
+          <Flex justify="center" align="center" gap={12}>
+            <EditOutlined
+              style={getActionIconStyle('#1677ff')}
+              onClick={() => handleStartEditReceiptItem(record)}
+            />
+
+            <Popconfirm
+              title="Видалити рядок?"
+              description="Після видалення рядок отримання буде втрачено."
+              okText="Так"
+              cancelText="Ні"
+              onConfirm={() => handleDeleteReceiptItem(record)}
+            >
+              <DeleteOutlined
+                style={getActionIconStyle('#ff4d4f')}
+                spin={deletingReceiptItemId === record.id}
+              />
+            </Popconfirm>
+          </Flex>
+        );
       },
     },
   ];
 
   const receiptItemsTableData = canAddReceiptItems
-    ? [{ id: 'new-row' }, ...receiptDocumentItems]
+    ? [...receiptDocumentItems, { id: 'new-row' }]
     : receiptDocumentItems;
 
   return (
@@ -791,18 +1030,9 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                 loading={receiptDocumentLoading}
               />
 
-              {!isActiveReceiptCompleted && selectedReceiptOrderItem && (
-                <Alert
-                  type="info"
-                  showIcon
-                  message={`Доступно до отримання: ${formatQuantity(
-                    selectedReceiptOrderItem.remaining_quantity,
-                  )}`}
-                />
-              )}
-
               {!isActiveReceiptCompleted &&
-                receiptOrderItemOptions.length === 0 && (
+                receiptOrderItemOptions.length === 0 &&
+                receiptDocumentItems.length > 0 && (
                   <Alert
                     type="warning"
                     showIcon

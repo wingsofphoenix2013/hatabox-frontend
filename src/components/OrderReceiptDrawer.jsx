@@ -33,7 +33,13 @@ import {
 
 const { Text, Link } = Typography;
 
-function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
+function OrderReceiptDrawer({
+  open,
+  onClose,
+  order,
+  onReceiptSaved,
+  initialReceiptDocumentId = null,
+}) {
   const [receiptDocuments, setReceiptDocuments] = useState([]);
   const [receiptDocumentsLoading, setReceiptDocumentsLoading] = useState(false);
   const [receiptSelectOpen, setReceiptSelectOpen] = useState(false);
@@ -167,15 +173,32 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   };
 
   useEffect(() => {
-    if (!open) {
-      resetReceiptDrawerState();
-      return;
-    }
+    const initializeDrawer = async () => {
+      if (!open) {
+        resetReceiptDrawerState();
+        return;
+      }
 
-    resetReceiptDrawerState();
-    loadReceiptDocuments(order?.id);
+      resetReceiptDrawerState();
+
+      const documents = await loadReceiptDocuments(order?.id);
+
+      if (initialReceiptDocumentId) {
+        const targetExists = documents.some(
+          (item) => item.id === initialReceiptDocumentId,
+        );
+
+        if (targetExists) {
+          setSelectedExistingReceiptId(initialReceiptDocumentId);
+          setIsCreatingNewReceipt(false);
+          await loadReceiptDocument(initialReceiptDocumentId);
+        }
+      }
+    };
+
+    initializeDrawer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, order?.id]);
+  }, [open, order?.id, initialReceiptDocumentId]);
 
   const hasReceiptDocuments =
     Array.isArray(receiptDocuments) && receiptDocuments.length > 0;

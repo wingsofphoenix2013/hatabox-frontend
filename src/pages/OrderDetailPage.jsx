@@ -87,6 +87,8 @@ function OrderDetailPage() {
   const [isPaymentsDrawerOpen, setIsPaymentsDrawerOpen] = useState(false);
   const [isReceiptDrawerOpen, setIsReceiptDrawerOpen] = useState(false);
   const [isOrderItemsDrawerOpen, setIsOrderItemsDrawerOpen] = useState(false);
+  const [selectedReceiptDocumentId, setSelectedReceiptDocumentId] =
+    useState(null);
 
   const [selectedPaymentId, setSelectedPaymentId] = useState(null);
   const [editingPaymentStatus, setEditingPaymentStatus] = useState(null);
@@ -405,6 +407,11 @@ function OrderDetailPage() {
     setRecipientAccountsLoading(false);
     setSelectedRecipientAccountId(null);
     setPaymentTransferFile(null);
+  };
+
+  const handleOpenReceiptDrawer = (receiptDocumentId = null) => {
+    setSelectedReceiptDocumentId(receiptDocumentId);
+    setIsReceiptDrawerOpen(true);
   };
 
   const handleClosePaymentsDrawer = () => {
@@ -775,24 +782,10 @@ function OrderDetailPage() {
       render: (_, record) => {
         const items = [
           {
-            key: '1',
-            label: 'Тестова дія 1',
+            key: 'open',
+            label: 'Переглянути накладну',
             onClick: () => {
-              console.log('Action 1', record.id);
-            },
-          },
-          {
-            key: '2',
-            label: 'Тестова дія 2',
-            onClick: () => {
-              console.log('Action 2', record.id);
-            },
-          },
-          {
-            key: '3',
-            label: 'Тестова дія 3',
-            onClick: () => {
-              console.log('Action 3', record.id);
+              handleOpenReceiptDrawer(record.id);
             },
           },
         ];
@@ -1160,7 +1153,7 @@ function OrderDetailPage() {
                   <Button
                     block
                     icon={<DownloadOutlined style={{ color: '#1677ff' }} />}
-                    onClick={() => setIsReceiptDrawerOpen(true)}
+                    onClick={() => handleOpenReceiptDrawer()}
                   >
                     Отримання товару
                   </Button>
@@ -1357,8 +1350,12 @@ function OrderDetailPage() {
 
       <OrderReceiptDrawer
         open={isReceiptDrawerOpen}
-        onClose={() => setIsReceiptDrawerOpen(false)}
+        onClose={() => {
+          setIsReceiptDrawerOpen(false);
+          setSelectedReceiptDocumentId(null);
+        }}
         order={order}
+        initialReceiptDocumentId={selectedReceiptDocumentId}
         onReceiptSaved={() => loadOrderPage({ silent: true })}
       />
 

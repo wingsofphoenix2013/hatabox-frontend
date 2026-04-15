@@ -844,10 +844,20 @@ function OrdersRegisterPage() {
 
         const items = [];
 
+        // ВСЕГДА доступно
+        items.push({
+          key: 'view',
+          label: <div style={{ padding: '4px 0' }}>Переглянути замовлення</div>,
+          onClick: () => {
+            navigate(`/orders/${record.id}`);
+          },
+        });
+
+        // Только не для draft
         if (record.status !== 'draft') {
           items.push({
             key: 'receipt',
-            label: 'Прибуткові накладні',
+            label: <div style={{ padding: '4px 0' }}>Прибуткові накладні</div>,
             onClick: () => {
               handleOpenOrderAction(record.id, 'receipt');
             },
@@ -855,7 +865,7 @@ function OrdersRegisterPage() {
 
           items.push({
             key: 'payments',
-            label: 'Платіжні документи',
+            label: <div style={{ padding: '4px 0' }}>Платіжні документи</div>,
             onClick: () => {
               handleOpenOrderAction(record.id, 'payments');
             },
@@ -864,18 +874,6 @@ function OrdersRegisterPage() {
 
         if (isLoading) {
           return <Spin size="small" />;
-        }
-
-        if (items.length === 0) {
-          return (
-            <AppstoreAddOutlined
-              style={{
-                fontSize: 17,
-                color: '#d9d9d9',
-                cursor: 'default',
-              }}
-            />
-          );
         }
 
         return (

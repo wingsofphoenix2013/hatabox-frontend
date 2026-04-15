@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import dayjs from 'dayjs';
 import { UploadOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
   Card,
   DatePicker,
+  Divider,
   Drawer,
   Flex,
   Input,
@@ -23,36 +25,56 @@ import {
   validateFileType,
 } from '../utils/fileHelpers';
 
-const { Text } = Typography;
+const { Text, Link } = Typography;
 
 function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
-  // state
+  const [receiptDocuments, setReceiptDocuments] = useState([]);
+  const [receiptDocumentsLoading, setReceiptDocumentsLoading] = useState(false);
+  const [receiptSelectOpen, setReceiptSelectOpen] = useState(false);
+
+  const [isCreatingNewReceipt, setIsCreatingNewReceipt] = useState(false);
+  const [selectedExistingReceiptId, setSelectedExistingReceiptId] =
+    useState(null);
+
   const [receiptNo, setReceiptNo] = useState('');
   const [receiptDate, setReceiptDate] = useState(null);
   const [receiptFile, setReceiptFile] = useState(null);
   const [creatingReceiptDocument, setCreatingReceiptDocument] = useState(false);
-  const [createdReceiptDocument, setCreatedReceiptDocument] = useState(null);
+
+  const [activeReceiptDocument, setActiveReceiptDocument] = useState(null);
   const [receiptDocumentLoading, setReceiptDocumentLoading] = useState(false);
 
   const [receiptOrderItemId, setReceiptOrderItemId] = useState(null);
   const [receiptQuantity, setReceiptQuantity] = useState(null);
   const [savingReceiptItem, setSavingReceiptItem] = useState(false);
 
-  // reset
-  const resetReceiptDrawerState = () => {
+  const resetReceiptCreateForm = () => {
     setReceiptNo('');
     setReceiptDate(null);
     setReceiptFile(null);
     setCreatingReceiptDocument(false);
-    setCreatedReceiptDocument(null);
-    setReceiptDocumentLoading(false);
+  };
+
+  const resetReceiptItemForm = () => {
     setReceiptOrderItemId(null);
     setReceiptQuantity(null);
     setSavingReceiptItem(false);
   };
-  const resetReceiptItemForm = () => {
-    setReceiptOrderItemId(null);
-    setReceiptQuantity(null);
+
+  const resetReceiptDrawerState = () => {
+    setReceiptDocuments([]);
+    setReceiptDocumentsLoading(false);
+    setReceiptSelectOpen(false);
+
+    setIsCreatingNewReceipt(false);
+    setSelectedExistingReceiptId(null);
+
+    resetReceiptCreateForm();
+
+    setActiveReceiptDocument(null);
+    setReceiptDocumentLoading(false);
+
+    resetReceiptItemForm();
   };
 
   const notifyReceiptSaved = async () => {
@@ -61,19 +83,103 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     }
   };
 
-  // effects
+  const getReceiptDocumentStatusLabel = (completed) =>
+    completed ? 'Оброблена' : 'Чернетка';
+
+  const formatSelectDate = (value) => {
+    if (!value) return '—';
+
+    const parsed = dayjs(value);
+    return parsed.isValid() ? parsed.format('DD-MM-YYYY') : '—';
+  };
+
+  const loadReceiptDocuments = async (orderId) => {
+    if (!orderId) {
+      setReceiptDocuments([]);
+      setIsCreatingNewReceipt(false);
+      return [];
+    }
+
+    try {
+      setReceiptDocumentsLoading(true);
+
+      const response = await api.get(`receipt-documents/?order=${orderId}`);
+
+      const results = Array.isArray(response.data?.results)
+        ? response.data.results
+        : [];
+
+      setReceiptDocuments(results);
+
+      if (results.length === 0) {
+        setIsCreatingNewReceipt(true);
+      }
+
+      return results;
+    } catch (err) {
+      console.error('Failed to load receipt documents:', err);
+      setReceiptDocuments([]);
+      message.error('Не вдалося завантажити прибуткові накладні.');
+      return [];
+    } finally {
+      setReceiptDocumentsLoading(false);
+    }
+  };
+
+  const loadReceiptDocument = async (receiptDocumentId) => {
+    if (!receiptDocumentId) {
+      setActiveReceiptDocument(null);
+      return;
+    }
+
+    try {
+      setReceiptDocumentLoading(true);
+
+      const response = await api.get(`receipt-documents/${receiptDocumentId}/`);
+      setActiveReceiptDocument(response.data);
+    } catch (err) {
+      console.error('Failed to load receipt document:', err);
+      setActiveReceiptDocument(null);
+      message.error('Не вдалося завантажити дані прибуткової накладної.');
+    } finally {
+      setReceiptDocumentLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!open) {
       resetReceiptDrawerState();
+      return;
     }
-  }, [open]);
 
-  // derived data
+    resetReceiptDrawerState();
+    loadReceiptDocuments(order?.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, order?.id]);
+
+  const hasReceiptDocuments =
+    Array.isArray(receiptDocuments) && receiptDocuments.length > 0;
+
+  const hasIncompleteReceiptDocument = useMemo(() => {
+    return receiptDocuments.some((item) => !item.completed);
+  }, [receiptDocuments]);
+
+  const receiptDocumentSelectOptions = useMemo(() => {
+    return receiptDocuments.map((item) => ({
+      value: item.id,
+      label: `${item.receipt_no || '—'} | ${formatSelectDate(
+        item.receipt_date,
+      )} | ${getReceiptDocumentStatusLabel(item.completed)}`,
+    }));
+  }, [receiptDocuments]);
+
   const receiptDocumentItems = useMemo(() => {
-    return Array.isArray(createdReceiptDocument?.items)
-      ? createdReceiptDocument.items
+    return Array.isArray(activeReceiptDocument?.items)
+      ? activeReceiptDocument.items
       : [];
-  }, [createdReceiptDocument]);
+  }, [activeReceiptDocument]);
+
+  const isActiveReceiptCompleted = Boolean(activeReceiptDocument?.completed);
 
   const selectedReceiptOrderItem = useMemo(() => {
     const items = Array.isArray(order?.items) ? order.items : [];
@@ -97,20 +203,8 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       }));
   }, [order, receiptDocumentItems]);
 
-  // handlers
-  const loadReceiptDocument = async (receiptDocumentId) => {
-    try {
-      setReceiptDocumentLoading(true);
-
-      const response = await api.get(`receipt-documents/${receiptDocumentId}/`);
-      setCreatedReceiptDocument(response.data);
-    } catch (err) {
-      console.error('Failed to load receipt document:', err);
-      message.error('Не вдалося оновити дані видаткової накладної.');
-    } finally {
-      setReceiptDocumentLoading(false);
-    }
-  };
+  const canAddReceiptItems =
+    Boolean(activeReceiptDocument?.id) && !isActiveReceiptCompleted;
 
   const handleReceiptFileChange = ({ fileList }) => {
     const fileObj = extractFileFromUploadEvent(fileList);
@@ -131,9 +225,40 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     setReceiptFile(fileObj);
   };
 
+  const handleSelectExistingReceipt = async (value) => {
+    setSelectedExistingReceiptId(value);
+    setIsCreatingNewReceipt(false);
+    resetReceiptCreateForm();
+    resetReceiptItemForm();
+    await loadReceiptDocument(value);
+  };
+
+  const handleStartCreateNewReceipt = () => {
+    if (hasIncompleteReceiptDocument) {
+      message.warning(
+        'Спочатку відкрийте та завершіть існуючу чернетку прибуткової накладної.',
+      );
+      return;
+    }
+
+    setReceiptSelectOpen(false);
+    setSelectedExistingReceiptId(null);
+    setActiveReceiptDocument(null);
+    resetReceiptItemForm();
+    resetReceiptCreateForm();
+    setIsCreatingNewReceipt(true);
+  };
+
   const handleCreateReceiptDocument = async () => {
+    if (hasIncompleteReceiptDocument) {
+      message.error(
+        'Неможливо створити нову прибуткову накладну, поки існує незавершена чернетка.',
+      );
+      return;
+    }
+
     if (!receiptNo.trim()) {
-      message.error('Вкажіть номер видаткової накладної.');
+      message.error('Вкажіть номер прибуткової накладної.');
       return;
     }
 
@@ -143,7 +268,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     }
 
     if (!receiptFile) {
-      message.error('Завантажте файл видаткової накладної.');
+      message.error('Завантажте файл прибуткової накладної.');
       return;
     }
 
@@ -165,11 +290,24 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
 
       const createdDocument = response.data;
 
-      setCreatedReceiptDocument(createdDocument);
-      message.success('Видаткову накладну зареєстровано.');
+      message.success('Прибуткову накладну зареєстровано.');
+
+      const refreshedReceiptDocuments = await loadReceiptDocuments(order.id);
+
+      setIsCreatingNewReceipt(false);
+      setSelectedExistingReceiptId(createdDocument.id);
+
+      const createdDocumentStillExists = refreshedReceiptDocuments.some(
+        (item) => item.id === createdDocument.id,
+      );
+
+      if (createdDocumentStillExists) {
+        await loadReceiptDocument(createdDocument.id);
+      } else {
+        setActiveReceiptDocument(createdDocument);
+      }
 
       await notifyReceiptSaved();
-      await loadReceiptDocument(createdDocument.id);
     } catch (err) {
       console.error('Failed to create receipt document:', err);
 
@@ -181,7 +319,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       ]);
 
       message.error(
-        backendMessage || 'Не вдалося зареєструвати видаткову накладну.',
+        backendMessage || 'Не вдалося зареєструвати прибуткову накладну.',
       );
     } finally {
       setCreatingReceiptDocument(false);
@@ -189,8 +327,15 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   };
 
   const handleSaveReceiptItem = async () => {
-    if (!createdReceiptDocument?.id) {
-      message.error('Спочатку зареєструйте видаткову накладну.');
+    if (!activeReceiptDocument?.id) {
+      message.error('Спочатку оберіть або створіть прибуткову накладну.');
+      return;
+    }
+
+    if (isActiveReceiptCompleted) {
+      message.error(
+        'Редагування недоступне: прибуткова накладна вже оброблена.',
+      );
       return;
     }
 
@@ -221,7 +366,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       setSavingReceiptItem(true);
 
       await api.post('receipt-items/', {
-        receipt_document: createdReceiptDocument.id,
+        receipt_document: activeReceiptDocument.id,
         order_item: receiptOrderItemId,
         received_quantity: receiptQuantity,
       });
@@ -230,7 +375,11 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
 
       resetReceiptItemForm();
 
-      await loadReceiptDocument(createdReceiptDocument.id);
+      await Promise.all([
+        loadReceiptDocument(activeReceiptDocument.id),
+        loadReceiptDocuments(order.id),
+      ]);
+
       await notifyReceiptSaved();
     } catch (err) {
       console.error('Failed to create receipt item:', err);
@@ -247,7 +396,6 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     }
   };
 
-  // table config
   const receiptItemsColumns = [
     {
       title: 'Назва компонента',
@@ -367,6 +515,10 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     },
   ];
 
+  const receiptItemsTableData = canAddReceiptItems
+    ? [{ id: 'new-row' }, ...receiptDocumentItems]
+    : receiptDocumentItems;
+
   return (
     <Drawer
       title="Отримання товару"
@@ -376,100 +528,286 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       onClose={onClose}
     >
       <Flex vertical gap={16}>
-        <Card title="1. Зареєструйте видаткову накладну">
+        <Card title="1. Оберіть прибуткову накладну">
           <Flex vertical gap={16}>
-            <div>
-              <Text style={{ display: 'block', marginBottom: 8 }}>
-                Номер документа
-              </Text>
-              <Input
-                value={receiptNo}
-                onChange={(e) => setReceiptNo(e.target.value)}
-                placeholder="Номер видаткової накладної"
-                disabled={Boolean(createdReceiptDocument)}
-              />
-            </div>
+            {!hasReceiptDocuments && !receiptDocumentsLoading && (
+              <>
+                <Alert
+                  type="info"
+                  showIcon
+                  message="Для цього замовлення ще немає прибуткових накладних. Заповніть форму нижче, щоб створити першу."
+                />
 
-            <div>
-              <Text style={{ display: 'block', marginBottom: 8 }}>
-                Дата отримання товару
-              </Text>
-              <DatePicker
-                style={{ width: '100%' }}
-                format="DD-MM-YYYY"
-                value={receiptDate}
-                onChange={setReceiptDate}
-                disabled={Boolean(createdReceiptDocument)}
-              />
-            </div>
+                <div>
+                  <Text style={{ display: 'block', marginBottom: 8 }}>
+                    Номер документа
+                  </Text>
+                  <Input
+                    value={receiptNo}
+                    onChange={(e) => setReceiptNo(e.target.value)}
+                    placeholder="Номер прибуткової накладної"
+                  />
+                </div>
 
-            <div>
-              <Text style={{ display: 'block', marginBottom: 8 }}>
-                Файл накладної
-              </Text>
-              <Upload
-                beforeUpload={() => false}
-                maxCount={1}
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={handleReceiptFileChange}
-                showUploadList
-                fileList={
-                  receiptFile
-                    ? [
-                        {
-                          uid: receiptFile.uid || receiptFile.name,
-                          name: receiptFile.name,
-                          status: 'done',
-                        },
-                      ]
-                    : []
-                }
-                disabled={Boolean(createdReceiptDocument)}
-              >
-                <Button
-                  icon={<UploadOutlined />}
-                  disabled={Boolean(createdReceiptDocument)}
-                >
-                  Обрати файл
-                </Button>
-              </Upload>
-            </div>
+                <div>
+                  <Text style={{ display: 'block', marginBottom: 8 }}>
+                    Дата отримання товару
+                  </Text>
+                  <DatePicker
+                    style={{ width: '100%' }}
+                    format="DD-MM-YYYY"
+                    value={receiptDate}
+                    onChange={setReceiptDate}
+                  />
+                </div>
 
-            {!createdReceiptDocument && (
-              <Flex justify="flex-end">
-                <Button
-                  type="primary"
-                  loading={creatingReceiptDocument}
-                  onClick={handleCreateReceiptDocument}
-                >
-                  Зберегти крок 1
-                </Button>
-              </Flex>
+                <div>
+                  <Text style={{ display: 'block', marginBottom: 8 }}>
+                    Файл накладної
+                  </Text>
+                  <Upload
+                    beforeUpload={() => false}
+                    maxCount={1}
+                    accept=".jpg,.jpeg,.png,.pdf"
+                    onChange={handleReceiptFileChange}
+                    showUploadList
+                    fileList={
+                      receiptFile
+                        ? [
+                            {
+                              uid: receiptFile.uid || receiptFile.name,
+                              name: receiptFile.name,
+                              status: 'done',
+                            },
+                          ]
+                        : []
+                    }
+                  >
+                    <Button icon={<UploadOutlined />}>Обрати файл</Button>
+                  </Upload>
+                </div>
+
+                <Flex justify="flex-end">
+                  <Button
+                    type="primary"
+                    loading={creatingReceiptDocument}
+                    onClick={handleCreateReceiptDocument}
+                  >
+                    Зберегти прибуткову накладну
+                  </Button>
+                </Flex>
+              </>
             )}
 
-            {createdReceiptDocument && (
-              <Alert
-                type="success"
-                showIcon
-                message="Видаткову накладну зареєстровано"
-              />
+            {hasReceiptDocuments && (
+              <>
+                <div>
+                  <Text style={{ display: 'block', marginBottom: 8 }}>
+                    Документ
+                  </Text>
+
+                  <Select
+                    style={{ width: '100%' }}
+                    placeholder="Оберіть прибуткову накладну"
+                    value={selectedExistingReceiptId}
+                    options={receiptDocumentSelectOptions}
+                    loading={receiptDocumentsLoading}
+                    open={receiptSelectOpen}
+                    onDropdownVisibleChange={setReceiptSelectOpen}
+                    onChange={handleSelectExistingReceipt}
+                    dropdownRender={(menu) => (
+                      <div>
+                        {!hasIncompleteReceiptDocument && (
+                          <>
+                            <div
+                              style={{ padding: 8 }}
+                              onMouseDown={(e) => e.preventDefault()}
+                            >
+                              <Button
+                                type="link"
+                                style={{ padding: 0, height: 'auto' }}
+                                onClick={handleStartCreateNewReceipt}
+                              >
+                                Створити нову прибуткову накладну
+                              </Button>
+                            </div>
+
+                            <Divider style={{ margin: '4px 0' }} />
+                          </>
+                        )}
+
+                        {menu}
+                      </div>
+                    )}
+                  />
+                </div>
+
+                {hasIncompleteReceiptDocument && (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    message="Створення нової прибуткової накладної недоступне, поки існує незавершена чернетка."
+                  />
+                )}
+
+                {isCreatingNewReceipt && (
+                  <Card
+                    type="inner"
+                    title="Нова прибуткова накладна"
+                    styles={{ body: { paddingTop: 16 } }}
+                  >
+                    <Flex vertical gap={16}>
+                      <div>
+                        <Text style={{ display: 'block', marginBottom: 8 }}>
+                          Номер документа
+                        </Text>
+                        <Input
+                          value={receiptNo}
+                          onChange={(e) => setReceiptNo(e.target.value)}
+                          placeholder="Номер прибуткової накладної"
+                        />
+                      </div>
+
+                      <div>
+                        <Text style={{ display: 'block', marginBottom: 8 }}>
+                          Дата отримання товару
+                        </Text>
+                        <DatePicker
+                          style={{ width: '100%' }}
+                          format="DD-MM-YYYY"
+                          value={receiptDate}
+                          onChange={setReceiptDate}
+                        />
+                      </div>
+
+                      <div>
+                        <Text style={{ display: 'block', marginBottom: 8 }}>
+                          Файл накладної
+                        </Text>
+                        <Upload
+                          beforeUpload={() => false}
+                          maxCount={1}
+                          accept=".jpg,.jpeg,.png,.pdf"
+                          onChange={handleReceiptFileChange}
+                          showUploadList
+                          fileList={
+                            receiptFile
+                              ? [
+                                  {
+                                    uid: receiptFile.uid || receiptFile.name,
+                                    name: receiptFile.name,
+                                    status: 'done',
+                                  },
+                                ]
+                              : []
+                          }
+                        >
+                          <Button icon={<UploadOutlined />}>Обрати файл</Button>
+                        </Upload>
+                      </div>
+
+                      <Flex justify="flex-end" gap={8}>
+                        <Button
+                          onClick={() => {
+                            setIsCreatingNewReceipt(false);
+                            resetReceiptCreateForm();
+                          }}
+                        >
+                          Скасувати
+                        </Button>
+
+                        <Button
+                          type="primary"
+                          loading={creatingReceiptDocument}
+                          onClick={handleCreateReceiptDocument}
+                        >
+                          Зберегти прибуткову накладну
+                        </Button>
+                      </Flex>
+                    </Flex>
+                  </Card>
+                )}
+              </>
             )}
           </Flex>
         </Card>
 
-        {createdReceiptDocument && (
-          <Card title="2. Оберіть товар та кількість">
+        {activeReceiptDocument && (
+          <Card title="2. Дані прибуткової накладної">
+            <Flex vertical gap={16}>
+              <div
+                style={{
+                  padding: '12px 14px',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: 8,
+                  background: '#fafafa',
+                }}
+              >
+                <Flex vertical gap={8}>
+                  <Text>
+                    <Text strong>Номер документа:</Text>{' '}
+                    {activeReceiptDocument.receipt_no || '—'}
+                  </Text>
+
+                  <Text>
+                    <Text strong>Дата:</Text>{' '}
+                    {formatSelectDate(activeReceiptDocument.receipt_date)}
+                  </Text>
+
+                  <Text>
+                    <Text strong>Статус:</Text>{' '}
+                    {getReceiptDocumentStatusLabel(
+                      activeReceiptDocument.completed,
+                    )}
+                  </Text>
+
+                  <Text>
+                    <Text strong>Файл:</Text>{' '}
+                    {activeReceiptDocument.image ? (
+                      <Link
+                        href={activeReceiptDocument.image}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Відкрити файл
+                      </Link>
+                    ) : (
+                      '—'
+                    )}
+                  </Text>
+                </Flex>
+              </div>
+
+              {isActiveReceiptCompleted ? (
+                <Alert
+                  type="info"
+                  showIcon
+                  message="Прибуткова накладна оброблена. Склад накладної доступний лише для перегляду."
+                />
+              ) : (
+                <Alert
+                  type="success"
+                  showIcon
+                  message="Прибуткова накладна відкрита для редагування."
+                />
+              )}
+            </Flex>
+          </Card>
+        )}
+
+        {activeReceiptDocument && (
+          <Card title="3. Склад прибуткової накладної">
             <Flex vertical gap={16}>
               <Table
                 rowKey="id"
                 columns={receiptItemsColumns}
-                dataSource={[{ id: 'new-row' }, ...receiptDocumentItems]}
+                dataSource={receiptItemsTableData}
                 pagination={false}
                 size="small"
                 loading={receiptDocumentLoading}
               />
 
-              {selectedReceiptOrderItem && (
+              {!isActiveReceiptCompleted && selectedReceiptOrderItem && (
                 <Alert
                   type="info"
                   showIcon
@@ -479,13 +817,23 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                 />
               )}
 
-              {receiptOrderItemOptions.length === 0 && (
-                <Alert
-                  type="warning"
-                  showIcon
-                  message="Усі товари замовлення вже повністю отримані або вже додані до цієї накладної"
-                />
-              )}
+              {!isActiveReceiptCompleted &&
+                receiptOrderItemOptions.length === 0 && (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    message="Усі товари замовлення вже повністю отримані або вже додані до цієї накладної."
+                  />
+                )}
+
+              {isActiveReceiptCompleted &&
+                receiptDocumentItems.length === 0 && (
+                  <Alert
+                    type="info"
+                    showIcon
+                    message="У цій прибутковій накладній немає рядків."
+                  />
+                )}
             </Flex>
           </Card>
         )}

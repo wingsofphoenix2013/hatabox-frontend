@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   AppstoreAddOutlined,
   CopyOutlined,
+  ExclamationCircleOutlined,
   LinkOutlined,
   PlusOutlined,
   SearchOutlined,
@@ -434,9 +435,24 @@ function OrdersRegisterPage() {
       key: 'status_name',
       width: 150,
       align: 'center',
-      render: (value, record) => (
-        <Tag color={getStatusTagColor(record.status)}>{value}</Tag>
-      ),
+      render: (value, record) => {
+        const hasComment = Boolean(record.comment);
+        const isCompleted = record.status === 'completed';
+
+        return (
+          <Flex align="center" justify="center" gap={6}>
+            {hasComment && !isCompleted && (
+              <Tooltip title="Є коментар до замовлення">
+                <ExclamationCircleOutlined
+                  style={{ color: '#faad14', fontSize: 14 }}
+                />
+              </Tooltip>
+            )}
+
+            <Tag color={getStatusTagColor(record.status)}>{value}</Tag>
+          </Flex>
+        );
+      },
     },
     {
       title: 'Сума замовлення',

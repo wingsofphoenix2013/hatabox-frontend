@@ -591,7 +591,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                     loading={creatingReceiptDocument}
                     onClick={handleCreateReceiptDocument}
                   >
-                    Зберегти прибуткову накладну
+                    Створити прибуткову накладну
                   </Button>
                 </Flex>
               </>
@@ -639,14 +639,6 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                     )}
                   />
                 </div>
-
-                {hasIncompleteReceiptDocument && (
-                  <Alert
-                    type="warning"
-                    showIcon
-                    message="Створення нової прибуткової накладної недоступне, поки існує незавершена чернетка."
-                  />
-                )}
 
                 {isCreatingNewReceipt && (
                   <Card
@@ -719,7 +711,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                           loading={creatingReceiptDocument}
                           onClick={handleCreateReceiptDocument}
                         >
-                          Зберегти прибуткову накладну
+                          Створити прибуткову накладну
                         </Button>
                       </Flex>
                     </Flex>
@@ -776,17 +768,11 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                 </Flex>
               </div>
 
-              {isActiveReceiptCompleted ? (
+              {isActiveReceiptCompleted && (
                 <Alert
                   type="info"
                   showIcon
                   message="Прибуткова накладна оброблена. Склад накладної доступний лише для перегляду."
-                />
-              ) : (
-                <Alert
-                  type="success"
-                  showIcon
-                  message="Прибуткова накладна відкрита для редагування."
                 />
               )}
             </Flex>
@@ -835,10 +821,6 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
             </Flex>
           </Card>
         )}
-
-        <Flex justify="flex-end" gap={8}>
-          <Button onClick={onClose}>Закрити</Button>
-        </Flex>
       </Flex>
     </Drawer>
   );

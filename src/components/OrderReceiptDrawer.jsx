@@ -58,6 +58,8 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   const [editingReceiptQuantity, setEditingReceiptQuantity] = useState(null);
   const [deletingReceiptItemId, setDeletingReceiptItemId] = useState(null);
 
+  const [uploadingReceiptFile, setUploadingReceiptFile] = useState(false);
+
   const resetReceiptCreateForm = () => {
     setReceiptNo('');
     setReceiptDate(null);
@@ -597,6 +599,50 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     }
   };
 
+  const handleUploadReceiptFile = async () => {
+    if (!receiptFile) {
+      message.error('Спочатку оберіть файл.');
+      return;
+    }
+
+    if (!activeReceiptDocument?.id) {
+      return;
+    }
+
+    try {
+      setUploadingReceiptFile(true);
+
+      const payload = new FormData();
+      payload.append('image', receiptFile);
+
+      const response = await api.patch(
+        `receipt-documents/${activeReceiptDocument.id}/`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
+
+      setActiveReceiptDocument(response.data);
+      setReceiptFile(null);
+
+      message.success('Файл успішно завантажено.');
+
+      await notifyReceiptSaved();
+    } catch (err) {
+      console.error('Failed to upload receipt file:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData, ['image']);
+
+      message.error(backendMessage || 'Не вдалося завантажити файл.');
+    } finally {
+      setUploadingReceiptFile(false);
+    }
+  };
+
   const getActionIconStyle = (color) => ({
     fontSize: 16,
     color,
@@ -1036,20 +1082,76 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                     )}
                   </Text>
 
-                  <Text>
-                    <Text strong>Файл:</Text>{' '}
-                    {activeReceiptDocument.image ? (
-                      <Link
-                        href={activeReceiptDocument.image}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        Відкрити файл
-                      </Link>
-                    ) : (
-                      '—'
-                    )}
-                  </Text>
+                  <div>
+                    <Text strong>Файл:</Text>
+
+                    <div style={{ marginTop: 8 }}>
+                      {activeReceiptDocument.image ? (
+                        <Flex vertical gap={8} align="flex-start">
+                          <Link
+                            href={activeReceiptDocument.image}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Відкрити файл
+                          </Link>
+
+                          {!isActiveReceiptCompleted && (
+                            <>
+                              <Upload
+                                beforeUpload={() => false}
+                                maxCount={1}
+                                accept=".jpg,.jpeg,.png,.pdf"
+                                onChange={handleReceiptFileChange}
+                                showUploadList={false}
+                              >
+                                <Button size="small" icon={<UploadOutlined />}>
+                                  Замінити файл
+                                </Button>
+                              </Upload>
+
+                              {receiptFile && (
+                                <Button
+                                  size="small"
+                                  type="primary"
+                                  loading={uploadingReceiptFile}
+                                  onClick={handleUploadReceiptFile}
+                                >
+                                  Завантажити файл
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </Flex>
+                      ) : (
+                        !isActiveReceiptCompleted && (
+                          <Flex vertical gap={8} align="flex-start">
+                            <Upload
+                              beforeUpload={() => false}
+                              maxCount={1}
+                              accept=".jpg,.jpeg,.png,.pdf"
+                              onChange={handleReceiptFileChange}
+                              showUploadList
+                            >
+                              <Button icon={<UploadOutlined />}>
+                                Обрати файл
+                              </Button>
+                            </Upload>
+
+                            {receiptFile && (
+                              <Button
+                                type="primary"
+                                loading={uploadingReceiptFile}
+                                onClick={handleUploadReceiptFile}
+                              >
+                                Завантажити файл
+                              </Button>
+                            )}
+                          </Flex>
+                        )
+                      )}
+                    </div>
+                  </div>
                 </Flex>
               </div>
 

@@ -626,7 +626,7 @@ function OrdersRegisterPage() {
         const items = [
           {
             key: 'receipt',
-            label: 'Приймання товару',
+            label: 'Прибуткові накладні',
             onClick: () => {
               handleOpenReceiptDrawer(record.id);
             },

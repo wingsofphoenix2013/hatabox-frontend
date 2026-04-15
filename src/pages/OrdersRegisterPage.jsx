@@ -27,6 +27,7 @@ import {
 } from 'antd';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import OrderReceiptDrawer from '../components/OrderReceiptDrawer';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -100,6 +101,10 @@ function OrdersRegisterPage() {
 
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [createSaving, setCreateSaving] = useState(false);
+
+  const [isReceiptDrawerOpen, setIsReceiptDrawerOpen] = useState(false);
+  const [selectedReceiptOrder, setSelectedReceiptOrder] = useState(null);
+  const [loadingReceiptOrderId, setLoadingReceiptOrderId] = useState(null);
 
   const [vendorOptions, setVendorOptions] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
@@ -363,6 +368,40 @@ function OrdersRegisterPage() {
     } finally {
       setCreateSaving(false);
     }
+  };
+
+  const handleOpenReceiptDrawer = async (orderId) => {
+    if (!orderId) {
+      return;
+    }
+
+    try {
+      setLoadingReceiptOrderId(orderId);
+
+      const response = await api.get(`orders/${orderId}/`);
+      setSelectedReceiptOrder(response.data);
+      setIsReceiptDrawerOpen(true);
+    } catch (err) {
+      console.error('Failed to load order for receipt drawer:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage =
+        responseData?.detail ||
+        responseData?.error ||
+        responseData?.message ||
+        (typeof responseData === 'string' ? responseData : null);
+
+      message.error(
+        backendMessage || 'Не вдалося завантажити замовлення для приймання.',
+      );
+    } finally {
+      setLoadingReceiptOrderId(null);
+    }
+  };
+
+  const handleCloseReceiptDrawer = () => {
+    setIsReceiptDrawerOpen(false);
+    setSelectedReceiptOrder(null);
   };
 
   const columns = [
@@ -873,6 +912,12 @@ function OrdersRegisterPage() {
           </Flex>
         </Form>
       </Drawer>
+      <OrderReceiptDrawer
+        open={isReceiptDrawerOpen}
+        onClose={handleCloseReceiptDrawer}
+        order={selectedReceiptOrder}
+        onReceiptSaved={() => loadOrders(currentPage)}
+      />
     </div>
   );
 }

@@ -137,7 +137,11 @@ function OrderReceiptDrawer({
 
       setReceiptDocuments(results);
 
-      if (results.length === 0) {
+      if (
+        results.length === 0 &&
+        order?.status !== 'completed' &&
+        order?.status !== 'draft'
+      ) {
         setIsCreatingNewReceipt(true);
       }
 
@@ -206,6 +210,11 @@ function OrderReceiptDrawer({
   const hasIncompleteReceiptDocument = useMemo(() => {
     return receiptDocuments.some((item) => !item.completed);
   }, [receiptDocuments]);
+
+  const canCreateReceiptDocument =
+    order?.status !== 'completed' &&
+    order?.status !== 'draft' &&
+    !hasIncompleteReceiptDocument;
 
   const receiptDocumentSelectOptions = useMemo(() => {
     return receiptDocuments.map((item) => ({
@@ -330,6 +339,20 @@ function OrderReceiptDrawer({
   };
 
   const handleStartCreateNewReceipt = () => {
+    if (order?.status === 'completed') {
+      message.warning(
+        'Для виконаного замовлення створення нової прибуткової накладної недоступне.',
+      );
+      return;
+    }
+
+    if (order?.status === 'draft') {
+      message.warning(
+        'Для замовлення у статусі чернетки створення прибуткової накладної недоступне.',
+      );
+      return;
+    }
+
     if (hasIncompleteReceiptDocument) {
       message.warning(
         'Спочатку відкрийте та завершіть існуючу чернетку прибуткової накладної.',
@@ -347,6 +370,20 @@ function OrderReceiptDrawer({
   };
 
   const handleCreateReceiptDocument = async () => {
+    if (order?.status === 'completed') {
+      message.error(
+        'Для виконаного замовлення створення нової прибуткової накладної недоступне.',
+      );
+      return;
+    }
+
+    if (order?.status === 'draft') {
+      message.error(
+        'Для замовлення у статусі чернетки створення прибуткової накладної недоступне.',
+      );
+      return;
+    }
+
     if (hasIncompleteReceiptDocument) {
       message.error(
         'Неможливо створити нову прибуткову накладну, поки існує незавершена чернетка.',
@@ -978,7 +1015,7 @@ function OrderReceiptDrawer({
                     onChange={handleSelectExistingReceipt}
                     dropdownRender={(menu) => (
                       <div>
-                        {!hasIncompleteReceiptDocument && (
+                        {canCreateReceiptDocument && (
                           <>
                             <div
                               style={{ padding: 8 }}
@@ -1003,7 +1040,7 @@ function OrderReceiptDrawer({
                   />
                 </div>
 
-                {isCreatingNewReceipt && (
+                {isCreatingNewReceipt && canCreateReceiptDocument && (
                   <Card
                     type="inner"
                     title="Нова прибуткова накладна"

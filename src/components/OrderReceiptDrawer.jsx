@@ -267,11 +267,6 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       return;
     }
 
-    if (!receiptFile) {
-      message.error('Завантажте файл прибуткової накладної.');
-      return;
-    }
-
     try {
       setCreatingReceiptDocument(true);
 
@@ -280,7 +275,10 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
       payload.append('order', String(order.id));
       payload.append('receipt_date', receiptDate.format('YYYY-MM-DD'));
       payload.append('comment', '');
-      payload.append('image', receiptFile);
+
+      if (receiptFile) {
+        payload.append('image', receiptFile);
+      }
 
       const response = await api.post('receipt-documents/', payload, {
         headers: {
@@ -563,7 +561,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
 
                 <div>
                   <Text style={{ display: 'block', marginBottom: 8 }}>
-                    Файл накладної
+                    Файл накладної (необов’язково для чернетки)
                   </Text>
                   <Upload
                     beforeUpload={() => false}
@@ -682,7 +680,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
 
                       <div>
                         <Text style={{ display: 'block', marginBottom: 8 }}>
-                          Файл накладної
+                          Файл накладної (необов’язково для чернетки)
                         </Text>
                         <Upload
                           beforeUpload={() => false}

@@ -575,9 +575,18 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     }
 
     try {
-      await api.patch(`receipt-documents/${activeReceiptDocument.id}/`, {
-        completed: true,
-      });
+      const payload = new FormData();
+      payload.append('completed', 'true');
+
+      await api.patch(
+        `receipt-documents/${activeReceiptDocument.id}/`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
 
       message.success('Прибуткову накладну позначено як оброблену.');
 

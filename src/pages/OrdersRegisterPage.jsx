@@ -104,9 +104,10 @@ function OrdersRegisterPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [createSaving, setCreateSaving] = useState(false);
 
-  const [isReceiptDrawerOpen, setIsReceiptDrawerOpen] = useState(false);
-  const [selectedReceiptOrder, setSelectedReceiptOrder] = useState(null);
-  const [loadingReceiptOrderId, setLoadingReceiptOrderId] = useState(null);
+  const [openOrderActionDrawer, setOpenOrderActionDrawer] = useState(null);
+  const [selectedActionOrder, setSelectedActionOrder] = useState(null);
+  const [loadingOrderActionId, setLoadingOrderActionId] = useState(null);
+  const [loadingOrderActionType, setLoadingOrderActionType] = useState(null);
 
   const [vendorOptions, setVendorOptions] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
@@ -373,19 +374,20 @@ function OrdersRegisterPage() {
     }
   };
 
-  const handleOpenReceiptDrawer = async (orderId) => {
-    if (!orderId) {
+  const handleOpenOrderAction = async (orderId, actionType) => {
+    if (!orderId || !actionType) {
       return;
     }
 
     try {
-      setLoadingReceiptOrderId(orderId);
+      setLoadingOrderActionId(orderId);
+      setLoadingOrderActionType(actionType);
 
       const response = await api.get(`orders/${orderId}/`);
-      setSelectedReceiptOrder(response.data);
-      setIsReceiptDrawerOpen(true);
+      setSelectedActionOrder(response.data);
+      setOpenOrderActionDrawer(actionType);
     } catch (err) {
-      console.error('Failed to load order for receipt drawer:', err);
+      console.error(`Failed to load order for action "${actionType}":`, err);
 
       const responseData = err?.response?.data;
       const backendMessage =
@@ -394,17 +396,16 @@ function OrdersRegisterPage() {
         responseData?.message ||
         (typeof responseData === 'string' ? responseData : null);
 
-      message.error(
-        backendMessage || 'Не вдалося завантажити замовлення для приймання.',
-      );
+      message.error(backendMessage || 'Не вдалося завантажити замовлення.');
     } finally {
-      setLoadingReceiptOrderId(null);
+      setLoadingOrderActionId(null);
+      setLoadingOrderActionType(null);
     }
   };
 
-  const handleCloseReceiptDrawer = () => {
-    setIsReceiptDrawerOpen(false);
-    setSelectedReceiptOrder(null);
+  const handleCloseOrderActionDrawer = () => {
+    setOpenOrderActionDrawer(null);
+    setSelectedActionOrder(null);
   };
 
   const columns = [
@@ -621,14 +622,16 @@ function OrdersRegisterPage() {
       width: 56,
       align: 'center',
       render: (_, record) => {
-        const isLoading = loadingReceiptOrderId === record.id;
+        const isLoading =
+          loadingOrderActionId === record.id &&
+          loadingOrderActionType === 'receipt';
 
         const items = [
           {
             key: 'receipt',
             label: 'Прибуткові накладні',
             onClick: () => {
-              handleOpenReceiptDrawer(record.id);
+              handleOpenOrderAction(record.id, 'receipt');
             },
           },
         ];
@@ -936,9 +939,9 @@ function OrdersRegisterPage() {
         </Form>
       </Drawer>
       <OrderReceiptDrawer
-        open={isReceiptDrawerOpen}
-        onClose={handleCloseReceiptDrawer}
-        order={selectedReceiptOrder}
+        open={openOrderActionDrawer === 'receipt'}
+        onClose={handleCloseOrderActionDrawer}
+        order={selectedActionOrder}
         onReceiptSaved={() => loadOrders(currentPage)}
       />
     </div>

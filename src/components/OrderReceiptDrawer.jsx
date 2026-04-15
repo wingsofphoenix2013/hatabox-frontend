@@ -256,6 +256,26 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
   const canAddReceiptItems =
     Boolean(activeReceiptDocument?.id) && !isActiveReceiptCompleted;
 
+  const hasReceiptItems = receiptDocumentItems.length > 0;
+  const hasReceiptFile = Boolean(activeReceiptDocument?.image);
+
+  const canCompleteReceipt =
+    !isActiveReceiptCompleted && hasReceiptItems && hasReceiptFile;
+
+  const isNewQuantityInvalid =
+    Boolean(selectedReceiptOrderItem) &&
+    receiptQuantity !== null &&
+    receiptQuantity !== undefined &&
+    Number(receiptQuantity) >
+      Number(selectedReceiptOrderItem.remaining_quantity);
+
+  const isEditQuantityInvalid =
+    Boolean(editingReceiptItem && editingOrderItem) &&
+    editingReceiptQuantity !== null &&
+    editingReceiptQuantity !== undefined &&
+    Number(editingReceiptQuantity) >
+      Number(getEditableRemainingForItem(editingOrderItem));
+
   const handleReceiptFileChange = ({ fileList }) => {
     const fileObj = extractFileFromUploadEvent(fileList);
 
@@ -547,6 +567,36 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     }
   };
 
+  const handleCompleteReceipt = async () => {
+    if (!activeReceiptDocument?.id) {
+      return;
+    }
+
+    try {
+      await api.patch(`receipt-documents/${activeReceiptDocument.id}/`, {
+        completed: true,
+      });
+
+      message.success('Прибуткову накладну позначено як оброблену.');
+
+      await Promise.all([
+        loadReceiptDocument(activeReceiptDocument.id),
+        loadReceiptDocuments(order.id),
+      ]);
+
+      await notifyReceiptSaved();
+    } catch (err) {
+      console.error('Failed to complete receipt:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData);
+
+      message.error(
+        backendMessage || 'Не вдалося завершити прибуткову накладну.',
+      );
+    }
+  };
+
   const getActionIconStyle = (color) => ({
     fontSize: 16,
     color,
@@ -638,11 +688,6 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
           return (
             <InputNumber
               min={0.001}
-              max={
-                selectedReceiptOrderItem
-                  ? Number(selectedReceiptOrderItem.remaining_quantity)
-                  : undefined
-              }
               step={0.001}
               controls={false}
               size="small"
@@ -654,17 +699,9 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
         }
 
         if (editingReceiptItemId === record.id) {
-          const currentOrderItem = Array.isArray(order?.items)
-            ? order.items.find((item) => item.id === record.order_item)
-            : null;
-
-          const maxAllowedQuantity =
-            getEditableRemainingForItem(currentOrderItem);
-
           return (
             <InputNumber
               min={0.001}
-              max={maxAllowedQuantity || undefined}
               step={0.001}
               controls={false}
               size="small"
@@ -695,9 +732,7 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                 !receiptOrderItemId ||
                 !receiptQuantity ||
                 Number(receiptQuantity) <= 0 ||
-                (selectedReceiptOrderItem &&
-                  Number(receiptQuantity) >
-                    Number(selectedReceiptOrderItem.remaining_quantity))
+                isNewQuantityInvalid
               }
             >
               Додати
@@ -718,8 +753,18 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
           return (
             <Flex justify="center" align="center" gap={12}>
               <SaveOutlined
-                style={getActionIconStyle('#52c41a')}
-                onClick={() => handleSaveEditedReceiptItem(record)}
+                style={
+                  isEditQuantityInvalid
+                    ? getDisabledActionIconStyle()
+                    : getActionIconStyle('#52c41a')
+                }
+                onClick={() => {
+                  if (isEditQuantityInvalid) {
+                    return;
+                  }
+
+                  handleSaveEditedReceiptItem(record);
+                }}
               />
 
               <DeleteOutlined style={getDisabledActionIconStyle()} />
@@ -752,9 +797,10 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
     },
   ];
 
-  const receiptItemsTableData = canAddReceiptItems
-    ? [...receiptDocumentItems, { id: 'new-row' }]
-    : receiptDocumentItems;
+  const receiptItemsTableData =
+    canAddReceiptItems && receiptOrderItemOptions.length > 0
+      ? [...receiptDocumentItems, { id: 'new-row' }]
+      : receiptDocumentItems;
 
   return (
     <Drawer
@@ -1014,6 +1060,31 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                   message="Прибуткова накладна оброблена. Склад накладної доступний лише для перегляду."
                 />
               )}
+              {!isActiveReceiptCompleted && (
+                <Flex vertical gap={8} align="flex-start">
+                  <Button
+                    type="primary"
+                    disabled={!canCompleteReceipt}
+                    onClick={handleCompleteReceipt}
+                  >
+                    Позначити як оброблену
+                  </Button>
+
+                  {!canCompleteReceipt && (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      message={
+                        !hasReceiptFile && !hasReceiptItems
+                          ? 'Завантажте файл та додайте хоча б одну позицію.'
+                          : !hasReceiptFile
+                            ? 'Завантажте файл прибуткової накладної.'
+                            : 'Додайте хоча б одну позицію до накладної.'
+                      }
+                    />
+                  )}
+                </Flex>
+              )}
             </Flex>
           </Card>
         )}
@@ -1030,13 +1101,29 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                 loading={receiptDocumentLoading}
               />
 
+              {isNewQuantityInvalid && (
+                <Alert
+                  type="error"
+                  showIcon
+                  message="Неможливо зберегти кількість, яка перевищує залишок до отримання."
+                />
+              )}
+
+              {isEditQuantityInvalid && (
+                <Alert
+                  type="error"
+                  showIcon
+                  message="Неможливо зберегти кількість, яка перевищує залишок до отримання."
+                />
+              )}
+
               {!isActiveReceiptCompleted &&
                 receiptOrderItemOptions.length === 0 &&
                 receiptDocumentItems.length > 0 && (
                   <Alert
                     type="warning"
                     showIcon
-                    message="Усі товари замовлення вже повністю отримані або вже додані до цієї накладної."
+                    message="До цієї прибуткової накладної вже додано всі позиції замовлення. За потреби змінюйте кількість у наявних рядках."
                   />
                 )}
 

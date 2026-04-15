@@ -4,6 +4,7 @@ import {
   BankOutlined,
   DeleteOutlined,
   DownloadOutlined,
+  EditOutlined,
   FileImageOutlined,
   InfoCircleOutlined,
   LinkOutlined,
@@ -74,6 +75,10 @@ function OrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [receiptDocuments, setReceiptDocuments] = useState([]);
   const [vendorWebsite, setVendorWebsite] = useState('');
+
+  const [isEditingOrderComment, setIsEditingOrderComment] = useState(false);
+  const [editingOrderComment, setEditingOrderComment] = useState('');
+  const [savingOrderComment, setSavingOrderComment] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -394,6 +399,46 @@ function OrderDetailPage() {
       );
     } finally {
       setSubmittingToWork(false);
+    }
+  };
+
+  const handleStartEditComment = () => {
+    setEditingOrderComment(order?.comment || '');
+    setIsEditingOrderComment(true);
+  };
+
+  const handleCancelEditComment = () => {
+    setIsEditingOrderComment(false);
+    setEditingOrderComment('');
+  };
+
+  const handleSaveComment = async () => {
+    try {
+      setSavingOrderComment(true);
+
+      const payload = new FormData();
+      payload.append('comment', editingOrderComment || '');
+
+      const response = await api.patch(`orders/${id}/`, payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setOrder(response.data);
+
+      message.success('Коментар збережено.');
+
+      setIsEditingOrderComment(false);
+    } catch (err) {
+      console.error('Failed to update comment:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData, ['comment']);
+
+      message.error(backendMessage || 'Не вдалося зберегти коментар.');
+    } finally {
+      setSavingOrderComment(false);
     }
   };
 
@@ -1249,18 +1294,61 @@ function OrderDetailPage() {
             }
             style={{ marginBottom: 20 }}
           >
-            {order.comment && (
-              <Alert
-                type="warning"
-                showIcon
-                style={{ marginBottom: 16 }}
-                message={
-                  <Text style={{ whiteSpace: 'pre-wrap' }}>
-                    <Text strong>Коментар до замовлення:</Text> {order.comment}
-                  </Text>
-                }
-              />
-            )}
+            <Alert
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+              message={
+                <Flex vertical gap={12}>
+                  {/* Верхняя строка: заголовок + кнопка редактирования */}
+                  <Flex justify="space-between" align="center">
+                    <Text strong>Коментар до замовлення</Text>
+
+                    {!isEditingOrderComment && (
+                      <EditOutlined
+                        style={{
+                          color: '#8c8c8c',
+                          cursor: 'pointer',
+                          fontSize: 16,
+                        }}
+                        onClick={handleStartEditComment}
+                      />
+                    )}
+                  </Flex>
+
+                  {/* Контент */}
+                  {!isEditingOrderComment ? (
+                    <Text style={{ whiteSpace: 'pre-wrap' }}>
+                      {order.comment ? order.comment : 'Додати коментар'}
+                    </Text>
+                  ) : (
+                    <Flex vertical gap={8}>
+                      <Input.TextArea
+                        value={editingOrderComment}
+                        onChange={(e) => setEditingOrderComment(e.target.value)}
+                        rows={3}
+                        autoFocus
+                      />
+
+                      <Flex gap={8}>
+                        <Button
+                          type="primary"
+                          size="small"
+                          loading={savingOrderComment}
+                          onClick={handleSaveComment}
+                        >
+                          Зберегти
+                        </Button>
+
+                        <Button size="small" onClick={handleCancelEditComment}>
+                          Скасувати
+                        </Button>
+                      </Flex>
+                    </Flex>
+                  )}
+                </Flex>
+              }
+            />
 
             <Table
               columns={summaryColumns}

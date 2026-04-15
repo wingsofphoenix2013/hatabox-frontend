@@ -506,6 +506,121 @@ function OrdersRegisterPage() {
   const handleCloseOrderActionDrawer = () => {
     setOpenOrderActionDrawer(null);
     setSelectedActionOrder(null);
+
+    setSelectedPaymentId(null);
+    setEditingPaymentStatus(null);
+    setEditingPaymentDate(null);
+    setEditingPaymentAmount(null);
+    setRecipientAccountOptions([]);
+    setRecipientAccountsLoading(false);
+    setSelectedRecipientAccountId(null);
+    setPaymentTransferFile(null);
+  };
+
+  const handlePaymentTransferFileChange = ({ fileList }) => {
+    const fileObj = extractFileFromUploadEvent(fileList);
+
+    if (!fileObj) {
+      setPaymentTransferFile(null);
+      return;
+    }
+
+    const { valid, error: validationError } = validateFileType(fileObj);
+
+    if (!valid) {
+      message.error(validationError);
+      setPaymentTransferFile(null);
+      return;
+    }
+
+    setPaymentTransferFile(fileObj);
+  };
+
+  const handleSavePayment = async () => {
+    if (!selectedPaymentDocument) {
+      message.error('Оберіть платіжну інструкцію.');
+      return;
+    }
+
+    if (
+      editingPaymentAmount === null ||
+      editingPaymentAmount === undefined ||
+      Number(editingPaymentAmount) <= 0
+    ) {
+      message.error('Сума платежу повинна бути більшою за 0.');
+      return;
+    }
+
+    if (editingPaymentStatus === 'paid') {
+      if (!selectedRecipientAccountId) {
+        message.error('Оберіть розрахунковий рахунок отримувача.');
+        return;
+      }
+
+      if (!editingPaymentDate) {
+        message.error('Вкажіть дату платежу.');
+        return;
+      }
+
+      if (!paymentTransferFile) {
+        message.error('Завантажте файл переказу.');
+        return;
+      }
+    }
+
+    try {
+      setSavingPayment(true);
+
+      const payload = new FormData();
+      payload.append('status', editingPaymentStatus);
+      payload.append('payment_amount', String(editingPaymentAmount));
+
+      if (editingPaymentStatus === 'paid') {
+        payload.append('payment_date', editingPaymentDate.format('YYYY-MM-DD'));
+        payload.append('image', paymentTransferFile);
+      }
+
+      await api.patch(
+        `payment-documents/${selectedPaymentDocument.id}/`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
+
+      const refreshedOrderResponse = await api.get(
+        `orders/${selectedActionOrder.id}/`,
+      );
+
+      setSelectedActionOrder(refreshedOrderResponse.data);
+
+      message.success('Платіжну інструкцію оновлено.');
+
+      setSelectedRecipientAccountId(null);
+      setPaymentTransferFile(null);
+
+      await loadOrders(currentPage);
+    } catch (err) {
+      console.error('Failed to update payment document:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage =
+        responseData?.detail ||
+        responseData?.error ||
+        responseData?.message ||
+        responseData?.payment_amount?.[0] ||
+        responseData?.payment_date?.[0] ||
+        responseData?.status?.[0] ||
+        (typeof responseData === 'string' ? responseData : null);
+
+      message.error(
+        backendMessage || 'Не вдалося оновити платіжну інструкцію.',
+      );
+    } finally {
+      setSavingPayment(false);
+    }
   };
 
   const columns = [
@@ -1057,6 +1172,37 @@ function OrdersRegisterPage() {
         onClose={handleCloseOrderActionDrawer}
         order={selectedActionOrder}
         onReceiptSaved={() => loadOrders(currentPage)}
+      />
+      <OrderPaymentsDrawer
+        open={openOrderActionDrawer === 'payments'}
+        onClose={handleCloseOrderActionDrawer}
+        order={selectedActionOrder}
+        paymentState={{
+          selectedPaymentId,
+          selectedPaymentDocument,
+          editingPaymentStatus,
+          editingPaymentDate,
+          editingPaymentAmount,
+          selectedRecipientAccountId,
+          paymentTransferFile,
+        }}
+        paymentActions={{
+          setSelectedPaymentId,
+          setEditingPaymentStatus,
+          setEditingPaymentDate,
+          setEditingPaymentAmount,
+          setSelectedRecipientAccountId,
+        }}
+        recipientAccountOptions={recipientAccountOptions}
+        recipientAccountsLoading={recipientAccountsLoading}
+        savingPayment={savingPayment}
+        handleSavePayment={handleSavePayment}
+        handlePaymentTransferFileChange={handlePaymentTransferFileChange}
+        getPaymentStatusTagColor={getPaymentStatusTagColor}
+        getAvailablePaymentStatusOptions={getAvailablePaymentStatusOptions}
+        PAYMENT_STATUS_LABELS={PAYMENT_STATUS_LABELS}
+        formatMoney={formatMoney}
+        formatDateDisplay={formatDateDisplay}
       />
     </div>
   );

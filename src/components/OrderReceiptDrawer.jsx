@@ -1163,14 +1163,6 @@ function OrderReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
                   </div>
                 </Flex>
               </div>
-
-              {isActiveReceiptCompleted && (
-                <Alert
-                  type="info"
-                  showIcon
-                  message="Прибуткова накладна оброблена. Склад накладної доступний лише для перегляду."
-                />
-              )}
             </Flex>
           </Card>
         )}

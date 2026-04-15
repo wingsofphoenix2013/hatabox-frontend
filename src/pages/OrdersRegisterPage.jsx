@@ -14,11 +14,13 @@ import {
   Card,
   Divider,
   Drawer,
+  Dropdown,
   Flex,
   Form,
   Input,
   Progress,
   Select,
+  Spin,
   Table,
   Tag,
   Tooltip,
@@ -115,6 +117,7 @@ function OrdersRegisterPage() {
 
   useEffect(() => {
     loadOrders(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     currentPage,
     searchText,
@@ -617,15 +620,35 @@ function OrdersRegisterPage() {
       key: 'action',
       width: 56,
       align: 'center',
-      render: () => (
-        <AppstoreAddOutlined
-          style={{
-            fontSize: 17,
-            color: '#8c8c8c',
-            cursor: 'pointer',
-          }}
-        />
-      ),
+      render: (_, record) => {
+        const isLoading = loadingReceiptOrderId === record.id;
+
+        const items = [
+          {
+            key: 'receipt',
+            label: 'Приймання товару',
+            onClick: () => {
+              handleOpenReceiptDrawer(record.id);
+            },
+          },
+        ];
+
+        if (isLoading) {
+          return <Spin size="small" />;
+        }
+
+        return (
+          <Dropdown menu={{ items }} trigger={['click']}>
+            <AppstoreAddOutlined
+              style={{
+                fontSize: 17,
+                color: '#8c8c8c',
+                cursor: 'pointer',
+              }}
+            />
+          </Dropdown>
+        );
+      },
     },
   ];
 

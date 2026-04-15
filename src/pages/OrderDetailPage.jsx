@@ -1250,28 +1250,16 @@ function OrderDetailPage() {
             style={{ marginBottom: 20 }}
           >
             {order.comment && (
-              <div
-                style={{
-                  marginBottom: 16,
-                  padding: '10px 12px',
-                  background: '#fafafa',
-                  border: '1px solid #f0f0f0',
-                  borderRadius: 8,
-                }}
-              >
-                <Flex align="flex-start" gap={8}>
-                  <InfoCircleOutlined
-                    style={{
-                      color: '#8c8c8c',
-                      marginTop: 3,
-                    }}
-                  />
-
+              <Alert
+                type="warning"
+                showIcon
+                style={{ marginBottom: 16 }}
+                message={
                   <Text style={{ whiteSpace: 'pre-wrap' }}>
                     <Text strong>Коментар до замовлення:</Text> {order.comment}
                   </Text>
-                </Flex>
-              </div>
+                }
+              />
             )}
 
             <Table

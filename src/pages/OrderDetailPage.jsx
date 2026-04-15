@@ -127,6 +127,8 @@ function OrderDetailPage() {
 
   const isDraft = order?.status === 'draft';
   const isInProgress = order?.status === 'in_progress';
+  const isCompleted = order?.status === 'completed';
+
   const hasOrderItems = Array.isArray(order?.items) && order.items.length > 0;
   const hasReceiptDocuments =
     Array.isArray(receiptDocuments) && receiptDocuments.length > 0;
@@ -1305,14 +1307,25 @@ function OrderDetailPage() {
                     <Text strong>Коментар до замовлення</Text>
 
                     {!isEditingOrderComment && (
-                      <EditOutlined
-                        style={{
-                          color: '#8c8c8c',
-                          cursor: 'pointer',
-                          fontSize: 16,
-                        }}
-                        onClick={handleStartEditComment}
-                      />
+                      <Tooltip
+                        title={
+                          isCompleted
+                            ? 'Редагування недоступне для виконаного замовлення'
+                            : 'Редагувати коментар'
+                        }
+                      >
+                        <EditOutlined
+                          style={{
+                            color: isCompleted ? '#bfbfbf' : '#8c8c8c',
+                            cursor: isCompleted ? 'not-allowed' : 'pointer',
+                            fontSize: 16,
+                          }}
+                          onClick={() => {
+                            if (isCompleted) return;
+                            handleStartEditComment();
+                          }}
+                        />
+                      </Tooltip>
                     )}
                   </Flex>
 

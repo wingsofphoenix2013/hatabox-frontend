@@ -442,7 +442,13 @@ function OrdersRegisterPage() {
         return (
           <Flex align="center" justify="center" gap={6}>
             {hasComment && !isCompleted && (
-              <Tooltip title="Є коментар до замовлення">
+              <Tooltip
+                title={
+                  <div style={{ maxWidth: 260, whiteSpace: 'pre-wrap' }}>
+                    {record.comment}
+                  </div>
+                }
+              >
                 <ExclamationCircleOutlined
                   style={{ color: '#faad14', fontSize: 14 }}
                 />

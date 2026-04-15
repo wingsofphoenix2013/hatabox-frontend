@@ -438,22 +438,35 @@ function OrdersRegisterPage() {
       render: (value, record) => {
         const hasComment = Boolean(record.comment);
         const isCompleted = record.status === 'completed';
+        const showCommentIcon = hasComment && !isCompleted;
 
         return (
           <Flex align="center" justify="center" gap={6}>
-            {hasComment && !isCompleted && (
-              <Tooltip
-                title={
-                  <div style={{ maxWidth: 260, whiteSpace: 'pre-wrap' }}>
-                    {record.comment}
-                  </div>
-                }
-              >
-                <ExclamationCircleOutlined
-                  style={{ color: '#faad14', fontSize: 14 }}
-                />
-              </Tooltip>
-            )}
+            <div
+              style={{
+                width: 14,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              {showCommentIcon && (
+                <Tooltip
+                  title={
+                    <div style={{ maxWidth: 260, whiteSpace: 'pre-wrap' }}>
+                      <strong>Коментар:</strong>
+                      <br />
+                      {record.comment}
+                    </div>
+                  }
+                >
+                  <ExclamationCircleOutlined
+                    style={{ color: '#faad14', fontSize: 14 }}
+                  />
+                </Tooltip>
+              )}
+            </div>
 
             <Tag color={getStatusTagColor(record.status)}>{value}</Tag>
           </Flex>

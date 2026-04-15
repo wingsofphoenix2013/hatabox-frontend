@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import dayjs from 'dayjs';
 import {
   AppstoreAddOutlined,
+  BankOutlined,
   CopyOutlined,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
   PlusOutlined,
   SearchOutlined,
+  UploadOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import {
@@ -29,7 +32,18 @@ import {
 } from 'antd';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import OrderPaymentsDrawer from '../components/OrderPaymentsDrawer';
 import OrderReceiptDrawer from '../components/OrderReceiptDrawer';
+import {
+  getAvailablePaymentStatusOptions,
+  getPaymentStatusTagColor,
+  PAYMENT_STATUS_LABELS,
+} from '../constants/orderStatus';
+import {
+  extractFileFromUploadEvent,
+  validateFileType,
+} from '../utils/fileHelpers';
+import { formatDateDisplay } from '../utils/orderFormatters';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -109,6 +123,19 @@ function OrdersRegisterPage() {
   const [loadingOrderActionId, setLoadingOrderActionId] = useState(null);
   const [loadingOrderActionType, setLoadingOrderActionType] = useState(null);
 
+  const [selectedPaymentId, setSelectedPaymentId] = useState(null);
+  const [editingPaymentStatus, setEditingPaymentStatus] = useState(null);
+  const [editingPaymentDate, setEditingPaymentDate] = useState(null);
+  const [editingPaymentAmount, setEditingPaymentAmount] = useState(null);
+  const [savingPayment, setSavingPayment] = useState(false);
+
+  const [recipientAccountOptions, setRecipientAccountOptions] = useState([]);
+  const [recipientAccountsLoading, setRecipientAccountsLoading] =
+    useState(false);
+  const [selectedRecipientAccountId, setSelectedRecipientAccountId] =
+    useState(null);
+  const [paymentTransferFile, setPaymentTransferFile] = useState(null);
+
   const [vendorOptions, setVendorOptions] = useState([]);
   const [selectedVendor, setSelectedVendor] = useState(null);
   const [suggestedOrderNo, setSuggestedOrderNo] = useState('');
@@ -165,6 +192,79 @@ function OrdersRegisterPage() {
     currentPage,
     setSearchParams,
   ]);
+
+  const selectedPaymentDocument = useMemo(() => {
+    const docs = Array.isArray(selectedActionOrder?.payment_documents)
+      ? selectedActionOrder.payment_documents
+      : [];
+
+    return docs.find((item) => item.id === selectedPaymentId) || null;
+  }, [selectedActionOrder, selectedPaymentId]);
+
+  useEffect(() => {
+    if (!selectedPaymentDocument) {
+      setEditingPaymentStatus(null);
+      setEditingPaymentDate(null);
+      setEditingPaymentAmount(null);
+      setSelectedRecipientAccountId(null);
+      setPaymentTransferFile(null);
+      return;
+    }
+
+    setEditingPaymentStatus(selectedPaymentDocument.status || null);
+    setEditingPaymentDate(
+      selectedPaymentDocument.payment_date
+        ? dayjs(selectedPaymentDocument.payment_date, 'YYYY-MM-DD')
+        : null,
+    );
+    setEditingPaymentAmount(
+      selectedPaymentDocument.payment_amount !== null &&
+        selectedPaymentDocument.payment_amount !== undefined
+        ? Number(selectedPaymentDocument.payment_amount)
+        : null,
+    );
+    setSelectedRecipientAccountId(null);
+    setPaymentTransferFile(null);
+  }, [selectedPaymentDocument]);
+
+  useEffect(() => {
+    const loadRecipientAccounts = async () => {
+      if (
+        openOrderActionDrawer !== 'payments' ||
+        !selectedActionOrder?.vendor
+      ) {
+        setRecipientAccountOptions([]);
+        setSelectedRecipientAccountId(null);
+        return;
+      }
+
+      try {
+        setRecipientAccountsLoading(true);
+
+        const response = await api.get(
+          `vendor-payment-details/?vendor=${selectedActionOrder.vendor}&is_active=true`,
+        );
+
+        const results = Array.isArray(response.data.results)
+          ? response.data.results
+          : [];
+
+        setRecipientAccountOptions(
+          results.map((item) => ({
+            value: item.id,
+            label: `${item.label || '—'} — ${item.iban || '—'}`,
+          })),
+        );
+      } catch (err) {
+        console.error('Failed to load vendor payment details:', err);
+        setRecipientAccountOptions([]);
+      } finally {
+        setRecipientAccountsLoading(false);
+      }
+    };
+
+    loadRecipientAccounts();
+  }, [openOrderActionDrawer, selectedActionOrder?.vendor]);
 
   const loadOrders = async (page) => {
     try {

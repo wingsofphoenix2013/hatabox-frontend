@@ -60,7 +60,16 @@ function ProtectedLayout() {
         },
       ],
     },
-    '/inventory': { pages: [], actions: [], dictionaries: [] },
+    '/inventory': {
+      pages: [],
+      actions: [],
+      dictionaries: [
+        {
+          label: 'Каталог складів',
+          path: '/inventory/warehouses',
+        },
+      ],
+    },
     '/sales': { pages: [], actions: [], dictionaries: [] },
     '/user': { pages: [], actions: [], dictionaries: [] },
     '/production': {
@@ -473,6 +482,18 @@ function ProtectedLayout() {
       },
       { title: 'Закупівлі' },
       { title: 'Деталі замовлення' },
+    ];
+  } else if (location.pathname === '/inventory/warehouses') {
+    breadcrumbItems = [
+      {
+        title: (
+          <Link to="/home" style={breadcrumbLinkStyle}>
+            Головна
+          </Link>
+        ),
+      },
+      { title: 'Склад' },
+      { title: 'Каталог складів' },
     ];
   } else if (location.pathname === '/user') {
     breadcrumbItems = [

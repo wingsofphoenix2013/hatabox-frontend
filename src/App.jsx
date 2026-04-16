@@ -137,6 +137,11 @@ function App() {
               element={<ProductionComponentDetailPage />}
             />
 
+            <Route
+              path="/inventory/warehouses"
+              element={<div>Каталог складів</div>}
+            />
+
             <Route path="/user" element={<div>Користувач</div>} />
           </Route>
         </>

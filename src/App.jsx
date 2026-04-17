@@ -12,6 +12,7 @@ import LoginPage from './pages/LoginPage';
 import ProtectedLayout from './layouts/ProtectedLayout';
 
 import WarehouseRegisterPage from './pages/WarehouseRegisterPage';
+import WarehousePendingIntakePage from './pages/WarehousePendingIntakePage';
 
 import OrderDetailPage from './pages/OrderDetailPage';
 import OrdersRegisterPage from './pages/OrdersRegisterPage';
@@ -137,6 +138,11 @@ function App() {
             <Route
               path="/production/components/:id"
               element={<ProductionComponentDetailPage />}
+            />
+
+            <Route
+              path="/inventory/pending-intake"
+              element={<WarehousePendingIntakePage />}
             />
 
             <Route

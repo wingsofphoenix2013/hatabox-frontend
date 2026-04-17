@@ -61,7 +61,16 @@ function ProtectedLayout() {
       ],
     },
     '/inventory': {
-      pages: [],
+      '/inventory': {
+        pages: [
+          {
+            label: 'Первинне отримання',
+            path: '/inventory/pending-intake',
+          },
+        ],
+        actions: [],
+        dictionaries: [],
+      },
       actions: [],
       dictionaries: [
         {

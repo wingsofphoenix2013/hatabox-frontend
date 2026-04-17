@@ -99,10 +99,10 @@ function WarehousePlacesDrawer({ open, onClose, locations = [], onCreated }) {
           return;
         }
 
-        const placementDescription = item.placement_display || '';
+        const verboseLabel = item.display_name_verbose || '';
         const placementLabel =
-          placementDescription && placementDescription !== 'На локації'
-            ? `${placementKey} (${placementDescription})`
+          verboseLabel && verboseLabel !== 'На локації'
+            ? `${placementKey} (${verboseLabel})`
             : placementKey;
 
         uniqueMap.set(placementKey, {

@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   AppstoreAddOutlined,
-  EnvironmentOutlined,
   InfoCircleOutlined,
   PlusOutlined,
   SearchOutlined,
@@ -29,7 +28,7 @@ const MOCK_STORAGE_PLACES = [
     display_name: 'A01',
     place_type: 'container',
     location_code: 'A',
-    placement_label: 'На локації',
+    placement_path: [],
     name: 'Контейнер витратних матеріалів',
     comment:
       'Всередині зберігаються ходові витратні матеріали та дрібні господарські позиції.',
@@ -39,7 +38,7 @@ const MOCK_STORAGE_PLACES = [
     display_name: 'A01-01',
     place_type: 'rack',
     location_code: 'A',
-    placement_label: 'Контейнер 01',
+    placement_path: [{ type: 'container', code: '01' }],
     name: 'Стелаж дрібних комплектуючих',
     comment: '',
   },
@@ -48,7 +47,10 @@ const MOCK_STORAGE_PLACES = [
     display_name: 'A01-01-008',
     place_type: 'box',
     location_code: 'A',
-    placement_label: 'Контейнер 01, стелаж 01',
+    placement_path: [
+      { type: 'container', code: '01' },
+      { type: 'rack', code: '01' },
+    ],
     name: 'Кріплення та метизи',
     comment:
       'Потрібно перевірити актуальність підпису після останнього переміщення.',
@@ -58,7 +60,7 @@ const MOCK_STORAGE_PLACES = [
     display_name: 'A02',
     place_type: 'container',
     location_code: 'A',
-    placement_label: 'На локації',
+    placement_path: [],
     name: 'Контейнер кабельної продукції',
     comment: '',
   },
@@ -67,7 +69,7 @@ const MOCK_STORAGE_PLACES = [
     display_name: 'A-03',
     place_type: 'rack',
     location_code: 'A',
-    placement_label: 'На локації',
+    placement_path: [],
     name: 'Великий інструмент',
     comment: '',
   },
@@ -76,7 +78,7 @@ const MOCK_STORAGE_PLACES = [
     display_name: 'A-03-001',
     place_type: 'box',
     location_code: 'A',
-    placement_label: 'Стелаж 03',
+    placement_path: [{ type: 'rack', code: '03' }],
     name: 'Ручний інструмент',
     comment: 'Уточнити склад вмісту.',
   },
@@ -85,7 +87,7 @@ const MOCK_STORAGE_PLACES = [
     display_name: 'B01',
     place_type: 'container',
     location_code: 'B',
-    placement_label: 'На локації',
+    placement_path: [],
     name: 'Контейнер сезонного запасу',
     comment: '',
   },
@@ -94,7 +96,7 @@ const MOCK_STORAGE_PLACES = [
     display_name: 'B01-002',
     place_type: 'box',
     location_code: 'B',
-    placement_label: 'Контейнер 01',
+    placement_path: [{ type: 'container', code: '01' }],
     name: 'Кабельна продукція',
     comment: '',
   },
@@ -103,7 +105,7 @@ const MOCK_STORAGE_PLACES = [
     display_name: 'B-02',
     place_type: 'rack',
     location_code: 'B',
-    placement_label: 'На локації',
+    placement_path: [],
     name: 'Стелаж електрики',
     comment: '',
   },
@@ -128,34 +130,46 @@ const getPlaceTypeTagColor = (placeType) => {
   }
 };
 
-const getLocationTagStyle = (locationCode) => {
-  if (locationCode === 'A') {
-    return {
-      color: '#0958d9',
-      background: '#e6f4ff',
-      borderColor: '#91caff',
-      fontWeight: 600,
-      minWidth: 34,
-      textAlign: 'center',
-    };
+const getPlacementItemTagColor = (placeType) => {
+  switch (placeType) {
+    case 'container':
+      return 'processing';
+    case 'rack':
+      return 'success';
+    case 'box':
+      return 'warning';
+    default:
+      return 'default';
+  }
+};
+
+const buildPlacementLabel = (placementPath = []) => {
+  if (!Array.isArray(placementPath) || placementPath.length === 0) {
+    return null;
   }
 
-  if (locationCode === 'B') {
-    return {
-      color: '#389e0d',
-      background: '#f6ffed',
-      borderColor: '#b7eb8f',
-      fontWeight: 600,
-      minWidth: 34,
-      textAlign: 'center',
-    };
-  }
+  return placementPath.map((item, index) => {
+    const typeLabel = PLACE_TYPE_LABELS[item.type] || item.type || '—';
+    const codeLabel = item.code || '—';
 
-  return {
-    fontWeight: 600,
-    minWidth: 34,
-    textAlign: 'center',
-  };
+    return (
+      <span key={`${item.type}-${item.code}-${index}`}>
+        {index > 0 ? <span style={{ color: '#8c8c8c' }}>, </span> : null}
+        <span>{typeLabel} </span>
+        <Tag
+          color={getPlacementItemTagColor(item.type)}
+          style={{
+            marginInlineEnd: 0,
+            minWidth: 34,
+            textAlign: 'center',
+            fontWeight: 600,
+          }}
+        >
+          {codeLabel}
+        </Tag>
+      </span>
+    );
+  });
 };
 
 function WarehouseRegisterPage() {
@@ -199,20 +213,27 @@ function WarehouseRegisterPage() {
       title: 'Тип',
       dataIndex: 'place_type',
       key: 'place_type',
-      width: 140,
-      align: 'center',
+      width: 160,
       render: (value) => (
-        <Tag color={getPlaceTypeTagColor(value)}>
-          {PLACE_TYPE_LABELS[value] || value || '—'}
-        </Tag>
+        <div style={{ textAlign: 'left' }}>
+          <Tag color={getPlaceTypeTagColor(value)}>
+            {PLACE_TYPE_LABELS[value] || value || '—'}
+          </Tag>
+        </div>
       ),
     },
     {
       title: 'Розміщення',
-      dataIndex: 'placement_label',
-      key: 'placement_label',
-      width: 280,
-      render: (value) => value || '—',
+      dataIndex: 'placement_path',
+      key: 'placement_path',
+      width: 330,
+      render: (value) => {
+        if (!Array.isArray(value) || value.length === 0) {
+          return 'На локації';
+        }
+
+        return <span>{buildPlacementLabel(value)}</span>;
+      },
     },
     {
       title: 'Локація',
@@ -221,46 +242,70 @@ function WarehouseRegisterPage() {
       width: 110,
       align: 'center',
       render: (value) => (
-        <Tag style={getLocationTagStyle(value)}>{value || '—'}</Tag>
+        <Tag
+          style={{
+            color: '#595959',
+            background: '#fafafa',
+            borderColor: '#d9d9d9',
+            fontWeight: 600,
+            minWidth: 34,
+            textAlign: 'center',
+          }}
+        >
+          {value || '—'}
+        </Tag>
       ),
     },
     {
       title: 'Назва',
       dataIndex: 'name',
       key: 'name',
-      width: 320,
-      render: (value) => value || '—',
-    },
-    {
-      title: '',
-      key: 'comment',
-      width: 56,
-      align: 'center',
-      render: (_, record) => {
-        if (!record.comment) {
-          return null;
-        }
-
-        return (
-          <Tooltip
-            title={
-              <div style={{ maxWidth: 280, whiteSpace: 'pre-wrap' }}>
-                <strong>Коментар:</strong>
-                <br />
-                {record.comment}
-              </div>
-            }
+      width: 340,
+      render: (value, record) => (
+        <Flex align="center" gap={8} style={{ minWidth: 0 }}>
+          <div
+            style={{
+              width: 16,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
           >
-            <InfoCircleOutlined
-              style={{
-                color: '#faad14',
-                fontSize: 15,
-                cursor: 'pointer',
-              }}
-            />
-          </Tooltip>
-        );
-      },
+            {record.comment ? (
+              <Tooltip
+                title={
+                  <div style={{ maxWidth: 280, whiteSpace: 'pre-wrap' }}>
+                    <strong>Коментар:</strong>
+                    <br />
+                    {record.comment}
+                  </div>
+                }
+              >
+                <InfoCircleOutlined
+                  style={{
+                    color: '#faad14',
+                    fontSize: 15,
+                    cursor: 'pointer',
+                  }}
+                />
+              </Tooltip>
+            ) : null}
+          </div>
+
+          <div
+            style={{
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            title={value || '—'}
+          >
+            {value || '—'}
+          </div>
+        </Flex>
+      ),
     },
     {
       title: '',
@@ -326,6 +371,23 @@ function WarehouseRegisterPage() {
 
             <Divider type="vertical" style={{ height: 28 }} />
 
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="Тип"
+              style={{ minWidth: 220 }}
+              value={selectedPlaceTypes}
+              onChange={setSelectedPlaceTypes}
+              options={[
+                { value: 'container', label: 'Контейнер' },
+                { value: 'rack', label: 'Стелаж' },
+                { value: 'box', label: 'Бокс' },
+              ]}
+              optionFilterProp="label"
+            />
+
+            <Divider type="vertical" style={{ height: 28 }} />
+
             <Input
               placeholder="Пошук по маркуванню або назві"
               allowClear
@@ -347,23 +409,6 @@ function WarehouseRegisterPage() {
               options={[
                 { value: 'A', label: 'Локація A' },
                 { value: 'B', label: 'Локація B' },
-              ]}
-              optionFilterProp="label"
-            />
-
-            <Divider type="vertical" style={{ height: 28 }} />
-
-            <Select
-              mode="multiple"
-              allowClear
-              placeholder="Тип"
-              style={{ minWidth: 220 }}
-              value={selectedPlaceTypes}
-              onChange={setSelectedPlaceTypes}
-              options={[
-                { value: 'container', label: 'Контейнер' },
-                { value: 'rack', label: 'Стелаж' },
-                { value: 'box', label: 'Бокс' },
               ]}
               optionFilterProp="label"
             />
@@ -400,18 +445,8 @@ function WarehouseRegisterPage() {
             locale={{
               emptyText: 'Немає місць зберігання для відображення.',
             }}
-            scroll={{ x: 1200 }}
+            scroll={{ x: 1280 }}
           />
-        </Card>
-
-        <Card size="small">
-          <Flex align="center" gap={8}>
-            <EnvironmentOutlined style={{ color: '#8c8c8c' }} />
-            <Text type="secondary">
-              Це тимчасовий мокап реєстру. Дані зараз локальні, без інтеграції з
-              API.
-            </Text>
-          </Flex>
         </Card>
       </Flex>
     </div>

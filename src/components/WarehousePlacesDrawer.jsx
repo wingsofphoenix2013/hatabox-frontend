@@ -1,305 +1,348 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  AppstoreAddOutlined,
+  CheckCircleFilled,
+  CloseCircleFilled,
+  InfoCircleOutlined,
+  PlusOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
+import {
   Alert,
   Button,
   Card,
-  Drawer,
+  Divider,
+  Dropdown,
   Flex,
-  Form,
   Input,
   Select,
+  Table,
+  Tooltip,
   Typography,
-  message,
 } from 'antd';
+import { Link } from 'react-router-dom';
 import api from '../api/client';
-import { getApiErrorMessage } from '../utils/apiError';
+import { formatQuantity } from '../utils/formatNumber';
+import { formatDateDisplay } from '../utils/orderFormatters';
 
-const { Text } = Typography;
-const { TextArea } = Input;
+const { Title, Text } = Typography;
 
-const compactLabelStyle = {
-  display: 'block',
-  marginBottom: 6,
-  fontSize: 12,
-  lineHeight: 1.2,
-};
+function WarehousePendingIntakePage() {
+  const [items, setItems] = useState([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
-function WarehousePlacesDrawer({ open, onClose, locations = [], onCreated }) {
-  const [form] = Form.useForm();
+  const [searchText, setSearchText] = useState('');
+  const [selectedConversionStatuses, setSelectedConversionStatuses] = useState(
+    [],
+  );
 
-  const [saving, setSaving] = useState(false);
-  const [loadingPlacementOptions, setLoadingPlacementOptions] = useState(false);
-
-  const [selectedLocationId, setSelectedLocationId] = useState(null);
-  const [selectedPlacementValue, setSelectedPlacementValue] = useState(null);
-
-  const [placementOptions, setPlacementOptions] = useState([
-    { value: 'location-root', label: 'На локації', parentId: null },
-  ]);
-
-  const locationOptions = useMemo(() => {
-    return locations.map((item) => ({
-      value: item.id,
-      label: `${item.code || '—'} — ${item.name || '—'}`,
-    }));
-  }, [locations]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!open) {
-      form.resetFields();
-      setSaving(false);
-      setLoadingPlacementOptions(false);
-      setSelectedLocationId(null);
-      setSelectedPlacementValue(null);
-      setPlacementOptions([
-        { value: 'location-root', label: 'На локації', parentId: null },
-      ]);
-      return;
-    }
+    loadPendingIntakeItems();
+  }, []);
 
-    form.resetFields();
-    setSelectedLocationId(null);
-    setSelectedPlacementValue(null);
-    setPlacementOptions([
-      { value: 'location-root', label: 'На локації', parentId: null },
-    ]);
-  }, [open, form]);
-
-  const loadPlacementOptions = async (locationId) => {
-    if (!locationId) {
-      setPlacementOptions([
-        { value: 'location-root', label: 'На локації', parentId: null },
-      ]);
-      return;
-    }
-
+  const loadPendingIntakeItems = async () => {
     try {
-      setLoadingPlacementOptions(true);
+      setLoading(true);
+      setError('');
 
-      const response = await api.get(
-        `warehouse-storage-places/?location=${locationId}`,
+      const response = await api.get('warehouse-pending-intake-items/');
+
+      setItems(
+        Array.isArray(response.data?.results) ? response.data.results : [],
       );
-
-      const results = Array.isArray(response.data?.results)
-        ? response.data.results
-        : [];
-
-      const uniqueMap = new Map();
-      uniqueMap.set('На локації', {
-        value: 'location-root',
-        label: 'На локації',
-        parentId: null,
-      });
-
-      results.forEach((item) => {
-        const placementKey = item.display_name || '';
-        const parentId = item.id;
-
-        if (!placementKey || uniqueMap.has(placementKey)) {
-          return;
-        }
-
-        const verboseLabel = item.display_name_verbose || '';
-        const placementLabel =
-          verboseLabel && verboseLabel !== 'На локації'
-            ? `${placementKey} (${verboseLabel})`
-            : placementKey;
-
-        uniqueMap.set(placementKey, {
-          value: `parent-${parentId}`,
-          label: placementLabel,
-          parentId,
-        });
-      });
-
-      setPlacementOptions(Array.from(uniqueMap.values()));
+      setSelectedRowKeys([]);
     } catch (err) {
-      console.error('Failed to load placement options:', err);
-      setPlacementOptions([
-        { value: 'location-root', label: 'На локації', parentId: null },
-      ]);
-      message.error('Не вдалося завантажити варіанти розміщення.');
+      console.error('Failed to load warehouse pending intake items:', err);
+      setError('Не вдалося завантажити список первинного отримання.');
+      setItems([]);
+      setSelectedRowKeys([]);
     } finally {
-      setLoadingPlacementOptions(false);
+      setLoading(false);
     }
   };
 
-  const handleCloseDrawer = () => {
-    form.resetFields();
-    setSelectedLocationId(null);
-    setSelectedPlacementValue(null);
-    setPlacementOptions([
-      { value: 'location-root', label: 'На локації', parentId: null },
-    ]);
-    onClose();
-  };
+  const filteredItems = useMemo(() => {
+    const normalizedSearch = searchText.trim().toLowerCase();
 
-  const handleLocationChange = async (value) => {
-    setSelectedLocationId(value || null);
-    setSelectedPlacementValue('location-root');
+    return items.filter((item) => {
+      const matchesSearch =
+        !normalizedSearch ||
+        (item.vendor_name || '').toLowerCase().includes(normalizedSearch) ||
+        (item.order_no || '').toLowerCase().includes(normalizedSearch) ||
+        (item.vendor_item_name || '')
+          .toLowerCase()
+          .includes(normalizedSearch) ||
+        (item.inventory_item_name || '')
+          .toLowerCase()
+          .includes(normalizedSearch);
 
-    form.setFieldValue('location', value);
-    form.setFieldValue('placement', 'location-root');
+      const conversionKey = item.requires_unit_conversion
+        ? 'requires_conversion'
+        : 'ready';
 
-    await loadPlacementOptions(value);
-  };
+      const matchesConversion =
+        selectedConversionStatuses.length === 0 ||
+        selectedConversionStatuses.includes(conversionKey);
 
-  const handleSubmit = async (values) => {
-    try {
-      setSaving(true);
+      return matchesSearch && matchesConversion;
+    });
+  }, [items, searchText, selectedConversionStatuses]);
 
-      const selectedPlacement =
-        placementOptions.find((item) => item.value === values.placement) ||
-        null;
+  const columns = [
+    {
+      title: 'Постачальник / Замовлення',
+      key: 'vendor_order',
+      width: 320,
+      render: (_, record) => (
+        <Flex vertical gap={2} style={{ minWidth: 0 }}>
+          <Text strong style={{ lineHeight: 1.3 }}>
+            {record.vendor_name || '—'}
+          </Text>
 
-      const payload = {
-        location: values.location,
-        parent: selectedPlacement ? selectedPlacement.parentId : null,
-        place_type: values.place_type,
-        name: values.name || '',
-        comment: values.comment || '',
-      };
+          <Flex align="center" gap={6} style={{ minWidth: 0 }}>
+            <Text
+              type="secondary"
+              style={{
+                fontSize: 12,
+                lineHeight: 1.2,
+                minWidth: 0,
+              }}
+            >
+              {record.order_no || '—'} ·{' '}
+              {record.order_created_at
+                ? formatDateDisplay(record.order_created_at)
+                : '—'}
+            </Text>
 
-      await api.post('warehouse-storage-places/', payload);
-
-      message.success('Місце зберігання створено.');
-      handleCloseDrawer();
-
-      if (onCreated) {
-        await onCreated();
-      }
-    } catch (err) {
-      console.error('Failed to create warehouse storage place:', err);
-
-      const responseData = err?.response?.data;
-      const backendMessage = getApiErrorMessage(responseData, [
-        'location',
-        'parent',
-        'place_type',
-        'name',
-        'comment',
-      ]);
-
-      message.error(backendMessage || 'Не вдалося створити місце зберігання.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Drawer
-      title="Створення місця зберігання"
-      placement="right"
-      size="large"
-      open={open}
-      onClose={handleCloseDrawer}
-    >
-      <Form form={form} layout="vertical" onFinish={handleSubmit}>
-        <Flex vertical gap={16}>
-          <Alert
-            type="info"
-            showIcon
-            message="Спочатку оберіть локацію та розміщення"
-            description="Після цього вкажіть тип місця зберігання, назву та коментар."
-          />
-
-          <Card title="Шаг 1. Оберіть локацію">
-            <Flex vertical gap={14}>
-              <div>
-                <Text style={compactLabelStyle}>Локація</Text>
-                <Form.Item
-                  name="location"
-                  style={{ marginBottom: 0 }}
-                  rules={[{ required: true, message: 'Оберіть локацію' }]}
+            {record.order_id ? (
+              <Tooltip title="Відкрити замовлення">
+                <Link
+                  to={`/orders/${record.order_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  state={{ orderLabel: record.order_no }}
                 >
-                  <Select
-                    placeholder="Оберіть локацію"
-                    options={locationOptions}
-                    onChange={handleLocationChange}
+                  <InfoCircleOutlined
+                    style={{
+                      color: '#1677ff',
+                      fontSize: 13,
+                      cursor: 'pointer',
+                    }}
                   />
-                </Form.Item>
-              </div>
-
-              <div>
-                <Text style={compactLabelStyle}>Розміщення</Text>
-                <Form.Item
-                  name="placement"
-                  style={{ marginBottom: 0 }}
-                  rules={[{ required: true, message: 'Оберіть розміщення' }]}
-                >
-                  <Select
-                    placeholder={
-                      selectedLocationId
-                        ? 'Оберіть розміщення'
-                        : 'Спочатку оберіть локацію'
-                    }
-                    options={placementOptions}
-                    value={selectedPlacementValue}
-                    onChange={setSelectedPlacementValue}
-                    loading={loadingPlacementOptions}
-                    disabled={!selectedLocationId}
-                    showSearch
-                    optionFilterProp="label"
-                  />
-                </Form.Item>
-              </div>
-            </Flex>
-          </Card>
-
-          <Card title="Шаг 2. Оберіть тип, додайте назву та опис">
-            <Flex vertical gap={14}>
-              <div>
-                <Text style={compactLabelStyle}>Тип місця зберігання</Text>
-                <Form.Item
-                  name="place_type"
-                  style={{ marginBottom: 0 }}
-                  rules={[
-                    {
-                      required: true,
-                      message: 'Оберіть тип місця зберігання',
-                    },
-                  ]}
-                >
-                  <Select
-                    placeholder="Оберіть тип"
-                    options={[
-                      { value: 'container', label: 'Контейнер' },
-                      { value: 'rack', label: 'Стелаж' },
-                      { value: 'box', label: 'Бокс' },
-                    ]}
-                  />
-                </Form.Item>
-              </div>
-
-              <div>
-                <Text style={compactLabelStyle}>Назва</Text>
-                <Form.Item name="name" style={{ marginBottom: 0 }}>
-                  <Input placeholder="Назва місця зберігання" />
-                </Form.Item>
-              </div>
-
-              <div>
-                <Text style={compactLabelStyle}>Коментар</Text>
-                <Form.Item name="comment" style={{ marginBottom: 0 }}>
-                  <TextArea
-                    rows={4}
-                    placeholder="Коментар до місця зберігання"
-                  />
-                </Form.Item>
-              </div>
-            </Flex>
-          </Card>
-
-          <Flex justify="flex-end" gap={8}>
-            <Button onClick={handleCloseDrawer}>Скасувати</Button>
-            <Button type="primary" htmlType="submit" loading={saving}>
-              Зберегти
-            </Button>
+                </Link>
+              </Tooltip>
+            ) : null}
           </Flex>
         </Flex>
-      </Form>
-    </Drawer>
+      ),
+    },
+    {
+      title: 'Номенклатура',
+      key: 'item',
+      width: 430,
+      render: (_, record) => (
+        <Flex vertical gap={2} style={{ minWidth: 0 }}>
+          <div
+            style={{
+              fontWeight: 600,
+              lineHeight: 1.3,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={record.vendor_item_name || '—'}
+          >
+            {record.vendor_item_name || '—'}
+          </div>
+
+          <Text
+            type="secondary"
+            style={{
+              fontSize: 12,
+              lineHeight: 1.2,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={record.inventory_item_name || '—'}
+          >
+            {record.inventory_item_name || '—'}
+          </Text>
+        </Flex>
+      ),
+    },
+    {
+      title: 'Отримано',
+      key: 'received_quantity',
+      width: 150,
+      align: 'center',
+      render: (_, record) => (
+        <Text strong>
+          {formatQuantity(record.received_quantity)}{' '}
+          {record.inventory_item_unit_symbol || ''}
+        </Text>
+      ),
+    },
+    {
+      title: 'Конвертація',
+      key: 'conversion',
+      width: 120,
+      align: 'center',
+      render: (_, record) =>
+        record.requires_unit_conversion ? (
+          <Tooltip title="Потрібна конвертація одиниць">
+            <CloseCircleFilled
+              style={{
+                color: '#ff4d4f',
+                fontSize: 18,
+              }}
+            />
+          </Tooltip>
+        ) : (
+          <Tooltip title="Готово до приймання">
+            <CheckCircleFilled
+              style={{
+                color: '#52c41a',
+                fontSize: 18,
+              }}
+            />
+          </Tooltip>
+        ),
+    },
+    {
+      title: '',
+      key: 'action',
+      width: 56,
+      align: 'center',
+      render: () => {
+        const items = [
+          {
+            key: 'open',
+            label: <div style={{ padding: '4px 0' }}>Переглянути позицію</div>,
+          },
+        ];
+
+        return (
+          <Dropdown menu={{ items }} trigger={['click']}>
+            <AppstoreAddOutlined
+              style={{
+                fontSize: 17,
+                color: '#8c8c8c',
+                cursor: 'pointer',
+              }}
+            />
+          </Dropdown>
+        );
+      },
+    },
+  ];
+
+  return (
+    <div style={{ padding: 20 }}>
+      <Flex vertical gap={16}>
+        <Flex justify="space-between" align="center" gap={16} wrap>
+          <Flex vertical gap={4}>
+            <Title level={2} style={{ margin: 0 }}>
+              Первинне отримання
+            </Title>
+
+            <Text type="secondary">
+              Позиції, що очікують оформлення первинного отримання на склад.
+            </Text>
+          </Flex>
+
+          <Button type="primary" size="large" icon={<PlusOutlined />}>
+            Оформити первинне отримання
+          </Button>
+        </Flex>
+
+        <Card size="small">
+          <Flex align="center" wrap gap={16}>
+            <Text>
+              Обрано: <strong>{selectedRowKeys.length}</strong>
+            </Text>
+
+            <Select
+              placeholder="Дії"
+              style={{ width: 180 }}
+              disabled={selectedRowKeys.length === 0}
+              options={[{ value: 'placeholder', label: 'Дії' }]}
+            />
+
+            <Divider type="vertical" style={{ height: 28 }} />
+
+            <Input
+              placeholder="Пошук по постачальнику або номенклатурі"
+              allowClear
+              prefix={<SearchOutlined />}
+              style={{ width: 300 }}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+
+            <Divider type="vertical" style={{ height: 28 }} />
+
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="Конвертація"
+              style={{ minWidth: 220 }}
+              value={selectedConversionStatuses}
+              onChange={setSelectedConversionStatuses}
+              options={[
+                { value: 'ready', label: 'Готові до приймання' },
+                {
+                  value: 'requires_conversion',
+                  label: 'Потрібна конвертація',
+                },
+              ]}
+              optionFilterProp="label"
+            />
+          </Flex>
+        </Card>
+
+        {error && <Alert type="error" description={error} showIcon />}
+
+        <Card styles={{ body: { padding: 0 } }}>
+          <Table
+            rowKey="id"
+            loading={loading}
+            columns={columns}
+            dataSource={filteredItems}
+            size="small"
+            rowSelection={{
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+            }}
+            pagination={{
+              pageSize: 50,
+              showSizeChanger: false,
+              showTotal: (totalValue, range) => (
+                <span>
+                  Показано{' '}
+                  <span style={{ color: '#1677ff', fontWeight: 600 }}>
+                    {range[0]}–{range[1]}
+                  </span>{' '}
+                  з{' '}
+                  <span style={{ color: '#1677ff', fontWeight: 600 }}>
+                    {totalValue}
+                  </span>{' '}
+                  позицій
+                </span>
+              ),
+            }}
+            locale={{
+              emptyText: 'Немає позицій для відображення.',
+            }}
+            scroll={{ x: 1100 }}
+          />
+        </Card>
+      </Flex>
+    </div>
   );
 }
 
-export default WarehousePlacesDrawer;
+export default WarehousePendingIntakePage;

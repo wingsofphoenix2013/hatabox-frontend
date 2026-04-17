@@ -11,6 +11,8 @@ import api, { setCsrfToken } from './api/client';
 import LoginPage from './pages/LoginPage';
 import ProtectedLayout from './layouts/ProtectedLayout';
 
+import WarehouseRegisterPage from './pages/WarehouseRegisterPage';
+
 import OrderDetailPage from './pages/OrderDetailPage';
 import OrdersRegisterPage from './pages/OrdersRegisterPage';
 import OrderCreatePage from './pages/OrderCreatePage';
@@ -139,7 +141,7 @@ function App() {
 
             <Route
               path="/inventory/warehouses"
-              element={<div>Каталог складів</div>}
+              element={<WarehouseRegisterPage />}
             />
 
             <Route path="/user" element={<div>Користувач</div>} />

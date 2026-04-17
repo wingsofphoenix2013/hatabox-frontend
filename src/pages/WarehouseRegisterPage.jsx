@@ -190,7 +190,38 @@ function WarehouseRegisterPage() {
       dataIndex: 'placement_display',
       key: 'placement_display',
       width: 330,
-      render: (value) => value || '—',
+      render: (value) => {
+        if (!value || value === 'На локації') {
+          return value || '—';
+        }
+
+        const parts = value.split(',').map((part) => part.trim());
+
+        return (
+          <Flex wrap gap={6}>
+            {parts.map((part, index) => {
+              const tokens = part.split(' ');
+              const code = tokens.pop();
+              const label = tokens.join(' ');
+
+              return (
+                <Flex key={index} align="center" gap={4}>
+                  <span>{label}</span>
+                  <Tag
+                    style={{
+                      marginInlineEnd: 0,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {code}
+                  </Tag>
+                  {index < parts.length - 1 && <span>,</span>}
+                </Flex>
+              );
+            })}
+          </Flex>
+        );
+      },
     },
     {
       title: 'Локація',

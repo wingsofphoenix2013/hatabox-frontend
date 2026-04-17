@@ -37,6 +37,16 @@ const getPlaceTypeTagColor = (placeType) => {
   }
 };
 
+const getPlacementTagColor = (label) => {
+  const normalized = label.toLowerCase();
+
+  if (normalized.includes('контейнер')) return 'processing'; // синий
+  if (normalized.includes('стелаж')) return 'success'; // зелёный
+  if (normalized.includes('бокс')) return 'warning'; // оранжевый
+
+  return 'default';
+};
+
 function WarehouseRegisterPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -208,6 +218,7 @@ function WarehouseRegisterPage() {
                 <Flex key={index} align="center" gap={4}>
                   <span>{label}</span>
                   <Tag
+                    color={getPlacementTagColor(label)}
                     style={{
                       marginInlineEnd: 0,
                       fontWeight: 600,

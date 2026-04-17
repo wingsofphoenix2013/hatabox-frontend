@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AppstoreAddOutlined,
   InfoCircleOutlined,
@@ -6,6 +6,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import {
+  Alert,
   Button,
   Card,
   Divider,
@@ -18,104 +19,10 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
+import api from '../api/client';
 
 const { Title, Text } = Typography;
-
-const MOCK_STORAGE_PLACES = [
-  {
-    id: 1,
-    display_name: 'A01',
-    place_type: 'container',
-    location_code: 'A',
-    placement_path: [],
-    name: 'Контейнер витратних матеріалів',
-    comment:
-      'Всередині зберігаються ходові витратні матеріали та дрібні господарські позиції.',
-  },
-  {
-    id: 2,
-    display_name: 'A01-01',
-    place_type: 'rack',
-    location_code: 'A',
-    placement_path: [{ type: 'container', code: '01' }],
-    name: 'Стелаж дрібних комплектуючих',
-    comment: '',
-  },
-  {
-    id: 3,
-    display_name: 'A01-01-008',
-    place_type: 'box',
-    location_code: 'A',
-    placement_path: [
-      { type: 'container', code: '01' },
-      { type: 'rack', code: '01' },
-    ],
-    name: 'Кріплення та метизи',
-    comment:
-      'Потрібно перевірити актуальність підпису після останнього переміщення.',
-  },
-  {
-    id: 4,
-    display_name: 'A02',
-    place_type: 'container',
-    location_code: 'A',
-    placement_path: [],
-    name: 'Контейнер кабельної продукції',
-    comment: '',
-  },
-  {
-    id: 5,
-    display_name: 'A-03',
-    place_type: 'rack',
-    location_code: 'A',
-    placement_path: [],
-    name: 'Великий інструмент',
-    comment: '',
-  },
-  {
-    id: 6,
-    display_name: 'A-03-001',
-    place_type: 'box',
-    location_code: 'A',
-    placement_path: [{ type: 'rack', code: '03' }],
-    name: 'Ручний інструмент',
-    comment: 'Уточнити склад вмісту.',
-  },
-  {
-    id: 7,
-    display_name: 'B01',
-    place_type: 'container',
-    location_code: 'B',
-    placement_path: [],
-    name: 'Контейнер сезонного запасу',
-    comment: '',
-  },
-  {
-    id: 8,
-    display_name: 'B01-002',
-    place_type: 'box',
-    location_code: 'B',
-    placement_path: [{ type: 'container', code: '01' }],
-    name: 'Кабельна продукція',
-    comment: '',
-  },
-  {
-    id: 9,
-    display_name: 'B-02',
-    place_type: 'rack',
-    location_code: 'B',
-    placement_path: [],
-    name: 'Стелаж електрики',
-    comment: '',
-  },
-];
-
-const PLACE_TYPE_LABELS = {
-  container: 'Контейнер',
-  rack: 'Стелаж',
-  box: 'Бокс',
-};
 
 const getPlaceTypeTagColor = (placeType) => {
   switch (placeType) {
@@ -130,74 +37,130 @@ const getPlaceTypeTagColor = (placeType) => {
   }
 };
 
-const getPlacementItemTagColor = (placeType) => {
-  switch (placeType) {
-    case 'container':
-      return 'processing';
-    case 'rack':
-      return 'success';
-    case 'box':
-      return 'warning';
-    default:
-      return 'default';
-  }
-};
-
-const buildPlacementLabel = (placementPath = []) => {
-  if (!Array.isArray(placementPath) || placementPath.length === 0) {
-    return null;
-  }
-
-  return placementPath.map((item, index) => {
-    const typeLabel = PLACE_TYPE_LABELS[item.type] || item.type || '—';
-    const codeLabel = item.code || '—';
-
-    return (
-      <span key={`${item.type}-${item.code}-${index}`}>
-        {index > 0 ? <span style={{ color: '#8c8c8c' }}>, </span> : null}
-        <span>{typeLabel} </span>
-        <Tag
-          color={getPlacementItemTagColor(item.type)}
-          style={{
-            marginInlineEnd: 0,
-            minWidth: 34,
-            textAlign: 'center',
-            fontWeight: 600,
-          }}
-        >
-          {codeLabel}
-        </Tag>
-      </span>
-    );
-  });
-};
-
 function WarehouseRegisterPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [items, setItems] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [searchText, setSearchText] = useState('');
-  const [selectedLocations, setSelectedLocations] = useState([]);
-  const [selectedPlaceTypes, setSelectedPlaceTypes] = useState([]);
 
-  const filteredItems = useMemo(() => {
-    const normalizedSearch = searchText.trim().toLowerCase();
+  const [searchText, setSearchText] = useState(
+    searchParams.get('search') || '',
+  );
+  const [selectedPlaceTypes, setSelectedPlaceTypes] = useState(
+    searchParams.getAll('place_type'),
+  );
+  const [selectedLocationIds, setSelectedLocationIds] = useState(
+    searchParams.getAll('location'),
+  );
+  const [currentPage, setCurrentPage] = useState(
+    Number(searchParams.get('page')) || 1,
+  );
 
-    return MOCK_STORAGE_PLACES.filter((item) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        item.display_name.toLowerCase().includes(normalizedSearch) ||
-        (item.name || '').toLowerCase().includes(normalizedSearch);
+  const [loading, setLoading] = useState(true);
+  const [locationsLoading, setLocationsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [total, setTotal] = useState(0);
 
-      const matchesLocation =
-        selectedLocations.length === 0 ||
-        selectedLocations.includes(item.location_code);
+  useEffect(() => {
+    loadLocations();
+  }, []);
 
-      const matchesPlaceType =
-        selectedPlaceTypes.length === 0 ||
-        selectedPlaceTypes.includes(item.place_type);
+  useEffect(() => {
+    loadStoragePlaces(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, searchText, selectedPlaceTypes, selectedLocationIds]);
 
-      return matchesSearch && matchesLocation && matchesPlaceType;
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (searchText) {
+      params.set('search', searchText);
+    }
+
+    selectedPlaceTypes.forEach((placeType) => {
+      params.append('place_type', placeType);
     });
-  }, [searchText, selectedLocations, selectedPlaceTypes]);
+
+    selectedLocationIds.forEach((locationId) => {
+      params.append('location', locationId);
+    });
+
+    if (currentPage > 1) {
+      params.set('page', String(currentPage));
+    }
+
+    setSearchParams(params);
+  }, [
+    searchText,
+    selectedPlaceTypes,
+    selectedLocationIds,
+    currentPage,
+    setSearchParams,
+  ]);
+
+  const loadLocations = async () => {
+    try {
+      setLocationsLoading(true);
+
+      const response = await api.get('warehouse-locations/');
+      const results = Array.isArray(response.data.results)
+        ? response.data.results
+        : [];
+
+      setLocations(results);
+    } catch (err) {
+      console.error('Failed to load warehouse locations:', err);
+      setLocations([]);
+    } finally {
+      setLocationsLoading(false);
+    }
+  };
+
+  const loadStoragePlaces = async (page) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const params = new URLSearchParams();
+      params.append('page', String(page));
+
+      if (searchText) {
+        params.append('search', searchText);
+      }
+
+      selectedPlaceTypes.forEach((placeType) => {
+        params.append('place_type', placeType);
+      });
+
+      selectedLocationIds.forEach((locationId) => {
+        params.append('location', locationId);
+      });
+
+      const response = await api.get(
+        `warehouse-storage-places/?${params.toString()}`,
+      );
+
+      setItems(
+        Array.isArray(response.data.results) ? response.data.results : [],
+      );
+      setTotal(response.data.count || 0);
+      setSelectedRowKeys([]);
+    } catch (err) {
+      console.error('Failed to load warehouse storage places:', err);
+      setError('Не вдалося завантажити каталог складів.');
+      setItems([]);
+      setTotal(0);
+      setSelectedRowKeys([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const locationOptions = locations.map((item) => ({
+    value: String(item.id),
+    label: `${item.code || '—'} — ${item.name || '—'}`,
+  }));
 
   const columns = [
     {
@@ -211,29 +174,23 @@ function WarehouseRegisterPage() {
     },
     {
       title: 'Тип',
-      dataIndex: 'place_type',
-      key: 'place_type',
+      dataIndex: 'place_type_name',
+      key: 'place_type_name',
       width: 160,
-      render: (value) => (
+      render: (value, record) => (
         <div style={{ textAlign: 'left' }}>
-          <Tag color={getPlaceTypeTagColor(value)}>
-            {PLACE_TYPE_LABELS[value] || value || '—'}
+          <Tag color={getPlaceTypeTagColor(record.place_type)}>
+            {value || '—'}
           </Tag>
         </div>
       ),
     },
     {
       title: 'Розміщення',
-      dataIndex: 'placement_path',
-      key: 'placement_path',
+      dataIndex: 'placement_display',
+      key: 'placement_display',
       width: 330,
-      render: (value) => {
-        if (!Array.isArray(value) || value.length === 0) {
-          return 'На локації';
-        }
-
-        return <span>{buildPlacementLabel(value)}</span>;
-      },
+      render: (value) => value || '—',
     },
     {
       title: 'Локація',
@@ -312,7 +269,7 @@ function WarehouseRegisterPage() {
       key: 'action',
       width: 56,
       align: 'center',
-      render: (_, record) => {
+      render: () => {
         const items = [
           {
             key: 'open',
@@ -377,7 +334,10 @@ function WarehouseRegisterPage() {
               placeholder="Тип"
               style={{ minWidth: 220 }}
               value={selectedPlaceTypes}
-              onChange={setSelectedPlaceTypes}
+              onChange={(values) => {
+                setSelectedPlaceTypes(values);
+                setCurrentPage(1);
+              }}
               options={[
                 { value: 'container', label: 'Контейнер' },
                 { value: 'rack', label: 'Стелаж' },
@@ -394,7 +354,10 @@ function WarehouseRegisterPage() {
               prefix={<SearchOutlined />}
               style={{ width: 280 }}
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setCurrentPage(1);
+              }}
             />
 
             <Divider type="vertical" style={{ height: 28 }} />
@@ -403,32 +366,39 @@ function WarehouseRegisterPage() {
               mode="multiple"
               allowClear
               placeholder="Локація"
-              style={{ minWidth: 180 }}
-              value={selectedLocations}
-              onChange={setSelectedLocations}
-              options={[
-                { value: 'A', label: 'Локація A' },
-                { value: 'B', label: 'Локація B' },
-              ]}
+              style={{ minWidth: 220 }}
+              value={selectedLocationIds}
+              onChange={(values) => {
+                setSelectedLocationIds(values);
+                setCurrentPage(1);
+              }}
+              options={locationOptions}
               optionFilterProp="label"
+              loading={locationsLoading}
             />
           </Flex>
         </Card>
 
+        {error && <Alert type="error" description={error} showIcon />}
+
         <Card styles={{ body: { padding: 0 } }}>
           <Table
             rowKey="id"
+            loading={loading}
             columns={columns}
-            dataSource={filteredItems}
+            dataSource={items}
             size="small"
             rowSelection={{
               selectedRowKeys,
               onChange: setSelectedRowKeys,
             }}
             pagination={{
+              current: currentPage,
               pageSize: 50,
+              total,
               showSizeChanger: false,
-              showTotal: (total, range) => (
+              onChange: (page) => setCurrentPage(page),
+              showTotal: (totalValue, range) => (
                 <span>
                   Показано{' '}
                   <span style={{ color: '#1677ff', fontWeight: 600 }}>
@@ -436,7 +406,7 @@ function WarehouseRegisterPage() {
                   </span>{' '}
                   з{' '}
                   <span style={{ color: '#1677ff', fontWeight: 600 }}>
-                    {total}
+                    {totalValue}
                   </span>{' '}
                   місць зберігання
                 </span>

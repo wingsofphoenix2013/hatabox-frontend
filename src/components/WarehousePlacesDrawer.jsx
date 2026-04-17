@@ -92,14 +92,20 @@ function WarehousePlacesDrawer({ open, onClose, locations = [], onCreated }) {
       });
 
       results.forEach((item) => {
-        const placementLabel = item.display_name || '';
+        const placementKey = item.display_name || '';
         const parentId = item.id;
 
-        if (!placementLabel || uniqueMap.has(placementLabel)) {
+        if (!placementKey || uniqueMap.has(placementKey)) {
           return;
         }
 
-        uniqueMap.set(placementLabel, {
+        const placementDescription = item.placement_display || '';
+        const placementLabel =
+          placementDescription && placementDescription !== 'На локації'
+            ? `${placementKey} (${placementDescription})`
+            : placementKey;
+
+        uniqueMap.set(placementKey, {
           value: `parent-${parentId}`,
           label: placementLabel,
           parentId,

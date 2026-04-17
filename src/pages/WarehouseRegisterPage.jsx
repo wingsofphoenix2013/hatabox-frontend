@@ -21,6 +21,7 @@ import {
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import WarehousePlacesDrawer from '../components/WarehousePlacesDrawer';
 
 const { Title, Text } = Typography;
 
@@ -71,6 +72,8 @@ function WarehouseRegisterPage() {
   const [locationsLoading, setLocationsLoading] = useState(true);
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
+
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   useEffect(() => {
     loadLocations();
@@ -171,6 +174,14 @@ function WarehouseRegisterPage() {
     value: String(item.id),
     label: `${item.code || '—'} — ${item.name || '—'}`,
   }));
+
+  const openCreateDrawer = () => {
+    setIsCreateDrawerOpen(true);
+  };
+
+  const closeCreateDrawer = () => {
+    setIsCreateDrawerOpen(false);
+  };
 
   const columns = [
     {
@@ -350,7 +361,12 @@ function WarehouseRegisterPage() {
             </Text>
           </Flex>
 
-          <Button type="primary" size="large" icon={<PlusOutlined />}>
+          <Button
+            type="primary"
+            size="large"
+            icon={<PlusOutlined />}
+            onClick={openCreateDrawer}
+          >
             Додати місце зберігання
           </Button>
         </Flex>
@@ -461,6 +477,13 @@ function WarehouseRegisterPage() {
           />
         </Card>
       </Flex>
+
+      <WarehousePlacesDrawer
+        open={isCreateDrawerOpen}
+        onClose={closeCreateDrawer}
+        locations={locations}
+        onCreated={() => loadStoragePlaces(currentPage)}
+      />
     </div>
   );
 }

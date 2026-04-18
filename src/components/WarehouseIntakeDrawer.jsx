@@ -1,24 +1,25 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  Alert,
   Button,
   Card,
   Drawer,
   Flex,
   Select,
-  Typography,
   Table,
-  Alert,
+  Typography,
+  message,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import api from '../api/client';
+import { formatQuantity } from '../utils/formatNumber';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
-function WarehouseIntakeDrawer({
-  open,
-  onClose,
-  locations = [],
-  pendingItems = [],
-}) {
+function WarehouseIntakeDrawer({ open, onClose, pendingItems = [] }) {
+  const [locations, setLocations] = useState([]);
+  const [locationsLoading, setLocationsLoading] = useState(false);
+
   const [locationId, setLocationId] = useState(null);
 
   const [selectedItemId, setSelectedItemId] = useState(null);
@@ -26,18 +27,41 @@ function WarehouseIntakeDrawer({
 
   const [items, setItems] = useState([]);
 
-  // --- фильтрация (только без конвертации)
+  // --- загрузка локаций
+  useEffect(() => {
+    if (open) {
+      loadLocations();
+    }
+  }, [open]);
+
+  const loadLocations = async () => {
+    try {
+      setLocationsLoading(true);
+
+      const response = await api.get('warehouse-locations/');
+
+      setLocations(
+        Array.isArray(response.data?.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load locations:', err);
+      setLocations([]);
+    } finally {
+      setLocationsLoading(false);
+    }
+  };
+
+  // --- фильтр товаров (только без конвертации)
   const availableItems = useMemo(() => {
     return pendingItems.filter(
       (i) => i.can_be_directly_accepted && !i.requires_unit_conversion,
     );
   }, [pendingItems]);
 
-  // --- сброс вниз при смене локации
+  // --- reset вниз при смене локации
   const handleLocationChange = (value) => {
     setLocationId(value);
 
-    // reset вниз
     setSelectedItemId(null);
     setSelectedItem(null);
     setItems([]);
@@ -51,47 +75,66 @@ function WarehouseIntakeDrawer({
     setSelectedItem(item || null);
   };
 
-  // --- добавление
+  // --- добавить товар
   const handleAddItem = () => {
     if (!selectedItem) return;
 
-    if (items.some((i) => i.id === selectedItem.id)) return;
+    if (items.some((i) => i.id === selectedItem.id)) {
+      message.warning('Цей товар вже додано.');
+      return;
+    }
 
     setItems((prev) => [...prev, selectedItem]);
 
-    // reset выбора
     setSelectedItemId(null);
     setSelectedItem(null);
   };
 
-  // --- удаление
+  // --- удалить товар
   const handleRemoveItem = (id) => {
     setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  const canStep2 = Boolean(locationId);
+  // --- submit (заглушка)
+  const handleSubmit = () => {
+    console.log('SUBMIT MOCK', {
+      locationId,
+      items,
+    });
 
+    message.success('Мок: дані зібрані (без відправки)');
+  };
+
+  const canStep2 = Boolean(locationId);
   const canSubmit = items.length > 0;
 
   const columns = [
     {
       title: 'Постачальник',
-      render: (_, r) => r.vendor_name,
+      render: (_, r) => r.vendor_name || '—',
     },
     {
       title: 'Номенклатура',
-      render: (_, r) => r.vendor_item_name,
+      render: (_, r) => r.vendor_item_name || '—',
     },
     {
       title: 'К-сть',
-      render: (_, r) => r.received_quantity,
+      render: (_, r) => (
+        <>
+          {formatQuantity(r.received_quantity)}{' '}
+          {r.inventory_item_unit_symbol || ''}
+        </>
+      ),
     },
     {
       title: '',
-      width: 60,
+      width: 50,
       render: (_, r) => (
         <DeleteOutlined
-          style={{ color: '#ff4d4f', cursor: 'pointer' }}
+          style={{
+            color: '#ff4d4f',
+            cursor: 'pointer',
+          }}
           onClick={() => handleRemoveItem(r.id)}
         />
       ),
@@ -103,7 +146,7 @@ function WarehouseIntakeDrawer({
       title="Оформлення первинного отримання"
       open={open}
       onClose={onClose}
-      width={520}
+      size="large"
     >
       <Flex vertical gap={16}>
         {/* STEP 1 */}
@@ -113,6 +156,7 @@ function WarehouseIntakeDrawer({
             style={{ width: '100%' }}
             value={locationId}
             onChange={handleLocationChange}
+            loading={locationsLoading}
             options={locations.map((l) => ({
               value: l.id,
               label: `${l.code} — ${l.name}`,
@@ -133,25 +177,25 @@ function WarehouseIntakeDrawer({
 
           <Flex vertical gap={12}>
             <Select
+              showSearch
               placeholder="Оберіть товар"
-              disabled={!canStep2}
+              style={{ width: '100%' }}
               value={selectedItemId}
               onChange={handleSelectItem}
-              style={{ width: '100%' }}
+              disabled={!canStep2}
+              optionFilterProp="label"
               options={availableItems.map((i) => ({
                 value: i.id,
                 label: `${i.vendor_item_name}`,
               }))}
-              showSearch
-              optionFilterProp="label"
             />
 
             {selectedItem && (
               <div
                 style={{
                   background: '#fafafa',
-                  padding: 10,
                   border: '1px solid #f0f0f0',
+                  padding: 10,
                   borderRadius: 6,
                 }}
               >
@@ -160,7 +204,7 @@ function WarehouseIntakeDrawer({
                 <Text type="secondary">{selectedItem.inventory_item_name}</Text>
                 <br />
                 <Text>
-                  {selectedItem.received_quantity}{' '}
+                  {formatQuantity(selectedItem.received_quantity)}{' '}
                   {selectedItem.inventory_item_unit_symbol}
                 </Text>
               </div>
@@ -170,8 +214,8 @@ function WarehouseIntakeDrawer({
               <Button
                 type="dashed"
                 icon={<PlusOutlined />}
-                disabled={!selectedItem}
                 onClick={handleAddItem}
+                disabled={!selectedItem}
               >
                 Додати товар
               </Button>
@@ -193,7 +237,7 @@ function WarehouseIntakeDrawer({
         <Flex justify="flex-end" gap={8}>
           <Button onClick={onClose}>Скасувати</Button>
 
-          <Button type="primary" disabled={!canSubmit}>
+          <Button type="primary" disabled={!canSubmit} onClick={handleSubmit}>
             Оформити отримання
           </Button>
         </Flex>

@@ -158,19 +158,40 @@ function WarehousePendingIntakePage() {
             {record.vendor_item_name || '—'}
           </div>
 
-          <Text
-            type="secondary"
-            style={{
-              fontSize: 12,
-              lineHeight: 1.2,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-            title={record.inventory_item_name || '—'}
-          >
-            {record.inventory_item_name || '—'}
-          </Text>
+          <Flex align="center" gap={6} style={{ minWidth: 0 }}>
+            <Text
+              type="secondary"
+              style={{
+                fontSize: 12,
+                lineHeight: 1.2,
+                minWidth: 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              title={record.inventory_item_name || '—'}
+            >
+              {record.inventory_item_name || '—'}
+            </Text>
+
+            {record.inventory_item_id ? (
+              <Tooltip title="Відкрити номенклатуру">
+                <a
+                  href={`/production/components/${record.inventory_item_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <InfoCircleOutlined
+                    style={{
+                      color: '#1677ff',
+                      fontSize: 13,
+                      cursor: 'pointer',
+                    }}
+                  />
+                </a>
+              </Tooltip>
+            ) : null}
+          </Flex>
         </Flex>
       ),
     },

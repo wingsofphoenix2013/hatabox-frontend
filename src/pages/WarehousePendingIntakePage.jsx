@@ -24,6 +24,7 @@ import { Link } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
+import WarehouseIntakeDrawer from '../components/WarehouseIntakeDrawer';
 
 const { Title, Text } = Typography;
 
@@ -38,6 +39,8 @@ function WarehousePendingIntakePage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     loadPendingIntakeItems();
@@ -285,7 +288,12 @@ function WarehousePendingIntakePage() {
             </Text>
           </Flex>
 
-          <Button type="primary" size="large" icon={<PlusOutlined />}>
+          <Button
+            type="primary"
+            size="large"
+            icon={<PlusOutlined />}
+            onClick={() => setDrawerOpen(true)}
+          >
             Оформити первинне отримання
           </Button>
         </Flex>
@@ -372,6 +380,12 @@ function WarehousePendingIntakePage() {
           />
         </Card>
       </Flex>
+      <WarehouseIntakeDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        locations={[]}
+        pendingItems={items}
+      />
     </div>
   );
 }

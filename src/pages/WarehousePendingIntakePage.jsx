@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   AppstoreAddOutlined,
   CheckCircleFilled,
@@ -42,57 +42,62 @@ function WarehousePendingIntakePage() {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 50;
+
   useEffect(() => {
-    loadPendingIntakeItems();
-  }, []);
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError('');
 
-  const loadPendingIntakeItems = async () => {
-    try {
-      setLoading(true);
-      setError('');
+        const params = {
+          page,
+        };
 
-      const response = await api.get('warehouse-pending-intake-items/');
+        const normalizedSearch = searchText.trim();
+        if (normalizedSearch) {
+          params.search = normalizedSearch;
+        }
 
-      setItems(
-        Array.isArray(response.data?.results) ? response.data.results : [],
-      );
-      setSelectedRowKeys([]);
-    } catch (err) {
-      console.error('Failed to load warehouse pending intake items:', err);
-      setError('Не вдалося завантажити список первинного отримання.');
-      setItems([]);
-      setSelectedRowKeys([]);
-    } finally {
-      setLoading(false);
-    }
+        if (selectedConversionStatuses.length === 1) {
+          params.requires_unit_conversion =
+            selectedConversionStatuses[0] === 'requires_conversion';
+        }
+
+        const response = await api.get('warehouse-pending-intake-items/', {
+          params,
+        });
+
+        setItems(
+          Array.isArray(response.data?.results) ? response.data.results : [],
+        );
+        setTotal(Number(response.data?.count) || 0);
+        setSelectedRowKeys([]);
+      } catch (err) {
+        console.error('Failed to load warehouse pending intake items:', err);
+        setError('Не вдалося завантажити список первинного отримання.');
+        setItems([]);
+        setTotal(0);
+        setSelectedRowKeys([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [page, searchText, selectedConversionStatuses]);
+
+  const handleSearchChange = (e) => {
+    setSearchText(e.target.value);
+    setPage(1);
   };
 
-  const filteredItems = useMemo(() => {
-    const normalizedSearch = searchText.trim().toLowerCase();
-
-    return items.filter((item) => {
-      const matchesSearch =
-        !normalizedSearch ||
-        (item.vendor_name || '').toLowerCase().includes(normalizedSearch) ||
-        (item.order_no || '').toLowerCase().includes(normalizedSearch) ||
-        (item.vendor_item_name || '')
-          .toLowerCase()
-          .includes(normalizedSearch) ||
-        (item.inventory_item_name || '')
-          .toLowerCase()
-          .includes(normalizedSearch);
-
-      const conversionKey = item.requires_unit_conversion
-        ? 'requires_conversion'
-        : 'ready';
-
-      const matchesConversion =
-        selectedConversionStatuses.length === 0 ||
-        selectedConversionStatuses.includes(conversionKey);
-
-      return matchesSearch && matchesConversion;
-    });
-  }, [items, searchText, selectedConversionStatuses]);
+  const handleConversionStatusesChange = (values) => {
+    setSelectedConversionStatuses(values);
+    setPage(1);
+  };
 
   const columns = [
     {
@@ -252,7 +257,7 @@ function WarehousePendingIntakePage() {
       width: 56,
       align: 'center',
       render: () => {
-        const items = [
+        const dropdownItems = [
           {
             key: 'open',
             label: <div style={{ padding: '4px 0' }}>Переглянути позицію</div>,
@@ -260,7 +265,7 @@ function WarehousePendingIntakePage() {
         ];
 
         return (
-          <Dropdown menu={{ items }} trigger={['click']}>
+          <Dropdown menu={{ items: dropdownItems }} trigger={['click']}>
             <AppstoreAddOutlined
               style={{
                 fontSize: 17,
@@ -319,7 +324,7 @@ function WarehousePendingIntakePage() {
               prefix={<SearchOutlined />}
               style={{ width: 300 }}
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={handleSearchChange}
             />
 
             <Divider type="vertical" style={{ height: 28 }} />
@@ -330,7 +335,7 @@ function WarehousePendingIntakePage() {
               placeholder="Конвертація"
               style={{ minWidth: 220 }}
               value={selectedConversionStatuses}
-              onChange={setSelectedConversionStatuses}
+              onChange={handleConversionStatusesChange}
               options={[
                 { value: 'ready', label: 'Готові до приймання' },
                 {
@@ -350,15 +355,20 @@ function WarehousePendingIntakePage() {
             rowKey="id"
             loading={loading}
             columns={columns}
-            dataSource={filteredItems}
+            dataSource={items}
             size="small"
             rowSelection={{
               selectedRowKeys,
               onChange: setSelectedRowKeys,
             }}
             pagination={{
-              pageSize: 50,
+              current: page,
+              pageSize,
+              total,
               showSizeChanger: false,
+              onChange: (nextPage) => {
+                setPage(nextPage);
+              },
               showTotal: (totalValue, range) => (
                 <span>
                   Показано{' '}
@@ -380,6 +390,7 @@ function WarehousePendingIntakePage() {
           />
         </Card>
       </Flex>
+
       <WarehouseIntakeDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}

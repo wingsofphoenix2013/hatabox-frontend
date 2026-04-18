@@ -179,12 +179,22 @@ function WarehousePendingIntakePage() {
       key: 'received_quantity',
       width: 150,
       align: 'center',
-      render: (_, record) => (
-        <Text strong>
-          {formatQuantity(record.received_quantity)}{' '}
-          {record.inventory_item_unit_symbol || ''}
-        </Text>
-      ),
+      render: (_, record) => {
+        const isConversionRequired = record.requires_unit_conversion;
+
+        return (
+          <Text strong>
+            {formatQuantity(record.received_quantity)}{' '}
+            {isConversionRequired ? (
+              <Tooltip title="Одиниця потребує уточнення">
+                <span style={{ color: '#ff4d4f' }}>???</span>
+              </Tooltip>
+            ) : (
+              record.inventory_item_unit_symbol || ''
+            )}
+          </Text>
+        );
+      },
     },
     {
       title: 'Конвертація',

@@ -30,6 +30,7 @@ const { Title, Text } = Typography;
 
 function WarehousePendingIntakePage() {
   const [items, setItems] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   const [searchText, setSearchText] = useState('');
@@ -38,7 +39,9 @@ function WarehousePendingIntakePage() {
   );
 
   const [loading, setLoading] = useState(true);
+  const [locationsLoading, setLocationsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [locationsError, setLocationsError] = useState('');
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -47,7 +50,32 @@ function WarehousePendingIntakePage() {
   const pageSize = 50;
 
   useEffect(() => {
-    const load = async () => {
+    const loadLocations = async () => {
+      try {
+        setLocationsLoading(true);
+        setLocationsError('');
+
+        const response = await api.get('warehouse-locations/', {
+          params: { is_active: true },
+        });
+
+        setLocations(
+          Array.isArray(response.data?.results) ? response.data.results : [],
+        );
+      } catch (err) {
+        console.error('Failed to load warehouse locations:', err);
+        setLocations([]);
+        setLocationsError('Не вдалося завантажити перелік активних локацій.');
+      } finally {
+        setLocationsLoading(false);
+      }
+    };
+
+    loadLocations();
+  }, []);
+
+  useEffect(() => {
+    const loadPendingIntakeItems = async () => {
       try {
         setLoading(true);
         setError('');
@@ -86,7 +114,7 @@ function WarehousePendingIntakePage() {
       }
     };
 
-    load();
+    loadPendingIntakeItems();
   }, [page, searchText, selectedConversionStatuses]);
 
   const handleSearchChange = (e) => {
@@ -96,6 +124,29 @@ function WarehousePendingIntakePage() {
 
   const handleConversionStatusesChange = (values) => {
     setSelectedConversionStatuses(values);
+    setPage(1);
+  };
+
+  const handleDrawerCompleted = async () => {
+    try {
+      setLocationsLoading(true);
+      setLocationsError('');
+
+      const response = await api.get('warehouse-locations/', {
+        params: { is_active: true },
+      });
+
+      setLocations(
+        Array.isArray(response.data?.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to reload warehouse locations:', err);
+      setLocations([]);
+      setLocationsError('Не вдалося завантажити перелік активних локацій.');
+    } finally {
+      setLocationsLoading(false);
+    }
+
     setPage(1);
   };
 
@@ -298,10 +349,17 @@ function WarehousePendingIntakePage() {
             size="large"
             icon={<PlusOutlined />}
             onClick={() => setDrawerOpen(true)}
+            disabled={
+              locationsLoading || (!!locationsError && locations.length === 0)
+            }
           >
             Оформити первинне отримання
           </Button>
         </Flex>
+
+        {locationsError && (
+          <Alert type="warning" description={locationsError} showIcon />
+        )}
 
         <Card size="small">
           <Flex align="center" wrap gap={16}>
@@ -394,8 +452,9 @@ function WarehousePendingIntakePage() {
       <WarehouseIntakeDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        locations={[]}
+        locations={locations}
         pendingItems={items}
+        onCompleted={handleDrawerCompleted}
       />
     </div>
   );

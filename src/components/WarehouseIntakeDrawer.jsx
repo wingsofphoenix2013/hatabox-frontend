@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -6,136 +7,443 @@ import {
   Drawer,
   Flex,
   Select,
+  Space,
+  Switch,
   Table,
   Typography,
   message,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 import { formatQuantity } from '../utils/formatNumber';
+import { formatDateDisplay } from '../utils/orderFormatters';
 
 const { Text } = Typography;
 
-function WarehouseIntakeDrawer({ open, onClose, pendingItems = [] }) {
-  const [locations, setLocations] = useState([]);
-  const [locationsLoading, setLocationsLoading] = useState(false);
+const SELECT_ALL_VALUE = '__select_all__';
+const SELECT_ALL_DIVIDER_VALUE = '__select_all_divider__';
 
-  const [locationId, setLocationId] = useState(null);
+const compactLabelStyle = {
+  display: 'block',
+  marginBottom: 6,
+  fontSize: 12,
+  lineHeight: 1.2,
+};
 
-  const [selectedItemId, setSelectedItemId] = useState(null);
-  const [selectedItem, setSelectedItem] = useState(null);
+const compactValueStyle = {
+  display: 'block',
+  fontSize: 12,
+  lineHeight: 1.3,
+  wordBreak: 'break-word',
+};
 
-  const [items, setItems] = useState([]);
+const compactMutedStyle = {
+  display: 'block',
+  fontSize: 11,
+  lineHeight: 1.2,
+  marginBottom: 4,
+};
 
-  // --- загрузка локаций
-  useEffect(() => {
-    if (open) {
-      loadLocations();
-    }
-  }, [open]);
+function InfoCell({ label, value, compact = false, valueStyle = {} }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <Text
+        type="secondary"
+        style={compact ? compactMutedStyle : compactLabelStyle}
+      >
+        {label}
+      </Text>
 
-  const loadLocations = async () => {
-    try {
-      setLocationsLoading(true);
+      <Text
+        style={{
+          ...(compact
+            ? { ...compactValueStyle, fontSize: 12 }
+            : compactValueStyle),
+          ...valueStyle,
+        }}
+      >
+        {value || '—'}
+      </Text>
+    </div>
+  );
+}
 
-      const response = await api.get('warehouse-locations/');
+function WarehouseIntakeDrawer({
+  open,
+  onClose,
+  locations = [],
+  pendingItems = [],
+  onCompleted,
+}) {
+  const [locationOptions, setLocationOptions] = useState([]);
 
-      setLocations(
-        Array.isArray(response.data?.results) ? response.data.results : [],
-      );
-    } catch (err) {
-      console.error('Failed to load locations:', err);
-      setLocations([]);
-    } finally {
-      setLocationsLoading(false);
-    }
-  };
+  const [locationDraftId, setLocationDraftId] = useState(null);
+  const [confirmedLocationId, setConfirmedLocationId] = useState(null);
 
-  // --- фильтр товаров (только без конвертации)
-  const availableItems = useMemo(() => {
-    return pendingItems.filter(
-      (i) => i.can_be_directly_accepted && !i.requires_unit_conversion,
-    );
+  const [conversionMode, setConversionMode] = useState(false); // false = Ні, true = Так
+  const [selectedPendingItemId, setSelectedPendingItemId] = useState(null);
+  const [cartItems, setCartItems] = useState([]);
+
+  const [saving, setSaving] = useState(false);
+
+  const [step1Error, setStep1Error] = useState('');
+  const [submitError, setSubmitError] = useState('');
+
+  const allPendingItems = useMemo(() => {
+    return Array.isArray(pendingItems) ? pendingItems : [];
   }, [pendingItems]);
 
-  // --- reset вниз при смене локации
-  const handleLocationChange = (value) => {
-    setLocationId(value);
+  const activeLocationOptionsFromProps = useMemo(() => {
+    return (Array.isArray(locations) ? locations : [])
+      .filter((location) => location?.is_active !== false)
+      .map((location) => ({
+        value: location.id,
+        label: location.name || location.code || `ID ${location.id}`,
+        raw: location,
+      }));
+  }, [locations]);
 
-    setSelectedItemId(null);
-    setSelectedItem(null);
-    setItems([]);
+  const regularPendingItems = useMemo(() => {
+    return allPendingItems.filter((item) => !item.requires_unit_conversion);
+  }, [allPendingItems]);
+
+  const conversionPendingItems = useMemo(() => {
+    return allPendingItems.filter((item) =>
+      Boolean(item.requires_unit_conversion),
+    );
+  }, [allPendingItems]);
+
+  const hasRegularItems = regularPendingItems.length > 0;
+  const hasConversionItems = conversionPendingItems.length > 0;
+  const hasBothModes = hasRegularItems && hasConversionItems;
+
+  const step2Enabled = Boolean(confirmedLocationId);
+  const cartHasItems = cartItems.length > 0;
+
+  const hasLocationDraftChanges =
+    confirmedLocationId !== null && locationDraftId !== confirmedLocationId;
+
+  const availableItemsForCurrentMode = useMemo(() => {
+    const source = conversionMode
+      ? conversionPendingItems
+      : regularPendingItems;
+    const cartIds = new Set(cartItems.map((item) => item.id));
+
+    return source.filter((item) => !cartIds.has(item.id));
+  }, [conversionMode, conversionPendingItems, regularPendingItems, cartItems]);
+
+  const selectedPendingItem = useMemo(() => {
+    if (
+      !selectedPendingItemId ||
+      selectedPendingItemId === SELECT_ALL_VALUE ||
+      selectedPendingItemId === SELECT_ALL_DIVIDER_VALUE
+    ) {
+      return null;
+    }
+
+    return (
+      availableItemsForCurrentMode.find(
+        (item) => item.id === selectedPendingItemId,
+      ) || null
+    );
+  }, [selectedPendingItemId, availableItemsForCurrentMode]);
+
+  const canUseSelectAll =
+    !conversionMode && availableItemsForCurrentMode.length > 1;
+
+  const step2SwitchDisabled = !step2Enabled || cartHasItems || !hasBothModes;
+
+  const isConversionPlaceholderMode = conversionMode;
+  const canAddSelectedItem =
+    step2Enabled &&
+    !isConversionPlaceholderMode &&
+    (selectedPendingItemId === SELECT_ALL_VALUE ||
+      Boolean(selectedPendingItem));
+
+  const submitButtonDisabled =
+    !confirmedLocationId || cartItems.length === 0 || saving;
+
+  const addButtonText =
+    selectedPendingItemId === SELECT_ALL_VALUE
+      ? '+ Додати товари'
+      : '+ Додати товар';
+
+  const resetStep2AndBelow = (nextConversionMode = false) => {
+    setConversionMode(nextConversionMode);
+    setSelectedPendingItemId(null);
+    setCartItems([]);
+    setSubmitError('');
   };
 
-  // --- выбор товара
-  const handleSelectItem = (value) => {
-    const item = availableItems.find((i) => i.id === value);
+  const resetAll = () => {
+    setLocationDraftId(null);
+    setConfirmedLocationId(null);
+    setStep1Error('');
+    setSubmitError('');
+    setSaving(false);
+    setSelectedPendingItemId(null);
+    setCartItems([]);
 
-    setSelectedItemId(value);
-    setSelectedItem(item || null);
+    if (hasRegularItems && hasConversionItems) {
+      setConversionMode(false);
+    } else if (!hasRegularItems && hasConversionItems) {
+      setConversionMode(true);
+    } else {
+      setConversionMode(false);
+    }
   };
 
-  // --- добавить товар
-  const handleAddItem = () => {
-    if (!selectedItem) return;
-
-    if (items.some((i) => i.id === selectedItem.id)) {
-      message.warning('Цей товар вже додано.');
+  useEffect(() => {
+    if (!open) {
       return;
     }
 
-    setItems((prev) => [...prev, selectedItem]);
+    setLocationOptions(activeLocationOptionsFromProps);
+  }, [open, activeLocationOptionsFromProps]);
 
-    setSelectedItemId(null);
-    setSelectedItem(null);
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setLocationDraftId(null);
+    setConfirmedLocationId(null);
+    setStep1Error('');
+    setSubmitError('');
+    setSaving(false);
+    setSelectedPendingItemId(null);
+    setCartItems([]);
+
+    if (hasRegularItems && hasConversionItems) {
+      setConversionMode(false);
+    } else if (!hasRegularItems && hasConversionItems) {
+      setConversionMode(true);
+    } else {
+      setConversionMode(false);
+    }
+  }, [open, hasRegularItems, hasConversionItems]);
+
+  useEffect(() => {
+    if (!step2Enabled) {
+      return;
+    }
+
+    if (
+      selectedPendingItemId &&
+      selectedPendingItemId !== SELECT_ALL_VALUE &&
+      selectedPendingItemId !== SELECT_ALL_DIVIDER_VALUE &&
+      !availableItemsForCurrentMode.some(
+        (item) => item.id === selectedPendingItemId,
+      )
+    ) {
+      setSelectedPendingItemId(null);
+    }
+  }, [selectedPendingItemId, availableItemsForCurrentMode, step2Enabled]);
+
+  const handleCloseDrawer = () => {
+    resetAll();
+    onClose();
   };
 
-  // --- удалить товар
-  const handleRemoveItem = (id) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const handleConfirmLocation = () => {
+    if (!locationDraftId) {
+      setStep1Error('Оберіть локацію.');
+      return;
+    }
+
+    setStep1Error('');
+
+    const nextConfirmedId = locationDraftId;
+    const locationActuallyChanged = confirmedLocationId !== nextConfirmedId;
+
+    setConfirmedLocationId(nextConfirmedId);
+
+    if (locationActuallyChanged) {
+      const nextMode =
+        hasRegularItems && hasConversionItems
+          ? false
+          : !hasRegularItems && hasConversionItems;
+
+      resetStep2AndBelow(nextMode);
+    }
   };
 
-  // --- submit (заглушка)
-  const handleSubmit = () => {
-    console.log('SUBMIT MOCK', {
-      locationId,
-      items,
-    });
-
-    message.success('Мок: дані зібрані (без відправки)');
+  const handleCancelLocationChange = () => {
+    setLocationDraftId(confirmedLocationId);
+    setStep1Error('');
   };
 
-  const canStep2 = Boolean(locationId);
-  const canSubmit = items.length > 0;
+  const handleChangeConversionMode = (checked) => {
+    if (step2SwitchDisabled) {
+      return;
+    }
 
-  const columns = [
+    setConversionMode(checked);
+    setSelectedPendingItemId(null);
+  };
+
+  const handleAddItem = () => {
+    if (!canAddSelectedItem) {
+      return;
+    }
+
+    if (selectedPendingItemId === SELECT_ALL_VALUE) {
+      setCartItems((prev) => [...prev, ...availableItemsForCurrentMode]);
+      setSelectedPendingItemId(null);
+      return;
+    }
+
+    if (!selectedPendingItem) {
+      return;
+    }
+
+    setCartItems((prev) => [...prev, selectedPendingItem]);
+    setSelectedPendingItemId(null);
+  };
+
+  const handleRemoveCartItem = (itemId) => {
+    setCartItems((prev) => prev.filter((item) => item.id !== itemId));
+  };
+
+  const handleSubmit = async () => {
+    if (submitButtonDisabled) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setSubmitError('');
+
+      if (cartItems.length === 1) {
+        const item = cartItems[0];
+
+        await api.post(
+          `warehouse-pending-intake-items/${item.id}/accept-to-location/`,
+          {
+            location: confirmedLocationId,
+          },
+        );
+
+        message.success('Первинне отримання оформлено.');
+      } else {
+        await api.post(
+          'warehouse-pending-intake-items/bulk-accept-to-location/',
+          {
+            location: confirmedLocationId,
+            receipt_item_ids: cartItems.map((item) => item.id),
+          },
+        );
+
+        message.success('Групове первинне отримання оформлено.');
+      }
+
+      if (onCompleted) {
+        await onCompleted();
+      }
+
+      handleCloseDrawer();
+    } catch (err) {
+      console.error('Failed to submit warehouse intake:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData, [
+        'location',
+        'receipt_item_ids',
+      ]);
+
+      setSubmitError(
+        backendMessage || 'Не вдалося оформити первинне отримання.',
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const orderItemOptions = useMemo(() => {
+    if (!step2Enabled || isConversionPlaceholderMode) {
+      return [];
+    }
+
+    const regularOptions = availableItemsForCurrentMode.map((item) => ({
+      value: item.id,
+      label:
+        item.vendor_item_name || item.inventory_item_name || `ID ${item.id}`,
+    }));
+
+    if (!canUseSelectAll) {
+      return regularOptions;
+    }
+
+    return [
+      {
+        value: SELECT_ALL_VALUE,
+        label: 'Обрати всі',
+      },
+      {
+        value: SELECT_ALL_DIVIDER_VALUE,
+        label: '────────────',
+        disabled: true,
+      },
+      ...regularOptions,
+    ];
+  }, [
+    step2Enabled,
+    isConversionPlaceholderMode,
+    availableItemsForCurrentMode,
+    canUseSelectAll,
+  ]);
+
+  const step3Columns = [
+    {
+      title: 'Товар',
+      dataIndex: 'vendor_item_name',
+      key: 'vendor_item_name',
+      render: (value, record) => value || record.inventory_item_name || '—',
+    },
     {
       title: 'Постачальник',
-      render: (_, r) => r.vendor_name || '—',
+      dataIndex: 'vendor_name',
+      key: 'vendor_name',
+      width: 180,
+      render: (value) => value || '—',
     },
     {
-      title: 'Номенклатура',
-      render: (_, r) => r.vendor_item_name || '—',
+      title: 'Замовлення',
+      key: 'order_info',
+      width: 170,
+      render: (_, record) => {
+        const datePart = record.order_created_at
+          ? formatDateDisplay(record.order_created_at)
+          : '—';
+
+        return `${record.order_no || '—'} · ${datePart}`;
+      },
     },
     {
-      title: 'К-сть',
-      render: (_, r) => (
-        <>
-          {formatQuantity(r.received_quantity)}{' '}
-          {r.inventory_item_unit_symbol || ''}
-        </>
+      title: <div style={{ whiteSpace: 'nowrap' }}>К-сть</div>,
+      key: 'received_quantity',
+      dataIndex: 'received_quantity',
+      width: 90,
+      align: 'center',
+      render: (value, record) => (
+        <span style={{ whiteSpace: 'nowrap' }}>
+          {formatQuantity(value)} {record.inventory_item_unit_symbol || ''}
+        </span>
       ),
     },
     {
       title: '',
-      width: 50,
-      render: (_, r) => (
+      key: 'actions',
+      width: 56,
+      align: 'center',
+      render: (_, record) => (
         <DeleteOutlined
           style={{
             color: '#ff4d4f',
             cursor: 'pointer',
+            fontSize: 14,
           }}
-          onClick={() => handleRemoveItem(r.id)}
+          onClick={() => handleRemoveCartItem(record.id)}
         />
       ),
     },
@@ -143,101 +451,226 @@ function WarehouseIntakeDrawer({ open, onClose, pendingItems = [] }) {
 
   return (
     <Drawer
-      title="Оформлення первинного отримання"
-      open={open}
-      onClose={onClose}
+      title="Первинне отримання"
+      placement="right"
       size="large"
+      open={open}
+      onClose={handleCloseDrawer}
     >
       <Flex vertical gap={16}>
-        {/* STEP 1 */}
         <Card title="1. Оберіть локацію">
-          <Select
-            placeholder="Оберіть локацію"
-            style={{ width: '100%' }}
-            value={locationId}
-            onChange={handleLocationChange}
-            loading={locationsLoading}
-            options={locations.map((l) => ({
-              value: l.id,
-              label: `${l.code} — ${l.name}`,
-            }))}
-          />
-        </Card>
-
-        {/* STEP 2 */}
-        <Card title="2. Оберіть товари" style={{ opacity: canStep2 ? 1 : 0.5 }}>
-          {!canStep2 && (
-            <Alert
-              type="info"
-              showIcon
-              message="Спочатку оберіть локацію"
-              style={{ marginBottom: 12 }}
-            />
-          )}
-
-          <Flex vertical gap={12}>
-            <Select
-              showSearch
-              placeholder="Оберіть товар"
-              style={{ width: '100%' }}
-              value={selectedItemId}
-              onChange={handleSelectItem}
-              disabled={!canStep2}
-              optionFilterProp="label"
-              options={availableItems.map((i) => ({
-                value: i.id,
-                label: `${i.vendor_item_name}`,
-              }))}
-            />
-
-            {selectedItem && (
-              <div
-                style={{
-                  background: '#fafafa',
-                  border: '1px solid #f0f0f0',
-                  padding: 10,
-                  borderRadius: 6,
+          <Flex vertical gap={14}>
+            <div>
+              <Text style={compactLabelStyle}>Локація</Text>
+              <Select
+                placeholder="Оберіть локацію"
+                style={{ width: '100%' }}
+                value={locationDraftId}
+                options={locationOptions}
+                onChange={(value) => {
+                  setLocationDraftId(value);
+                  setStep1Error('');
                 }}
-              >
-                <Text strong>{selectedItem.vendor_item_name}</Text>
-                <br />
-                <Text type="secondary">{selectedItem.inventory_item_name}</Text>
-                <br />
-                <Text>
-                  {formatQuantity(selectedItem.received_quantity)}{' '}
-                  {selectedItem.inventory_item_unit_symbol}
-                </Text>
-              </div>
-            )}
+              />
+            </div>
 
-            <Flex justify="flex-end">
-              <Button
-                type="dashed"
-                icon={<PlusOutlined />}
-                onClick={handleAddItem}
-                disabled={!selectedItem}
-              >
-                Додати товар
-              </Button>
-            </Flex>
-
-            {items.length > 0 && (
-              <Table
-                rowKey="id"
-                columns={columns}
-                dataSource={items}
-                pagination={false}
-                size="small"
+            {hasLocationDraftChanges && cartHasItems && (
+              <Alert
+                type="warning"
+                showIcon
+                message="Зміна локації очистить перелік отримання"
+                description="Якщо підтвердити нову локацію, усі товари, додані на кроці 2, будуть скинуті."
               />
             )}
+
+            {step1Error && <Alert type="error" showIcon message={step1Error} />}
+
+            <Flex justify="flex-end" gap={8}>
+              {hasLocationDraftChanges && (
+                <Button onClick={handleCancelLocationChange}>Відміна</Button>
+              )}
+
+              <Button
+                type="primary"
+                onClick={handleConfirmLocation}
+                disabled={!locationDraftId}
+              >
+                Обрати локацію
+              </Button>
+            </Flex>
           </Flex>
         </Card>
 
-        {/* ACTION */}
-        <Flex justify="flex-end" gap={8}>
-          <Button onClick={onClose}>Скасувати</Button>
+        <Card
+          title={
+            <Flex justify="space-between" align="center" wrap gap={12}>
+              <span>2. Оберіть товар</span>
 
-          <Button type="primary" disabled={!canSubmit} onClick={handleSubmit}>
+              <Flex align="center" gap={8}>
+                <Text style={{ fontSize: 12 }}>Товари з конвертацією</Text>
+                <Switch
+                  checked={conversionMode}
+                  checkedChildren="Так"
+                  unCheckedChildren="Ні"
+                  disabled={step2SwitchDisabled}
+                  onChange={handleChangeConversionMode}
+                />
+              </Flex>
+            </Flex>
+          }
+          styles={{
+            body: {
+              opacity: step2Enabled ? 1 : 0.65,
+              pointerEvents: step2Enabled ? 'auto' : 'none',
+            },
+          }}
+        >
+          <Flex vertical gap={14}>
+            {!step2Enabled && (
+              <Alert
+                type="info"
+                showIcon
+                message="Спочатку підтвердьте локацію"
+                description="Наступний крок стане доступним після вибору та підтвердження локації."
+              />
+            )}
+
+            {step2Enabled && isConversionPlaceholderMode && (
+              <Alert
+                type="warning"
+                showIcon
+                message="Режим недоступний"
+                description="Оформлення товарів з конвертацією поки що не реалізоване на стороні backend."
+              />
+            )}
+
+            <div>
+              <Text style={compactLabelStyle}>Товар</Text>
+              <Select
+                placeholder="Оберіть товар"
+                style={{ width: '100%' }}
+                value={selectedPendingItemId}
+                options={orderItemOptions}
+                onChange={setSelectedPendingItemId}
+                disabled={!step2Enabled || isConversionPlaceholderMode}
+              />
+            </div>
+
+            <div
+              style={{
+                padding: '10px 12px',
+                border: '1px solid #f0f0f0',
+                borderRadius: 8,
+                background: '#fafafa',
+              }}
+            >
+              <Flex wrap gap={16} align="flex-start">
+                <div style={{ flex: '1 1 180px' }}>
+                  <InfoCell
+                    label="Постачальник"
+                    value={selectedPendingItem?.vendor_name}
+                    compact
+                  />
+                </div>
+
+                <div style={{ flex: '1 1 220px' }}>
+                  <InfoCell
+                    label="Замовлення"
+                    value={
+                      selectedPendingItem
+                        ? `${selectedPendingItem.order_no || '—'} · ${
+                            selectedPendingItem.order_created_at
+                              ? formatDateDisplay(
+                                  selectedPendingItem.order_created_at,
+                                )
+                              : '—'
+                          }`
+                        : '—'
+                    }
+                    compact
+                  />
+                </div>
+
+                <div style={{ flex: '1 1 260px' }}>
+                  <InfoCell
+                    label="Інвентарно-номенклатурна назва"
+                    value={selectedPendingItem?.inventory_item_name}
+                    compact
+                  />
+                </div>
+
+                <div style={{ flex: '0 1 140px' }}>
+                  <InfoCell
+                    label="Кількість"
+                    value={
+                      selectedPendingItem
+                        ? `${formatQuantity(selectedPendingItem.received_quantity)} ${
+                            selectedPendingItem.inventory_item_unit_symbol || ''
+                          }`
+                        : '—'
+                    }
+                    compact
+                    valueStyle={{
+                      fontSize: 18,
+                      fontWeight: 600,
+                      lineHeight: 1.2,
+                      whiteSpace: 'nowrap',
+                    }}
+                  />
+                </div>
+              </Flex>
+            </div>
+
+            <Flex justify="flex-end">
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleAddItem}
+                disabled={!canAddSelectedItem}
+              >
+                {addButtonText}
+              </Button>
+            </Flex>
+          </Flex>
+        </Card>
+
+        <Card title="3. Перелік отримання">
+          <Table
+            rowKey="id"
+            columns={step3Columns}
+            dataSource={cartItems}
+            pagination={false}
+            size="small"
+            locale={{
+              emptyText: 'Немає доданих товарів.',
+            }}
+            components={{
+              body: {
+                cell: (props) => (
+                  <td
+                    {...props}
+                    style={{
+                      fontSize: 12.5,
+                      padding: '7px 8px',
+                    }}
+                  />
+                ),
+              },
+            }}
+          />
+        </Card>
+
+        {submitError && <Alert type="error" showIcon message={submitError} />}
+
+        <Flex justify="space-between" align="center" gap={12} wrap>
+          <Button onClick={handleCloseDrawer}>Закрити</Button>
+
+          <Button
+            type="primary"
+            loading={saving}
+            onClick={handleSubmit}
+            disabled={submitButtonDisabled}
+          >
             Оформити отримання
           </Button>
         </Flex>

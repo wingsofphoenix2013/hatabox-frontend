@@ -73,7 +73,7 @@ function WarehouseIntakeDrawer({
   onClose,
   locations = [],
   pendingItems = [],
-  presetPendingItem = null,
+  presetPendingItems = [],
   onCompleted,
 }) {
   const [locationOptions, setLocationOptions] = useState([]);
@@ -90,7 +90,8 @@ function WarehouseIntakeDrawer({
   const [step1Error, setStep1Error] = useState('');
   const [submitError, setSubmitError] = useState('');
 
-  const isPresetMode = Boolean(presetPendingItem);
+  const isPresetMode =
+    Array.isArray(presetPendingItems) && presetPendingItems.length > 0;
 
   const allPendingItems = useMemo(() => {
     return Array.isArray(pendingItems) ? pendingItems : [];
@@ -177,7 +178,7 @@ function WarehouseIntakeDrawer({
   const resetStep2AndBelow = (nextConversionMode = false) => {
     setConversionMode(nextConversionMode);
     setSelectedPendingItemId(null);
-    setCartItems(presetPendingItem ? [presetPendingItem] : []);
+    setCartItems(isPresetMode ? presetPendingItems : []);
     setSubmitError('');
   };
 
@@ -219,8 +220,8 @@ function WarehouseIntakeDrawer({
     setSaving(false);
     setSelectedPendingItemId(null);
 
-    if (presetPendingItem) {
-      setCartItems([presetPendingItem]);
+    if (isPresetMode) {
+      setCartItems(presetPendingItems);
       setConversionMode(false);
     } else {
       setCartItems([]);
@@ -233,7 +234,13 @@ function WarehouseIntakeDrawer({
         setConversionMode(false);
       }
     }
-  }, [open, hasRegularItems, hasConversionItems, presetPendingItem]);
+  }, [
+    open,
+    hasRegularItems,
+    hasConversionItems,
+    isPresetMode,
+    presetPendingItems,
+  ]);
 
   useEffect(() => {
     if (!step2Enabled) {
@@ -542,8 +549,16 @@ function WarehouseIntakeDrawer({
               <Alert
                 type="info"
                 showIcon
-                message="Позицію вже додано"
-                description="Відкрито швидке первинне отримання для однієї позиції. Додавання інших товарів недоступне."
+                message={
+                  cartItems.length === 1
+                    ? 'Позицію вже додано'
+                    : 'Позиції вже додано'
+                }
+                description={
+                  cartItems.length === 1
+                    ? 'Відкрито швидке первинне отримання для однієї позиції. Додавання інших товарів недоступне.'
+                    : 'Відкрито швидке первинне отримання для обраних позицій. Додавання інших товарів недоступне.'
+                }
               />
             )}
 

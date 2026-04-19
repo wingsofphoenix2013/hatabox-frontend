@@ -44,7 +44,7 @@ function WarehousePendingIntakePage() {
   const [locationsError, setLocationsError] = useState('');
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [presetPendingItem, setPresetPendingItem] = useState(null);
+  const [presetPendingItems, setPresetPendingItems] = useState([]);
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -149,6 +149,37 @@ function WarehousePendingIntakePage() {
     }
 
     setPage(1);
+  };
+
+  const selectedItems = items.filter((item) =>
+    selectedRowKeys.includes(item.id),
+  );
+
+  const handleBulkIntake = () => {
+    if (selectedItems.length === 0) {
+      return;
+    }
+
+    const conversionCount = selectedItems.filter(
+      (item) => item.requires_unit_conversion,
+    ).length;
+
+    if (conversionCount === selectedItems.length) {
+      alert(
+        'Усі обрані позиції потребують конвертації. Сценарій ще не реалізовано.',
+      );
+      return;
+    }
+
+    if (conversionCount > 0) {
+      alert(
+        'Неможливо змішувати позиції, що потребують конвертації, з позиціями без конвертації.',
+      );
+      return;
+    }
+
+    setPresetPendingItems(selectedItems);
+    setDrawerOpen(true);
   };
 
   const columns = [
@@ -315,7 +346,7 @@ function WarehousePendingIntakePage() {
             label: <div style={{ padding: '4px 0' }}>Первинне отримання</div>,
             disabled: record.requires_unit_conversion,
             onClick: () => {
-              setPresetPendingItem(record);
+              setPresetPendingItems([record]);
               setDrawerOpen(true);
             },
           },
@@ -354,7 +385,10 @@ function WarehousePendingIntakePage() {
             type="primary"
             size="large"
             icon={<PlusOutlined />}
-            onClick={() => setDrawerOpen(true)}
+            onClick={() => {
+              setPresetPendingItems([]);
+              setDrawerOpen(true);
+            }}
             disabled={
               locationsLoading || (!!locationsError && locations.length === 0)
             }
@@ -377,7 +411,18 @@ function WarehousePendingIntakePage() {
               placeholder="Дії"
               style={{ width: 180 }}
               disabled={selectedRowKeys.length === 0}
-              options={[{ value: 'placeholder', label: 'Дії' }]}
+              value={undefined}
+              onChange={(value) => {
+                if (value === 'bulk_intake') {
+                  handleBulkIntake();
+                }
+              }}
+              options={[
+                {
+                  value: 'bulk_intake',
+                  label: 'Первинне отримання',
+                },
+              ]}
             />
 
             <Divider type="vertical" style={{ height: 28 }} />
@@ -459,11 +504,11 @@ function WarehousePendingIntakePage() {
         open={drawerOpen}
         onClose={() => {
           setDrawerOpen(false);
-          setPresetPendingItem(null);
+          setPresetPendingItems([]);
         }}
         locations={locations}
         pendingItems={items}
-        presetPendingItem={presetPendingItem}
+        presetPendingItems={presetPendingItems}
         onCompleted={handleDrawerCompleted}
       />
     </div>

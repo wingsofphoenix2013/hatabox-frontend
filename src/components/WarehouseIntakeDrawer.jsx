@@ -407,9 +407,9 @@ function WarehouseIntakeDrawer({
       width: 90,
       align: 'center',
       render: (value, record) => (
-        <span style={{ whiteSpace: 'nowrap' }}>
+        <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
           {formatQuantity(value)} {record.inventory_item_unit_symbol || ''}
-        </span>
+        </div>
       ),
     },
     {

@@ -177,7 +177,7 @@ function WarehouseIntakeDrawer({
   const resetStep2AndBelow = (nextConversionMode = false) => {
     setConversionMode(nextConversionMode);
     setSelectedPendingItemId(null);
-    setCartItems([]);
+    setCartItems(presetPendingItem ? [presetPendingItem] : []);
     setSubmitError('');
   };
 

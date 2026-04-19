@@ -48,6 +48,7 @@ function WarehousePendingIntakePage() {
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
   const pageSize = 50;
 
   useEffect(() => {
@@ -116,7 +117,7 @@ function WarehousePendingIntakePage() {
     };
 
     loadPendingIntakeItems();
-  }, [page, searchText, selectedConversionStatuses]);
+  }, [page, searchText, selectedConversionStatuses, reloadKey]);
 
   const handleSearchChange = (e) => {
     setSearchText(e.target.value);
@@ -149,6 +150,7 @@ function WarehousePendingIntakePage() {
     }
 
     setPage(1);
+    setReloadKey((prev) => prev + 1);
   };
 
   const selectedItems = items.filter((item) =>

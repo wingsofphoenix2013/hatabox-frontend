@@ -401,25 +401,6 @@ function WarehouseIntakeDrawer({
       render: (value, record) => value || record.inventory_item_name || '—',
     },
     {
-      title: 'Постачальник',
-      dataIndex: 'vendor_name',
-      key: 'vendor_name',
-      width: 180,
-      render: (value) => value || '—',
-    },
-    {
-      title: 'Замовлення',
-      key: 'order_info',
-      width: 170,
-      render: (_, record) => {
-        const datePart = record.order_created_at
-          ? formatDateDisplay(record.order_created_at)
-          : '—';
-
-        return `${record.order_no || '—'} · ${datePart}`;
-      },
-    },
-    {
       title: <div style={{ whiteSpace: 'nowrap' }}>К-сть</div>,
       key: 'received_quantity',
       dataIndex: 'received_quantity',

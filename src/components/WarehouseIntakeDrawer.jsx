@@ -154,10 +154,10 @@ function WarehouseIntakeDrawer({
   const canUseSelectAll =
     !conversionMode && availableItemsForCurrentMode.length > 1;
 
+  const isStep2LockedByPreset = isPresetMode;
+
   const step2SwitchDisabled =
     !step2Enabled || cartHasItems || !hasBothModes || isStep2LockedByPreset;
-
-  const isStep2LockedByPreset = isPresetMode;
 
   const isConversionPlaceholderMode = conversionMode;
   const canAddSelectedItem =

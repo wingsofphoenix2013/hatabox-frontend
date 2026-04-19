@@ -44,6 +44,7 @@ function WarehousePendingIntakePage() {
   const [locationsError, setLocationsError] = useState('');
 
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [presetPendingItem, setPresetPendingItem] = useState(null);
 
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -307,11 +308,16 @@ function WarehousePendingIntakePage() {
       key: 'action',
       width: 56,
       align: 'center',
-      render: () => {
+      render: (_, record) => {
         const dropdownItems = [
           {
-            key: 'open',
-            label: <div style={{ padding: '4px 0' }}>Переглянути позицію</div>,
+            key: 'intake',
+            label: <div style={{ padding: '4px 0' }}>Первинне отримання</div>,
+            disabled: record.requires_unit_conversion,
+            onClick: () => {
+              setPresetPendingItem(record);
+              setDrawerOpen(true);
+            },
           },
         ];
 
@@ -451,9 +457,13 @@ function WarehousePendingIntakePage() {
 
       <WarehouseIntakeDrawer
         open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        onClose={() => {
+          setDrawerOpen(false);
+          setPresetPendingItem(null);
+        }}
         locations={locations}
         pendingItems={items}
+        presetPendingItem={presetPendingItem}
         onCompleted={handleDrawerCompleted}
       />
     </div>

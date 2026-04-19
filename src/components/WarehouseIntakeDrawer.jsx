@@ -73,6 +73,7 @@ function WarehouseIntakeDrawer({
   onClose,
   locations = [],
   pendingItems = [],
+  presetPendingItem = null,
   onCompleted,
 }) {
   const [locationOptions, setLocationOptions] = useState([]);
@@ -88,6 +89,8 @@ function WarehouseIntakeDrawer({
 
   const [step1Error, setStep1Error] = useState('');
   const [submitError, setSubmitError] = useState('');
+
+  const isPresetMode = Boolean(presetPendingItem);
 
   const allPendingItems = useMemo(() => {
     return Array.isArray(pendingItems) ? pendingItems : [];
@@ -151,7 +154,10 @@ function WarehouseIntakeDrawer({
   const canUseSelectAll =
     !conversionMode && availableItemsForCurrentMode.length > 1;
 
-  const step2SwitchDisabled = !step2Enabled || cartHasItems || !hasBothModes;
+  const step2SwitchDisabled =
+    !step2Enabled || cartHasItems || !hasBothModes || isStep2LockedByPreset;
+
+  const isStep2LockedByPreset = isPresetMode;
 
   const isConversionPlaceholderMode = conversionMode;
   const canAddSelectedItem =
@@ -212,16 +218,22 @@ function WarehouseIntakeDrawer({
     setSubmitError('');
     setSaving(false);
     setSelectedPendingItemId(null);
-    setCartItems([]);
 
-    if (hasRegularItems && hasConversionItems) {
+    if (presetPendingItem) {
+      setCartItems([presetPendingItem]);
       setConversionMode(false);
-    } else if (!hasRegularItems && hasConversionItems) {
-      setConversionMode(true);
     } else {
-      setConversionMode(false);
+      setCartItems([]);
+
+      if (hasRegularItems && hasConversionItems) {
+        setConversionMode(false);
+      } else if (!hasRegularItems && hasConversionItems) {
+        setConversionMode(true);
+      } else {
+        setConversionMode(false);
+      }
     }
-  }, [open, hasRegularItems, hasConversionItems]);
+  }, [open, hasRegularItems, hasConversionItems, presetPendingItem]);
 
   useEffect(() => {
     if (!step2Enabled) {
@@ -417,16 +429,17 @@ function WarehouseIntakeDrawer({
       key: 'actions',
       width: 56,
       align: 'center',
-      render: (_, record) => (
-        <DeleteOutlined
-          style={{
-            color: '#ff4d4f',
-            cursor: 'pointer',
-            fontSize: 14,
-          }}
-          onClick={() => handleRemoveCartItem(record.id)}
-        />
-      ),
+      render: (_, record) =>
+        isStep2LockedByPreset ? null : (
+          <DeleteOutlined
+            style={{
+              color: '#ff4d4f',
+              cursor: 'pointer',
+              fontSize: 14,
+            }}
+            onClick={() => handleRemoveCartItem(record.id)}
+          />
+        ),
     },
   ];
 
@@ -525,6 +538,15 @@ function WarehouseIntakeDrawer({
               />
             )}
 
+            {step2Enabled && isStep2LockedByPreset && (
+              <Alert
+                type="info"
+                showIcon
+                message="Позицію вже додано"
+                description="Відкрито швидке первинне отримання для однієї позиції. Додавання інших товарів недоступне."
+              />
+            )}
+
             <div>
               <Text style={compactLabelStyle}>Товар</Text>
               <Select
@@ -533,7 +555,11 @@ function WarehouseIntakeDrawer({
                 value={selectedPendingItemId}
                 options={orderItemOptions}
                 onChange={setSelectedPendingItemId}
-                disabled={!step2Enabled || isConversionPlaceholderMode}
+                disabled={
+                  !step2Enabled ||
+                  isConversionPlaceholderMode ||
+                  isStep2LockedByPreset
+                }
               />
             </div>
 
@@ -607,7 +633,7 @@ function WarehouseIntakeDrawer({
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={handleAddItem}
-                disabled={!canAddSelectedItem}
+                disabled={!canAddSelectedItem || isStep2LockedByPreset}
               >
                 {addButtonText}
               </Button>

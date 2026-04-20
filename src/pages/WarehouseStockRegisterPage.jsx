@@ -162,41 +162,36 @@ function WarehouseStockRegisterPage() {
       setLoading(true);
       setError('');
 
-      const params = {
-        page,
-        has_any_activity: true,
-      };
+      const params = new URLSearchParams();
+      params.append('page', String(page));
+      params.append('has_any_activity', 'true');
 
       const normalizedSearch = searchText.trim();
       if (normalizedSearch) {
-        params.search = normalizedSearch;
+        params.append('search', normalizedSearch);
       }
 
       selectedCategoryIds.forEach((categoryId) => {
-        if (!params.category) {
-          params.category = [];
-        }
-        params.category.push(categoryId);
+        params.append('category', categoryId);
       });
 
       selectedLocationIds.forEach((locationId) => {
-        if (!params.location) {
-          params.location = [];
-        }
-        params.location.push(locationId);
+        params.append('location', locationId);
       });
 
       if (selectedVariants.includes('has_stock')) {
-        params.has_stock = true;
+        params.append('has_stock', 'true');
       }
       if (selectedVariants.includes('has_pending_intake')) {
-        params.has_pending_intake = true;
+        params.append('has_pending_intake', 'true');
       }
       if (selectedVariants.includes('has_incoming')) {
-        params.has_incoming = true;
+        params.append('has_incoming', 'true');
       }
 
-      const response = await api.get('warehouse-stock-overview/', { params });
+      const response = await api.get(
+        `warehouse-stock-overview/?${params.toString()}`,
+      );
 
       setItems(
         Array.isArray(response.data?.results) ? response.data.results : [],

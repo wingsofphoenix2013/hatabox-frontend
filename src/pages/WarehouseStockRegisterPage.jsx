@@ -299,17 +299,22 @@ function WarehouseStockRegisterPage() {
       key: 'available_quantity',
       width: 150,
       align: 'center',
-      render: (_, record) => {
+      onCell: (record) => {
         const quantity = Number(record.available_quantity) || 0;
+
+        return quantity > 0
+          ? {
+              style: {
+                backgroundColor: '#f0f7ff',
+              },
+            }
+          : {};
+      },
+      render: (_, record) => {
         const unit = record.inventory_item_unit_symbol || '';
 
         return (
-          <Text
-            strong
-            style={{
-              color: quantity > 0 ? '#1677ff' : '#262626',
-            }}
-          >
+          <Text strong>
             {formatQuantity(record.available_quantity)} {unit}
           </Text>
         );

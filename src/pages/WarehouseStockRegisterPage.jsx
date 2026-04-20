@@ -164,6 +164,7 @@ function WarehouseStockRegisterPage() {
 
       const params = {
         page,
+        has_any_activity: true,
       };
 
       const normalizedSearch = searchText.trim();
@@ -185,8 +186,6 @@ function WarehouseStockRegisterPage() {
         params.location.push(locationId);
       });
 
-      // Backend filters are AND-based. Here we send only explicit user-selected variants.
-      // Default open state intentionally sends no variant filters.
       if (selectedVariants.includes('has_stock')) {
         params.has_stock = true;
       }

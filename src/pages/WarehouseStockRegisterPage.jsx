@@ -304,7 +304,12 @@ function WarehouseStockRegisterPage() {
         const unit = record.inventory_item_unit_symbol || '';
 
         return (
-          <Text strong style={{ color: quantity > 0 ? '#1677ff' : undefined }}>
+          <Text
+            strong
+            style={{
+              color: quantity > 0 ? '#1677ff' : '#262626',
+            }}
+          >
             {formatQuantity(record.available_quantity)} {unit}
           </Text>
         );
@@ -319,27 +324,12 @@ function WarehouseStockRegisterPage() {
         const quantity = Number(record.pending_intake_quantity) || 0;
         const hasUnconverted = Boolean(record.has_unconverted_pending_intake);
         const unit = record.inventory_item_unit_symbol || '';
-
-        if (quantity <= 0 && hasUnconverted) {
-          return (
-            <Tooltip title="Є отримана позиція, що очікує конвертації одиниць">
-              <QuestionCircleOutlined
-                style={{
-                  color: '#ff4d4f',
-                  fontSize: 16,
-                }}
-              />
-            </Tooltip>
-          );
-        }
+        const canOpenPendingIntake = quantity > 0 || hasUnconverted;
 
         return (
           <Flex align="center" justify="center" gap={6}>
-            <Text strong>
-              {formatQuantity(record.pending_intake_quantity)} {unit}
-            </Text>
-
-            {hasUnconverted ? (
+            {/* Основной контент */}
+            {quantity <= 0 && hasUnconverted ? (
               <Tooltip title="Є отримана позиція, що очікує конвертації одиниць">
                 <QuestionCircleOutlined
                   style={{
@@ -348,7 +338,41 @@ function WarehouseStockRegisterPage() {
                   }}
                 />
               </Tooltip>
-            ) : null}
+            ) : (
+              <>
+                <Text strong>
+                  {formatQuantity(record.pending_intake_quantity)} {unit}
+                </Text>
+
+                {hasUnconverted && (
+                  <Tooltip title="Є отримана позиція, що очікує конвертації одиниць">
+                    <QuestionCircleOutlined
+                      style={{
+                        color: '#ff4d4f',
+                        fontSize: 16,
+                      }}
+                    />
+                  </Tooltip>
+                )}
+              </>
+            )}
+
+            {/* Иконка перехода */}
+            {canOpenPendingIntake && record.inventory_item_id && (
+              <Tooltip title="Перейти до первинного отримання">
+                <Link
+                  to={`/inventory/pending-intake?inventory_item_id=${record.inventory_item_id}`}
+                >
+                  <InfoCircleOutlined
+                    style={{
+                      color: '#1677ff',
+                      fontSize: 14,
+                      cursor: 'pointer',
+                    }}
+                  />
+                </Link>
+              </Tooltip>
+            )}
           </Flex>
         );
       },

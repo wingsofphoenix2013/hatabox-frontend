@@ -20,7 +20,7 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
@@ -29,6 +29,7 @@ import WarehouseIntakeDrawer from '../components/WarehouseIntakeDrawer';
 const { Title, Text } = Typography;
 
 function WarehousePendingIntakePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [locations, setLocations] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -37,6 +38,8 @@ function WarehousePendingIntakePage() {
   const [selectedConversionStatuses, setSelectedConversionStatuses] = useState(
     [],
   );
+
+  const inventoryItemId = searchParams.get('inventory_item_id') || '';
 
   const [loading, setLoading] = useState(true);
   const [locationsLoading, setLocationsLoading] = useState(false);
@@ -50,6 +53,35 @@ function WarehousePendingIntakePage() {
   const [total, setTotal] = useState(0);
   const [reloadKey, setReloadKey] = useState(0);
   const pageSize = 50;
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    const normalizedSearch = searchText.trim();
+    if (normalizedSearch) {
+      params.set('search', normalizedSearch);
+    }
+
+    if (inventoryItemId) {
+      params.set('inventory_item_id', inventoryItemId);
+    }
+
+    selectedConversionStatuses.forEach((status) => {
+      params.append('conversion', status);
+    });
+
+    if (page > 1) {
+      params.set('page', String(page));
+    }
+
+    setSearchParams(params);
+  }, [
+    searchText,
+    inventoryItemId,
+    selectedConversionStatuses,
+    page,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
     const loadLocations = async () => {
@@ -91,6 +123,10 @@ function WarehousePendingIntakePage() {
           params.search = normalizedSearch;
         }
 
+        if (inventoryItemId) {
+          params.inventory_item_id = inventoryItemId;
+        }
+
         if (selectedConversionStatuses.length === 1) {
           params.requires_unit_conversion =
             selectedConversionStatuses[0] === 'requires_conversion';
@@ -117,7 +153,13 @@ function WarehousePendingIntakePage() {
     };
 
     loadPendingIntakeItems();
-  }, [page, searchText, selectedConversionStatuses, reloadKey]);
+  }, [
+    page,
+    searchText,
+    inventoryItemId,
+    selectedConversionStatuses,
+    reloadKey,
+  ]);
 
   const handleSearchChange = (e) => {
     setSearchText(e.target.value);

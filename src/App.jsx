@@ -13,6 +13,7 @@ import ProtectedLayout from './layouts/ProtectedLayout';
 
 import WarehouseRegisterPage from './pages/WarehouseRegisterPage';
 import WarehousePendingIntakePage from './pages/WarehousePendingIntakePage';
+import WarehouseStockRegisterPage from './pages/WarehouseStockRegisterPage';
 
 import OrderDetailPage from './pages/OrderDetailPage';
 import OrdersRegisterPage from './pages/OrdersRegisterPage';
@@ -143,6 +144,11 @@ function App() {
             <Route
               path="/inventory/pending-intake"
               element={<WarehousePendingIntakePage />}
+            />
+
+            <Route
+              path="/inventory/stock"
+              element={<WarehouseStockRegisterPage />}
             />
 
             <Route

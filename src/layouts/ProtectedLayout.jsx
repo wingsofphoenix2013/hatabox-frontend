@@ -63,6 +63,10 @@ function ProtectedLayout() {
     '/inventory': {
       pages: [
         {
+          label: 'Складські залишки',
+          path: '/inventory/stock',
+        },
+        {
           label: 'Первинне отримання',
           path: '/inventory/pending-intake',
         },

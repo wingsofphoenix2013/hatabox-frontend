@@ -32,6 +32,7 @@ import {
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { buildBreadcrumbs } from '../navigation/breadcrumbs/buildBreadcrumbs.jsx';
+import api from '../api/client';
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
@@ -44,6 +45,7 @@ function ProtectedLayout() {
   const [previewModule, setPreviewModule] = useState(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [manuallyClosedModule, setManuallyClosedModule] = useState(null);
+  const [pendingIntakeCount, setPendingIntakeCount] = useState(0);
 
   const sidebar1TopItems = [
     {
@@ -207,6 +209,17 @@ function ProtectedLayout() {
     );
   };
 
+  const fetchPendingIntakeStatus = async () => {
+    try {
+      const response = await api.get('warehouse-pending-intake-items/status/');
+      const count = Number(response.data?.count) || 0;
+      setPendingIntakeCount(count);
+    } catch (error) {
+      console.error('Failed to fetch pending intake status:', error);
+      setPendingIntakeCount(0);
+    }
+  };
+
   const routeModule = getModuleFromPath(location.pathname);
 
   useEffect(() => {
@@ -238,7 +251,20 @@ function ProtectedLayout() {
     setPanelOpen(shouldOpen);
   }, [location.pathname, routeModule, manuallyClosedModule]);
 
+  useEffect(() => {
+    fetchPendingIntakeStatus();
+
+    const intervalId = window.setInterval(() => {
+      fetchPendingIntakeStatus();
+    }, 60000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   const currentConfig = previewModule ? moduleConfig[previewModule] : null;
+
   const hasContent = hasModuleContent(currentConfig);
 
   const breadcrumbItems = buildBreadcrumbs(location);
@@ -292,6 +318,8 @@ function ProtectedLayout() {
     const isActive = routeModule === item.key || location.pathname === item.key;
     const isPreview = previewModule === item.key;
     const isHovered = hoveredSidebar1Key === item.key;
+    const showInventoryBadge =
+      item.key === '/inventory' && !!inventoryBadgeText;
 
     const IconComponent = isActive ? item.filledIcon : item.outlinedIcon;
 
@@ -342,9 +370,34 @@ function ProtectedLayout() {
             gap: 4,
             padding: '8px 4px',
             transition: 'background-color 0.18s ease, color 0.18s ease',
+            position: 'relative',
           }}
         >
           <IconComponent style={{ fontSize: 24, lineHeight: 1 }} />
+
+          {showInventoryBadge && (
+            <span
+              style={{
+                position: 'absolute',
+                top: 6,
+                right: 6,
+                minWidth: 16,
+                height: 16,
+                padding: '0 4px',
+                borderRadius: 999,
+                background: '#ef4444',
+                color: '#ffffff',
+                fontSize: 10,
+                fontWeight: 700,
+                lineHeight: '16px',
+                textAlign: 'center',
+                boxSizing: 'border-box',
+              }}
+            >
+              {inventoryBadgeText}
+            </span>
+          )}
+
           <div
             style={{
               fontSize: 10,
@@ -380,6 +433,13 @@ function ProtectedLayout() {
 
     return [];
   }, [currentConfig, location.pathname]);
+
+  const inventoryBadgeText =
+    pendingIntakeCount > 9
+      ? '9+'
+      : pendingIntakeCount > 0
+        ? String(pendingIntakeCount)
+        : null;
 
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden' }}>

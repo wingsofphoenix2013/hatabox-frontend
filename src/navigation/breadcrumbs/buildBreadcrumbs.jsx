@@ -15,8 +15,6 @@ export function buildBreadcrumbs(location) {
     return matchedEntry.build({ pathname, search, state });
   }
 
-  const productLabel = state?.productLabel;
-  const stepLabel = state?.stepLabel;
   const vendorLabel = state?.vendorLabel;
   const orderLabel = state?.orderLabel;
 
@@ -29,66 +27,6 @@ export function buildBreadcrumbs(location) {
   }
 
   switch (matchedEntry.key) {
-    case 'production-product-material-plan':
-      return [
-        makeHomeItem(),
-        makeTextItem('Виробництво'),
-        makeLinkItem(`/production/products${search}`, 'Каталог продукції'),
-        productLabel
-          ? makeLinkItem(
-              `/production/products/${pathParts[pathParts.length - 2]}${search}`,
-              productLabel,
-              { productLabel },
-            )
-          : makeTextItem(`Продукт ID ${pathParts[pathParts.length - 2]}`),
-        makeTextItem('Загальна комплектація'),
-      ];
-
-    case 'production-product-new-step':
-      return [
-        makeHomeItem(),
-        makeTextItem('Виробництво'),
-        makeLinkItem(`/production/products${search}`, 'Каталог продукції'),
-        productLabel
-          ? makeLinkItem(
-              `/production/products/${pathParts[pathParts.length - 2]}${search}`,
-              productLabel,
-              { productLabel },
-            )
-          : makeTextItem(`Продукт ID ${pathParts[pathParts.length - 2]}`),
-        makeTextItem('Новий етап'),
-      ];
-
-    case 'production-product-step-detail':
-      return [
-        makeHomeItem(),
-        makeTextItem('Виробництво'),
-        makeLinkItem(`/production/products${search}`, 'Каталог продукції'),
-        productLabel
-          ? makeLinkItem(
-              `/production/products/${state?.productId || ''}${search}`,
-              productLabel,
-              { productLabel },
-            )
-          : makeTextItem('Продукт'),
-        makeTextItem(stepLabel || `Етап ID ${currentId}`),
-      ];
-
-    case 'production-product-detail':
-      return [
-        makeHomeItem(),
-        makeTextItem('Виробництво'),
-        makeLinkItem(`/production/products${search}`, 'Каталог продукції'),
-        makeTextItem(productLabel || `Продукт ID ${currentId}`),
-      ];
-
-    case 'production-products':
-      return [
-        makeHomeItem(),
-        makeTextItem('Виробництво'),
-        makeTextItem('Каталог продукції'),
-      ];
-
     case 'orders-register':
       return [
         makeHomeItem(),

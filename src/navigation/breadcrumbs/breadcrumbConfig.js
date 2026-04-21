@@ -2,6 +2,7 @@ import {
   makeHomeItem,
   makeTextItem,
   makeLinkItem,
+  getCurrentId,
 } from './breadcrumbHelpers.jsx';
 
 export const breadcrumbConfig = [
@@ -28,28 +29,97 @@ export const breadcrumbConfig = [
     ],
   },
   {
-    key: 'production-product-material-plan',
     match: (pathname) =>
       pathname.startsWith('/production/products/') &&
       pathname.endsWith('/material-plan'),
+    build: ({ pathname, search, state }) => {
+      const pathParts = pathname.split('/');
+      const productId = pathParts[pathParts.length - 2];
+      const productLabel = state?.productLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Виробництво'),
+        makeLinkItem(`/production/products${search}`, 'Каталог продукції'),
+        productLabel
+          ? makeLinkItem(
+              `/production/products/${productId}${search}`,
+              productLabel,
+              { productLabel },
+            )
+          : makeTextItem(`Продукт ID ${productId}`),
+        makeTextItem('Загальна комплектація'),
+      ];
+    },
   },
   {
-    key: 'production-product-new-step',
     match: (pathname) =>
       pathname.startsWith('/production/products/') &&
       pathname.endsWith('/new-step'),
+    build: ({ pathname, search, state }) => {
+      const pathParts = pathname.split('/');
+      const productId = pathParts[pathParts.length - 2];
+      const productLabel = state?.productLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Виробництво'),
+        makeLinkItem(`/production/products${search}`, 'Каталог продукції'),
+        productLabel
+          ? makeLinkItem(
+              `/production/products/${productId}${search}`,
+              productLabel,
+              { productLabel },
+            )
+          : makeTextItem(`Продукт ID ${productId}`),
+        makeTextItem('Новий етап'),
+      ];
+    },
   },
   {
-    key: 'production-product-step-detail',
     match: (pathname) => pathname.startsWith('/production/product-steps/'),
+    build: ({ pathname, search, state }) => {
+      const currentId = getCurrentId(pathname);
+      const productLabel = state?.productLabel;
+      const stepLabel = state?.stepLabel;
+      const productId = state?.productId || '';
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Виробництво'),
+        makeLinkItem(`/production/products${search}`, 'Каталог продукції'),
+        productLabel
+          ? makeLinkItem(
+              `/production/products/${productId}${search}`,
+              productLabel,
+              { productLabel },
+            )
+          : makeTextItem('Продукт'),
+        makeTextItem(stepLabel || `Етап ID ${currentId}`),
+      ];
+    },
   },
   {
-    key: 'production-product-detail',
     match: (pathname) => pathname.startsWith('/production/products/'),
+    build: ({ pathname, search, state }) => {
+      const currentId = getCurrentId(pathname);
+      const productLabel = state?.productLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Виробництво'),
+        makeLinkItem(`/production/products${search}`, 'Каталог продукції'),
+        makeTextItem(productLabel || `Продукт ID ${currentId}`),
+      ];
+    },
   },
   {
-    key: 'production-products',
     match: (pathname) => pathname === '/production/products',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Виробництво'),
+      makeTextItem('Каталог продукції'),
+    ],
   },
   {
     key: 'orders-register',

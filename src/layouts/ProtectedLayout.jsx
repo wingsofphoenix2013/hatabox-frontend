@@ -1,4 +1,12 @@
-import { Layout, Menu, Divider, Typography, Button, Breadcrumb } from 'antd';
+import {
+  Layout,
+  Menu,
+  Divider,
+  Typography,
+  Button,
+  Breadcrumb,
+  ConfigProvider,
+} from 'antd';
 import {
   HomeOutlined,
   HomeFilled,
@@ -22,7 +30,7 @@ import {
   CloseOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
@@ -31,10 +39,10 @@ function ProtectedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [activeModule, setActiveModule] = useState(null);
-  const [panelManuallyClosed, setPanelManuallyClosed] = useState(false);
   const [hoveredSidebar1Key, setHoveredSidebar1Key] = useState(null);
+  const [previewModule, setPreviewModule] = useState(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [manuallyClosedModule, setManuallyClosedModule] = useState(null);
 
   const sidebar1TopItems = [
     {
@@ -86,8 +94,8 @@ function ProtectedLayout() {
     { key: 'divider-3', type: 'divider' },
 
     {
-      key: '/settings',
-      label: 'Налаштування',
+      key: '/service',
+      label: 'Сервіс',
       outlinedIcon: ToolOutlined,
       filledIcon: ToolFilled,
       type: 'item',
@@ -103,6 +111,47 @@ function ProtectedLayout() {
   };
 
   const moduleConfig = {
+    '/sales': {
+      pages: [],
+      actions: [],
+      dictionaries: [],
+    },
+
+    '/production': {
+      pages: [],
+      actions: [],
+      dictionaries: [
+        {
+          label: 'Каталог продукції',
+          path: '/production/products',
+        },
+        {
+          label: 'Каталог компонентів',
+          path: '/production/components',
+        },
+      ],
+    },
+
+    '/inventory': {
+      pages: [
+        {
+          label: 'Складські залишки',
+          path: '/inventory/stock',
+        },
+        {
+          label: 'Первинне отримання',
+          path: '/inventory/pending-intake',
+        },
+      ],
+      actions: [],
+      dictionaries: [
+        {
+          label: 'Каталог складів',
+          path: '/inventory/warehouses',
+        },
+      ],
+    },
+
     '/orders': {
       pages: [
         {
@@ -123,46 +172,29 @@ function ProtectedLayout() {
         },
       ],
     },
-    '/inventory': {
-      pages: [
-        {
-          label: 'Складські залишки',
-          path: '/inventory/stock',
-        },
-        {
-          label: 'Первинне отримання',
-          path: '/inventory/pending-intake',
-        },
-      ],
-      actions: [],
-      dictionaries: [
-        {
-          label: 'Каталог складів',
-          path: '/inventory/warehouses',
-        },
-      ],
-    },
-    '/sales': { pages: [], actions: [], dictionaries: [] },
-    '/user': { pages: [], actions: [], dictionaries: [] },
-    '/production': {
+
+    '/organizations': {
       pages: [],
       actions: [],
-      dictionaries: [
-        {
-          label: 'Каталог продукції',
-          path: '/production/products',
-        },
-        {
-          label: 'Каталог компонентів',
-          path: '/production/components',
-        },
-      ],
+      dictionaries: [],
     },
-    '/service': { pages: [], actions: [], dictionaries: [] },
 
-    // подготовка под новые пункты sidebar-1
-    '/organizations': { pages: [], actions: [], dictionaries: [] },
-    '/settings': { pages: [], actions: [], dictionaries: [] },
+    '/service': {
+      pages: [],
+      actions: [],
+      dictionaries: [],
+    },
+
+    '/user': {
+      pages: [],
+      actions: [],
+      dictionaries: [],
+    },
+  };
+
+  const getModuleFromPath = (pathname) => {
+    const moduleKeys = Object.keys(moduleConfig);
+    return moduleKeys.find((key) => pathname.startsWith(key)) || null;
   };
 
   const hasModuleContent = (config) => {
@@ -174,36 +206,43 @@ function ProtectedLayout() {
     );
   };
 
-  useEffect(() => {
-    const moduleFromPath = Object.keys(moduleConfig).find((key) =>
-      location.pathname.startsWith(key),
-    );
+  const routeModule = useMemo(
+    () => getModuleFromPath(location.pathname),
+    [location.pathname],
+  );
 
+  useEffect(() => {
     if (location.pathname === '/home') {
-      setActiveModule(null);
+      setPreviewModule(null);
       setPanelOpen(false);
-      setPanelManuallyClosed(false);
+      setManuallyClosedModule(null);
       return;
     }
 
-    if (moduleFromPath) {
-      const config = moduleConfig[moduleFromPath];
-      setActiveModule(moduleFromPath);
-
-      if (!panelManuallyClosed) {
-        setPanelOpen(hasModuleContent(config));
-      }
+    if (location.pathname === '/user') {
+      setPreviewModule('/user');
+      setPanelOpen(false);
+      return;
     }
-  }, [location.pathname, panelManuallyClosed]);
 
-  const mainSelectedKey =
-    location.pathname === '/home'
-      ? '/home'
-      : location.pathname === '/user'
-        ? '/user'
-        : activeModule || '';
+    if (!routeModule) {
+      setPreviewModule(null);
+      setPanelOpen(false);
+      return;
+    }
 
-  const currentConfig = activeModule ? moduleConfig[activeModule] : null;
+    setPreviewModule(routeModule);
+
+    const config = moduleConfig[routeModule];
+    const shouldOpen =
+      hasModuleContent(config) && manuallyClosedModule !== routeModule;
+
+    setPanelOpen(shouldOpen);
+  }, [location.pathname]);
+
+  const currentConfig = previewModule ? moduleConfig[previewModule] : null;
+  const hasContent = hasModuleContent(currentConfig);
+
   const pathParts = location.pathname.split('/');
   const currentId = pathParts[pathParts.length - 1];
 
@@ -588,30 +627,37 @@ function ProtectedLayout() {
     ];
   }
 
-  const hasContent = hasModuleContent(currentConfig);
-
-  const handleMainMenuClick = (key) => {
+  const handleSidebar1Click = (key) => {
     if (key === '/home') {
-      setActiveModule(null);
+      setPreviewModule(null);
       setPanelOpen(false);
-      setPanelManuallyClosed(false);
+      setManuallyClosedModule(null);
       navigate('/home');
       return;
     }
 
     if (key === '/user') {
-      setActiveModule('/user');
+      setPreviewModule('/user');
       setPanelOpen(false);
-      setPanelManuallyClosed(false);
+      setManuallyClosedModule(null);
       navigate('/user');
       return;
     }
 
     const config = moduleConfig[key];
+    const moduleHasContent = hasModuleContent(config);
 
-    setActiveModule(key);
-    setPanelManuallyClosed(false);
-    setPanelOpen(hasModuleContent(config));
+    if (previewModule === key) {
+      if (!panelOpen && moduleHasContent) {
+        setPanelOpen(true);
+        setManuallyClosedModule(null);
+      }
+      return;
+    }
+
+    setPreviewModule(key);
+    setManuallyClosedModule(null);
+    setPanelOpen(moduleHasContent);
   };
 
   const renderSidebar1Item = (item) => {
@@ -627,21 +673,35 @@ function ProtectedLayout() {
       );
     }
 
-    const isActive = mainSelectedKey === item.key;
+    const isActive = routeModule === item.key || location.pathname === item.key;
+    const isPreview = previewModule === item.key;
     const isHovered = hoveredSidebar1Key === item.key;
 
     const IconComponent = isActive ? item.filledIcon : item.outlinedIcon;
 
-    const backgroundColor =
-      isActive || isHovered ? 'rgba(255,255,255,0.12)' : 'transparent';
+    let backgroundColor = 'transparent';
+    let color = '#d1d5db';
 
-    const color = isActive ? '#ffffff' : '#d1d5db';
+    if (isHovered) {
+      backgroundColor = 'rgba(255,255,255,0.08)';
+      color = '#f3f4f6';
+    }
+
+    if (isPreview) {
+      backgroundColor = 'rgba(255,255,255,0.12)';
+      color = '#f9fafb';
+    }
+
+    if (isActive) {
+      backgroundColor = 'rgba(255,255,255,0.18)';
+      color = '#ffffff';
+    }
 
     return (
       <button
         key={item.key}
         type="button"
-        onClick={() => handleMainMenuClick(item.key)}
+        onClick={() => handleSidebar1Click(item.key)}
         onMouseEnter={() => setHoveredSidebar1Key(item.key)}
         onMouseLeave={() => setHoveredSidebar1Key(null)}
         style={{
@@ -649,7 +709,7 @@ function ProtectedLayout() {
           border: 'none',
           background: 'transparent',
           padding: '0 8px',
-          margin: '3px 0',
+          margin: '2px 0',
           cursor: 'pointer',
         }}
       >
@@ -665,7 +725,7 @@ function ProtectedLayout() {
             justifyContent: 'center',
             gap: 4,
             padding: '8px 4px',
-            transition: 'background-color 0.18s ease',
+            transition: 'background-color 0.18s ease, color 0.18s ease',
           }}
         >
           <IconComponent style={{ fontSize: 24, lineHeight: 1 }} />
@@ -685,6 +745,26 @@ function ProtectedLayout() {
     );
   };
 
+  const sidebar2SelectedKeys = useMemo(() => {
+    if (!currentConfig) return [];
+
+    if (currentConfig.pages.some((item) => item.path === location.pathname)) {
+      return [location.pathname];
+    }
+
+    if (currentConfig.actions.some((item) => item.path === location.pathname)) {
+      return [location.pathname];
+    }
+
+    if (
+      currentConfig.dictionaries.some((item) => item.path === location.pathname)
+    ) {
+      return [location.pathname];
+    }
+
+    return [];
+  }, [currentConfig, location.pathname]);
+
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden' }}>
       <Sider
@@ -692,10 +772,7 @@ function ProtectedLayout() {
         style={{
           height: '100vh',
           background: '#1f2937',
-          position: 'relative',
           flexShrink: 0,
-          display: 'flex',
-          flexDirection: 'column',
         }}
       >
         <div
@@ -714,7 +791,7 @@ function ProtectedLayout() {
         </div>
       </Sider>
 
-      {panelOpen && hasContent && (
+      {panelOpen && hasContent && previewModule !== '/user' && (
         <Sider
           width={260}
           style={{
@@ -726,97 +803,98 @@ function ProtectedLayout() {
             flexShrink: 0,
           }}
         >
-          <div style={{ marginBottom: 8, textAlign: 'right' }}>
-            <Button
-              type="text"
-              icon={<CloseOutlined />}
-              onClick={() => {
-                setPanelOpen(false);
-                setPanelManuallyClosed(true);
-              }}
-              style={{ color: '#d1d5db' }}
-            />
-          </div>
-
-          {currentConfig.pages.length > 0 && (
-            <>
-              <Text strong style={{ color: '#fff', paddingLeft: 12 }}>
-                Сторінки
-              </Text>
-              <Menu
-                mode="inline"
-                theme="dark"
-                style={{ background: '#2a3441', borderInlineEnd: 'none' }}
-                selectedKeys={
-                  currentConfig.pages.some(
-                    (item) => item.path === location.pathname,
-                  )
-                    ? [location.pathname]
-                    : []
-                }
-                onClick={({ key }) => navigate(key)}
-                items={currentConfig.pages.map((item, i) => ({
-                  key: item.path || 'p' + i,
-                  icon: <DatabaseOutlined />,
-                  label: item.label || item,
-                }))}
+          <ConfigProvider
+            theme={{
+              components: {
+                Menu: {
+                  darkItemBg: '#2a3441',
+                  darkSubMenuItemBg: '#2a3441',
+                  darkItemHoverBg: 'rgba(255,255,255,0.06)',
+                  darkItemSelectedBg: '#475569',
+                  darkItemSelectedColor: '#ffffff',
+                  darkItemColor: '#d1d5db',
+                  darkDangerItemSelectedBg: '#475569',
+                  activeBarBorderWidth: 0,
+                  itemBorderRadius: 8,
+                  itemMarginBlock: 4,
+                },
+              },
+            }}
+          >
+            <div style={{ marginBottom: 8, textAlign: 'right' }}>
+              <Button
+                type="text"
+                icon={<CloseOutlined />}
+                onClick={() => {
+                  setPanelOpen(false);
+                  setManuallyClosedModule(previewModule);
+                }}
+                style={{ color: '#d1d5db' }}
               />
-              <Divider style={{ borderColor: 'rgba(255,255,255,0.12)' }} />
-            </>
-          )}
+            </div>
 
-          {currentConfig.actions.length > 0 && (
-            <>
-              <Text strong style={{ color: '#fff', paddingLeft: 12 }}>
-                Дії
-              </Text>
-              <Menu
-                mode="inline"
-                theme="dark"
-                style={{ background: '#2a3441', borderInlineEnd: 'none' }}
-                selectedKeys={
-                  currentConfig.actions.some(
-                    (item) => item.path === location.pathname,
-                  )
-                    ? [location.pathname]
-                    : []
-                }
-                onClick={({ key }) => navigate(key)}
-                items={currentConfig.actions.map((item, i) => ({
-                  key: item.path || 'a' + i,
-                  icon: <FileAddOutlined />,
-                  label: item.label || item,
-                }))}
-              />
-              <Divider style={{ borderColor: 'rgba(255,255,255,0.12)' }} />
-            </>
-          )}
+            {currentConfig.pages.length > 0 && (
+              <>
+                <Text strong style={{ color: '#fff', paddingLeft: 12 }}>
+                  Сторінки
+                </Text>
+                <Menu
+                  mode="inline"
+                  theme="dark"
+                  style={{ background: '#2a3441', borderInlineEnd: 'none' }}
+                  selectedKeys={sidebar2SelectedKeys}
+                  onClick={({ key }) => navigate(key)}
+                  items={currentConfig.pages.map((item, i) => ({
+                    key: item.path || 'p' + i,
+                    icon: <DatabaseOutlined />,
+                    label: item.label || item,
+                  }))}
+                />
+                <Divider style={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+              </>
+            )}
 
-          {currentConfig.dictionaries.length > 0 && (
-            <>
-              <Text strong style={{ color: '#fff', paddingLeft: 12 }}>
-                Довідники
-              </Text>
-              <Menu
-                mode="inline"
-                theme="dark"
-                style={{ background: '#2a3441', borderInlineEnd: 'none' }}
-                selectedKeys={
-                  currentConfig.dictionaries.some(
-                    (item) => item.path === location.pathname,
-                  )
-                    ? [location.pathname]
-                    : []
-                }
-                onClick={({ key }) => navigate(key)}
-                items={currentConfig.dictionaries.map((item, i) => ({
-                  key: item.path || 'd' + i,
-                  icon: <ReadOutlined />,
-                  label: item.label || item,
-                }))}
-              />
-            </>
-          )}
+            {currentConfig.actions.length > 0 && (
+              <>
+                <Text strong style={{ color: '#fff', paddingLeft: 12 }}>
+                  Дії
+                </Text>
+                <Menu
+                  mode="inline"
+                  theme="dark"
+                  style={{ background: '#2a3441', borderInlineEnd: 'none' }}
+                  selectedKeys={sidebar2SelectedKeys}
+                  onClick={({ key }) => navigate(key)}
+                  items={currentConfig.actions.map((item, i) => ({
+                    key: item.path || 'a' + i,
+                    icon: <FileAddOutlined />,
+                    label: item.label || item,
+                  }))}
+                />
+                <Divider style={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+              </>
+            )}
+
+            {currentConfig.dictionaries.length > 0 && (
+              <>
+                <Text strong style={{ color: '#fff', paddingLeft: 12 }}>
+                  Довідники
+                </Text>
+                <Menu
+                  mode="inline"
+                  theme="dark"
+                  style={{ background: '#2a3441', borderInlineEnd: 'none' }}
+                  selectedKeys={sidebar2SelectedKeys}
+                  onClick={({ key }) => navigate(key)}
+                  items={currentConfig.dictionaries.map((item, i) => ({
+                    key: item.path || 'd' + i,
+                    icon: <ReadOutlined />,
+                    label: item.label || item,
+                  }))}
+                />
+              </>
+            )}
+          </ConfigProvider>
         </Sider>
       )}
 

@@ -649,6 +649,7 @@ function ProtectedLayout() {
           border: 'none',
           background: 'transparent',
           padding: '0 8px',
+          margin: '3px 0',
           cursor: 'pointer',
         }}
       >

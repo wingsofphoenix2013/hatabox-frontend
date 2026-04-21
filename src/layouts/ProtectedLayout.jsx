@@ -1,12 +1,21 @@
 import { Layout, Menu, Divider, Typography, Button, Breadcrumb } from 'antd';
 import {
   HomeOutlined,
-  ShoppingCartOutlined,
-  BuildOutlined,
+  HomeFilled,
+  ShopOutlined,
+  ShopFilled,
+  ApiOutlined,
+  ApiFilled,
   AppstoreOutlined,
+  AppstoreFilled,
   ShoppingOutlined,
+  ShoppingFilled,
+  BankOutlined,
+  BankFilled,
   ToolOutlined,
-  UserOutlined,
+  ToolFilled,
+  IdcardOutlined,
+  IdcardFilled,
   DatabaseOutlined,
   FileAddOutlined,
   ReadOutlined,
@@ -25,19 +34,73 @@ function ProtectedLayout() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [activeModule, setActiveModule] = useState(null);
   const [panelManuallyClosed, setPanelManuallyClosed] = useState(false);
+  const [hoveredSidebar1Key, setHoveredSidebar1Key] = useState(null);
 
-  const mainMenuItems = [
-    { key: '/home', icon: <HomeOutlined />, label: 'Головна' },
-    { key: '/sales', icon: <ShoppingCartOutlined />, label: 'Продажі' },
-    { key: '/production', icon: <BuildOutlined />, label: 'Виробництво' },
-    { key: '/inventory', icon: <AppstoreOutlined />, label: 'Склад' },
-    { key: '/orders', icon: <ShoppingOutlined />, label: 'Закупівлі' },
-    { key: '/service', icon: <ToolOutlined />, label: 'Сервіс' },
+  const sidebar1TopItems = [
+    {
+      key: '/home',
+      label: 'Головна',
+      outlinedIcon: HomeOutlined,
+      filledIcon: HomeFilled,
+      type: 'item',
+    },
+    { key: 'divider-1', type: 'divider' },
+
+    {
+      key: '/sales',
+      label: 'Продажі',
+      outlinedIcon: ShopOutlined,
+      filledIcon: ShopFilled,
+      type: 'item',
+    },
+    {
+      key: '/production',
+      label: 'Виробництво',
+      outlinedIcon: ApiOutlined,
+      filledIcon: ApiFilled,
+      type: 'item',
+    },
+    {
+      key: '/inventory',
+      label: 'Склад',
+      outlinedIcon: AppstoreOutlined,
+      filledIcon: AppstoreFilled,
+      type: 'item',
+    },
+    {
+      key: '/orders',
+      label: 'Закупівлі',
+      outlinedIcon: ShoppingOutlined,
+      filledIcon: ShoppingFilled,
+      type: 'item',
+    },
+    { key: 'divider-2', type: 'divider' },
+
+    {
+      key: '/organizations',
+      label: 'Організації',
+      outlinedIcon: BankOutlined,
+      filledIcon: BankFilled,
+      type: 'item',
+    },
+    { key: 'divider-3', type: 'divider' },
+
+    {
+      key: '/settings',
+      label: 'Налаштування',
+      outlinedIcon: ToolOutlined,
+      filledIcon: ToolFilled,
+      type: 'item',
+    },
   ];
 
-  const bottomMenuItems = [
-    { key: '/user', icon: <UserOutlined />, label: 'Користувач' },
-  ];
+  const sidebar1BottomItem = {
+    key: '/user',
+    label: 'Користувач',
+    outlinedIcon: IdcardOutlined,
+    filledIcon: IdcardFilled,
+    type: 'item',
+  };
 
   const moduleConfig = {
     '/orders': {
@@ -96,6 +159,10 @@ function ProtectedLayout() {
       ],
     },
     '/service': { pages: [], actions: [], dictionaries: [] },
+
+    // подготовка под новые пункты sidebar-1
+    '/organizations': { pages: [], actions: [], dictionaries: [] },
+    '/settings': { pages: [], actions: [], dictionaries: [] },
   };
 
   const hasModuleContent = (config) => {
@@ -130,7 +197,11 @@ function ProtectedLayout() {
   }, [location.pathname, panelManuallyClosed]);
 
   const mainSelectedKey =
-    location.pathname === '/home' ? '/home' : activeModule || '';
+    location.pathname === '/home'
+      ? '/home'
+      : location.pathname === '/user'
+        ? '/user'
+        : activeModule || '';
 
   const currentConfig = activeModule ? moduleConfig[activeModule] : null;
   const pathParts = location.pathname.split('/');
@@ -519,12 +590,20 @@ function ProtectedLayout() {
 
   const hasContent = hasModuleContent(currentConfig);
 
-  const handleMainMenuClick = ({ key }) => {
+  const handleMainMenuClick = (key) => {
     if (key === '/home') {
       setActiveModule(null);
       setPanelOpen(false);
       setPanelManuallyClosed(false);
       navigate('/home');
+      return;
+    }
+
+    if (key === '/user') {
+      setActiveModule('/user');
+      setPanelOpen(false);
+      setPanelManuallyClosed(false);
+      navigate('/user');
       return;
     }
 
@@ -535,35 +614,102 @@ function ProtectedLayout() {
     setPanelOpen(hasModuleContent(config));
   };
 
+  const renderSidebar1Item = (item) => {
+    if (item.type === 'divider') {
+      return (
+        <div
+          key={item.key}
+          style={{
+            margin: '10px 12px',
+            borderTop: '1px dotted rgba(255,255,255,0.28)',
+          }}
+        />
+      );
+    }
+
+    const isActive = mainSelectedKey === item.key;
+    const isHovered = hoveredSidebar1Key === item.key;
+
+    const IconComponent = isActive ? item.filledIcon : item.outlinedIcon;
+
+    const backgroundColor =
+      isActive || isHovered ? 'rgba(255,255,255,0.12)' : 'transparent';
+
+    const color = isActive ? '#ffffff' : '#d1d5db';
+
+    return (
+      <button
+        key={item.key}
+        type="button"
+        onClick={() => handleMainMenuClick(item.key)}
+        onMouseEnter={() => setHoveredSidebar1Key(item.key)}
+        onMouseLeave={() => setHoveredSidebar1Key(null)}
+        style={{
+          width: '100%',
+          border: 'none',
+          background: 'transparent',
+          padding: '0 8px',
+          cursor: 'pointer',
+        }}
+      >
+        <div
+          style={{
+            minHeight: 72,
+            borderRadius: 10,
+            background: backgroundColor,
+            color,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4,
+            padding: '8px 4px',
+            transition: 'background-color 0.18s ease',
+          }}
+        >
+          <IconComponent style={{ fontSize: 24, lineHeight: 1 }} />
+          <div
+            style={{
+              fontSize: 10,
+              lineHeight: 1.15,
+              textAlign: 'center',
+              wordBreak: 'break-word',
+              maxWidth: '100%',
+            }}
+          >
+            {item.label}
+          </div>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden' }}>
       <Sider
-        width={220}
+        width={92}
         style={{
           height: '100vh',
           background: '#1f2937',
           position: 'relative',
           flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
-        <Menu
-          theme="dark"
-          mode="inline"
-          style={{ background: '#1f2937', borderInlineEnd: 'none' }}
-          selectedKeys={[mainSelectedKey]}
-          onClick={handleMainMenuClick}
-          items={mainMenuItems}
-        />
+        <div
+          style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '10px 0',
+          }}
+        >
+          <div>{sidebar1TopItems.map((item) => renderSidebar1Item(item))}</div>
 
-        <div style={{ position: 'absolute', bottom: 0, width: '100%' }}>
-          <Menu
-            theme="dark"
-            mode="inline"
-            style={{ background: '#1f2937', borderInlineEnd: 'none' }}
-            selectedKeys={[activeModule === '/user' ? '/user' : '']}
-            onClick={handleMainMenuClick}
-            items={bottomMenuItems}
-          />
+          <div style={{ marginTop: 'auto' }}>
+            {renderSidebar1Item(sidebar1BottomItem)}
+          </div>
         </div>
       </Sider>
 

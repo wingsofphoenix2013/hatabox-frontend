@@ -222,6 +222,7 @@ function ProtectedLayout() {
 
   const routeModule = getModuleFromPath(location.pathname);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (location.pathname === '/home') {
       setPreviewModule(null);
@@ -245,11 +246,10 @@ function ProtectedLayout() {
     setPreviewModule(routeModule);
 
     const config = moduleConfig[routeModule];
-    const shouldOpen =
-      hasModuleContent(config) && manuallyClosedModule !== routeModule;
+    const shouldOpen = hasModuleContent(config);
 
     setPanelOpen(shouldOpen);
-  }, [location.pathname, routeModule, manuallyClosedModule]);
+  }, [location.pathname, routeModule]);
 
   useEffect(() => {
     fetchPendingIntakeStatus();

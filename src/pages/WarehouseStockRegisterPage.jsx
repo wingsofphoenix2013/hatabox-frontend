@@ -242,6 +242,11 @@ function WarehouseStockRegisterPage() {
           <Flex vertical gap={2} style={{ minWidth: 0 }}>
             <Link
               to={`/inventory/stock/${record.inventory_item_id}`}
+              state={{
+                inventoryItemLabel: record.inventory_item_name
+                  ? `inv item - ${record.inventory_item_name}`
+                  : undefined,
+              }}
               style={{
                 fontWeight: 600,
                 lineHeight: 1.3,

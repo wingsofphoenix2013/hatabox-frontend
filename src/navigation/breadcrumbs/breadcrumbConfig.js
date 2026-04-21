@@ -225,6 +225,28 @@ export const breadcrumbConfig = [
   },
 
   {
+    match: (pathname) => pathname === '/inventory/stock',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Склад'),
+      makeTextItem('Складські залишки'),
+    ],
+  },
+  {
+    match: (pathname) => pathname.startsWith('/inventory/stock/'),
+    build: ({ pathname, state }) => {
+      const currentId = getCurrentId(pathname);
+      const inventoryItemLabel = state?.inventoryItemLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Склад'),
+        makeLinkItem('/inventory/stock', 'Складські залишки'),
+        makeTextItem(inventoryItemLabel || `Inv item ID ${currentId}`),
+      ];
+    },
+  },
+  {
     match: (pathname) => pathname === '/inventory/warehouses',
     build: () => [
       makeHomeItem(),

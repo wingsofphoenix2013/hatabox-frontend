@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SwapOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -125,7 +126,7 @@ function WarehouseStockDetailPage() {
               <Flex vertical gap={8}>
                 <Button
                   block
-                  type="primary"
+                  icon={<SwapOutlined style={{ color: '#1677ff' }} />}
                   onClick={() => setIsMovementDrawerOpen(true)}
                 >
                   Переміщення товару

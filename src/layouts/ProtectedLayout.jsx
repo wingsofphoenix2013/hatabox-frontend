@@ -31,7 +31,7 @@ import {
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { buildBreadcrumbs } from '../navigation/breadcrumbs/buildBreadcrumbs';
+import { buildBreadcrumbs } from '../navigation/breadcrumbs/buildBreadcrumbs.jsx';
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;

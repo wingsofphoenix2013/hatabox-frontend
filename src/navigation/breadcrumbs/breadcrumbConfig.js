@@ -9,8 +9,7 @@ export const breadcrumbConfig = [
   {
     match: (pathname) => pathname.startsWith('/production/components/'),
     build: ({ pathname, search }) => {
-      const pathParts = pathname.split('/');
-      const currentId = pathParts[pathParts.length - 1];
+      const currentId = getCurrentId(pathname);
 
       return [
         makeHomeItem(),
@@ -121,48 +120,121 @@ export const breadcrumbConfig = [
       makeTextItem('Каталог продукції'),
     ],
   },
+
   {
-    key: 'orders-register',
     match: (pathname) => pathname === '/orders/register',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Закупівлі'),
+      makeTextItem('Реєстр замовлень'),
+    ],
   },
   {
-    key: 'orders-new',
     match: (pathname) => pathname === '/orders/new',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Закупівлі'),
+      makeTextItem('Створити замовлення'),
+    ],
   },
   {
-    key: 'orders-vendors',
     match: (pathname) => pathname === '/orders/vendors',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Закупівлі'),
+      makeTextItem('Каталог постачальників'),
+    ],
   },
   {
-    key: 'orders-vendors-new',
     match: (pathname) => pathname === '/orders/vendors/new',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Закупівлі'),
+      makeLinkItem('/orders/vendors', 'Каталог постачальників'),
+      makeTextItem('Новий постачальник'),
+    ],
   },
   {
-    key: 'orders-vendor-detail-or-edit',
     match: (pathname) => pathname.startsWith('/orders/vendors/'),
+    build: ({ pathname, state }) => {
+      const currentId = getCurrentId(pathname);
+      const isVendorEditPage = pathname.endsWith('/edit');
+      const pathParts = pathname.split('/');
+      const vendorId = isVendorEditPage
+        ? pathParts[pathParts.length - 2]
+        : currentId;
+      const vendorLabel = state?.vendorLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Закупівлі'),
+        makeLinkItem('/orders/vendors', 'Каталог постачальників'),
+        makeLinkItem(
+          `/orders/vendors/${vendorId}`,
+          vendorLabel || `Постачальник ID ${vendorId}`,
+          { vendorLabel },
+        ),
+        ...(isVendorEditPage ? [makeTextItem('Редагування')] : []),
+      ];
+    },
   },
   {
-    key: 'orders-edit',
     match: (pathname) =>
       pathname.startsWith('/orders/') && pathname.endsWith('/edit'),
+    build: ({ pathname, state }) => {
+      const pathParts = pathname.split('/');
+      const orderId = pathParts[pathParts.length - 2];
+      const orderLabel = state?.orderLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Закупівлі'),
+        makeLinkItem('/orders/register', 'Реєстр замовлень'),
+        makeLinkItem(
+          `/orders/${orderId}`,
+          orderLabel || `Замовлення ID ${orderId}`,
+        ),
+        makeTextItem('Редагування'),
+      ];
+    },
   },
   {
-    key: 'orders-detail',
     match: (pathname) => {
       const pathParts = pathname.split('/');
       return pathname.startsWith('/orders/') && pathParts.length === 3;
     },
+    build: ({ pathname, state }) => {
+      const currentId = getCurrentId(pathname);
+      const orderLabel = state?.orderLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Закупівлі'),
+        makeLinkItem('/orders/register', 'Реєстр замовлень'),
+        makeTextItem(orderLabel || `Замовлення ID ${currentId}`),
+      ];
+    },
   },
   {
-    key: 'orders-fallback',
     match: (pathname) => pathname.startsWith('/orders/'),
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Закупівлі'),
+      makeTextItem('Деталі замовлення'),
+    ],
   },
+
   {
-    key: 'inventory-warehouses',
     match: (pathname) => pathname === '/inventory/warehouses',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Склад'),
+      makeTextItem('Каталог складів'),
+    ],
   },
+
   {
-    key: 'user',
     match: (pathname) => pathname === '/user',
+    build: () => [makeHomeItem(), makeTextItem('Користувач')],
   },
 ];

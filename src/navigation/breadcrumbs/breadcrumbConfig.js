@@ -1,11 +1,31 @@
+import {
+  makeHomeItem,
+  makeTextItem,
+  makeLinkItem,
+} from './breadcrumbHelpers.jsx';
+
 export const breadcrumbConfig = [
   {
-    key: 'production-component-detail',
     match: (pathname) => pathname.startsWith('/production/components/'),
+    build: ({ pathname, search }) => {
+      const pathParts = pathname.split('/');
+      const currentId = pathParts[pathParts.length - 1];
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Виробництво'),
+        makeLinkItem(`/production/components${search}`, 'Каталог компонентів'),
+        makeTextItem(`Компонент ID ${currentId}`),
+      ];
+    },
   },
   {
-    key: 'production-components',
     match: (pathname) => pathname === '/production/components',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Виробництво'),
+      makeTextItem('Каталог компонентів'),
+    ],
   },
   {
     key: 'production-product-material-plan',

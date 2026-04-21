@@ -1,44 +1,19 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
 import { breadcrumbConfig } from './breadcrumbConfig';
-
-const breadcrumbLinkStyle = {
-  textDecoration: 'underline',
-};
-
-function makeHomeItem() {
-  return {
-    title: (
-      <Link to="/home" style={breadcrumbLinkStyle}>
-        Головна
-      </Link>
-    ),
-  };
-}
-
-function makeTextItem(title) {
-  return { title };
-}
-
-function makeLinkItem(to, title, state) {
-  return {
-    title: (
-      <Link to={to} style={breadcrumbLinkStyle} state={state}>
-        {title}
-      </Link>
-    ),
-  };
-}
-
-function getCurrentId(pathname) {
-  const pathParts = pathname.split('/');
-  return pathParts[pathParts.length - 1];
-}
+import {
+  makeHomeItem,
+  makeTextItem,
+  makeLinkItem,
+  getCurrentId,
+} from './breadcrumbHelpers.jsx';
 
 export function buildBreadcrumbs(location) {
   const { pathname, search, state } = location;
 
   const matchedEntry = breadcrumbConfig.find((entry) => entry.match(pathname));
+
+  if (matchedEntry?.build) {
+    return matchedEntry.build({ pathname, search, state });
+  }
 
   const productLabel = state?.productLabel;
   const stepLabel = state?.stepLabel;
@@ -54,21 +29,6 @@ export function buildBreadcrumbs(location) {
   }
 
   switch (matchedEntry.key) {
-    case 'production-component-detail':
-      return [
-        makeHomeItem(),
-        makeTextItem('Виробництво'),
-        makeLinkItem(`/production/components${search}`, 'Каталог компонентів'),
-        makeTextItem(`Компонент ID ${currentId}`),
-      ];
-
-    case 'production-components':
-      return [
-        makeHomeItem(),
-        makeTextItem('Виробництво'),
-        makeTextItem('Каталог компонентів'),
-      ];
-
     case 'production-product-material-plan':
       return [
         makeHomeItem(),

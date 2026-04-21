@@ -243,9 +243,7 @@ function WarehouseStockRegisterPage() {
             <Link
               to={`/inventory/stock/${record.inventory_item_id}`}
               state={{
-                inventoryItemLabel: record.inventory_item_name
-                  ? `inv item - ${record.inventory_item_name}`
-                  : undefined,
+                inventoryItemLabel: record.inventory_item_name || undefined,
               }}
               style={{
                 fontWeight: 600,

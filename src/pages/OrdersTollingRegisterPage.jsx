@@ -53,6 +53,12 @@ const ORGANIZATION_TYPE_LABELS = {
   charity: 'Благодійна організація',
 };
 
+const ORGANIZATION_TYPE_OPTIONS = [
+  { value: 'military', label: 'Військова частина' },
+  { value: 'commercial', label: 'Комерційна організація' },
+  { value: 'charity', label: 'Благодійна організація' },
+];
+
 function OrdersTollingRegisterPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -67,6 +73,10 @@ function OrdersTollingRegisterPage() {
     searchParams.get('organization')
       ? Number(searchParams.get('organization'))
       : null,
+  );
+
+  const [selectedOrganizationType, setSelectedOrganizationType] = useState(
+    searchParams.get('organization_type') || null,
   );
   const [selectedStatuses, setSelectedStatuses] = useState(
     searchParams.getAll('status'),
@@ -117,6 +127,10 @@ function OrdersTollingRegisterPage() {
 
     if (selectedOrganization) {
       params.set('organization', String(selectedOrganization));
+    }
+
+    if (selectedOrganizationType) {
+      params.set('organization_type', selectedOrganizationType);
     }
 
     selectedStatuses.forEach((status) => {
@@ -369,11 +383,25 @@ function OrdersTollingRegisterPage() {
 
             <Divider type="vertical" style={{ height: 28 }} />
 
+            <Input
+              placeholder="Пошук (номер / організація)"
+              allowClear
+              prefix={<SearchOutlined />}
+              style={{ width: 220 }}
+              value={searchText}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+
+            <Divider type="vertical" style={{ height: 28 }} />
+
             <Select
               allowClear
               showSearch
               optionFilterProp="label"
-              placeholder="Організація"
+              placeholder="Перелік організацій"
               style={{ minWidth: 260 }}
               loading={organizationsLoading}
               value={selectedOrganization}
@@ -381,7 +409,28 @@ function OrdersTollingRegisterPage() {
                 setSelectedOrganization(value ?? null);
                 setCurrentPage(1);
               }}
-              options={organizations}
+              options={
+                selectedOrganizationType
+                  ? organizations.filter(
+                      (item) => item.type === selectedOrganizationType,
+                    )
+                  : organizations
+              }
+            />
+
+            <Divider type="vertical" style={{ height: 28 }} />
+
+            <Select
+              allowClear
+              placeholder="Тип організацій"
+              style={{ minWidth: 240 }}
+              value={selectedOrganizationType}
+              onChange={(value) => {
+                setSelectedOrganizationType(value ?? null);
+                setSelectedOrganization(null);
+                setCurrentPage(1);
+              }}
+              options={ORGANIZATION_TYPE_OPTIONS}
             />
 
             <Divider type="vertical" style={{ height: 28 }} />
@@ -399,20 +448,6 @@ function OrdersTollingRegisterPage() {
                 setCurrentPage(1);
               }}
               options={TOLLING_STATUS_OPTIONS}
-            />
-
-            <Divider type="vertical" style={{ height: 28 }} />
-
-            <Input
-              placeholder="Пошук"
-              allowClear
-              prefix={<SearchOutlined />}
-              style={{ width: 220 }}
-              value={searchText}
-              onChange={(e) => {
-                setSearchText(e.target.value);
-                setCurrentPage(1);
-              }}
             />
 
             <Divider type="vertical" style={{ height: 28 }} />

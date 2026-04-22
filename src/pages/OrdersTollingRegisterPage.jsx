@@ -21,7 +21,7 @@ import {
   Typography,
   message,
 } from 'antd';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
@@ -46,6 +46,12 @@ const TOLLING_STATUS_OPTIONS = [
   { value: 'active', label: 'В роботі' },
   { value: 'completed', label: 'Завершено' },
 ];
+
+const ORGANIZATION_TYPE_LABELS = {
+  military: 'Військова частина',
+  commercial: 'Комерційна організація',
+  charity: 'Благодійна організація',
+};
 
 function OrdersTollingRegisterPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -151,6 +157,7 @@ function OrdersTollingRegisterPage() {
         results.map((item) => ({
           value: item.id,
           label: item.name,
+          type: item.type || null,
         })),
       );
     } catch (err) {
@@ -217,7 +224,29 @@ function OrdersTollingRegisterPage() {
     }
   };
 
+  const getOrganizationTypeById = (organizationId) => {
+    const matchedOrganization = organizations.find(
+      (item) => item.value === organizationId,
+    );
+
+    return matchedOrganization?.type || null;
+  };
+
   const columns = [
+    {
+      title: 'Номер документа',
+      dataIndex: 'order_no',
+      key: 'order_no',
+      width: 220,
+      render: (value, record) => (
+        <Link
+          to={`/orders/tolling/${record.id}`}
+          state={{ tollingOrderLabel: record.order_no }}
+        >
+          {value || '—'}
+        </Link>
+      ),
+    },
     {
       title: 'Дата документа',
       dataIndex: 'created_at',
@@ -226,18 +255,26 @@ function OrdersTollingRegisterPage() {
       render: (value) => formatDateDisplay(value),
     },
     {
-      title: 'Номер документа',
-      dataIndex: 'order_no',
-      key: 'order_no',
-      width: 220,
-      render: (value) => value || '—',
-    },
-    {
       title: 'Назва організації',
       dataIndex: 'organization_name',
       key: 'organization_name',
-      width: 320,
-      render: (value) => value || '—',
+      width: 420,
+      render: (value, record) => {
+        const organizationType = getOrganizationTypeById(record.organization);
+        const organizationTypeLabel = organizationType
+          ? ORGANIZATION_TYPE_LABELS[organizationType]
+          : null;
+
+        return (
+          <Flex align="center" gap={8} wrap>
+            <span>{value || '—'}</span>
+
+            {organizationTypeLabel && (
+              <Tag color="default">{organizationTypeLabel}</Tag>
+            )}
+          </Flex>
+        );
+      },
     },
     {
       title: 'Статус',

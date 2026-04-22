@@ -113,6 +113,7 @@ function OrdersTollingRegisterPage() {
     currentPage,
     searchText,
     selectedOrganization,
+    selectedOrganizationType,
     selectedStatuses,
     createdAtFrom,
     createdAtTo,
@@ -153,6 +154,7 @@ function OrdersTollingRegisterPage() {
   }, [
     searchText,
     selectedOrganization,
+    selectedOrganizationType,
     selectedStatuses,
     createdAtFrom,
     createdAtTo,
@@ -200,7 +202,11 @@ function OrdersTollingRegisterPage() {
       }
 
       if (selectedOrganization) {
-        params.append('organization', String(selectedOrganization));
+        params.set('organization', String(selectedOrganization));
+      }
+
+      if (selectedOrganizationType) {
+        params.set('organization_type', selectedOrganizationType);
       }
 
       selectedStatuses.forEach((status) => {
@@ -409,13 +415,7 @@ function OrdersTollingRegisterPage() {
                 setSelectedOrganization(value ?? null);
                 setCurrentPage(1);
               }}
-              options={
-                selectedOrganizationType
-                  ? organizations.filter(
-                      (item) => item.type === selectedOrganizationType,
-                    )
-                  : organizations
-              }
+              options={organizations}
             />
 
             <Divider type="vertical" style={{ height: 28 }} />
@@ -427,7 +427,6 @@ function OrdersTollingRegisterPage() {
               value={selectedOrganizationType}
               onChange={(value) => {
                 setSelectedOrganizationType(value ?? null);
-                setSelectedOrganization(null);
                 setCurrentPage(1);
               }}
               options={ORGANIZATION_TYPE_OPTIONS}

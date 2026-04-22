@@ -515,12 +515,7 @@ function OrdersTollingRegisterPage() {
       <OrderTollingCreateDrawer
         open={isCreateDrawerOpen}
         onClose={() => setIsCreateDrawerOpen(false)}
-        organizations={organizations.map((item) => ({
-          value: item.id,
-          label: item.name,
-          type: item.type,
-          legal_name: item.legal_name,
-        }))}
+        organizations={organizations}
       />
     </div>
   );

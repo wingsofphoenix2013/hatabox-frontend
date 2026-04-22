@@ -600,7 +600,7 @@ function OrderTollingCreateDrawer({
           }}
         >
           <Flex vertical gap={14}>
-            <div style={{ flex: '1 1 320px' }}>
+            <div>
               <Text style={compactLabelStyle}>Організація</Text>
               <Select
                 showSearch

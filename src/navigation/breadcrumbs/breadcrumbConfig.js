@@ -130,6 +130,14 @@ export const breadcrumbConfig = [
     ],
   },
   {
+    match: (pathname) => pathname === '/orders/tolling',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Закупівлі'),
+      makeTextItem('Давальчі поставки'),
+    ],
+  },
+  {
     match: (pathname) => pathname === '/orders/new',
     build: () => [
       makeHomeItem(),

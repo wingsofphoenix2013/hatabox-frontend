@@ -161,6 +161,10 @@ function ProtectedLayout() {
           label: 'Реєстр замовлень',
           path: '/orders/register',
         },
+        {
+          label: 'Давальчі поставки',
+          path: '/orders/tolling',
+        },
       ],
       actions: [
         {

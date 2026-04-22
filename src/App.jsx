@@ -18,6 +18,7 @@ import WarehouseStockDetailPage from './pages/WarehouseStockDetailPage';
 
 import OrderDetailPage from './pages/OrderDetailPage';
 import OrdersRegisterPage from './pages/OrdersRegisterPage';
+import OrdersTollingRegisterPage from './pages/OrdersTollingRegisterPage';
 import OrderCreatePage from './pages/OrderCreatePage';
 import OrderEditPage from './pages/OrderEditPage';
 
@@ -96,6 +97,10 @@ function App() {
 
             <Route path="/orders/register" element={<OrdersRegisterPage />} />
             <Route path="/orders/new" element={<OrderCreatePage />} />
+            <Route
+              path="/orders/tolling"
+              element={<OrdersTollingRegisterPage />}
+            />
 
             <Route path="/orders/vendors" element={<VendorsPage />} />
             <Route path="/orders/vendors/new" element={<VendorCreatePage />} />

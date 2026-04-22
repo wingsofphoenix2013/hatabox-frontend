@@ -11,7 +11,6 @@ import {
   Card,
   DatePicker,
   Divider,
-  Drawer,
   Dropdown,
   Flex,
   Input,
@@ -23,6 +22,7 @@ import {
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import OrderTollingCreateDrawer from '../components/OrderTollingCreateDrawer';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
 
@@ -511,17 +511,14 @@ function OrdersTollingRegisterPage() {
         </Card>
       </Flex>
 
-      <Drawer
-        title="Додати передачу"
-        placement="right"
-        size="large"
-        onClose={() => setIsCreateDrawerOpen(false)}
+      <OrderTollingCreateDrawer
         open={isCreateDrawerOpen}
-      >
-        <Text type="secondary">
-          Форма створення передачі буде додана на наступному етапі.
-        </Text>
-      </Drawer>
+        onClose={() => setIsCreateDrawerOpen(false)}
+        organizations={organizations}
+        onCompleted={async () => {
+          await loadOrders(currentPage);
+        }}
+      />
     </div>
   );
 }

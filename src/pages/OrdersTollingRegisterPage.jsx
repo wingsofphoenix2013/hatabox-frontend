@@ -173,6 +173,7 @@ function OrdersTollingRegisterPage() {
         results.map((item) => ({
           value: item.id,
           label: item.name,
+          legalName: item.legal_name || item.name || '',
           type: item.type || null,
         })),
       );

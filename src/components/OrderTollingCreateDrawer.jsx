@@ -123,7 +123,7 @@ function OrderTollingCreateDrawer({
       value: item.value ?? item.id,
       label: item.label ?? item.name,
       type: item.type || null,
-      fullName: item.full_name || item.legal_name || item.label || item.name,
+      legalName: item.legalName || item.legal_name || item.label || item.name,
     }));
   }, [organizations]);
 
@@ -484,21 +484,51 @@ function OrderTollingCreateDrawer({
       <Flex vertical gap={16}>
         <Card title="1. Оберіть організацію">
           <Flex vertical gap={14}>
-            <div>
-              <Text style={compactLabelStyle}>Організація</Text>
-              <Select
-                showSearch
-                optionFilterProp="label"
-                placeholder="Почніть вводити назву організації"
-                style={{ width: '100%' }}
-                value={organizationDraftId}
-                options={organizationOptions}
-                onChange={(value) => {
-                  setOrganizationDraftId(value ?? null);
-                  setStep1Error('');
-                }}
-              />
-            </div>
+            <Flex gap={16} wrap>
+              <div style={{ flex: '1 1 320px' }}>
+                <Text style={compactLabelStyle}>Організація</Text>
+                <Select
+                  showSearch
+                  optionFilterProp="label"
+                  placeholder="Почніть вводити назву організації"
+                  style={{ width: '100%' }}
+                  value={organizationDraftId}
+                  options={organizationOptions}
+                  onChange={(value) => {
+                    setOrganizationDraftId(value ?? null);
+                    setStep1Error('');
+                  }}
+                />
+              </div>
+
+              <div style={{ flex: '0 1 260px' }}>
+                <Text style={compactLabelStyle}>Номер документа</Text>
+                <Input
+                  placeholder="Номер документа"
+                  value={documentNoDraft}
+                  onChange={(e) => {
+                    setDocumentNoDraft(e.target.value);
+                    setStep1Error('');
+                  }}
+                  addonAfter={
+                    <span
+                      style={{
+                        color: '#1677ff',
+                        cursor: 'pointer',
+                      }}
+                      onClick={handleInsertSuggestedDocumentNo}
+                    >
+                      <CopyOutlined />
+                    </span>
+                  }
+                />
+                <div style={{ marginTop: 6 }}>
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    Наприклад DDMMYYYY_X
+                  </Text>
+                </div>
+              </div>
+            </Flex>
 
             <div
               style={{
@@ -512,7 +542,7 @@ function OrderTollingCreateDrawer({
                 <div style={{ flex: '1 1 260px' }}>
                   <InfoCell
                     label="Повна назва організації"
-                    value={selectedOrganizationDraft?.fullName}
+                    value={selectedOrganizationDraft?.legalName}
                     compact
                   />
                 </div>
@@ -531,34 +561,6 @@ function OrderTollingCreateDrawer({
                   />
                 </div>
               </Flex>
-            </div>
-
-            <div>
-              <Text style={compactLabelStyle}>Номер документа</Text>
-              <Input
-                placeholder="Номер документа"
-                value={documentNoDraft}
-                onChange={(e) => {
-                  setDocumentNoDraft(e.target.value);
-                  setStep1Error('');
-                }}
-                addonAfter={
-                  <span
-                    style={{
-                      color: '#1677ff',
-                      cursor: 'pointer',
-                    }}
-                    onClick={handleInsertSuggestedDocumentNo}
-                  >
-                    <CopyOutlined />
-                  </span>
-                }
-              />
-              <div style={{ marginTop: 6 }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Наприклад DDMMYYYY_X
-                </Text>
-              </div>
             </div>
 
             {step1HasDraftChanges && draftRows.length > 0 && (

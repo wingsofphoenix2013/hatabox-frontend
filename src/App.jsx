@@ -19,6 +19,7 @@ import WarehouseStockDetailPage from './pages/WarehouseStockDetailPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import OrdersRegisterPage from './pages/OrdersRegisterPage';
 import OrdersTollingRegisterPage from './pages/OrdersTollingRegisterPage';
+import OrderTollingDetailsPage from './pages/OrderTollingDetailsPage';
 import OrderCreatePage from './pages/OrderCreatePage';
 import OrderEditPage from './pages/OrderEditPage';
 
@@ -100,6 +101,10 @@ function App() {
             <Route
               path="/orders/tolling"
               element={<OrdersTollingRegisterPage />}
+            />
+            <Route
+              path="/orders/tolling/:id"
+              element={<OrderTollingDetailsPage />}
             />
 
             <Route path="/orders/vendors" element={<VendorsPage />} />

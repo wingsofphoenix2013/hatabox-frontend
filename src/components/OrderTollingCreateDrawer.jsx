@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  CopyOutlined,
   DeleteOutlined,
   EditOutlined,
   PlusOutlined,
@@ -14,13 +13,11 @@ import {
   Divider,
   Drawer,
   Flex,
-  Form,
-  Input,
   InputNumber,
+  Modal,
   Select,
   Space,
   Table,
-  Tag,
   Typography,
   message,
 } from 'antd';
@@ -60,8 +57,6 @@ const ORGANIZATION_TYPE_LABELS = {
   charity: 'Благодійна організація',
 };
 
-const SUGGESTED_DOCUMENT_NO = '22042026_12';
-
 function InfoCell({ label, value, compact = false, valueStyle = {} }) {
   return (
     <div style={{ minWidth: 0 }}>
@@ -93,16 +88,12 @@ function OrderTollingCreateDrawer({
   onCompleted,
 }) {
   const navigate = useNavigate();
-  const [form] = Form.useForm();
 
   const [inventoryOptions, setInventoryOptions] = useState([]);
   const [inventoryLoading, setInventoryLoading] = useState(false);
 
   const [organizationDraftId, setOrganizationDraftId] = useState(null);
-  const [confirmedOrganizationId, setConfirmedOrganizationId] = useState(null);
-
-  const [documentNoDraft, setDocumentNoDraft] = useState('');
-  const [confirmedDocumentNo, setConfirmedDocumentNo] = useState('');
+  const [createdOrderId, setCreatedOrderId] = useState(null);
 
   const [selectedInvItemId, setSelectedInvItemId] = useState(null);
   const [selectedQuantity, setSelectedQuantity] = useState(null);
@@ -113,7 +104,9 @@ function OrderTollingCreateDrawer({
   const [editingQuantity, setEditingQuantity] = useState(null);
   const [editingExpectedDate, setEditingExpectedDate] = useState(null);
 
-  const [saving, setSaving] = useState(false);
+  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [savingRow, setSavingRow] = useState(false);
+  const [finalizing, setFinalizing] = useState(false);
 
   const [step1Error, setStep1Error] = useState('');
   const [step2Error, setStep2Error] = useState('');
@@ -147,13 +140,8 @@ function OrderTollingCreateDrawer({
     );
   }, [availableInventoryOptions, selectedInvItemId]);
 
-  const step2Enabled =
-    Boolean(confirmedOrganizationId) && Boolean(confirmedDocumentNo);
-
-  const step1HasDraftChanges =
-    confirmedOrganizationId !== null &&
-    (organizationDraftId !== confirmedOrganizationId ||
-      documentNoDraft !== confirmedDocumentNo);
+  const step1Locked = Boolean(createdOrderId);
+  const step2Enabled = Boolean(createdOrderId);
 
   const canAddRow =
     step2Enabled &&
@@ -161,9 +149,11 @@ function OrderTollingCreateDrawer({
     selectedQuantity !== null &&
     selectedQuantity !== undefined &&
     Number(selectedQuantity) > 0 &&
-    Boolean(selectedExpectedDate);
+    Boolean(selectedExpectedDate) &&
+    !savingRow;
 
-  const submitButtonDisabled = draftRows.length === 0 || saving;
+  const submitButtonDisabled =
+    !createdOrderId || draftRows.length === 0 || finalizing;
 
   const resetStep2AndBelow = () => {
     setSelectedInvItemId(null);
@@ -177,11 +167,8 @@ function OrderTollingCreateDrawer({
   };
 
   const resetAll = () => {
-    form.resetFields();
     setOrganizationDraftId(null);
-    setConfirmedOrganizationId(null);
-    setDocumentNoDraft('');
-    setConfirmedDocumentNo('');
+    setCreatedOrderId(null);
     setSelectedInvItemId(null);
     setSelectedQuantity(null);
     setSelectedExpectedDate(null);
@@ -189,7 +176,9 @@ function OrderTollingCreateDrawer({
     setEditingRowId(null);
     setEditingQuantity(null);
     setEditingExpectedDate(null);
-    setSaving(false);
+    setCreatingOrder(false);
+    setSavingRow(false);
+    setFinalizing(false);
     setStep1Error('');
     setStep2Error('');
   };
@@ -199,22 +188,8 @@ function OrderTollingCreateDrawer({
       return;
     }
 
-    form.resetFields();
-    setOrganizationDraftId(null);
-    setConfirmedOrganizationId(null);
-    setDocumentNoDraft('');
-    setConfirmedDocumentNo('');
-    setSelectedInvItemId(null);
-    setSelectedQuantity(null);
-    setSelectedExpectedDate(null);
-    setDraftRows([]);
-    setEditingRowId(null);
-    setEditingQuantity(null);
-    setEditingExpectedDate(null);
-    setSaving(false);
-    setStep1Error('');
-    setStep2Error('');
-  }, [open, form]);
+    resetAll();
+  }, [open]);
 
   useEffect(() => {
     if (!open) {
@@ -240,7 +215,6 @@ function OrderTollingCreateDrawer({
       );
 
       const results = Array.isArray(response.data) ? response.data : [];
-
       setInventoryOptions(results);
     } catch (err) {
       console.error('Failed to load inventory item options:', err);
@@ -256,81 +230,165 @@ function OrderTollingCreateDrawer({
     }
   };
 
-  const handleCloseDrawer = () => {
+  const performCloseDrawer = async () => {
     resetAll();
     onClose();
+
+    if (onCompleted) {
+      await onCompleted();
+    }
   };
 
-  const handleConfirmOrganization = () => {
+  const handleCloseAttempt = () => {
+    if (!createdOrderId) {
+      void performCloseDrawer();
+      return;
+    }
+
+    if (draftRows.length > 0) {
+      void performCloseDrawer();
+      return;
+    }
+
+    Modal.confirm({
+      title: 'Видалити чернетку?',
+      content:
+        'Накладну вже створено, але рядки не додані. Чернетку буде видалено.',
+      okText: 'Видалити чернетку',
+      cancelText: 'Скасувати',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await api.delete(`tolling-orders/${createdOrderId}/`);
+          message.success('Порожню чернетку видалено.');
+          await performCloseDrawer();
+        } catch (err) {
+          console.error('Failed to delete empty tolling draft:', err);
+
+          const backendMessage = getApiErrorMessage(err?.response?.data);
+          message.error(
+            backendMessage || 'Не вдалося видалити порожню чернетку.',
+          );
+        }
+      },
+    });
+  };
+
+  const handleCreateOrder = async () => {
     if (!organizationDraftId) {
       setStep1Error('Оберіть організацію.');
       return;
     }
 
-    if (!documentNoDraft?.trim()) {
-      setStep1Error('Вкажіть номер документа.');
-      return;
-    }
+    try {
+      setCreatingOrder(true);
+      setStep1Error('');
 
-    setStep1Error('');
+      const response = await api.post('tolling-orders/', {
+        organization: organizationDraftId,
+      });
 
-    const nextConfirmedOrganizationId = organizationDraftId;
-    const nextConfirmedDocumentNo = documentNoDraft.trim();
+      const createdOrder = response.data;
 
-    const step1ActuallyChanged =
-      confirmedOrganizationId !== nextConfirmedOrganizationId ||
-      confirmedDocumentNo !== nextConfirmedDocumentNo;
-
-    setConfirmedOrganizationId(nextConfirmedOrganizationId);
-    setConfirmedDocumentNo(nextConfirmedDocumentNo);
-
-    if (step1ActuallyChanged) {
+      setCreatedOrderId(createdOrder?.id || null);
       resetStep2AndBelow();
+
+      message.success('Накладну створено.');
+    } catch (err) {
+      console.error('Failed to create tolling order:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'organization',
+      ]);
+
+      setStep1Error(backendMessage || 'Не вдалося створити накладну.');
+    } finally {
+      setCreatingOrder(false);
     }
   };
 
-  const handleCancelStep1Changes = () => {
-    setOrganizationDraftId(confirmedOrganizationId);
-    setDocumentNoDraft(confirmedDocumentNo);
-    setStep1Error('');
-  };
-
-  const handleInsertSuggestedDocumentNo = () => {
-    setDocumentNoDraft(SUGGESTED_DOCUMENT_NO);
-    form.setFieldValue('document_no', SUGGESTED_DOCUMENT_NO);
-  };
-
-  const handleAddRow = () => {
-    if (!canAddRow || !selectedInventoryItem) {
+  const handleAddRow = async () => {
+    if (!canAddRow || !selectedInventoryItem || !createdOrderId) {
       return;
     }
 
-    const nextRow = {
-      id: `${selectedInventoryItem.id}-${Date.now()}`,
-      inv_item_id: selectedInventoryItem.id,
-      item_name: selectedInventoryItem.name || '—',
-      internal_code: selectedInventoryItem.internal_code || '',
-      category_name: selectedInventoryItem.category_name || '',
-      unit_symbol: selectedInventoryItem.unit_symbol || '',
-      description: selectedInventoryItem.description || '',
-      quantity: Number(selectedQuantity),
-      expected_delivery_date: selectedExpectedDate.format('YYYY-MM-DD'),
-    };
+    try {
+      setSavingRow(true);
+      setStep2Error('');
 
-    setDraftRows((prev) => [...prev, nextRow]);
-    setSelectedInvItemId(null);
-    setSelectedQuantity(null);
-    setSelectedExpectedDate(null);
-    setStep2Error('');
+      const payload = {
+        order: createdOrderId,
+        inv_item: selectedInventoryItem.id,
+        quantity: String(selectedQuantity),
+        expected_delivery_date: selectedExpectedDate.format('YYYY-MM-DD'),
+      };
+
+      const response = await api.post('tolling-order-items/', payload);
+      const createdItem = response.data || {};
+
+      const nextRow = {
+        id: createdItem.id,
+        inv_item_id: selectedInventoryItem.id,
+        item_name:
+          createdItem.inv_item_name || selectedInventoryItem.name || '—',
+        internal_code: selectedInventoryItem.internal_code || '',
+        category_name: selectedInventoryItem.category_name || '',
+        unit_symbol: selectedInventoryItem.unit_symbol || '',
+        description: selectedInventoryItem.description || '',
+        quantity:
+          createdItem.quantity !== undefined && createdItem.quantity !== null
+            ? createdItem.quantity
+            : String(selectedQuantity),
+        expected_delivery_date:
+          createdItem.expected_delivery_date ||
+          selectedExpectedDate.format('YYYY-MM-DD'),
+      };
+
+      setDraftRows((prev) => [...prev, nextRow]);
+      setSelectedInvItemId(null);
+      setSelectedQuantity(null);
+      setSelectedExpectedDate(null);
+
+      message.success('Рядок додано.');
+    } catch (err) {
+      console.error('Failed to create tolling order item:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'order',
+        'inv_item',
+        'quantity',
+        'expected_delivery_date',
+      ]);
+
+      setStep2Error(backendMessage || 'Не вдалося додати рядок.');
+    } finally {
+      setSavingRow(false);
+    }
   };
 
-  const handleDeleteRow = (rowId) => {
-    setDraftRows((prev) => prev.filter((item) => item.id !== rowId));
+  const handleDeleteRow = async (rowId) => {
+    try {
+      setSavingRow(true);
+      setStep2Error('');
 
-    if (editingRowId === rowId) {
-      setEditingRowId(null);
-      setEditingQuantity(null);
-      setEditingExpectedDate(null);
+      await api.delete(`tolling-order-items/${rowId}/`);
+
+      setDraftRows((prev) => prev.filter((item) => item.id !== rowId));
+
+      if (editingRowId === rowId) {
+        setEditingRowId(null);
+        setEditingQuantity(null);
+        setEditingExpectedDate(null);
+      }
+
+      message.success('Рядок видалено.');
+    } catch (err) {
+      console.error('Failed to delete tolling order item:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+      message.error(backendMessage || 'Не вдалося видалити рядок.');
+    } finally {
+      setSavingRow(false);
     }
   };
 
@@ -348,7 +406,7 @@ function OrderTollingCreateDrawer({
     );
   };
 
-  const handleSaveRow = (rowId) => {
+  const handleSaveRow = async (rowId) => {
     if (
       editingQuantity === null ||
       editingQuantity === undefined ||
@@ -363,21 +421,55 @@ function OrderTollingCreateDrawer({
       return;
     }
 
-    setDraftRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              quantity: Number(editingQuantity),
-              expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
-            }
-          : row,
-      ),
-    );
+    try {
+      setSavingRow(true);
 
-    setEditingRowId(null);
-    setEditingQuantity(null);
-    setEditingExpectedDate(null);
+      const payload = {
+        quantity: String(editingQuantity),
+        expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
+      };
+
+      const response = await api.patch(
+        `tolling-order-items/${rowId}/`,
+        payload,
+      );
+      const updatedItem = response.data || {};
+
+      setDraftRows((prev) =>
+        prev.map((row) =>
+          row.id === rowId
+            ? {
+                ...row,
+                quantity:
+                  updatedItem.quantity !== undefined &&
+                  updatedItem.quantity !== null
+                    ? updatedItem.quantity
+                    : String(editingQuantity),
+                expected_delivery_date:
+                  updatedItem.expected_delivery_date ||
+                  editingExpectedDate.format('YYYY-MM-DD'),
+              }
+            : row,
+        ),
+      );
+
+      setEditingRowId(null);
+      setEditingQuantity(null);
+      setEditingExpectedDate(null);
+
+      message.success('Рядок оновлено.');
+    } catch (err) {
+      console.error('Failed to update tolling order item:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'quantity',
+        'expected_delivery_date',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося оновити рядок.');
+    } finally {
+      setSavingRow(false);
+    }
   };
 
   const step3Columns = [
@@ -444,29 +536,44 @@ function OrderTollingCreateDrawer({
             <SaveOutlined
               style={{
                 color: '#52c41a',
-                cursor: 'pointer',
+                cursor: savingRow ? 'default' : 'pointer',
                 fontSize: 16,
+                opacity: savingRow ? 0.55 : 1,
               }}
-              onClick={() => handleSaveRow(record.id)}
+              onClick={() => {
+                if (!savingRow) {
+                  void handleSaveRow(record.id);
+                }
+              }}
             />
           ) : (
             <EditOutlined
               style={{
                 color: '#1677ff',
-                cursor: 'pointer',
+                cursor: savingRow ? 'default' : 'pointer',
                 fontSize: 16,
+                opacity: savingRow ? 0.55 : 1,
               }}
-              onClick={() => handleStartEditRow(record)}
+              onClick={() => {
+                if (!savingRow) {
+                  handleStartEditRow(record);
+                }
+              }}
             />
           )}
 
           <DeleteOutlined
             style={{
               color: '#ff4d4f',
-              cursor: 'pointer',
+              cursor: savingRow ? 'default' : 'pointer',
               fontSize: 16,
+              opacity: savingRow ? 0.55 : 1,
             }}
-            onClick={() => handleDeleteRow(record.id)}
+            onClick={() => {
+              if (!savingRow) {
+                void handleDeleteRow(record.id);
+              }
+            }}
           />
         </Space>
       ),
@@ -479,56 +586,36 @@ function OrderTollingCreateDrawer({
       placement="right"
       size="large"
       open={open}
-      onClose={handleCloseDrawer}
+      onClose={handleCloseAttempt}
+      maskClosable={false}
     >
       <Flex vertical gap={16}>
-        <Card title="1. Оберіть організацію">
+        <Card
+          title="1. Оберіть організацію"
+          styles={{
+            body: {
+              opacity: step1Locked ? 0.7 : 1,
+              pointerEvents: step1Locked ? 'none' : 'auto',
+            },
+          }}
+        >
           <Flex vertical gap={14}>
-            <Flex gap={16} wrap>
-              <div style={{ flex: '1 1 320px' }}>
-                <Text style={compactLabelStyle}>Організація</Text>
-                <Select
-                  showSearch
-                  optionFilterProp="label"
-                  placeholder="Почніть вводити назву організації"
-                  style={{ width: '100%' }}
-                  value={organizationDraftId}
-                  options={organizationOptions}
-                  onChange={(value) => {
-                    setOrganizationDraftId(value ?? null);
-                    setStep1Error('');
-                  }}
-                />
-              </div>
-
-              <div style={{ flex: '0 1 260px' }}>
-                <Text style={compactLabelStyle}>Номер документа</Text>
-                <Input
-                  placeholder="Номер документа"
-                  value={documentNoDraft}
-                  onChange={(e) => {
-                    setDocumentNoDraft(e.target.value);
-                    setStep1Error('');
-                  }}
-                  addonAfter={
-                    <span
-                      style={{
-                        color: '#1677ff',
-                        cursor: 'pointer',
-                      }}
-                      onClick={handleInsertSuggestedDocumentNo}
-                    >
-                      <CopyOutlined />
-                    </span>
-                  }
-                />
-                <div style={{ marginTop: 6 }}>
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    Наприклад DDMMYYYY_X
-                  </Text>
-                </div>
-              </div>
-            </Flex>
+            <div style={{ flex: '1 1 320px' }}>
+              <Text style={compactLabelStyle}>Організація</Text>
+              <Select
+                showSearch
+                optionFilterProp="label"
+                placeholder="Почніть вводити назву організації"
+                style={{ width: '100%' }}
+                value={organizationDraftId}
+                options={organizationOptions}
+                onChange={(value) => {
+                  setOrganizationDraftId(value ?? null);
+                  setStep1Error('');
+                }}
+                disabled={step1Locked}
+              />
+            </div>
 
             <div
               style={{
@@ -563,28 +650,18 @@ function OrderTollingCreateDrawer({
               </Flex>
             </div>
 
-            {step1HasDraftChanges && draftRows.length > 0 && (
-              <Alert
-                type="warning"
-                showIcon
-                message="Зміна організації або номера документа очистить склад передачі"
-                description="Якщо підтвердити зміни, усі додані рядки будуть скинуті."
-              />
-            )}
-
             {step1Error && <Alert type="error" showIcon message={step1Error} />}
 
-            <Flex justify="flex-end" gap={8}>
-              {step1HasDraftChanges && (
-                <Button onClick={handleCancelStep1Changes}>Відміна</Button>
-              )}
-
+            <Flex justify="flex-end">
               <Button
                 type="primary"
-                onClick={handleConfirmOrganization}
-                disabled={!organizationDraftId || !documentNoDraft?.trim()}
+                onClick={() => {
+                  void handleCreateOrder();
+                }}
+                disabled={!organizationDraftId || step1Locked}
+                loading={creatingOrder}
               >
-                Обрати організацію
+                Створити накладну
               </Button>
             </Flex>
           </Flex>
@@ -604,8 +681,8 @@ function OrderTollingCreateDrawer({
               <Alert
                 type="info"
                 showIcon
-                message="Спочатку підтвердьте організацію та номер документа"
-                description="Наступний крок стане доступним після підтвердження даних на кроці 1."
+                message="Спочатку створіть накладну"
+                description="Наступний крок стане доступним після створення накладної на кроці 1."
               />
             )}
 
@@ -626,9 +703,11 @@ function OrderTollingCreateDrawer({
                 }}
                 options={availableInventoryOptions.map((item) => ({
                   value: item.id,
-                  label: `${item.name || '—'}${item.internal_code ? ` — ${item.internal_code}` : ''}`,
+                  label: `${item.name || '—'}${
+                    item.internal_code ? ` — ${item.internal_code}` : ''
+                  }`,
                 }))}
-                disabled={!step2Enabled}
+                disabled={!step2Enabled || savingRow}
               />
             </div>
 
@@ -646,7 +725,7 @@ function OrderTollingCreateDrawer({
                     setSelectedQuantity(value);
                     setStep2Error('');
                   }}
-                  disabled={!step2Enabled}
+                  disabled={!step2Enabled || savingRow}
                 />
               </div>
 
@@ -661,7 +740,7 @@ function OrderTollingCreateDrawer({
                     setSelectedExpectedDate(value);
                     setStep2Error('');
                   }}
-                  disabled={!step2Enabled}
+                  disabled={!step2Enabled || savingRow}
                 />
               </div>
             </Flex>
@@ -719,8 +798,11 @@ function OrderTollingCreateDrawer({
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={handleAddRow}
+                onClick={() => {
+                  void handleAddRow();
+                }}
                 disabled={!canAddRow}
+                loading={savingRow}
               >
                 Додати рядок
               </Button>
@@ -755,24 +837,29 @@ function OrderTollingCreateDrawer({
         </Card>
 
         <Flex justify="space-between" align="center" gap={12} wrap>
-          <Button onClick={handleCloseDrawer}>Закрити</Button>
+          <Button onClick={handleCloseAttempt}>Закрити</Button>
 
           <Button
             type="primary"
-            loading={saving}
+            loading={finalizing}
             disabled={submitButtonDisabled}
             onClick={async () => {
+              if (!createdOrderId) {
+                return;
+              }
+
               try {
-                setSaving(true);
-                handleCloseDrawer();
+                setFinalizing(true);
+                resetAll();
 
                 if (onCompleted) {
                   await onCompleted();
                 }
 
-                navigate('/orders/tolling');
+                onClose();
+                navigate(`/orders/tolling/${createdOrderId}`);
               } finally {
-                setSaving(false);
+                setFinalizing(false);
               }
             }}
           >

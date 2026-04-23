@@ -3,6 +3,9 @@ import {
   AppstoreAddOutlined,
   DeleteOutlined,
   DownloadOutlined,
+  EditOutlined,
+  InfoCircleOutlined,
+  LinkOutlined,
   SettingOutlined,
   StopOutlined,
 } from '@ant-design/icons';
@@ -13,6 +16,7 @@ import {
   Col,
   Divider,
   Flex,
+  Input,
   Popconfirm,
   Row,
   Skeleton,
@@ -57,6 +61,10 @@ function OrderTollingDetailsPage() {
 
   const [sendingToWork, setSendingToWork] = useState(false);
   const [deletingDraft, setDeletingDraft] = useState(false);
+
+  const [isEditingOrderComment, setIsEditingOrderComment] = useState(false);
+  const [editingOrderComment, setEditingOrderComment] = useState('');
+  const [savingOrderComment, setSavingOrderComment] = useState(false);
 
   useEffect(() => {
     loadOrderPage();
@@ -128,6 +136,39 @@ function OrderTollingDetailsPage() {
       message.error(backendMessage || 'Не вдалося видалити чернетку передачі.');
     } finally {
       setDeletingDraft(false);
+    }
+  };
+
+  const handleStartEditComment = () => {
+    setEditingOrderComment(order?.comment || '');
+    setIsEditingOrderComment(true);
+  };
+
+  const handleCancelEditComment = () => {
+    setIsEditingOrderComment(false);
+    setEditingOrderComment('');
+  };
+
+  const handleSaveComment = async () => {
+    try {
+      setSavingOrderComment(true);
+
+      const response = await api.patch(`tolling-orders/${id}/`, {
+        comment: editingOrderComment || '',
+      });
+
+      setOrder(response.data);
+      message.success('Коментар збережено.');
+      setIsEditingOrderComment(false);
+    } catch (err) {
+      console.error('Failed to update tolling comment:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'comment',
+      ]);
+      message.error(backendMessage || 'Не вдалося зберегти коментар.');
+    } finally {
+      setSavingOrderComment(false);
     }
   };
 
@@ -307,8 +348,94 @@ function OrderTollingDetailsPage() {
         </Col>
 
         <Col xs={24} lg={18}>
-          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-            <Text type="secondary">Дані з’являться пізніше.</Text>
+          <Card
+            title={
+              <Flex justify="space-between" align="center">
+                <span>Основна інформація</span>
+
+                <Flex align="center" gap={8}>
+                  <Title
+                    level={5}
+                    style={{
+                      margin: 0,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {order.organization_name || '—'}
+                  </Title>
+
+                  <InfoCircleOutlined
+                    style={{
+                      color: '#bfbfbf',
+                      fontSize: 16,
+                      cursor: 'default',
+                    }}
+                  />
+
+                  <LinkOutlined
+                    style={{
+                      color: '#bfbfbf',
+                      fontSize: 16,
+                      cursor: 'default',
+                    }}
+                  />
+                </Flex>
+              </Flex>
+            }
+            style={{ marginBottom: 20 }}
+          >
+            <Alert
+              type="warning"
+              showIcon
+              message={
+                <Flex vertical gap={12}>
+                  <Flex justify="space-between" align="center">
+                    <Text strong>Коментар до передачі</Text>
+
+                    {!isEditingOrderComment && (
+                      <EditOutlined
+                        style={{
+                          color: '#8c8c8c',
+                          cursor: 'pointer',
+                          fontSize: 16,
+                        }}
+                        onClick={handleStartEditComment}
+                      />
+                    )}
+                  </Flex>
+
+                  {!isEditingOrderComment ? (
+                    <Text style={{ whiteSpace: 'pre-wrap' }}>
+                      {order.comment ? order.comment : 'Додати коментар'}
+                    </Text>
+                  ) : (
+                    <Flex vertical gap={8}>
+                      <Input.TextArea
+                        value={editingOrderComment}
+                        onChange={(e) => setEditingOrderComment(e.target.value)}
+                        rows={3}
+                        autoFocus
+                      />
+
+                      <Flex gap={8}>
+                        <Button
+                          type="primary"
+                          size="small"
+                          loading={savingOrderComment}
+                          onClick={handleSaveComment}
+                        >
+                          Зберегти
+                        </Button>
+
+                        <Button size="small" onClick={handleCancelEditComment}>
+                          Скасувати
+                        </Button>
+                      </Flex>
+                    </Flex>
+                  )}
+                </Flex>
+              }
+            />
           </Card>
 
           <Card title="Передача">

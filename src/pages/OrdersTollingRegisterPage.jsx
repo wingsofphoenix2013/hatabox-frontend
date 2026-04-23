@@ -5,6 +5,7 @@ import {
   PlusOutlined,
   SearchOutlined,
   InfoCircleOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -252,6 +253,12 @@ function OrdersTollingRegisterPage() {
           {record.comment && (
             <Tooltip title={record.comment}>
               <InfoCircleOutlined style={{ color: '#faad14' }} />
+            </Tooltip>
+          )}
+
+          {record.is_overdue === true && (
+            <Tooltip title={`Прострочено на ${record.overdue_days} дн.`}>
+              <WarningOutlined style={{ color: '#ff4d4f' }} />
             </Tooltip>
           )}
         </Flex>

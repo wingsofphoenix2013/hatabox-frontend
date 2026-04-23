@@ -276,6 +276,14 @@ export const breadcrumbConfig = [
     ],
   },
   {
+    match: (pathname) => pathname === '/inventory/tolling-pending-intake',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Склад'),
+      makeTextItem('Давальчі поставки'),
+    ],
+  },
+  {
     match: (pathname) => pathname === '/inventory/warehouses',
     build: () => [
       makeHomeItem(),

@@ -69,6 +69,10 @@ const moduleConfig = {
         label: 'Первинне отримання',
         path: '/inventory/pending-intake',
       },
+      {
+        label: 'Давальчі поставки',
+        path: '/inventory/tolling-pending-intake',
+      },
     ],
     actions: [],
     dictionaries: [

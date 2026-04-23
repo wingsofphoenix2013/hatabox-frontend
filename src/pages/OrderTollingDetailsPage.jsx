@@ -35,6 +35,7 @@ import { getApiErrorMessage } from '../utils/apiError';
 
 import api from '../api/client';
 import OrderTollingCreateDrawer from '../components/OrderTollingCreateDrawer';
+import OrderTollingReceiptDrawer from '../components/OrderTollingReceiptDrawer';
 
 const { Title, Text } = Typography;
 
@@ -70,6 +71,7 @@ function OrderTollingDetailsPage() {
   const [deletingDraft, setDeletingDraft] = useState(false);
 
   const [isOrderEditDrawerOpen, setIsOrderEditDrawerOpen] = useState(false);
+  const [isReceiptDrawerOpen, setIsReceiptDrawerOpen] = useState(false);
 
   const [isEditingOrderComment, setIsEditingOrderComment] = useState(false);
 
@@ -428,6 +430,7 @@ function OrderTollingDetailsPage() {
                     <Button
                       block
                       icon={<DownloadOutlined style={{ color: '#1677ff' }} />}
+                      onClick={() => setIsReceiptDrawerOpen(true)}
                     >
                       Отримання товару
                     </Button>
@@ -589,6 +592,13 @@ function OrderTollingDetailsPage() {
         mode="edit"
         order={order}
         onCompleted={() => loadOrderPage({ silent: true })}
+      />
+
+      <OrderTollingReceiptDrawer
+        open={isReceiptDrawerOpen}
+        onClose={() => setIsReceiptDrawerOpen(false)}
+        order={order}
+        onReceiptSaved={() => loadOrderPage({ silent: true })}
       />
     </div>
   );

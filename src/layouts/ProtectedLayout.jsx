@@ -30,12 +30,98 @@ import {
   CloseOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { buildBreadcrumbs } from '../navigation/breadcrumbs/buildBreadcrumbs.jsx';
 import api from '../api/client';
 
 const { Sider, Content } = Layout;
 const { Text } = Typography;
+
+const moduleConfig = {
+  '/sales': {
+    pages: [],
+    actions: [],
+    dictionaries: [],
+  },
+
+  '/production': {
+    pages: [],
+    actions: [],
+    dictionaries: [
+      {
+        label: 'Каталог продукції',
+        path: '/production/products',
+      },
+      {
+        label: 'Каталог компонентів',
+        path: '/production/components',
+      },
+    ],
+  },
+
+  '/inventory': {
+    pages: [
+      {
+        label: 'Складські залишки',
+        path: '/inventory/stock',
+      },
+      {
+        label: 'Первинне отримання',
+        path: '/inventory/pending-intake',
+      },
+    ],
+    actions: [],
+    dictionaries: [
+      {
+        label: 'Каталог складів',
+        path: '/inventory/warehouses',
+      },
+    ],
+  },
+
+  '/orders': {
+    pages: [
+      {
+        label: 'Реєстр замовлень',
+        path: '/orders/register',
+      },
+      {
+        label: 'Давальчі поставки',
+        path: '/orders/tolling',
+      },
+    ],
+    actions: [
+      {
+        label: 'Створити замовлення',
+        path: '/orders/new',
+      },
+    ],
+    dictionaries: [
+      {
+        label: 'Каталог постачальників',
+        path: '/orders/vendors',
+      },
+    ],
+  },
+
+  '/organizations': {
+    pages: [],
+    actions: [],
+    dictionaries: [],
+  },
+
+  '/service': {
+    pages: [],
+    actions: [],
+    dictionaries: [],
+  },
+
+  '/user': {
+    pages: [],
+    actions: [],
+    dictionaries: [],
+  },
+};
 
 function ProtectedLayout() {
   const navigate = useNavigate();
@@ -44,7 +130,6 @@ function ProtectedLayout() {
   const [hoveredSidebar1Key, setHoveredSidebar1Key] = useState(null);
   const [previewModule, setPreviewModule] = useState(null);
   const [panelOpen, setPanelOpen] = useState(false);
-  const [manuallyClosedModule, setManuallyClosedModule] = useState(null);
   const [pendingIntakeCount, setPendingIntakeCount] = useState(0);
 
   const sidebar1TopItems = [
@@ -113,92 +198,6 @@ function ProtectedLayout() {
     type: 'item',
   };
 
-  const moduleConfig = {
-    '/sales': {
-      pages: [],
-      actions: [],
-      dictionaries: [],
-    },
-
-    '/production': {
-      pages: [],
-      actions: [],
-      dictionaries: [
-        {
-          label: 'Каталог продукції',
-          path: '/production/products',
-        },
-        {
-          label: 'Каталог компонентів',
-          path: '/production/components',
-        },
-      ],
-    },
-
-    '/inventory': {
-      pages: [
-        {
-          label: 'Складські залишки',
-          path: '/inventory/stock',
-        },
-        {
-          label: 'Первинне отримання',
-          path: '/inventory/pending-intake',
-        },
-      ],
-      actions: [],
-      dictionaries: [
-        {
-          label: 'Каталог складів',
-          path: '/inventory/warehouses',
-        },
-      ],
-    },
-
-    '/orders': {
-      pages: [
-        {
-          label: 'Реєстр замовлень',
-          path: '/orders/register',
-        },
-        {
-          label: 'Давальчі поставки',
-          path: '/orders/tolling',
-        },
-      ],
-      actions: [
-        {
-          label: 'Створити замовлення',
-          path: '/orders/new',
-        },
-      ],
-      dictionaries: [
-        {
-          label: 'Каталог постачальників',
-          path: '/orders/vendors',
-        },
-      ],
-    },
-
-    '/organizations': {
-      pages: [],
-      actions: [],
-      dictionaries: [],
-    },
-
-    '/service': {
-      pages: [],
-      actions: [],
-      dictionaries: [],
-    },
-
-    '/user': {
-      pages: [],
-      actions: [],
-      dictionaries: [],
-    },
-  };
-
   const getModuleFromPath = (pathname) => {
     const moduleKeys = Object.keys(moduleConfig);
     return moduleKeys.find((key) => pathname.startsWith(key)) || null;
@@ -225,34 +224,43 @@ function ProtectedLayout() {
   };
 
   const routeModule = getModuleFromPath(location.pathname);
+  const previousRouteModuleRef = useRef(routeModule);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    const previousRouteModule = previousRouteModuleRef.current;
+
     if (location.pathname === '/home') {
       setPreviewModule(null);
       setPanelOpen(false);
-      setManuallyClosedModule(null);
+      previousRouteModuleRef.current = null;
       return;
     }
 
     if (location.pathname === '/user') {
       setPreviewModule('/user');
       setPanelOpen(false);
+      previousRouteModuleRef.current = '/user';
       return;
     }
 
     if (!routeModule) {
       setPreviewModule(null);
       setPanelOpen(false);
+      previousRouteModuleRef.current = null;
       return;
     }
 
+    const isModuleChanged = previousRouteModule !== routeModule;
+    const config = moduleConfig[routeModule];
+    const moduleHasContent = hasModuleContent(config);
+
     setPreviewModule(routeModule);
 
-    const config = moduleConfig[routeModule];
-    const shouldOpen = hasModuleContent(config);
+    if (isModuleChanged) {
+      setPanelOpen(moduleHasContent);
+    }
 
-    setPanelOpen(shouldOpen);
+    previousRouteModuleRef.current = routeModule;
   }, [location.pathname, routeModule]);
 
   useEffect(() => {
@@ -277,7 +285,6 @@ function ProtectedLayout() {
     if (key === '/home') {
       setPreviewModule(null);
       setPanelOpen(false);
-      setManuallyClosedModule(null);
       navigate('/home');
       return;
     }
@@ -285,7 +292,6 @@ function ProtectedLayout() {
     if (key === '/user') {
       setPreviewModule('/user');
       setPanelOpen(false);
-      setManuallyClosedModule(null);
       navigate('/user');
       return;
     }
@@ -296,13 +302,11 @@ function ProtectedLayout() {
     if (previewModule === key) {
       if (!panelOpen && moduleHasContent) {
         setPanelOpen(true);
-        setManuallyClosedModule(null);
       }
       return;
     }
 
     setPreviewModule(key);
-    setManuallyClosedModule(null);
     setPanelOpen(moduleHasContent);
   };
 
@@ -507,7 +511,6 @@ function ProtectedLayout() {
                 icon={<CloseOutlined />}
                 onClick={() => {
                   setPanelOpen(false);
-                  setManuallyClosedModule(previewModule);
                 }}
                 style={{ color: '#d1d5db' }}
               />

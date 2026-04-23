@@ -69,12 +69,6 @@ function OrdersTollingRegisterPage() {
   const [searchText, setSearchText] = useState(
     searchParams.get('search') || '',
   );
-  const [selectedOrganization, setSelectedOrganization] = useState(
-    searchParams.get('organization')
-      ? Number(searchParams.get('organization'))
-      : null,
-  );
-
   const [selectedOrganizationType, setSelectedOrganizationType] = useState(
     searchParams.get('organization_type') || null,
   );
@@ -96,7 +90,6 @@ function OrdersTollingRegisterPage() {
   );
 
   const [loading, setLoading] = useState(true);
-  const [organizationsLoading, setOrganizationsLoading] = useState(false);
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
 
@@ -112,7 +105,6 @@ function OrdersTollingRegisterPage() {
   }, [
     currentPage,
     searchText,
-    selectedOrganization,
     selectedOrganizationType,
     selectedStatuses,
     createdAtFrom,
@@ -124,10 +116,6 @@ function OrdersTollingRegisterPage() {
 
     if (searchText) {
       params.set('search', searchText);
-    }
-
-    if (selectedOrganization) {
-      params.set('organization', String(selectedOrganization));
     }
 
     if (selectedOrganizationType) {
@@ -153,7 +141,6 @@ function OrdersTollingRegisterPage() {
     setSearchParams(params);
   }, [
     searchText,
-    selectedOrganization,
     selectedOrganizationType,
     selectedStatuses,
     createdAtFrom,
@@ -164,8 +151,6 @@ function OrdersTollingRegisterPage() {
 
   const loadOrganizations = async () => {
     try {
-      setOrganizationsLoading(true);
-
       const response = await api.get('organizations/');
       const results = Array.isArray(response.data) ? response.data : [];
 
@@ -185,8 +170,6 @@ function OrdersTollingRegisterPage() {
       message.error(
         backendMessage || 'Не вдалося завантажити список організацій.',
       );
-    } finally {
-      setOrganizationsLoading(false);
     }
   };
 
@@ -200,10 +183,6 @@ function OrdersTollingRegisterPage() {
 
       if (searchText) {
         params.append('search', searchText);
-      }
-
-      if (selectedOrganization) {
-        params.set('organization', String(selectedOrganization));
       }
 
       if (selectedOrganizationType) {
@@ -400,23 +379,6 @@ function OrdersTollingRegisterPage() {
                 setSearchText(e.target.value);
                 setCurrentPage(1);
               }}
-            />
-
-            <Divider type="vertical" style={{ height: 28 }} />
-
-            <Select
-              allowClear
-              showSearch
-              optionFilterProp="label"
-              placeholder="Перелік організацій"
-              style={{ minWidth: 260 }}
-              loading={organizationsLoading}
-              value={selectedOrganization}
-              onChange={(value) => {
-                setSelectedOrganization(value ?? null);
-                setCurrentPage(1);
-              }}
-              options={organizations}
             />
 
             <Divider type="vertical" style={{ height: 28 }} />

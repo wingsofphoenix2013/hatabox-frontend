@@ -4,6 +4,7 @@ import {
   AppstoreAddOutlined,
   PlusOutlined,
   SearchOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -17,6 +18,7 @@ import {
   Select,
   Table,
   Tag,
+  Tooltip,
   Typography,
   message,
 } from 'antd';
@@ -239,12 +241,20 @@ function OrdersTollingRegisterPage() {
       key: 'order_no',
       width: 220,
       render: (value, record) => (
-        <Link
-          to={`/orders/tolling/${record.id}`}
-          state={{ tollingOrderLabel: record.order_no }}
-        >
-          {value || '—'}
-        </Link>
+        <Flex align="center" gap={6}>
+          <Link
+            to={`/orders/tolling/${record.id}`}
+            state={{ tollingOrderLabel: record.order_no }}
+          >
+            {value || '—'}
+          </Link>
+
+          {record.comment && (
+            <Tooltip title={record.comment}>
+              <InfoCircleOutlined style={{ color: '#faad14' }} />
+            </Tooltip>
+          )}
+        </Flex>
       ),
     },
     {

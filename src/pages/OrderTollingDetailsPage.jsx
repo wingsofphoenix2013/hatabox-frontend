@@ -30,8 +30,9 @@ import {
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatDateUa } from '../utils/orderFormatters';
-import { getApiErrorMessage } from '../utils/apiError';
+import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const { Title, Text } = Typography;
 
@@ -210,11 +211,17 @@ function OrderTollingDetailsPage() {
     },
     {
       title: 'Товар',
-      dataIndex: 'inventory_item_name',
-      key: 'inventory_item_name',
+      dataIndex: 'inv_item_name',
+      key: 'inv_item_name',
       render: (value, record) => (
         <Flex align="center" gap={6} wrap>
-          <span>{value || '—'}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+              {record.inv_item_internal_code || '—'}
+            </span>
+
+            <span>{value || '—'}</span>
+          </div>
 
           {record.inv_item && (
             <Link
@@ -239,8 +246,15 @@ function OrderTollingDetailsPage() {
       key: 'quantity',
       width: 140,
       align: 'center',
-      render: (_, record) =>
-        `${record.quantity || 0} ${record.unit_symbol || ''}`,
+      render: (_, record) => {
+        const quantity = Number(record.quantity) || 0;
+
+        return (
+          <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+            {formatQuantity(quantity)} {record.inv_item_unit_symbol || ''}
+          </div>
+        );
+      },
     },
     {
       title: 'Отрим.',
@@ -250,20 +264,29 @@ function OrderTollingDetailsPage() {
       render: (_, record) => {
         const received = Number(record.received_quantity) || 0;
         const total = Number(record.quantity) || 0;
+        const unit = record.inv_item_unit_symbol || '';
 
         if (received === 0) {
           return (
-            <CloseCircleFilled style={{ color: '#ff4d4f', fontSize: 16 }} />
+            <div style={{ textAlign: 'center' }}>
+              <CloseCircleFilled style={{ color: '#ff4d4f', fontSize: 16 }} />
+            </div>
           );
         }
 
         if (received >= total && total > 0) {
           return (
-            <CheckCircleFilled style={{ color: '#52c41a', fontSize: 16 }} />
+            <div style={{ textAlign: 'center' }}>
+              <CheckCircleFilled style={{ color: '#52c41a', fontSize: 16 }} />
+            </div>
           );
         }
 
-        return `${received} з ${total} ${record.unit_symbol || ''}`;
+        return (
+          <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+            {formatQuantity(received)} з {formatQuantity(total)} {unit}
+          </div>
+        );
       },
     },
     {
@@ -271,10 +294,13 @@ function OrderTollingDetailsPage() {
       key: 'expected_delivery_date',
       width: 160,
       align: 'center',
-      render: (_, record) =>
-        record.expected_delivery_date
-          ? formatDateDisplay(record.expected_delivery_date)
-          : '—',
+      render: (_, record) => (
+        <div style={{ textAlign: 'center' }}>
+          {record.expected_delivery_date
+            ? formatDateDisplay(record.expected_delivery_date)
+            : '—'}
+        </div>
+      ),
     },
   ];
 
@@ -524,7 +550,7 @@ function OrderTollingDetailsPage() {
             <Table
               rowKey="id"
               columns={itemsColumns}
-              dataSource={Array.isArray(order.items) ? order.items : []}
+              dataSource={Array.isArray(order?.items) ? order.items : []}
               pagination={false}
               size="small"
               locale={{

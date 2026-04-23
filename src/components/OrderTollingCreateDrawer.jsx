@@ -471,8 +471,6 @@ function OrderTollingCreateDrawer({
   const handleSaveRow = async (rowId) => {
     const isEditActiveMode = isEditMode && isActive;
 
-    const currentRow = draftRows.find((row) => row.id === rowId);
-
     if (!isEditActiveMode) {
       if (
         editingQuantity === null ||
@@ -492,12 +490,14 @@ function OrderTollingCreateDrawer({
     try {
       setSavingRow(true);
 
-      const payload = {
-        quantity: String(
-          isEditActiveMode ? currentRow?.quantity : editingQuantity,
-        ),
-        expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
-      };
+      const payload = isEditActiveMode
+        ? {
+            expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
+          }
+        : {
+            quantity: String(editingQuantity),
+            expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
+          };
 
       const response = await api.patch(
         `tolling-order-items/${rowId}/`,

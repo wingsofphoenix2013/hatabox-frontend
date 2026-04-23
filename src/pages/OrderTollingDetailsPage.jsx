@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
   AppstoreAddOutlined,
+  CheckCircleFilled,
+  CloseCircleFilled,
   DeleteOutlined,
   DownloadOutlined,
   EditOutlined,
@@ -24,10 +26,11 @@ import {
   Typography,
   message,
 } from 'antd';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatDateUa } from '../utils/orderFormatters';
 import { getApiErrorMessage } from '../utils/apiError';
+import { formatDateDisplay } from '../utils/orderFormatters';
 
 const { Title, Text } = Typography;
 
@@ -195,6 +198,84 @@ function OrderTollingDetailsPage() {
       </div>
     );
   }
+
+  const itemsColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 60,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Товар',
+      dataIndex: 'inventory_item_name',
+      key: 'inventory_item_name',
+      render: (value, record) => (
+        <Flex align="center" gap={6} wrap>
+          <span>{value || '—'}</span>
+
+          {record.inv_item && (
+            <Link
+              to={`/production/components/${record.inv_item}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <InfoCircleOutlined
+                style={{
+                  color: '#1677ff',
+                  fontSize: 14,
+                  cursor: 'pointer',
+                }}
+              />
+            </Link>
+          )}
+        </Flex>
+      ),
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 140,
+      align: 'center',
+      render: (_, record) =>
+        `${record.quantity || 0} ${record.unit_symbol || ''}`,
+    },
+    {
+      title: 'Отрим.',
+      key: 'received',
+      width: 160,
+      align: 'center',
+      render: (_, record) => {
+        const received = Number(record.received_quantity) || 0;
+        const total = Number(record.quantity) || 0;
+
+        if (received === 0) {
+          return (
+            <CloseCircleFilled style={{ color: '#ff4d4f', fontSize: 16 }} />
+          );
+        }
+
+        if (received >= total && total > 0) {
+          return (
+            <CheckCircleFilled style={{ color: '#52c41a', fontSize: 16 }} />
+          );
+        }
+
+        return `${received} з ${total} ${record.unit_symbol || ''}`;
+      },
+    },
+    {
+      title: 'Поставка',
+      key: 'expected_delivery_date',
+      width: 160,
+      align: 'center',
+      render: (_, record) =>
+        record.expected_delivery_date
+          ? formatDateDisplay(record.expected_delivery_date)
+          : '—',
+    },
+  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -439,7 +520,29 @@ function OrderTollingDetailsPage() {
           </Card>
 
           <Card title="Передача">
-            <Text type="secondary">Дані з’являться пізніше.</Text>
+            <Table
+              rowKey="id"
+              columns={itemsColumns}
+              dataSource={Array.isArray(order.items) ? order.items : []}
+              pagination={false}
+              size="small"
+              locale={{
+                emptyText: 'Немає доданих позицій.',
+              }}
+              components={{
+                body: {
+                  cell: (props) => (
+                    <td
+                      {...props}
+                      style={{
+                        fontSize: 12.5,
+                        padding: '7px 8px',
+                      }}
+                    />
+                  ),
+                },
+              }}
+            />
           </Card>
         </Col>
       </Row>

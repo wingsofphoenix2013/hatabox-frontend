@@ -28,11 +28,13 @@ import {
   message,
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import api from '../api/client';
 import { formatDateUa } from '../utils/orderFormatters';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
 import { getApiErrorMessage } from '../utils/apiError';
+
+import api from '../api/client';
+import OrderTollingCreateDrawer from '../components/OrderTollingCreateDrawer';
 
 const { Title, Text } = Typography;
 
@@ -67,7 +69,10 @@ function OrderTollingDetailsPage() {
   const [sendingToWork, setSendingToWork] = useState(false);
   const [deletingDraft, setDeletingDraft] = useState(false);
 
+  const [isOrderEditDrawerOpen, setIsOrderEditDrawerOpen] = useState(false);
+
   const [isEditingOrderComment, setIsEditingOrderComment] = useState(false);
+
   const [editingOrderComment, setEditingOrderComment] = useState('');
   const [savingOrderComment, setSavingOrderComment] = useState(false);
 
@@ -377,6 +382,7 @@ function OrderTollingDetailsPage() {
                     <Button
                       block
                       icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                      onClick={() => setIsOrderEditDrawerOpen(true)}
                     >
                       Комплектація передачі
                     </Button>
@@ -429,6 +435,7 @@ function OrderTollingDetailsPage() {
                     <Button
                       block
                       icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                      onClick={() => setIsOrderEditDrawerOpen(true)}
                     >
                       Комплектація передачі
                     </Button>
@@ -575,6 +582,14 @@ function OrderTollingDetailsPage() {
           </Card>
         </Col>
       </Row>
+      <OrderTollingCreateDrawer
+        open={isOrderEditDrawerOpen}
+        onClose={() => setIsOrderEditDrawerOpen(false)}
+        organizations={[]}
+        mode="edit"
+        order={order}
+        onCompleted={() => loadOrderPage({ silent: true })}
+      />
     </div>
   );
 }

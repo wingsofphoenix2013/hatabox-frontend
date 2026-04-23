@@ -86,8 +86,15 @@ function OrderTollingCreateDrawer({
   onClose,
   organizations = [],
   onCompleted,
+  mode = 'create',
+  order = null,
 }) {
   const navigate = useNavigate();
+
+  const isEditMode = mode === 'edit';
+  const isActive = order?.status === 'active';
+
+  const step2DisabledInActive = isEditMode && isActive;
 
   const [inventoryOptions, setInventoryOptions] = useState([]);
   const [inventoryLoading, setInventoryLoading] = useState(false);
@@ -141,7 +148,9 @@ function OrderTollingCreateDrawer({
   }, [availableInventoryOptions, selectedInvItemId]);
 
   const step1Locked = Boolean(createdOrderId);
-  const step2Enabled = Boolean(createdOrderId);
+  const step2Enabled = isEditMode
+    ? Boolean(order?.id)
+    : Boolean(createdOrderId);
 
   const canAddRow =
     step2Enabled &&
@@ -188,8 +197,42 @@ function OrderTollingCreateDrawer({
       return;
     }
 
+    if (isEditMode) {
+      setOrganizationDraftId(order?.organization ?? null);
+      setCreatedOrderId(order?.id ?? null);
+
+      setSelectedInvItemId(null);
+      setSelectedQuantity(null);
+      setSelectedExpectedDate(null);
+
+      setDraftRows(
+        Array.isArray(order?.items)
+          ? order.items.map((item) => ({
+              id: item.id,
+              inv_item_id: item.inv_item,
+              item_name: item.inv_item_name || '—',
+              internal_code: item.inv_item_internal_code || '',
+              unit_symbol: item.inv_item_unit_symbol || '',
+              quantity: item.quantity,
+              expected_delivery_date: item.expected_delivery_date || null,
+              received_quantity: item.received_quantity,
+            }))
+          : [],
+      );
+
+      setEditingRowId(null);
+      setEditingQuantity(null);
+      setEditingExpectedDate(null);
+      setCreatingOrder(false);
+      setSavingRow(false);
+      setFinalizing(false);
+      setStep1Error('');
+      setStep2Error('');
+      return;
+    }
+
     resetAll();
-  }, [open]);
+  }, [open, isEditMode, order]);
 
   useEffect(() => {
     if (!open) {
@@ -231,7 +274,10 @@ function OrderTollingCreateDrawer({
   };
 
   const performCloseDrawer = async () => {
-    resetAll();
+    if (!isEditMode) {
+      resetAll();
+    }
+
     onClose();
 
     if (onCompleted) {
@@ -240,6 +286,10 @@ function OrderTollingCreateDrawer({
   };
 
   const handleCloseAttempt = () => {
+    if (isEditMode) {
+      onClose();
+      return;
+    }
     if (!createdOrderId) {
       void performCloseDrawer();
       return;
@@ -308,7 +358,9 @@ function OrderTollingCreateDrawer({
   };
 
   const handleAddRow = async () => {
-    if (!canAddRow || !selectedInventoryItem || !createdOrderId) {
+    const currentOrderId = isEditMode ? order?.id : createdOrderId;
+
+    if (!canAddRow || !selectedInventoryItem || !currentOrderId) {
       return;
     }
 
@@ -317,7 +369,7 @@ function OrderTollingCreateDrawer({
       setStep2Error('');
 
       const payload = {
-        order: createdOrderId,
+        order: currentOrderId,
         inv_item: selectedInventoryItem.id,
         quantity: String(selectedQuantity),
         expected_delivery_date: selectedExpectedDate.format('YYYY-MM-DD'),
@@ -333,7 +385,10 @@ function OrderTollingCreateDrawer({
           createdItem.inv_item_name || selectedInventoryItem.name || '—',
         internal_code: selectedInventoryItem.internal_code || '',
         category_name: selectedInventoryItem.category_name || '',
-        unit_symbol: selectedInventoryItem.unit_symbol || '',
+        unit_symbol:
+          createdItem.inv_item_unit_symbol ||
+          selectedInventoryItem.unit_symbol ||
+          '',
         description: selectedInventoryItem.description || '',
         quantity:
           createdItem.quantity !== undefined && createdItem.quantity !== null
@@ -345,6 +400,7 @@ function OrderTollingCreateDrawer({
       };
 
       setDraftRows((prev) => [...prev, nextRow]);
+
       setSelectedInvItemId(null);
       setSelectedQuantity(null);
       setSelectedExpectedDate(null);
@@ -394,11 +450,17 @@ function OrderTollingCreateDrawer({
 
   const handleStartEditRow = (row) => {
     setEditingRowId(row.id);
-    setEditingQuantity(
-      row.quantity !== null && row.quantity !== undefined
-        ? Number(row.quantity)
-        : null,
-    );
+
+    if (isEditMode && isActive) {
+      setEditingQuantity(null);
+    } else {
+      setEditingQuantity(
+        row.quantity !== null && row.quantity !== undefined
+          ? Number(row.quantity)
+          : null,
+      );
+    }
+
     setEditingExpectedDate(
       row.expected_delivery_date
         ? dayjs(row.expected_delivery_date, 'YYYY-MM-DD')
@@ -407,13 +469,17 @@ function OrderTollingCreateDrawer({
   };
 
   const handleSaveRow = async (rowId) => {
-    if (
-      editingQuantity === null ||
-      editingQuantity === undefined ||
-      Number(editingQuantity) <= 0
-    ) {
-      message.error('Кількість повинна бути більшою за 0.');
-      return;
+    const isEditActiveMode = isEditMode && isActive;
+
+    if (!isEditActiveMode) {
+      if (
+        editingQuantity === null ||
+        editingQuantity === undefined ||
+        Number(editingQuantity) <= 0
+      ) {
+        message.error('Кількість повинна бути більшою за 0.');
+        return;
+      }
     }
 
     if (!editingExpectedDate) {
@@ -424,10 +490,14 @@ function OrderTollingCreateDrawer({
     try {
       setSavingRow(true);
 
-      const payload = {
-        quantity: String(editingQuantity),
-        expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
-      };
+      const payload = isEditActiveMode
+        ? {
+            expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
+          }
+        : {
+            quantity: String(editingQuantity),
+            expected_delivery_date: editingExpectedDate.format('YYYY-MM-DD'),
+          };
 
       const response = await api.patch(
         `tolling-order-items/${rowId}/`,
@@ -444,7 +514,9 @@ function OrderTollingCreateDrawer({
                   updatedItem.quantity !== undefined &&
                   updatedItem.quantity !== null
                     ? updatedItem.quantity
-                    : String(editingQuantity),
+                    : isEditActiveMode
+                      ? row.quantity
+                      : String(editingQuantity),
                 expected_delivery_date:
                   updatedItem.expected_delivery_date ||
                   editingExpectedDate.format('YYYY-MM-DD'),
@@ -491,7 +563,7 @@ function OrderTollingCreateDrawer({
       key: 'quantity',
       width: 170,
       render: (_, record) => {
-        if (editingRowId === record.id) {
+        if (editingRowId === record.id && !(isEditMode && isActive)) {
           return (
             <InputNumber
               min={0.001}
@@ -504,7 +576,9 @@ function OrderTollingCreateDrawer({
           );
         }
 
-        return `${formatQuantity(record.quantity)} ${record.unit_symbol || ''}`;
+        return `${formatQuantity(record.quantity)} ${
+          record.unit_symbol || record.inv_item_unit_symbol || ''
+        }`;
       },
     },
     {
@@ -565,12 +639,17 @@ function OrderTollingCreateDrawer({
           <DeleteOutlined
             style={{
               color: '#ff4d4f',
-              cursor: savingRow ? 'default' : 'pointer',
+              cursor:
+                isEditMode && isActive
+                  ? 'not-allowed'
+                  : savingRow
+                    ? 'default'
+                    : 'pointer',
               fontSize: 16,
-              opacity: savingRow ? 0.55 : 1,
+              opacity: isEditMode && isActive ? 0.4 : savingRow ? 0.55 : 1,
             }}
             onClick={() => {
-              if (!savingRow) {
+              if (!savingRow && !(isEditMode && isActive)) {
                 void handleDeleteRow(record.id);
               }
             }}
@@ -582,7 +661,7 @@ function OrderTollingCreateDrawer({
 
   return (
     <Drawer
-      title="Створити нову передачу"
+      title={isEditMode ? 'Редагувати передачу' : 'Створити нову передачу'}
       placement="right"
       size="large"
       open={open}
@@ -590,89 +669,98 @@ function OrderTollingCreateDrawer({
       maskClosable={false}
     >
       <Flex vertical gap={16}>
-        <Card
-          title="1. Оберіть організацію"
-          styles={{
-            body: {
-              opacity: step1Locked ? 0.7 : 1,
-              pointerEvents: step1Locked ? 'none' : 'auto',
-            },
-          }}
-        >
-          <Flex vertical gap={14}>
-            <div>
-              <Text style={compactLabelStyle}>Організація</Text>
-              <Select
-                showSearch
-                optionFilterProp="label"
-                placeholder="Почніть вводити назву організації"
-                style={{ width: '100%' }}
-                value={organizationDraftId}
-                options={organizationOptions}
-                onChange={(value) => {
-                  setOrganizationDraftId(value ?? null);
-                  setStep1Error('');
+        {!isEditMode && (
+          <Card
+            title="1. Оберіть організацію"
+            styles={{
+              body: {
+                opacity: step1Locked ? 0.7 : 1,
+                pointerEvents: step1Locked ? 'none' : 'auto',
+              },
+            }}
+          >
+            <Flex vertical gap={14}>
+              <div>
+                <Text style={compactLabelStyle}>Організація</Text>
+                <Select
+                  showSearch
+                  optionFilterProp="label"
+                  placeholder="Почніть вводити назву організації"
+                  style={{ width: '100%' }}
+                  value={organizationDraftId}
+                  options={organizationOptions}
+                  onChange={(value) => {
+                    setOrganizationDraftId(value ?? null);
+                    setStep1Error('');
+                  }}
+                  disabled={step1Locked}
+                />
+              </div>
+
+              <div
+                style={{
+                  padding: '10px 12px',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: 8,
+                  background: '#fafafa',
                 }}
-                disabled={step1Locked}
-              />
-            </div>
-
-            <div
-              style={{
-                padding: '10px 12px',
-                border: '1px solid #f0f0f0',
-                borderRadius: 8,
-                background: '#fafafa',
-              }}
-            >
-              <Flex wrap gap={16} align="flex-start">
-                <div style={{ flex: '1 1 260px' }}>
-                  <InfoCell
-                    label="Повна назва організації"
-                    value={selectedOrganizationDraft?.legalName}
-                    compact
-                  />
-                </div>
-
-                <div style={{ flex: '1 1 220px' }}>
-                  <InfoCell
-                    label="Тип організації"
-                    value={
-                      selectedOrganizationDraft?.type
-                        ? ORGANIZATION_TYPE_LABELS[
-                            selectedOrganizationDraft.type
-                          ]
-                        : '—'
-                    }
-                    compact
-                  />
-                </div>
-              </Flex>
-            </div>
-
-            {step1Error && <Alert type="error" showIcon message={step1Error} />}
-
-            <Flex justify="flex-end">
-              <Button
-                type="primary"
-                onClick={() => {
-                  void handleCreateOrder();
-                }}
-                disabled={!organizationDraftId || step1Locked}
-                loading={creatingOrder}
               >
-                Створити накладну
-              </Button>
+                <Flex wrap gap={16} align="flex-start">
+                  <div style={{ flex: '1 1 260px' }}>
+                    <InfoCell
+                      label="Повна назва організації"
+                      value={selectedOrganizationDraft?.legalName}
+                      compact
+                    />
+                  </div>
+
+                  <div style={{ flex: '1 1 220px' }}>
+                    <InfoCell
+                      label="Тип організації"
+                      value={
+                        selectedOrganizationDraft?.type
+                          ? ORGANIZATION_TYPE_LABELS[
+                              selectedOrganizationDraft.type
+                            ]
+                          : '—'
+                      }
+                      compact
+                    />
+                  </div>
+                </Flex>
+              </div>
+
+              {step1Error && (
+                <Alert type="error" showIcon message={step1Error} />
+              )}
+
+              <Flex justify="flex-end">
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    void handleCreateOrder();
+                  }}
+                  disabled={!organizationDraftId || step1Locked}
+                  loading={creatingOrder}
+                >
+                  Створити накладну
+                </Button>
+              </Flex>
             </Flex>
-          </Flex>
-        </Card>
+          </Card>
+        )}
 
         <Card
-          title="2. Оберіть номенклатурну позицію"
+          title={
+            isEditMode
+              ? '1. Оберіть номенклатурну позицію'
+              : '2. Оберіть номенклатурну позицію'
+          }
           styles={{
             body: {
-              opacity: step2Enabled ? 1 : 0.65,
-              pointerEvents: step2Enabled ? 'auto' : 'none',
+              opacity: step2Enabled && !step2DisabledInActive ? 1 : 0.65,
+              pointerEvents:
+                step2Enabled && !step2DisabledInActive ? 'auto' : 'none',
             },
           }}
         >
@@ -683,6 +771,15 @@ function OrderTollingCreateDrawer({
                 showIcon
                 message="Спочатку створіть накладну"
                 description="Наступний крок стане доступним після створення накладної на кроці 1."
+              />
+            )}
+
+            {isEditMode && isActive && (
+              <Alert
+                type="warning"
+                showIcon
+                message="Додавання нових рядків недоступне"
+                description="Передача вже в роботі. Додавання нових позицій заборонено."
               />
             )}
 
@@ -801,7 +898,7 @@ function OrderTollingCreateDrawer({
                 onClick={() => {
                   void handleAddRow();
                 }}
-                disabled={!canAddRow}
+                disabled={!canAddRow || step2DisabledInActive}
                 loading={savingRow}
               >
                 Додати рядок
@@ -810,7 +907,7 @@ function OrderTollingCreateDrawer({
           </Flex>
         </Card>
 
-        <Card title="3. Склад передачі">
+        <Card title={isEditMode ? '2. Склад передачі' : '3. Склад передачі'}>
           <Table
             rowKey="id"
             columns={step3Columns}
@@ -839,32 +936,34 @@ function OrderTollingCreateDrawer({
         <Flex justify="space-between" align="center" gap={12} wrap>
           <Button onClick={handleCloseAttempt}>Закрити</Button>
 
-          <Button
-            type="primary"
-            loading={finalizing}
-            disabled={submitButtonDisabled}
-            onClick={async () => {
-              if (!createdOrderId) {
-                return;
-              }
-
-              try {
-                setFinalizing(true);
-                resetAll();
-
-                if (onCompleted) {
-                  await onCompleted();
+          {!isEditMode && (
+            <Button
+              type="primary"
+              loading={finalizing}
+              disabled={submitButtonDisabled}
+              onClick={async () => {
+                if (!createdOrderId) {
+                  return;
                 }
 
-                onClose();
-                navigate(`/orders/tolling/${createdOrderId}`);
-              } finally {
-                setFinalizing(false);
-              }
-            }}
-          >
-            Оформити передачу
-          </Button>
+                try {
+                  setFinalizing(true);
+                  resetAll();
+
+                  if (onCompleted) {
+                    await onCompleted();
+                  }
+
+                  onClose();
+                  navigate(`/orders/tolling/${createdOrderId}`);
+                } finally {
+                  setFinalizing(false);
+                }
+              }}
+            >
+              Оформити передачу
+            </Button>
+          )}
         </Flex>
       </Flex>
     </Drawer>

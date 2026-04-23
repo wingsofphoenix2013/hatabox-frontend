@@ -207,7 +207,9 @@ function OrderTollingDetailsPage() {
       key: 'index',
       width: 60,
       align: 'center',
-      render: (_, __, index) => index + 1,
+      render: (_, __, index) => (
+        <div style={{ textAlign: 'center' }}>{index + 1}</div>
+      ),
     },
     {
       title: 'Товар',

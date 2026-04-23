@@ -287,9 +287,10 @@ function OrderTollingCreateDrawer({
 
   const handleCloseAttempt = () => {
     if (isEditMode) {
-      onClose();
+      void performCloseDrawer();
       return;
     }
+
     if (!createdOrderId) {
       void performCloseDrawer();
       return;

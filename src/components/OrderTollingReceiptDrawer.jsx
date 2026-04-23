@@ -370,19 +370,8 @@ function OrderTollingReceiptDrawer({ open, onClose, order, onReceiptSaved }) {
 
       message.success('Документ отримання позначено як оброблений.');
 
-      const refreshedDocuments = await loadReceiptDocuments(order.id);
-      const defaultDocumentId = getDefaultReceiptDocumentId(refreshedDocuments);
-
-      if (defaultDocumentId) {
-        setSelectedReceiptDocumentId(defaultDocumentId);
-        await loadReceiptDocument(defaultDocumentId);
-      } else {
-        setSelectedReceiptDocumentId(null);
-        setActiveReceiptDocument(null);
-        setReceiptDate(null);
-      }
-
       await notifyReceiptSaved();
+      onClose();
     } catch (err) {
       console.error('Failed to complete tolling receipt document:', err);
 

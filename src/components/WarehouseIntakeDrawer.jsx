@@ -86,8 +86,6 @@ function WarehouseIntakeDrawer({
   const [conversionMode, setConversionMode] = useState(false); // false = Ні, true = Так
   const [selectedPendingItemId, setSelectedPendingItemId] = useState(null);
   const [cartItems, setCartItems] = useState([]);
-  const [conversionTargetQuantity, setConversionTargetQuantity] =
-    useState(null);
 
   const [saving, setSaving] = useState(false);
 
@@ -189,6 +187,8 @@ function WarehouseIntakeDrawer({
     (selectedPendingItemId === SELECT_ALL_VALUE ||
       Boolean(selectedPendingItem));
 
+  const conversionTargetQuantity = cartItems[0]?.conversion_target_quantity;
+
   const submitButtonDisabled =
     !confirmedLocationId ||
     cartItems.length === 0 ||
@@ -216,7 +216,6 @@ function WarehouseIntakeDrawer({
     setSaving(false);
     setSelectedPendingItemId(null);
     setCartItems([]);
-    setConversionTargetQuantity(null);
 
     if (isTollingMode) {
       setConversionMode(false);
@@ -248,7 +247,6 @@ function WarehouseIntakeDrawer({
     setSubmitError('');
     setSaving(false);
     setSelectedPendingItemId(null);
-    setConversionTargetQuantity(null);
 
     if (isPresetMode) {
       const hasConversion = presetPendingItems.some((item) =>
@@ -378,7 +376,7 @@ function WarehouseIntakeDrawer({
           `warehouse-pending-intake-items/${item.id}/accept-with-conversion/`,
           {
             location: confirmedLocationId,
-            target_quantity: String(conversionTargetQuantity),
+            target_quantity: String(cartItems[0]?.conversion_target_quantity),
             comment: 'Конвертація при оформленні',
           },
         );
@@ -543,8 +541,16 @@ function WarehouseIntakeDrawer({
                     step={0.001}
                     controls={false}
                     size="small"
-                    value={conversionTargetQuantity}
-                    onChange={setConversionTargetQuantity}
+                    value={record.conversion_target_quantity}
+                    onChange={(value) => {
+                      setCartItems((prev) =>
+                        prev.map((item) =>
+                          item.id === record.id
+                            ? { ...item, conversion_target_quantity: value }
+                            : item,
+                        ),
+                      );
+                    }}
                     placeholder="К-сть"
                     style={{ width: 90 }}
                   />
@@ -573,12 +579,7 @@ function WarehouseIntakeDrawer({
           ),
       },
     ],
-    [
-      conversionTargetQuantity,
-      getPendingItemDisplayName,
-      isSingleConversionMode,
-      isStep2LockedByPreset,
-    ],
+    [getPendingItemDisplayName, isSingleConversionMode, isStep2LockedByPreset],
   );
 
   return (

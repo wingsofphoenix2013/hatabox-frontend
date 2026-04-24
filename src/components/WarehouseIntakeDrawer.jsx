@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -91,6 +91,8 @@ function WarehouseIntakeDrawer({
 
   const [step1Error, setStep1Error] = useState('');
   const [submitError, setSubmitError] = useState('');
+
+  const [conversionDraftQuantity, setConversionDraftQuantity] = useState(null);
 
   const isPresetMode =
     Array.isArray(presetPendingItems) && presetPendingItems.length > 0;
@@ -216,6 +218,7 @@ function WarehouseIntakeDrawer({
     setSaving(false);
     setSelectedPendingItemId(null);
     setCartItems([]);
+    setConversionDraftQuantity(null);
 
     if (isTollingMode) {
       setConversionMode(false);
@@ -247,6 +250,7 @@ function WarehouseIntakeDrawer({
     setSubmitError('');
     setSaving(false);
     setSelectedPendingItemId(null);
+    setConversionDraftQuantity(null);
 
     if (isPresetMode) {
       const hasConversion = presetPendingItems.some((item) =>
@@ -356,9 +360,9 @@ function WarehouseIntakeDrawer({
     setSelectedPendingItemId(null);
   };
 
-  const handleRemoveCartItem = (itemId) => {
+  const handleRemoveCartItem = useCallback((itemId) => {
     setCartItems((prev) => prev.filter((item) => item.id !== itemId));
-  };
+  }, []);
 
   const handleSubmit = async () => {
     if (submitButtonDisabled) {
@@ -541,18 +545,38 @@ function WarehouseIntakeDrawer({
                     step={0.001}
                     controls={false}
                     size="small"
-                    value={record.conversion_target_quantity}
-                    onChange={(value) => {
+                    value={conversionDraftQuantity}
+                    onChange={setConversionDraftQuantity}
+                    placeholder="К-сть"
+                    style={{ width: 90 }}
+                  />
+
+                  <SaveOutlined
+                    style={{
+                      color: '#52c41a',
+                      fontSize: 16,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      if (
+                        !conversionDraftQuantity ||
+                        Number(conversionDraftQuantity) <= 0
+                      ) {
+                        return;
+                      }
+
                       setCartItems((prev) =>
                         prev.map((item) =>
                           item.id === record.id
-                            ? { ...item, conversion_target_quantity: value }
+                            ? {
+                                ...item,
+                                conversion_target_quantity:
+                                  conversionDraftQuantity,
+                              }
                             : item,
                         ),
                       );
                     }}
-                    placeholder="К-сть"
-                    style={{ width: 90 }}
                   />
 
                   <Text>{record.inventory_item_unit_symbol || ''}</Text>
@@ -579,7 +603,13 @@ function WarehouseIntakeDrawer({
           ),
       },
     ],
-    [getPendingItemDisplayName, isSingleConversionMode, isStep2LockedByPreset],
+    [
+      conversionDraftQuantity,
+      getPendingItemDisplayName,
+      handleRemoveCartItem,
+      isSingleConversionMode,
+      isStep2LockedByPreset,
+    ],
   );
 
   return (

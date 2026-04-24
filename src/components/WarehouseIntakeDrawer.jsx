@@ -357,7 +357,7 @@ function WarehouseIntakeDrawer({
 
     setConfirmedLocationId(nextConfirmedId);
 
-    if (locationActuallyChanged) {
+    if (locationActuallyChanged && !isPresetMode) {
       const nextMode = isTollingMode
         ? false
         : hasRegularItems && hasConversionItems
@@ -815,7 +815,15 @@ function WarehouseIntakeDrawer({
           </Flex>
         </Card>
 
-        <Card title="3. Перелік отримання">
+        <Card
+          title="3. Перелік отримання"
+          styles={{
+            body: {
+              opacity: step2Enabled ? 1 : 0.65,
+              pointerEvents: step2Enabled ? 'auto' : 'none',
+            },
+          }}
+        >
           <Table
             rowKey="id"
             columns={step3Columns}

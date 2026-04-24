@@ -366,10 +366,74 @@ function WarehouseStockRegisterPage() {
             )}
 
             {/* Иконка перехода */}
-            {canOpenPendingIntake && record.inventory_item_id && (
-              <Tooltip title="Перейти до первинного отримання">
-                <Link
-                  to={`/inventory/pending-intake?inventory_item_id=${record.inventory_item_id}`}
+            {canOpenPendingIntake &&
+              record.inventory_item_id &&
+              record.has_procurement_pending_intake &&
+              !record.has_tolling_pending_intake && (
+                <Tooltip title="Перейти до первинного отримання">
+                  <Link
+                    to={`/inventory/pending-intake?inventory_item_id=${record.inventory_item_id}`}
+                  >
+                    <InfoCircleOutlined
+                      style={{
+                        color: '#1677ff',
+                        fontSize: 14,
+                        cursor: 'pointer',
+                      }}
+                    />
+                  </Link>
+                </Tooltip>
+              )}
+
+            {canOpenPendingIntake &&
+              record.inventory_item_id &&
+              !record.has_procurement_pending_intake &&
+              record.has_tolling_pending_intake && (
+                <Tooltip title="Перейти до давальчих поставок">
+                  <Link
+                    to={`/inventory/tolling-pending-intake?inventory_item_id=${record.inventory_item_id}`}
+                  >
+                    <InfoCircleOutlined
+                      style={{
+                        color: '#1677ff',
+                        fontSize: 14,
+                        cursor: 'pointer',
+                      }}
+                    />
+                  </Link>
+                </Tooltip>
+              )}
+
+            {canOpenPendingIntake &&
+              record.inventory_item_id &&
+              record.has_procurement_pending_intake &&
+              record.has_tolling_pending_intake && (
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: 'procurement',
+                        label: (
+                          <Link
+                            to={`/inventory/pending-intake?inventory_item_id=${record.inventory_item_id}`}
+                          >
+                            Комерційне отримання
+                          </Link>
+                        ),
+                      },
+                      {
+                        key: 'tolling',
+                        label: (
+                          <Link
+                            to={`/inventory/tolling-pending-intake?inventory_item_id=${record.inventory_item_id}`}
+                          >
+                            Давальчі поставки
+                          </Link>
+                        ),
+                      },
+                    ],
+                  }}
+                  trigger={['click']}
                 >
                   <InfoCircleOutlined
                     style={{
@@ -378,9 +442,8 @@ function WarehouseStockRegisterPage() {
                       cursor: 'pointer',
                     }}
                   />
-                </Link>
-              </Tooltip>
-            )}
+                </Dropdown>
+              )}
           </Flex>
         );
       },

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   Alert,
@@ -7,7 +7,6 @@ import {
   Drawer,
   Flex,
   Select,
-  Space,
   Switch,
   Table,
   Typography,
@@ -75,7 +74,9 @@ function WarehouseIntakeDrawer({
   pendingItems = [],
   presetPendingItems = [],
   onCompleted,
+  sourceType = 'procurement',
 }) {
+  const isTollingMode = sourceType === 'tolling';
   const [locationOptions, setLocationOptions] = useState([]);
 
   const [locationDraftId, setLocationDraftId] = useState(null);
@@ -108,14 +109,22 @@ function WarehouseIntakeDrawer({
   }, [locations]);
 
   const regularPendingItems = useMemo(() => {
+    if (isTollingMode) {
+      return allPendingItems;
+    }
+
     return allPendingItems.filter((item) => !item.requires_unit_conversion);
-  }, [allPendingItems]);
+  }, [allPendingItems, isTollingMode]);
 
   const conversionPendingItems = useMemo(() => {
+    if (isTollingMode) {
+      return [];
+    }
+
     return allPendingItems.filter((item) =>
       Boolean(item.requires_unit_conversion),
     );
-  }, [allPendingItems]);
+  }, [allPendingItems, isTollingMode]);
 
   const hasRegularItems = regularPendingItems.length > 0;
   const hasConversionItems = conversionPendingItems.length > 0;
@@ -158,9 +167,13 @@ function WarehouseIntakeDrawer({
   const isStep2LockedByPreset = isPresetMode;
 
   const step2SwitchDisabled =
-    !step2Enabled || cartHasItems || !hasBothModes || isStep2LockedByPreset;
+    isTollingMode ||
+    !step2Enabled ||
+    cartHasItems ||
+    !hasBothModes ||
+    isStep2LockedByPreset;
 
-  const isConversionPlaceholderMode = conversionMode;
+  const isConversionPlaceholderMode = !isTollingMode && conversionMode;
   const canAddSelectedItem =
     step2Enabled &&
     !isConversionPlaceholderMode &&
@@ -191,7 +204,9 @@ function WarehouseIntakeDrawer({
     setSelectedPendingItemId(null);
     setCartItems([]);
 
-    if (hasRegularItems && hasConversionItems) {
+    if (isTollingMode) {
+      setConversionMode(false);
+    } else if (hasRegularItems && hasConversionItems) {
       setConversionMode(false);
     } else if (!hasRegularItems && hasConversionItems) {
       setConversionMode(true);
@@ -226,7 +241,9 @@ function WarehouseIntakeDrawer({
     } else {
       setCartItems([]);
 
-      if (hasRegularItems && hasConversionItems) {
+      if (isTollingMode) {
+        setConversionMode(false);
+      } else if (hasRegularItems && hasConversionItems) {
         setConversionMode(false);
       } else if (!hasRegularItems && hasConversionItems) {
         setConversionMode(true);
@@ -240,6 +257,7 @@ function WarehouseIntakeDrawer({
     hasConversionItems,
     isPresetMode,
     presetPendingItems,
+    isTollingMode,
   ]);
 
   useEffect(() => {
@@ -278,8 +296,9 @@ function WarehouseIntakeDrawer({
     setConfirmedLocationId(nextConfirmedId);
 
     if (locationActuallyChanged) {
-      const nextMode =
-        hasRegularItems && hasConversionItems
+      const nextMode = isTollingMode
+        ? false
+        : hasRegularItems && hasConversionItems
           ? false
           : !hasRegularItems && hasConversionItems;
 
@@ -293,7 +312,7 @@ function WarehouseIntakeDrawer({
   };
 
   const handleChangeConversionMode = (checked) => {
-    if (step2SwitchDisabled) {
+    if (isTollingMode || step2SwitchDisabled) {
       return;
     }
 
@@ -337,7 +356,11 @@ function WarehouseIntakeDrawer({
         const item = cartItems[0];
 
         await api.post(
-          `warehouse-pending-intake-items/${item.id}/accept-to-location/`,
+          `${
+            isTollingMode
+              ? 'warehouse-tolling-pending-intake-items'
+              : 'warehouse-pending-intake-items'
+          }/${item.id}/accept-to-location/`,
           {
             location: confirmedLocationId,
           },
@@ -346,7 +369,9 @@ function WarehouseIntakeDrawer({
         message.success('Первинне отримання оформлено.');
       } else {
         await api.post(
-          'warehouse-pending-intake-items/bulk-accept-to-location/',
+          isTollingMode
+            ? 'warehouse-tolling-pending-intake-items/bulk-accept-to-location/'
+            : 'warehouse-pending-intake-items/bulk-accept-to-location/',
           {
             location: confirmedLocationId,
             receipt_item_ids: cartItems.map((item) => item.id),
@@ -378,6 +403,37 @@ function WarehouseIntakeDrawer({
     }
   };
 
+  const getPendingItemDisplayName = useCallback(
+    (item) => {
+      if (!item) return '—';
+
+      return isTollingMode
+        ? item.inventory_item_name || `ID ${item.id}`
+        : item.vendor_item_name || item.inventory_item_name || `ID ${item.id}`;
+    },
+    [isTollingMode],
+  );
+
+  const getPendingItemCounterpartyName = (item) => {
+    if (!item) return '—';
+
+    return isTollingMode ? item.organization_name : item.vendor_name;
+  };
+
+  const getPendingItemDocumentDisplay = (item) => {
+    if (!item) return '—';
+
+    if (isTollingMode) {
+      return `${item.receipt_no || '—'} · ${
+        item.receipt_date ? formatDateDisplay(item.receipt_date) : '—'
+      }`;
+    }
+
+    return `${item.order_no || '—'} · ${
+      item.order_created_at ? formatDateDisplay(item.order_created_at) : '—'
+    }`;
+  };
+
   const orderItemOptions = useMemo(() => {
     if (!step2Enabled || isConversionPlaceholderMode) {
       return [];
@@ -385,8 +441,7 @@ function WarehouseIntakeDrawer({
 
     const regularOptions = availableItemsForCurrentMode.map((item) => ({
       value: item.id,
-      label:
-        item.vendor_item_name || item.inventory_item_name || `ID ${item.id}`,
+      label: getPendingItemDisplayName(item),
     }));
 
     if (!canUseSelectAll) {
@@ -410,6 +465,7 @@ function WarehouseIntakeDrawer({
     isConversionPlaceholderMode,
     availableItemsForCurrentMode,
     canUseSelectAll,
+    getPendingItemDisplayName,
   ]);
 
   const step3Columns = [
@@ -417,7 +473,7 @@ function WarehouseIntakeDrawer({
       title: 'Товар',
       dataIndex: 'vendor_item_name',
       key: 'vendor_item_name',
-      render: (value, record) => value || record.inventory_item_name || '—',
+      render: (_, record) => getPendingItemDisplayName(record),
     },
     {
       title: <div style={{ whiteSpace: 'nowrap' }}>К-сть</div>,
@@ -510,7 +566,7 @@ function WarehouseIntakeDrawer({
               <Flex align="center" gap={8}>
                 <Text style={{ fontSize: 12 }}>Товари з конвертацією</Text>
                 <Switch
-                  checked={conversionMode}
+                  checked={isTollingMode ? false : conversionMode}
                   checkedChildren="Так"
                   unCheckedChildren="Ні"
                   disabled={step2SwitchDisabled}
@@ -590,7 +646,7 @@ function WarehouseIntakeDrawer({
                 <div style={{ flex: '1 1 180px' }}>
                   <InfoCell
                     label="Постачальник"
-                    value={selectedPendingItem?.vendor_name}
+                    value={getPendingItemCounterpartyName(selectedPendingItem)}
                     compact
                   />
                 </div>
@@ -598,17 +654,7 @@ function WarehouseIntakeDrawer({
                 <div style={{ flex: '1 1 220px' }}>
                   <InfoCell
                     label="Замовлення"
-                    value={
-                      selectedPendingItem
-                        ? `${selectedPendingItem.order_no || '—'} · ${
-                            selectedPendingItem.order_created_at
-                              ? formatDateDisplay(
-                                  selectedPendingItem.order_created_at,
-                                )
-                              : '—'
-                          }`
-                        : '—'
-                    }
+                    value={getPendingItemDocumentDisplay(selectedPendingItem)}
                     compact
                   />
                 </div>

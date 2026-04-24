@@ -15,13 +15,13 @@ import {
   Table,
   Tooltip,
   Typography,
-  message,
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
 import { getApiErrorMessage } from '../utils/apiError';
+import WarehouseIntakeDrawer from '../components/WarehouseIntakeDrawer';
 
 const { Title, Text } = Typography;
 
@@ -35,11 +35,18 @@ function WarehouseTollingPendingIntakePage() {
     searchParams.get('search') || '',
   );
 
+  const [locations, setLocations] = useState([]);
+  const [locationsError, setLocationsError] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [presetPendingItems, setPresetPendingItems] = useState([]);
+
   const [page, setPage] = useState(Number(searchParams.get('page')) || 1);
   const [total, setTotal] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const pageSize = 50;
 
@@ -58,6 +65,33 @@ function WarehouseTollingPendingIntakePage() {
 
     setSearchParams(params);
   }, [searchText, page, setSearchParams]);
+
+  useEffect(() => {
+    const loadLocations = async () => {
+      try {
+        setLocationsError('');
+
+        const response = await api.get('warehouse-locations/', {
+          params: { is_active: true },
+        });
+
+        setLocations(
+          Array.isArray(response.data?.results) ? response.data.results : [],
+        );
+      } catch (err) {
+        console.error('Failed to load warehouse locations:', err);
+
+        const backendMessage = getApiErrorMessage(err?.response?.data);
+
+        setLocations([]);
+        setLocationsError(
+          backendMessage || 'Не вдалося завантажити перелік активних локацій.',
+        );
+      }
+    };
+
+    loadLocations();
+  }, []);
 
   useEffect(() => {
     const loadPendingIntakeItems = async () => {
@@ -108,16 +142,47 @@ function WarehouseTollingPendingIntakePage() {
     };
 
     loadPendingIntakeItems();
-  }, [page, searchText]);
+  }, [page, searchText, reloadKey]);
 
   const handleSearchChange = (e) => {
     setSearchText(e.target.value);
     setPage(1);
   };
 
+  const handleDrawerCompleted = async () => {
+    try {
+      setLocationsError('');
+
+      const response = await api.get('warehouse-locations/', {
+        params: { is_active: true },
+      });
+
+      setLocations(
+        Array.isArray(response.data?.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to reload warehouse locations:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      setLocations([]);
+      setLocationsError(
+        backendMessage || 'Не вдалося завантажити перелік активних локацій.',
+      );
+    }
+
+    setPage(1);
+    setReloadKey((prev) => prev + 1);
+  };
+
+  const selectedItems = items.filter((item) =>
+    selectedRowKeys.includes(item.id),
+  );
+
   const handleBulkActionChange = (value) => {
-    if (value === 'placeholder') {
-      message.info('Масові дії будуть додані пізніше.');
+    if (value === 'intake') {
+      setPresetPendingItems(selectedItems);
+      setDrawerOpen(true);
     }
   };
 
@@ -248,13 +313,15 @@ function WarehouseTollingPendingIntakePage() {
       key: 'action',
       width: 56,
       align: 'center',
-      render: () => {
+      render: (_, record) => {
         const dropdownItems = [
           {
-            key: 'placeholder',
-            label: (
-              <div style={{ padding: '4px 0' }}>Дії будуть додані пізніше</div>
-            ),
+            key: 'intake',
+            label: <div style={{ padding: '4px 0' }}>Оформити отримання</div>,
+            onClick: () => {
+              setPresetPendingItems([record]);
+              setDrawerOpen(true);
+            },
           },
         ];
 
@@ -302,8 +369,8 @@ function WarehouseTollingPendingIntakePage() {
               onChange={handleBulkActionChange}
               options={[
                 {
-                  value: 'placeholder',
-                  label: 'Дії',
+                  value: 'intake',
+                  label: 'Оформити отримання',
                 },
               ]}
             />
@@ -320,6 +387,10 @@ function WarehouseTollingPendingIntakePage() {
             />
           </Flex>
         </Card>
+
+        {locationsError && (
+          <Alert type="warning" description={locationsError} showIcon />
+        )}
 
         {error && <Alert type="error" description={error} showIcon />}
 
@@ -363,6 +434,18 @@ function WarehouseTollingPendingIntakePage() {
           />
         </Card>
       </Flex>
+      <WarehouseIntakeDrawer
+        open={drawerOpen}
+        onClose={() => {
+          setDrawerOpen(false);
+          setPresetPendingItems([]);
+        }}
+        locations={locations}
+        pendingItems={items}
+        presetPendingItems={presetPendingItems}
+        onCompleted={handleDrawerCompleted}
+        sourceType="tolling"
+      />
     </div>
   );
 }

@@ -135,6 +135,7 @@ function ProtectedLayout() {
   const [previewModule, setPreviewModule] = useState(null);
   const [panelOpen, setPanelOpen] = useState(false);
   const [pendingIntakeCount, setPendingIntakeCount] = useState(0);
+  const [tollingPendingIntakeCount, setTollingPendingIntakeCount] = useState(0);
 
   const sidebar1TopItems = [
     {
@@ -216,14 +217,19 @@ function ProtectedLayout() {
     );
   };
 
-  const fetchPendingIntakeStatus = async () => {
+  const fetchWarehouseIntakeStatuses = async () => {
     try {
-      const response = await api.get('warehouse-pending-intake-items/status/');
-      const count = Number(response.data?.count) || 0;
-      setPendingIntakeCount(count);
+      const [pendingResponse, tollingResponse] = await Promise.all([
+        api.get('warehouse-pending-intake-items/status/'),
+        api.get('warehouse-tolling-pending-intake-items/status/'),
+      ]);
+
+      setPendingIntakeCount(Number(pendingResponse.data?.count) || 0);
+      setTollingPendingIntakeCount(Number(tollingResponse.data?.count) || 0);
     } catch (error) {
-      console.error('Failed to fetch pending intake status:', error);
+      console.error('Failed to fetch warehouse intake statuses:', error);
       setPendingIntakeCount(0);
+      setTollingPendingIntakeCount(0);
     }
   };
 
@@ -268,10 +274,10 @@ function ProtectedLayout() {
   }, [location.pathname, routeModule]);
 
   useEffect(() => {
-    fetchPendingIntakeStatus();
+    fetchWarehouseIntakeStatuses();
 
     const intervalId = window.setInterval(() => {
-      fetchPendingIntakeStatus();
+      fetchWarehouseIntakeStatuses();
     }, 60000);
 
     return () => {
@@ -313,6 +319,16 @@ function ProtectedLayout() {
     setPreviewModule(key);
     setPanelOpen(moduleHasContent);
   };
+
+  const inventoryTotalBadgeCount =
+    pendingIntakeCount + tollingPendingIntakeCount;
+
+  const inventoryBadgeText =
+    inventoryTotalBadgeCount > 9
+      ? '9+'
+      : inventoryTotalBadgeCount > 0
+        ? String(inventoryTotalBadgeCount)
+        : null;
 
   const renderSidebar1Item = (item) => {
     if (item.type === 'divider') {
@@ -426,6 +442,38 @@ function ProtectedLayout() {
     );
   };
 
+  const renderSidebar2Label = (item) => {
+    const showDot =
+      (item.path === '/inventory/pending-intake' && pendingIntakeCount > 0) ||
+      (item.path === '/inventory/tolling-pending-intake' &&
+        tollingPendingIntakeCount > 0);
+
+    if (!showDot) {
+      return item.label;
+    }
+
+    return (
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
+      >
+        <span>{item.label}</span>
+        <span
+          style={{
+            width: 7,
+            height: 7,
+            borderRadius: 999,
+            background: '#ef4444',
+            flexShrink: 0,
+          }}
+        />
+      </span>
+    );
+  };
+
   const sidebar2SelectedKeys = useMemo(() => {
     if (!currentConfig) return [];
 
@@ -445,13 +493,6 @@ function ProtectedLayout() {
 
     return [];
   }, [currentConfig, location.pathname]);
-
-  const inventoryBadgeText =
-    pendingIntakeCount > 9
-      ? '9+'
-      : pendingIntakeCount > 0
-        ? String(pendingIntakeCount)
-        : null;
 
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden' }}>
@@ -534,7 +575,7 @@ function ProtectedLayout() {
                   items={currentConfig.pages.map((item, i) => ({
                     key: item.path || 'p' + i,
                     icon: <DatabaseOutlined />,
-                    label: item.label || item,
+                    label: renderSidebar2Label(item),
                   }))}
                 />
                 <Divider style={{ borderColor: 'rgba(255,255,255,0.12)' }} />

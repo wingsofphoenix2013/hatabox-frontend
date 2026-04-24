@@ -500,78 +500,86 @@ function WarehouseIntakeDrawer({
     getPendingItemDisplayName,
   ]);
 
-  const step3Columns = [
-    {
-      title: 'Товар',
-      dataIndex: 'vendor_item_name',
-      key: 'vendor_item_name',
-      render: (_, record) => getPendingItemDisplayName(record),
-    },
-    {
-      title: (
-        <div style={{ whiteSpace: 'nowrap' }}>
-          {isSingleConversionMode ? 'Ориг.' : 'К-сть'}
-        </div>
-      ),
-      key: 'received_quantity',
-      dataIndex: 'received_quantity',
-      width: 90,
-      align: 'center',
-      render: (value, record) => (
-        <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-          {formatQuantity(value)}{' '}
-          {isSingleConversionMode ? (
-            <span style={{ color: '#ff4d4f' }}>???</span>
-          ) : (
-            record.inventory_item_unit_symbol || ''
-          )}
-        </div>
-      ),
-    },
-    ...(isSingleConversionMode
-      ? [
-          {
-            title: <div style={{ whiteSpace: 'nowrap' }}>К-сть</div>,
-            key: 'target_quantity',
-            width: 150,
-            align: 'center',
-            render: (_, record) => (
-              <Flex justify="center" align="center" gap={6}>
-                <InputNumber
-                  min={0.001}
-                  step={0.001}
-                  controls={false}
-                  size="small"
-                  value={conversionTargetQuantity}
-                  onChange={setConversionTargetQuantity}
-                  placeholder="К-сть"
-                  style={{ width: 90 }}
-                />
-
-                <Text>{record.inventory_item_unit_symbol || ''}</Text>
-              </Flex>
-            ),
-          },
-        ]
-      : []),
-    {
-      title: '',
-      key: 'actions',
-      width: 56,
-      align: 'center',
-      render: (_, record) =>
-        isStep2LockedByPreset ? null : (
-          <DeleteOutlined
-            style={{
-              color: '#ff4d4f',
-              cursor: 'pointer',
-              fontSize: 14,
-            }}
-            onClick={() => handleRemoveCartItem(record.id)}
-          />
+  const step3Columns = useMemo(
+    () => [
+      {
+        title: 'Товар',
+        dataIndex: 'vendor_item_name',
+        key: 'vendor_item_name',
+        render: (_, record) => getPendingItemDisplayName(record),
+      },
+      {
+        title: (
+          <div style={{ whiteSpace: 'nowrap' }}>
+            {isSingleConversionMode ? 'Ориг.' : 'К-сть'}
+          </div>
         ),
-    },
-  ];
+        key: 'received_quantity',
+        dataIndex: 'received_quantity',
+        width: 90,
+        align: 'center',
+        render: (value, record) => (
+          <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+            {formatQuantity(value)}{' '}
+            {isSingleConversionMode ? (
+              <span style={{ color: '#ff4d4f' }}>???</span>
+            ) : (
+              record.inventory_item_unit_symbol || ''
+            )}
+          </div>
+        ),
+      },
+      ...(isSingleConversionMode
+        ? [
+            {
+              title: <div style={{ whiteSpace: 'nowrap' }}>К-сть</div>,
+              key: 'target_quantity',
+              width: 150,
+              align: 'center',
+              render: (_, record) => (
+                <Flex justify="center" align="center" gap={6}>
+                  <InputNumber
+                    min={0.001}
+                    step={0.001}
+                    controls={false}
+                    size="small"
+                    value={conversionTargetQuantity}
+                    onChange={setConversionTargetQuantity}
+                    placeholder="К-сть"
+                    style={{ width: 90 }}
+                  />
+
+                  <Text>{record.inventory_item_unit_symbol || ''}</Text>
+                </Flex>
+              ),
+            },
+          ]
+        : []),
+      {
+        title: '',
+        key: 'actions',
+        width: 56,
+        align: 'center',
+        render: (_, record) =>
+          isStep2LockedByPreset ? null : (
+            <DeleteOutlined
+              style={{
+                color: '#ff4d4f',
+                cursor: 'pointer',
+                fontSize: 14,
+              }}
+              onClick={() => handleRemoveCartItem(record.id)}
+            />
+          ),
+      },
+    ],
+    [
+      conversionTargetQuantity,
+      getPendingItemDisplayName,
+      isSingleConversionMode,
+      isStep2LockedByPreset,
+    ],
+  );
 
   return (
     <Drawer

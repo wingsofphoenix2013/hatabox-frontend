@@ -522,7 +522,7 @@ function ProtectedLayout() {
 
       {panelOpen && hasContent && previewModule !== '/user' && (
         <Sider
-          width={260}
+          width={300}
           style={{
             height: '100vh',
             background: '#2a3441',

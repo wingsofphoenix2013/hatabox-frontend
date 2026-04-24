@@ -68,6 +68,51 @@ function InfoCell({ label, value, compact = false, valueStyle = {} }) {
   );
 }
 
+function ConversionQuantityInput({ value, unitSymbol, onSave }) {
+  const [draftValue, setDraftValue] = useState(null);
+  const [isDirty, setIsDirty] = useState(false);
+
+  const displayValue = isDirty ? draftValue : (value ?? null);
+
+  return (
+    <Flex justify="center" align="center" gap={6}>
+      <InputNumber
+        min={0.001}
+        step={0.001}
+        controls={false}
+        size="small"
+        value={displayValue}
+        onChange={(val) => {
+          setDraftValue(val);
+          setIsDirty(true);
+        }}
+        placeholder="К-сть"
+        style={{ width: 90 }}
+      />
+
+      <Text>{unitSymbol || ''}</Text>
+
+      <SaveOutlined
+        style={{
+          color: isDirty ? '#52c41a' : '#bfbfbf',
+          fontSize: 16,
+          cursor: isDirty ? 'pointer' : 'default',
+        }}
+        onClick={() => {
+          if (!isDirty) return;
+
+          if (!draftValue || Number(draftValue) <= 0) {
+            return;
+          }
+
+          onSave(draftValue);
+          setIsDirty(false);
+        }}
+      />
+    </Flex>
+  );
+}
+
 function WarehouseIntakeDrawer({
   open,
   onClose,
@@ -91,8 +136,6 @@ function WarehouseIntakeDrawer({
 
   const [step1Error, setStep1Error] = useState('');
   const [submitError, setSubmitError] = useState('');
-
-  const [conversionDraftQuantity, setConversionDraftQuantity] = useState(null);
 
   const isPresetMode =
     Array.isArray(presetPendingItems) && presetPendingItems.length > 0;
@@ -218,7 +261,6 @@ function WarehouseIntakeDrawer({
     setSaving(false);
     setSelectedPendingItemId(null);
     setCartItems([]);
-    setConversionDraftQuantity(null);
 
     if (isTollingMode) {
       setConversionMode(false);
@@ -250,7 +292,6 @@ function WarehouseIntakeDrawer({
     setSubmitError('');
     setSaving(false);
     setSelectedPendingItemId(null);
-    setConversionDraftQuantity(null);
 
     if (isPresetMode) {
       const hasConversion = presetPendingItems.some((item) =>
@@ -362,6 +403,16 @@ function WarehouseIntakeDrawer({
 
   const handleRemoveCartItem = useCallback((itemId) => {
     setCartItems((prev) => prev.filter((item) => item.id !== itemId));
+  }, []);
+
+  const handleSaveConversionQuantity = useCallback((itemId, value) => {
+    setCartItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? { ...item, conversion_target_quantity: value }
+          : item,
+      ),
+    );
   }, []);
 
   const handleSubmit = async () => {
@@ -539,48 +590,13 @@ function WarehouseIntakeDrawer({
               width: 150,
               align: 'center',
               render: (_, record) => (
-                <Flex justify="center" align="center" gap={6}>
-                  <InputNumber
-                    min={0.001}
-                    step={0.001}
-                    controls={false}
-                    size="small"
-                    value={conversionDraftQuantity}
-                    onChange={setConversionDraftQuantity}
-                    placeholder="К-сть"
-                    style={{ width: 90 }}
-                  />
-
-                  <SaveOutlined
-                    style={{
-                      color: '#52c41a',
-                      fontSize: 16,
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => {
-                      if (
-                        !conversionDraftQuantity ||
-                        Number(conversionDraftQuantity) <= 0
-                      ) {
-                        return;
-                      }
-
-                      setCartItems((prev) =>
-                        prev.map((item) =>
-                          item.id === record.id
-                            ? {
-                                ...item,
-                                conversion_target_quantity:
-                                  conversionDraftQuantity,
-                              }
-                            : item,
-                        ),
-                      );
-                    }}
-                  />
-
-                  <Text>{record.inventory_item_unit_symbol || ''}</Text>
-                </Flex>
+                <ConversionQuantityInput
+                  value={record.conversion_target_quantity}
+                  unitSymbol={record.inventory_item_unit_symbol}
+                  onSave={(value) =>
+                    handleSaveConversionQuantity(record.id, value)
+                  }
+                />
               ),
             },
           ]
@@ -604,9 +620,9 @@ function WarehouseIntakeDrawer({
       },
     ],
     [
-      conversionDraftQuantity,
       getPendingItemDisplayName,
       handleRemoveCartItem,
+      handleSaveConversionQuantity,
       isSingleConversionMode,
       isStep2LockedByPreset,
     ],

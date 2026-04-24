@@ -4,7 +4,6 @@ import {
   CheckCircleFilled,
   CloseCircleFilled,
   InfoCircleOutlined,
-  PlusOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
 import {
@@ -43,7 +42,6 @@ function WarehousePendingIntakePage() {
   const inventoryItemId = searchParams.get('inventory_item_id') || '';
 
   const [loading, setLoading] = useState(true);
-  const [locationsLoading, setLocationsLoading] = useState(false);
   const [error, setError] = useState('');
   const [locationsError, setLocationsError] = useState('');
 
@@ -87,7 +85,6 @@ function WarehousePendingIntakePage() {
   useEffect(() => {
     const loadLocations = async () => {
       try {
-        setLocationsLoading(true);
         setLocationsError('');
 
         const response = await api.get('warehouse-locations/', {
@@ -101,8 +98,6 @@ function WarehousePendingIntakePage() {
         console.error('Failed to load warehouse locations:', err);
         setLocations([]);
         setLocationsError('Не вдалося завантажити перелік активних локацій.');
-      } finally {
-        setLocationsLoading(false);
       }
     };
 
@@ -174,7 +169,6 @@ function WarehousePendingIntakePage() {
 
   const handleDrawerCompleted = async () => {
     try {
-      setLocationsLoading(true);
       setLocationsError('');
 
       const response = await api.get('warehouse-locations/', {
@@ -188,8 +182,6 @@ function WarehousePendingIntakePage() {
       console.error('Failed to reload warehouse locations:', err);
       setLocations([]);
       setLocationsError('Не вдалося завантажити перелік активних локацій.');
-    } finally {
-      setLocationsLoading(false);
     }
 
     setPage(1);
@@ -430,21 +422,6 @@ function WarehousePendingIntakePage() {
               Позиції, що очікують оформлення первинного отримання на склад.
             </Text>
           </Flex>
-
-          <Button
-            type="primary"
-            size="large"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setPresetPendingItems([]);
-              setDrawerOpen(true);
-            }}
-            disabled={
-              locationsLoading || (!!locationsError && locations.length === 0)
-            }
-          >
-            Оформити первинне отримання
-          </Button>
         </Flex>
 
         {locationsError && (

@@ -85,6 +85,8 @@ function WarehouseIntakeDrawer({
   const [conversionMode, setConversionMode] = useState(false); // false = Ні, true = Так
   const [selectedPendingItemId, setSelectedPendingItemId] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+  const [conversionTargetQuantity, setConversionTargetQuantity] =
+    useState(null);
 
   const [saving, setSaving] = useState(false);
 
@@ -173,7 +175,13 @@ function WarehouseIntakeDrawer({
     !hasBothModes ||
     isStep2LockedByPreset;
 
-  const isConversionPlaceholderMode = !isTollingMode && conversionMode;
+  const isConversionPlaceholderMode = false;
+
+  const isSingleConversionMode =
+    !isTollingMode &&
+    conversionMode &&
+    cartItems.length === 1 &&
+    Boolean(cartItems[0]?.requires_unit_conversion);
   const canAddSelectedItem =
     step2Enabled &&
     !isConversionPlaceholderMode &&
@@ -181,7 +189,11 @@ function WarehouseIntakeDrawer({
       Boolean(selectedPendingItem));
 
   const submitButtonDisabled =
-    !confirmedLocationId || cartItems.length === 0 || saving;
+    !confirmedLocationId ||
+    cartItems.length === 0 ||
+    saving ||
+    (isSingleConversionMode &&
+      (!conversionTargetQuantity || Number(conversionTargetQuantity) <= 0));
 
   const addButtonText =
     selectedPendingItemId === SELECT_ALL_VALUE
@@ -203,6 +215,7 @@ function WarehouseIntakeDrawer({
     setSaving(false);
     setSelectedPendingItemId(null);
     setCartItems([]);
+    setConversionTargetQuantity(null);
 
     if (isTollingMode) {
       setConversionMode(false);
@@ -234,10 +247,15 @@ function WarehouseIntakeDrawer({
     setSubmitError('');
     setSaving(false);
     setSelectedPendingItemId(null);
+    setConversionTargetQuantity(null);
 
     if (isPresetMode) {
+      const hasConversion = presetPendingItems.some((item) =>
+        Boolean(item.requires_unit_conversion),
+      );
+
       setCartItems(presetPendingItems);
-      setConversionMode(false);
+      setConversionMode(hasConversion);
     } else {
       setCartItems([]);
 
@@ -352,7 +370,20 @@ function WarehouseIntakeDrawer({
       setSaving(true);
       setSubmitError('');
 
-      if (cartItems.length === 1) {
+      if (isSingleConversionMode) {
+        const item = cartItems[0];
+
+        await api.post(
+          `warehouse-pending-intake-items/${item.id}/accept-with-conversion/`,
+          {
+            location: confirmedLocationId,
+            target_quantity: String(conversionTargetQuantity),
+            comment: 'Конвертація при оформленні',
+          },
+        );
+
+        message.success('Первинне отримання з конвертацією оформлено.');
+      } else if (cartItems.length === 1) {
         const item = cartItems[0];
 
         await api.post(
@@ -476,17 +507,52 @@ function WarehouseIntakeDrawer({
       render: (_, record) => getPendingItemDisplayName(record),
     },
     {
-      title: <div style={{ whiteSpace: 'nowrap' }}>К-сть</div>,
+      title: (
+        <div style={{ whiteSpace: 'nowrap' }}>
+          {isSingleConversionMode ? 'Ориг.' : 'К-сть'}
+        </div>
+      ),
       key: 'received_quantity',
       dataIndex: 'received_quantity',
       width: 90,
       align: 'center',
       render: (value, record) => (
         <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-          {formatQuantity(value)} {record.inventory_item_unit_symbol || ''}
+          {formatQuantity(value)}{' '}
+          {isSingleConversionMode ? (
+            <span style={{ color: '#ff4d4f' }}>???</span>
+          ) : (
+            record.inventory_item_unit_symbol || ''
+          )}
         </div>
       ),
     },
+    ...(isSingleConversionMode
+      ? [
+          {
+            title: <div style={{ whiteSpace: 'nowrap' }}>К-сть</div>,
+            key: 'target_quantity',
+            width: 150,
+            align: 'center',
+            render: (_, record) => (
+              <Flex justify="center" align="center" gap={6}>
+                <InputNumber
+                  min={0.001}
+                  step={0.001}
+                  controls={false}
+                  size="small"
+                  value={conversionTargetQuantity}
+                  onChange={setConversionTargetQuantity}
+                  placeholder="К-сть"
+                  style={{ width: 90 }}
+                />
+
+                <Text>{record.inventory_item_unit_symbol || ''}</Text>
+              </Flex>
+            ),
+          },
+        ]
+      : []),
     {
       title: '',
       key: 'actions',
@@ -589,15 +655,6 @@ function WarehouseIntakeDrawer({
                 showIcon
                 message="Спочатку підтвердьте локацію"
                 description="Наступний крок стане доступним після вибору та підтвердження локації."
-              />
-            )}
-
-            {step2Enabled && isConversionPlaceholderMode && (
-              <Alert
-                type="warning"
-                showIcon
-                message="Режим недоступний"
-                description="Оформлення товарів з конвертацією поки що не реалізоване на стороні backend."
               />
             )}
 

@@ -6,6 +6,7 @@ import {
   Card,
   Drawer,
   Flex,
+  InputNumber,
   Select,
   Switch,
   Table,

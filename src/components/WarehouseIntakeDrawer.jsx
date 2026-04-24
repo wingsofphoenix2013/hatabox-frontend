@@ -90,7 +90,7 @@ function ConversionQuantityInput({ value, unitSymbol, onSave }) {
         style={{ width: 90 }}
       />
 
-      <Text>{unitSymbol || ''}</Text>
+      <Text style={{ whiteSpace: 'nowrap' }}>{unitSymbol || ''}</Text>
 
       <SaveOutlined
         style={{

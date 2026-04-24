@@ -19,6 +19,7 @@ import {
   Table,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
@@ -209,14 +210,20 @@ function WarehousePendingIntakePage() {
     ).length;
 
     if (conversionCount === selectedItems.length) {
-      alert(
-        'Усі обрані позиції потребують конвертації. Сценарій ще не реалізовано.',
-      );
+      if (selectedItems.length > 1) {
+        message.warning(
+          'Групове оформлення для товарів з конвертацією неможливо!',
+        );
+        return;
+      }
+
+      setPresetPendingItems(selectedItems);
+      setDrawerOpen(true);
       return;
     }
 
     if (conversionCount > 0) {
-      alert(
+      message.warning(
         'Неможливо змішувати позиції, що потребують конвертації, з позиціями без конвертації.',
       );
       return;
@@ -388,7 +395,6 @@ function WarehousePendingIntakePage() {
           {
             key: 'intake',
             label: <div style={{ padding: '4px 0' }}>Первинне отримання</div>,
-            disabled: record.requires_unit_conversion,
             onClick: () => {
               setPresetPendingItems([record]);
               setDrawerOpen(true);

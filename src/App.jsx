@@ -15,6 +15,7 @@ import WarehouseRegisterPage from './pages/WarehouseRegisterPage';
 import WarehousePendingIntakePage from './pages/WarehousePendingIntakePage';
 import WarehouseTollingPendingIntakePage from './pages/WarehouseTollingPendingIntakePage';
 import WarehouseStockRegisterPage from './pages/WarehouseStockRegisterPage';
+import WarehouseMovementRegisterPage from './pages/WarehouseMovementRegisterPage';
 import WarehouseStockDetailPage from './pages/WarehouseStockDetailPage';
 
 import OrderDetailPage from './pages/OrderDetailPage';
@@ -166,6 +167,11 @@ function App() {
             <Route
               path="/inventory/stock"
               element={<WarehouseStockRegisterPage />}
+            />
+
+            <Route
+              path="/inventory/movements"
+              element={<WarehouseMovementRegisterPage />}
             />
 
             <Route

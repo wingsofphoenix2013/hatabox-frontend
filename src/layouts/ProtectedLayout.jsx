@@ -66,19 +66,16 @@ const moduleConfig = {
         path: '/inventory/stock',
       },
       {
+        label: 'Переміщення товарів',
+        path: '/inventory/movements',
+      },
+      {
         label: 'Первинне отримання',
         path: '/inventory/pending-intake',
       },
       {
         label: 'Давальчі поставки',
         path: '/inventory/tolling-pending-intake',
-      },
-    ],
-    actions: [],
-    dictionaries: [
-      {
-        label: 'Каталог складів',
-        path: '/inventory/warehouses',
       },
     ],
   },

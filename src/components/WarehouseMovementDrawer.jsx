@@ -488,6 +488,19 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     cursor: 'not-allowed',
   });
 
+  const availableMoveQuantity =
+    Number(selectedStockItem?.available_quantity) || 0;
+  const requestedMoveQuantity = Number(moveQuantity) || 0;
+
+  const isMoveQuantityInvalid =
+    Boolean(selectedStockItem) && requestedMoveQuantity > availableMoveQuantity;
+
+  const canAddMovementItem =
+    Boolean(selectedStockItem) &&
+    requestedMoveQuantity > 0 &&
+    !isMoveQuantityInvalid &&
+    !isReadonly;
+
   const handleAddMovementItem = async () => {
     if (!activePlanId) {
       message.error('Спочатку створіть план переміщення.');
@@ -877,8 +890,13 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
                     setMoveQuantity(null);
                     setStockItems([]);
                   }}
-                  onChange={(_, option) => {
-                    setSelectedStockItem(option?.raw || null);
+                  onChange={(value) => {
+                    const selectedItem =
+                      stockItems.find(
+                        (item) => item.inventory_item_id === value,
+                      ) || null;
+
+                    setSelectedStockItem(selectedItem);
                     setMoveQuantity(null);
                   }}
                 />
@@ -891,27 +909,31 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
 
                 <InputNumber
                   min={0.001}
+                  max={availableMoveQuantity || undefined}
                   step={0.001}
                   controls={false}
                   style={{ width: '100%' }}
                   placeholder="Вкажіть кількість"
                   value={moveQuantity}
+                  status={isMoveQuantityInvalid ? 'error' : undefined}
                   onChange={setMoveQuantity}
                 />
               </div>
 
               {renderSelectedStockInfo()}
+              {isMoveQuantityInvalid && (
+                <Alert
+                  type="error"
+                  showIcon
+                  message="Кількість для переміщення не може перевищувати доступний залишок."
+                />
+              )}
 
               <Flex justify="flex-end">
                 <Button
                   type="primary"
                   loading={addingItem}
-                  disabled={
-                    !selectedStockItem ||
-                    !moveQuantity ||
-                    Number(moveQuantity) <= 0 ||
-                    isReadonly
-                  }
+                  disabled={!canAddMovementItem}
                   onClick={handleAddMovementItem}
                 >
                   Додати товар

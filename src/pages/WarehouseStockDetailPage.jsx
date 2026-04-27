@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'react';
-import { SwapOutlined } from '@ant-design/icons';
+import { AppstoreAddOutlined, SwapOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
   Card,
   Col,
   Drawer,
+  Dropdown,
   Flex,
   Image,
   Row,
   Skeleton,
+  Table,
+  Tag,
   Typography,
 } from 'antd';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuantity } from '../utils/formatNumber';
+import {
+  getLocationTagStyle,
+  renderStoragePlaceChain,
+} from '../utils/warehousePlacementRenderers';
 
 const { Title, Text } = Typography;
 
@@ -76,6 +84,102 @@ function WarehouseStockDetailPage() {
   const pendingIntakeRows = data.pending_intake_rows || [];
   const incomingRows = data.incoming_rows || [];
   const imageUrl = header.image || '';
+  const unitSymbol = header.inventory_item_unit_symbol || '';
+
+  const availableStockColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Локація',
+      key: 'location',
+      width: 240,
+      render: (_, record) => (
+        <Tag
+          style={{
+            ...getLocationTagStyle(),
+            marginInlineEnd: 0,
+            maxWidth: 220,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+          title={`${record.location_code || '—'} - ${
+            record.location_name || '—'
+          }`}
+        >
+          {(record.location_code || '—') +
+            ' - ' +
+            (record.location_name || '—')}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Місце зберігання',
+      key: 'storage_place',
+      render: (_, record) =>
+        record.storage_place_id ? (
+          <div
+            title={record.storage_place_display_name || undefined}
+            style={{
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {renderStoragePlaceChain(record.storage_place_full_display)}
+          </div>
+        ) : (
+          <Text type="secondary">—</Text>
+        ),
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (_, record) =>
+        unitSymbol
+          ? `${formatQuantity(record.quantity)} ${unitSymbol}`
+          : formatQuantity(record.quantity),
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 80,
+      align: 'center',
+      render: () => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'placeholder',
+                label: (
+                  <div style={{ padding: '4px 0' }}>
+                    Дії будуть додані пізніше
+                  </div>
+                ),
+              },
+            ],
+          }}
+          trigger={['click']}
+        >
+          <AppstoreAddOutlined
+            style={{
+              fontSize: 17,
+              color: '#8c8c8c',
+              cursor: 'pointer',
+            }}
+          />
+        </Dropdown>
+      ),
+    },
+  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -150,7 +254,18 @@ function WarehouseStockDetailPage() {
 
             {stockRows.length > 0 && (
               <Card title="Доступно на складах" style={{ marginBottom: 20 }}>
-                <Text type="secondary">Вміст буде додано пізніше.</Text>
+                <Table
+                  rowKey={(record) =>
+                    `${record.placement_type}-${record.location_id}-${
+                      record.storage_place_id || 'location'
+                    }`
+                  }
+                  columns={availableStockColumns}
+                  dataSource={stockRows}
+                  pagination={false}
+                  size="small"
+                  tableLayout="fixed"
+                />
               </Card>
             )}
 

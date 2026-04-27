@@ -114,6 +114,8 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
   const [editingQuantity, setEditingQuantity] = useState(null);
   const [deletingPlanItemId, setDeletingPlanItemId] = useState(null);
 
+  const [executingPlan, setExecutingPlan] = useState(false);
+
   const activePlanId = planId || activePlan?.id;
   const isEditMode = Boolean(activePlanId);
 
@@ -134,6 +136,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     setEditingPlanItemId(null);
     setEditingQuantity(null);
     setDeletingPlanItemId(null);
+    setExecutingPlan(false);
   };
 
   const loadAllPaginated = async (endpoint, params = {}) => {
@@ -633,6 +636,33 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     }
   };
 
+  const handleExecutePlan = async () => {
+    if (!activePlanId || planStatus !== 'active') return;
+
+    try {
+      setExecutingPlan(true);
+
+      await api.post(`movement-plans/${activePlanId}/execute/`, {});
+
+      await loadActivePlan(activePlanId);
+
+      message.success('Переміщення виконано.');
+
+      if (onSaved) {
+        await onSaved();
+      }
+    } catch (err) {
+      console.error('Failed to execute movement plan:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData);
+
+      message.error(backendMessage || 'Не вдалося виконати переміщення.');
+    } finally {
+      setExecutingPlan(false);
+    }
+  };
+
   const planItemsColumns = [
     {
       title: 'Товар',
@@ -963,6 +993,57 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
                   emptyText: 'До накладної ще не додано товари.',
                 }}
               />
+            </Flex>
+          </Card>
+        )}
+        {activePlan?.id && (
+          <Card title="4. Виконання накладної">
+            <Flex vertical gap={12} align="flex-start">
+              {planStatus === 'draft' && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message="Щоб виконати переміщення, додайте хоча б один товар до накладної."
+                />
+              )}
+
+              {planStatus === 'active' && (
+                <>
+                  <Popconfirm
+                    title="Виконати переміщення?"
+                    description="Після виконання товари будуть переміщені на обрану локацію або місце зберігання."
+                    okText="Так"
+                    cancelText="Ні"
+                    onConfirm={handleExecutePlan}
+                  >
+                    <Button type="primary" loading={executingPlan}>
+                      Виконати переміщення
+                    </Button>
+                  </Popconfirm>
+
+                  <Alert
+                    type="info"
+                    showIcon
+                    message="Після виконання накладна стане доступною лише для перегляду."
+                  />
+                </>
+              )}
+
+              {planStatus === 'executed' && (
+                <Alert
+                  type="success"
+                  showIcon
+                  message="Переміщення за цією накладною виконано."
+                />
+              )}
+
+              {planStatus === 'cancelled' && (
+                <Alert
+                  type="info"
+                  showIcon
+                  message="Цю накладну скасовано. Виконання недоступне."
+                />
+              )}
             </Flex>
           </Card>
         )}

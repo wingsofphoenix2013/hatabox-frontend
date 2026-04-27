@@ -83,9 +83,6 @@ const renderStoragePlaceOption = (item) => (
 );
 
 function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
-  const activePlanId = planId || activePlan?.id;
-  const isEditMode = Boolean(activePlanId);
-
   const [locations, setLocations] = useState([]);
   const [storagePlaces, setStoragePlaces] = useState([]);
 
@@ -101,6 +98,9 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
   const [comment, setComment] = useState('');
   const [planStatus, setPlanStatus] = useState(null);
   const [activePlan, setActivePlan] = useState(null);
+
+  const activePlanId = planId || activePlan?.id;
+  const isEditMode = Boolean(activePlanId);
 
   const resetState = () => {
     setDestinationType('location');

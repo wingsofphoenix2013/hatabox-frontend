@@ -53,7 +53,7 @@ const renderStoragePlaceChain = (value) => {
   const parts = value.split(',').map((part) => part.trim());
 
   return (
-    <Flex wrap gap={6}>
+    <Flex wrap={false} gap={6} style={{ whiteSpace: 'nowrap' }}>
       {parts.map((part, index) => {
         const tokens = part.split(' ');
         const code = tokens.pop();
@@ -77,29 +77,40 @@ const renderStoragePlaceChain = (value) => {
 };
 
 const renderDestination = (record) => (
-  <Flex vertical gap={6} style={{ minWidth: 0 }}>
-    <Flex align="center" gap={8} style={{ minWidth: 0 }}>
-      <Tag style={getLocationTagStyle()}>
-        {record.target_location_code || '—'}
-      </Tag>
-
-      <Text
-        style={{
-          minWidth: 0,
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}
-        title={record.target_location_name || '—'}
-      >
-        {record.target_location_name || '—'}
-      </Text>
-    </Flex>
+  <Flex align="center" gap={6} wrap={false} style={{ minWidth: 0 }}>
+    <Tag
+      style={{
+        ...getLocationTagStyle(),
+        marginInlineEnd: 0,
+        maxWidth: 220,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        whiteSpace: 'nowrap',
+      }}
+      title={`${record.target_location_code || '—'} - ${
+        record.target_location_name || '—'
+      }`}
+    >
+      {(record.target_location_code || '—') +
+        ' - ' +
+        (record.target_location_name || '—')}
+    </Tag>
 
     {record.target_storage_place ? (
-      <div title={record.target_storage_place_display_name || undefined}>
-        {renderStoragePlaceChain(record.target_storage_place_full_display)}
-      </div>
+      <>
+        <Text type="secondary">:</Text>
+        <div
+          title={record.target_storage_place_display_name || undefined}
+          style={{
+            minWidth: 0,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {renderStoragePlaceChain(record.target_storage_place_full_display)}
+        </div>
+      </>
     ) : null}
   </Flex>
 );

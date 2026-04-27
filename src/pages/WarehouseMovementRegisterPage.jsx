@@ -147,6 +147,7 @@ function WarehouseMovementRegisterPage() {
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
 
+  const [editingPlanId, setEditingPlanId] = useState(null);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   useEffect(() => {
@@ -252,12 +253,19 @@ function WarehouseMovementRegisterPage() {
     [],
   );
 
-  const openCreateDrawer = () => {
+  const openEditDrawer = (planId) => {
+    setEditingPlanId(planId);
     setIsCreateDrawerOpen(true);
   };
 
-  const closeCreateDrawer = () => {
+  const closeMovementDrawer = () => {
     setIsCreateDrawerOpen(false);
+    setEditingPlanId(null);
+  };
+
+  const openCreateDrawer = () => {
+    setEditingPlanId(null);
+    setIsCreateDrawerOpen(true);
   };
 
   const columns = [
@@ -345,13 +353,12 @@ function WarehouseMovementRegisterPage() {
       key: 'action',
       width: 56,
       align: 'center',
-      render: () => {
+      render: (_, record) => {
         const dropdownItems = [
           {
-            key: 'placeholder',
-            label: (
-              <div style={{ padding: '4px 0' }}>Дії будуть додані пізніше</div>
-            ),
+            key: 'edit',
+            label: <div style={{ padding: '4px 0' }}>Редагувати накладну</div>,
+            onClick: () => openEditDrawer(record.id),
           },
         ];
 
@@ -496,7 +503,16 @@ function WarehouseMovementRegisterPage() {
       </Flex>
       <WarehouseMovementDrawer
         open={isCreateDrawerOpen}
-        onClose={closeCreateDrawer}
+        onClose={closeMovementDrawer}
+        planId={editingPlanId}
+        onSaved={() => {
+          if (!editingPlanId && currentPage !== 1) {
+            setCurrentPage(1);
+            return;
+          }
+
+          loadMovementPlans(currentPage);
+        }}
       />
     </div>
   );

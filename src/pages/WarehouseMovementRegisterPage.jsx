@@ -14,14 +14,17 @@ import {
   Divider,
   Dropdown,
   Flex,
+  Popconfirm,
   Select,
   Table,
   Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 import WarehouseMovementDrawer from '../components/WarehouseMovementDrawer';
 import {
   MOVEMENT_PLAN_STATUS_LABELS,
@@ -150,6 +153,8 @@ function WarehouseMovementRegisterPage() {
   const [editingPlanId, setEditingPlanId] = useState(null);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
+  const [executingPlanId, setExecutingPlanId] = useState(null);
+
   useEffect(() => {
     loadMovementPlans(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -268,6 +273,28 @@ function WarehouseMovementRegisterPage() {
     setIsCreateDrawerOpen(true);
   };
 
+  const handleExecutePlan = async (planId) => {
+    if (!planId) return;
+
+    try {
+      setExecutingPlanId(planId);
+
+      await api.post(`movement-plans/${planId}/execute/`, {});
+
+      message.success('Переміщення виконано.');
+      loadMovementPlans(currentPage);
+    } catch (err) {
+      console.error('Failed to execute movement plan:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData);
+
+      message.error(backendMessage || 'Не вдалося виконати переміщення.');
+    } finally {
+      setExecutingPlanId(null);
+    }
+  };
+
   const columns = [
     {
       title: 'Документ',
@@ -361,6 +388,35 @@ function WarehouseMovementRegisterPage() {
             onClick: () => openEditDrawer(record.id),
           },
         ];
+
+        if (record.status === 'active') {
+          dropdownItems.push({
+            key: 'execute',
+            label: (
+              <Popconfirm
+                title="Виконати переміщення?"
+                description="Після виконання товари будуть переміщені на обрану локацію або місце зберігання."
+                okText="Так"
+                cancelText="Ні"
+                onConfirm={() => handleExecutePlan(record.id)}
+              >
+                <div
+                  style={{
+                    padding: '4px 0',
+                    color: '#1677ff',
+                    cursor: 'pointer',
+                  }}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  {executingPlanId === record.id
+                    ? 'Виконується...'
+                    : 'Виконати переміщення'}
+                </div>
+              </Popconfirm>
+            ),
+            disabled: executingPlanId === record.id,
+          });
+        }
 
         return (
           <Dropdown menu={{ items: dropdownItems }} trigger={['click']}>

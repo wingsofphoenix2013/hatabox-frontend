@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
+import { DeleteOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -9,8 +10,10 @@ import {
   Flex,
   Input,
   InputNumber,
+  Popconfirm,
   Select,
   Switch,
+  Table,
   Tag,
   Typography,
   message,
@@ -106,6 +109,11 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
   const [stockItems, setStockItems] = useState([]);
   const [stockLoading, setStockLoading] = useState(false);
 
+  const [addingItem, setAddingItem] = useState(false);
+  const [editingPlanItemId, setEditingPlanItemId] = useState(null);
+  const [editingQuantity, setEditingQuantity] = useState(null);
+  const [deletingPlanItemId, setDeletingPlanItemId] = useState(null);
+
   const activePlanId = planId || activePlan?.id;
   const isEditMode = Boolean(activePlanId);
 
@@ -122,6 +130,10 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     setStockItems([]);
     setStockLoading(false);
     setSaving(false);
+    setAddingItem(false);
+    setEditingPlanItemId(null);
+    setEditingQuantity(null);
+    setDeletingPlanItemId(null);
   };
 
   const loadAllPaginated = async (endpoint, params = {}) => {
@@ -214,6 +226,23 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     }
   };
 
+  const applyPlanToState = (plan) => {
+    setActivePlan(plan);
+    setPlanStatus(plan?.status || null);
+    setComment(plan?.comment || '');
+    setPlannedAt(plan?.planned_at ? dayjs(plan.planned_at) : null);
+
+    if (plan?.target_storage_place) {
+      setDestinationType('storage_place');
+      setTargetStoragePlaceId(plan.target_storage_place);
+      setTargetLocationId(null);
+    } else {
+      setDestinationType('location');
+      setTargetLocationId(plan?.target_location || null);
+      setTargetStoragePlaceId(null);
+    }
+  };
+
   const loadPlan = async () => {
     if (!planId) return;
 
@@ -223,20 +252,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       const response = await api.get(`movement-plans/${planId}/`);
       const plan = response.data;
 
-      setActivePlan(plan);
-      setPlanStatus(plan.status || null);
-      setComment(plan.comment || '');
-      setPlannedAt(plan.planned_at ? dayjs(plan.planned_at) : null);
-
-      if (plan.target_storage_place) {
-        setDestinationType('storage_place');
-        setTargetStoragePlaceId(plan.target_storage_place);
-        setTargetLocationId(null);
-      } else {
-        setDestinationType('location');
-        setTargetLocationId(plan.target_location || null);
-        setTargetStoragePlaceId(null);
-      }
+      applyPlanToState(plan);
     } catch (err) {
       console.error('Failed to load movement plan:', err);
       message.error('Не вдалося завантажити план переміщення.');
@@ -366,7 +382,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
 
           <div style={cellStyle}>
             <Text type="secondary" style={labelStyle}>
-              Зарезервовано
+              Вже зарезервовано
             </Text>
             <div
               style={{
@@ -387,6 +403,17 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     !isReadonly &&
     ((destinationType === 'location' && targetLocationId) ||
       (destinationType === 'storage_place' && targetStoragePlaceId));
+
+  const loadActivePlan = async (targetPlanId = activePlanId) => {
+    if (!targetPlanId) return null;
+
+    const response = await api.get(`movement-plans/${targetPlanId}/`);
+    const plan = response.data;
+
+    applyPlanToState(plan);
+
+    return plan;
+  };
 
   const handleSave = async () => {
     if (!canSave) {
@@ -410,11 +437,8 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       setSaving(true);
 
       if (isEditMode) {
-        const response = await api.patch(
-          `movement-plans/${activePlanId}/`,
-          payload,
-        );
-        setActivePlan(response.data);
+        await api.patch(`movement-plans/${activePlanId}/`, payload);
+        await loadActivePlan(activePlanId);
         message.success('План переміщення оновлено.');
 
         if (onSaved) {
@@ -425,8 +449,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       }
 
       const response = await api.post('movement-plans/', payload);
-      setActivePlan(response.data);
-      setPlanStatus(response.data?.status || null);
+      await loadActivePlan(response.data.id);
       message.success('План переміщення створено.');
 
       if (onSaved) {
@@ -449,6 +472,255 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       setSaving(false);
     }
   };
+
+  const planItems = Array.isArray(activePlan?.items) ? activePlan.items : [];
+  const canManageItems = planStatus === 'active';
+
+  const getActionIconStyle = (color) => ({
+    fontSize: 16,
+    color,
+    cursor: 'pointer',
+  });
+
+  const getDisabledActionIconStyle = () => ({
+    fontSize: 16,
+    color: '#bfbfbf',
+    cursor: 'not-allowed',
+  });
+
+  const handleAddMovementItem = async () => {
+    if (!activePlanId) {
+      message.error('Спочатку створіть план переміщення.');
+      return;
+    }
+
+    if (!selectedStockItem?.inventory_item_id) {
+      message.error('Оберіть товар.');
+      return;
+    }
+
+    if (!moveQuantity || Number(moveQuantity) <= 0) {
+      message.error('Кількість повинна бути більшою за 0.');
+      return;
+    }
+
+    try {
+      setAddingItem(true);
+
+      await api.post(`movement-plans/${activePlanId}/add-items/`, {
+        inventory_item: selectedStockItem.inventory_item_id,
+        quantity: String(moveQuantity),
+      });
+
+      await loadActivePlan(activePlanId);
+
+      setSelectedStockItem(null);
+      setMoveQuantity(null);
+      setStockItems([]);
+
+      message.success('Товар додано до накладної.');
+
+      if (onSaved) {
+        await onSaved();
+      }
+    } catch (err) {
+      console.error('Failed to add movement item:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData, [
+        'inventory_item',
+        'quantity',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося додати товар до накладної.');
+    } finally {
+      setAddingItem(false);
+    }
+  };
+
+  const handleStartEditPlanItem = (record) => {
+    if (!canManageItems) return;
+
+    setEditingPlanItemId(record.id);
+    setEditingQuantity(
+      record.move_quantity !== null && record.move_quantity !== undefined
+        ? Number(record.move_quantity)
+        : Number(record.reserved_quantity),
+    );
+  };
+
+  const handleSaveEditedPlanItem = async (record) => {
+    if (!activePlanId || !canManageItems) return;
+
+    if (!editingQuantity || Number(editingQuantity) <= 0) {
+      message.error('Кількість повинна бути більшою за 0.');
+      return;
+    }
+
+    try {
+      await api.post(`movement-plans/${activePlanId}/change-item-quantity/`, {
+        item_id: record.id,
+        quantity: String(editingQuantity),
+      });
+
+      await loadActivePlan(activePlanId);
+
+      setEditingPlanItemId(null);
+      setEditingQuantity(null);
+
+      message.success('Кількість оновлено.');
+
+      if (onSaved) {
+        await onSaved();
+      }
+    } catch (err) {
+      console.error('Failed to change movement item quantity:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData, [
+        'item_id',
+        'quantity',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося змінити кількість.');
+    }
+  };
+
+  const handleRemovePlanItem = async (record) => {
+    if (!activePlanId || !canManageItems) return;
+
+    try {
+      setDeletingPlanItemId(record.id);
+
+      await api.post(`movement-plans/${activePlanId}/remove-item/`, {
+        item_id: record.id,
+      });
+
+      await loadActivePlan(activePlanId);
+
+      if (editingPlanItemId === record.id) {
+        setEditingPlanItemId(null);
+        setEditingQuantity(null);
+      }
+
+      message.success('Товар видалено з накладної.');
+
+      if (onSaved) {
+        await onSaved();
+      }
+    } catch (err) {
+      console.error('Failed to remove movement item:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData, ['item_id']);
+
+      message.error(backendMessage || 'Не вдалося видалити товар.');
+    } finally {
+      setDeletingPlanItemId(null);
+    }
+  };
+
+  const planItemsColumns = [
+    {
+      title: 'Товар',
+      dataIndex: 'inventory_item_name',
+      key: 'inventory_item_name',
+      width: 300,
+      render: (value) => (
+        <div
+          style={{
+            maxWidth: 280,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            fontSize: 13,
+          }}
+          title={value || '—'}
+        >
+          {value || '—'}
+        </div>
+      ),
+    },
+    {
+      title: 'Кількість',
+      key: 'quantity',
+      width: 140,
+      align: 'center',
+      render: (_, record) => {
+        if (editingPlanItemId === record.id) {
+          return (
+            <InputNumber
+              min={0.001}
+              step={0.001}
+              controls={false}
+              size="small"
+              value={editingQuantity}
+              onChange={setEditingQuantity}
+              style={{ width: 100 }}
+            />
+          );
+        }
+
+        const quantity =
+          record.move_quantity !== null && record.move_quantity !== undefined
+            ? record.move_quantity
+            : record.reserved_quantity;
+
+        return formatQuantity(quantity);
+      },
+    },
+    {
+      title: '',
+      key: 'action',
+      width: 110,
+      align: 'center',
+      render: (_, record) => {
+        if (!canManageItems) {
+          return (
+            <Flex justify="center" align="center" gap={12}>
+              <EditOutlined style={getDisabledActionIconStyle()} />
+              <DeleteOutlined style={getDisabledActionIconStyle()} />
+            </Flex>
+          );
+        }
+
+        if (editingPlanItemId === record.id) {
+          return (
+            <Flex justify="center" align="center" gap={12}>
+              <SaveOutlined
+                style={getActionIconStyle('#52c41a')}
+                onClick={() => handleSaveEditedPlanItem(record)}
+              />
+
+              <DeleteOutlined style={getDisabledActionIconStyle()} />
+            </Flex>
+          );
+        }
+
+        return (
+          <Flex justify="center" align="center" gap={12}>
+            <EditOutlined
+              style={getActionIconStyle('#1677ff')}
+              onClick={() => handleStartEditPlanItem(record)}
+            />
+
+            <Popconfirm
+              title="Видалити товар?"
+              description="Після видалення резерв по цьому товару буде знято."
+              okText="Так"
+              cancelText="Ні"
+              onConfirm={() => handleRemovePlanItem(record)}
+            >
+              <DeleteOutlined
+                style={getActionIconStyle('#ff4d4f')}
+                spin={deletingPlanItemId === record.id}
+              />
+            </Popconfirm>
+          </Flex>
+        );
+      },
+    },
+  ];
 
   return (
     <Drawer
@@ -631,10 +903,44 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
               {renderSelectedStockInfo()}
 
               <Flex justify="flex-end">
-                <Button type="primary" disabled>
+                <Button
+                  type="primary"
+                  loading={addingItem}
+                  disabled={
+                    !selectedStockItem ||
+                    !moveQuantity ||
+                    Number(moveQuantity) <= 0 ||
+                    isReadonly
+                  }
+                  onClick={handleAddMovementItem}
+                >
                   Додати товар
                 </Button>
               </Flex>
+            </Flex>
+          </Card>
+        )}
+        {activePlan?.id && (
+          <Card title="3. Склад накладної">
+            <Flex vertical gap={12}>
+              {!canManageItems && planItems.length > 0 && (
+                <Alert
+                  type="info"
+                  showIcon
+                  message="Редагування та видалення товарів доступне лише для накладної у статусі «Активний»."
+                />
+              )}
+
+              <Table
+                rowKey="id"
+                columns={planItemsColumns}
+                dataSource={planItems}
+                pagination={false}
+                size="small"
+                locale={{
+                  emptyText: 'До накладної ще не додано товари.',
+                }}
+              />
             </Flex>
           </Card>
         )}

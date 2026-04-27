@@ -241,22 +241,19 @@ function WarehouseMovementRegisterPage() {
 
   const columns = [
     {
-      title: 'План',
-      key: 'plan',
-      width: 230,
+      title: 'Документ',
+      key: 'document',
+      width: 260,
       render: (_, record) => (
-        <Flex vertical gap={2}>
-          <Link
-            to={`/inventory/movements/${record.id}`}
-            style={{ fontWeight: 600 }}
-          >
-            План #{record.id}
-          </Link>
-
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            Створено: {formatDateDisplay(record.created_at)}
-          </Text>
-        </Flex>
+        <Link
+          to={`/inventory/movements/${record.id}`}
+          style={{
+            fontWeight: 500,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {`Накладна №${record.id} від ${formatDateDisplay(record.created_at)}`}
+        </Link>
       ),
     },
     {

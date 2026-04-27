@@ -425,7 +425,9 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     }
 
     const payload = {
-      planned_at: plannedAt ? plannedAt.toISOString() : null,
+      planned_at: plannedAt
+        ? plannedAt.hour(12).minute(0).second(0).millisecond(0).toISOString()
+        : null,
       comment: comment.trim(),
     };
 

@@ -17,6 +17,7 @@ import {
 } from 'antd';
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -293,26 +294,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     () =>
       stockItems.map((item) => ({
         value: item.inventory_item_id,
-        label: (
-          <Flex vertical style={{ minWidth: 0 }}>
-            <Text
-              style={{
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-              title={item.inventory_item_name || '—'}
-            >
-              {item.inventory_item_name || '—'}
-            </Text>
-
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {item.inventory_item_code || '—'} • {item.available_quantity}{' '}
-              {item.inventory_item_unit_symbol || ''}
-            </Text>
-          </Flex>
-        ),
+        label: item.inventory_item_name || '—',
         raw: item,
       })),
     [stockItems],
@@ -326,60 +308,76 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
 
     const unit = selectedStockItem.inventory_item_unit_symbol || '';
 
+    const cellStyle = {
+      flex: '1 1 140px',
+      minWidth: 0,
+    };
+
+    const labelStyle = {
+      display: 'block',
+      fontSize: 11,
+      lineHeight: 1.2,
+    };
+
+    const valueStyle = {
+      fontSize: 13,
+      lineHeight: 1.3,
+      fontWeight: 600,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+    };
+
     return (
       <Card size="small" style={{ background: '#fafafa' }}>
-        <Flex vertical gap={14}>
-          <Flex gap={24} wrap>
-            <div style={{ flex: '1 1 160px' }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Артикул
-              </Text>
-              <div style={{ fontWeight: 500 }}>
-                {selectedStockItem.inventory_item_code || '—'}
-              </div>
+        <Flex gap={18} wrap align="center">
+          <div style={cellStyle}>
+            <Text type="secondary" style={labelStyle}>
+              Артикул
+            </Text>
+            <div style={valueStyle}>
+              {selectedStockItem.inventory_item_code || '—'}
             </div>
+          </div>
 
-            <div style={{ flex: '1 1 220px' }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Категорія
-              </Text>
-              <div style={{ fontWeight: 500 }}>
-                {selectedStockItem.inventory_item_category_name || '—'}
-              </div>
+          <div style={{ ...cellStyle, flex: '1.4 1 180px' }}>
+            <Text type="secondary" style={labelStyle}>
+              Категорія
+            </Text>
+            <div style={valueStyle}>
+              {selectedStockItem.inventory_item_category_name || '—'}
             </div>
-          </Flex>
+          </div>
 
-          <Flex gap={32} wrap>
-            <div style={{ flex: '1 1 220px' }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Доступно для переміщення
-              </Text>
-              <div
-                style={{
-                  fontWeight: 700,
-                  color: '#52c41a',
-                  fontSize: 17,
-                }}
-              >
-                {selectedStockItem.available_quantity || '0.000'} {unit}
-              </div>
+          <div style={cellStyle}>
+            <Text type="secondary" style={labelStyle}>
+              Доступно для переміщення
+            </Text>
+            <div
+              style={{
+                ...valueStyle,
+                color: '#52c41a',
+                fontWeight: 700,
+              }}
+            >
+              {formatQuantity(selectedStockItem.available_quantity)} {unit}
             </div>
+          </div>
 
-            <div style={{ flex: '1 1 180px' }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Зарезервовано
-              </Text>
-              <div
-                style={{
-                  fontWeight: 700,
-                  color: '#8c8c8c',
-                  fontSize: 17,
-                }}
-              >
-                {selectedStockItem.reserved_quantity || '0.000'} {unit}
-              </div>
+          <div style={cellStyle}>
+            <Text type="secondary" style={labelStyle}>
+              Зарезервовано
+            </Text>
+            <div
+              style={{
+                ...valueStyle,
+                color: '#8c8c8c',
+                fontWeight: 700,
+              }}
+            >
+              {formatQuantity(selectedStockItem.reserved_quantity)} {unit}
             </div>
-          </Flex>
+          </div>
         </Flex>
       </Card>
     );

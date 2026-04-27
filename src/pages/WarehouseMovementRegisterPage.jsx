@@ -22,6 +22,7 @@ import {
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import WarehouseMovementDrawer from '../components/WarehouseMovementDrawer';
 import {
   MOVEMENT_PLAN_STATUS_LABELS,
   getMovementPlanStatusTagColor,
@@ -146,6 +147,8 @@ function WarehouseMovementRegisterPage() {
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
 
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+
   useEffect(() => {
     loadMovementPlans(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -248,6 +251,14 @@ function WarehouseMovementRegisterPage() {
     ],
     [],
   );
+
+  const openCreateDrawer = () => {
+    setIsCreateDrawerOpen(true);
+  };
+
+  const closeCreateDrawer = () => {
+    setIsCreateDrawerOpen(false);
+  };
 
   const columns = [
     {
@@ -374,7 +385,12 @@ function WarehouseMovementRegisterPage() {
             </Text>
           </Flex>
 
-          <Button type="primary" size="large" icon={<PlusOutlined />}>
+          <Button
+            type="primary"
+            size="large"
+            icon={<PlusOutlined />}
+            onClick={openCreateDrawer}
+          >
             Створити план переміщення
           </Button>
         </Flex>
@@ -478,6 +494,10 @@ function WarehouseMovementRegisterPage() {
           />
         </Card>
       </Flex>
+      <WarehouseMovementDrawer
+        open={isCreateDrawerOpen}
+        onClose={closeCreateDrawer}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   Drawer,
   Flex,
   Input,
+  InputNumber,
   Select,
   Switch,
   Tag,
@@ -99,6 +100,11 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
   const [planStatus, setPlanStatus] = useState(null);
   const [activePlan, setActivePlan] = useState(null);
 
+  const [selectedStockItem, setSelectedStockItem] = useState(null);
+  const [moveQuantity, setMoveQuantity] = useState(null);
+  const [stockItems, setStockItems] = useState([]);
+  const [stockLoading, setStockLoading] = useState(false);
+
   const activePlanId = planId || activePlan?.id;
   const isEditMode = Boolean(activePlanId);
 
@@ -110,6 +116,10 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     setComment('');
     setPlanStatus(null);
     setActivePlan(null);
+    setSelectedStockItem(null);
+    setMoveQuantity(null);
+    setStockItems([]);
+    setStockLoading(false);
     setSaving(false);
   };
 
@@ -168,6 +178,38 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       message.error('Не вдалося завантажити місця зберігання.');
     } finally {
       setStoragePlacesLoading(false);
+    }
+  };
+
+  const loadStockItems = async (search = '') => {
+    if (!search || search.trim().length < 2) {
+      setStockItems([]);
+      return;
+    }
+
+    try {
+      setStockLoading(true);
+
+      const params = new URLSearchParams();
+      params.append('page', '1');
+      params.append('has_stock', 'true');
+      params.append('search', search.trim());
+
+      const response = await api.get(
+        `warehouse-stock-overview/?${params.toString()}`,
+      );
+
+      const results = Array.isArray(response.data?.results)
+        ? response.data.results
+        : [];
+
+      setStockItems(results);
+    } catch (err) {
+      console.error('Failed to load warehouse stock overview:', err);
+      setStockItems([]);
+      message.error('Не вдалося завантажити залишки складу.');
+    } finally {
+      setStockLoading(false);
     }
   };
 
@@ -247,8 +289,101 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     [storagePlaces],
   );
 
+  const stockOptions = useMemo(
+    () =>
+      stockItems.map((item) => ({
+        value: item.inventory_item_id,
+        label: (
+          <Flex vertical style={{ minWidth: 0 }}>
+            <Text
+              style={{
+                fontWeight: 500,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              title={item.inventory_item_name || '—'}
+            >
+              {item.inventory_item_name || '—'}
+            </Text>
+
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {item.inventory_item_code || '—'} • {item.available_quantity}{' '}
+              {item.inventory_item_unit_symbol || ''}
+            </Text>
+          </Flex>
+        ),
+        raw: item,
+      })),
+    [stockItems],
+  );
+
   const isReadonly = planStatus === 'executed' || planStatus === 'cancelled';
   const isDestinationLocked = isEditMode && planStatus === 'active';
+
+  const renderSelectedStockInfo = () => {
+    if (!selectedStockItem) return null;
+
+    const unit = selectedStockItem.inventory_item_unit_symbol || '';
+
+    return (
+      <Card size="small" style={{ background: '#fafafa' }}>
+        <Flex vertical gap={14}>
+          <Flex gap={24} wrap>
+            <div style={{ flex: '1 1 160px' }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Артикул
+              </Text>
+              <div style={{ fontWeight: 500 }}>
+                {selectedStockItem.inventory_item_code || '—'}
+              </div>
+            </div>
+
+            <div style={{ flex: '1 1 220px' }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Категорія
+              </Text>
+              <div style={{ fontWeight: 500 }}>
+                {selectedStockItem.inventory_item_category_name || '—'}
+              </div>
+            </div>
+          </Flex>
+
+          <Flex gap={32} wrap>
+            <div style={{ flex: '1 1 220px' }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Доступно для переміщення
+              </Text>
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: '#52c41a',
+                  fontSize: 17,
+                }}
+              >
+                {selectedStockItem.available_quantity || '0.000'} {unit}
+              </div>
+            </div>
+
+            <div style={{ flex: '1 1 180px' }}>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Зарезервовано
+              </Text>
+              <div
+                style={{
+                  fontWeight: 700,
+                  color: '#8c8c8c',
+                  fontSize: 17,
+                }}
+              >
+                {selectedStockItem.reserved_quantity || '0.000'} {unit}
+              </div>
+            </div>
+          </Flex>
+        </Flex>
+      </Card>
+    );
+  };
 
   const canSave =
     !isReadonly &&
@@ -452,12 +587,57 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
           </Flex>
         </Card>
         {activePlan?.id && (
-          <Card title="2. Позиції переміщення">
-            <Alert
-              type="info"
-              showIcon
-              message="Додавання позицій до плану переміщення буде додано наступним кроком."
-            />
+          <Card title="2. Додавання товару">
+            <Flex vertical gap={16}>
+              <div>
+                <Text style={{ display: 'block', marginBottom: 8 }}>Товар</Text>
+
+                <Select
+                  showSearch
+                  allowClear
+                  style={{ width: '100%' }}
+                  placeholder="Почніть вводити назву або артикул товару"
+                  value={selectedStockItem?.inventory_item_id}
+                  options={stockOptions}
+                  loading={stockLoading}
+                  filterOption={false}
+                  onSearch={loadStockItems}
+                  onClear={() => {
+                    setSelectedStockItem(null);
+                    setMoveQuantity(null);
+                    setStockItems([]);
+                  }}
+                  onChange={(_, option) => {
+                    setSelectedStockItem(option?.raw || null);
+                    setMoveQuantity(null);
+                  }}
+                />
+              </div>
+
+              <div>
+                <Text style={{ display: 'block', marginBottom: 8 }}>
+                  Кількість для переміщення
+                </Text>
+
+                <InputNumber
+                  min={0.001}
+                  step={0.001}
+                  controls={false}
+                  style={{ width: '100%' }}
+                  placeholder="Вкажіть кількість"
+                  value={moveQuantity}
+                  onChange={setMoveQuantity}
+                />
+              </div>
+
+              {renderSelectedStockInfo()}
+
+              <Flex justify="flex-end">
+                <Button type="primary" disabled>
+                  Додати товар
+                </Button>
+              </Flex>
+            </Flex>
           </Card>
         )}
       </Flex>

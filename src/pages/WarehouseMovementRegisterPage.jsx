@@ -55,7 +55,12 @@ const getPlacementTagColor = (label = '') => {
 const renderStoragePlaceChain = (value) => {
   if (!value) return null;
 
-  const parts = value.split(',').map((part) => part.trim());
+  const normalizedValue = value.replace(/\s+на локації\s*$/i, '');
+
+  const parts = normalizedValue
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
 
   return (
     <Flex wrap={false} gap={6} style={{ whiteSpace: 'nowrap' }}>

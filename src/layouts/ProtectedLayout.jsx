@@ -78,6 +78,13 @@ const moduleConfig = {
         path: '/inventory/tolling-pending-intake',
       },
     ],
+    actions: [],
+    dictionaries: [
+      {
+        label: 'Каталог складів',
+        path: '/inventory/warehouses',
+      },
+    ],
   },
 
   '/orders': {

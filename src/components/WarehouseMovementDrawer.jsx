@@ -83,7 +83,8 @@ const renderStoragePlaceOption = (item) => (
 );
 
 function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
-  const isEditMode = Boolean(planId);
+  const activePlanId = planId || activePlan?.id;
+  const isEditMode = Boolean(activePlanId);
 
   const [locations, setLocations] = useState([]);
   const [storagePlaces, setStoragePlaces] = useState([]);
@@ -99,6 +100,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
   const [plannedAt, setPlannedAt] = useState(null);
   const [comment, setComment] = useState('');
   const [planStatus, setPlanStatus] = useState(null);
+  const [activePlan, setActivePlan] = useState(null);
 
   const resetState = () => {
     setDestinationType('location');
@@ -107,6 +109,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     setPlannedAt(null);
     setComment('');
     setPlanStatus(null);
+    setActivePlan(null);
     setSaving(false);
   };
 
@@ -177,6 +180,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       const response = await api.get(`movement-plans/${planId}/`);
       const plan = response.data;
 
+      setActivePlan(plan);
       setPlanStatus(plan.status || null);
       setComment(plan.comment || '');
       setPlannedAt(plan.planned_at ? dayjs(plan.planned_at) : null);
@@ -273,18 +277,28 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       setSaving(true);
 
       if (isEditMode) {
-        await api.patch(`movement-plans/${planId}/`, payload);
+        const response = await api.patch(
+          `movement-plans/${activePlanId}/`,
+          payload,
+        );
+        setActivePlan(response.data);
         message.success('План переміщення оновлено.');
-      } else {
-        await api.post('movement-plans/', payload);
-        message.success('План переміщення створено.');
+
+        if (onSaved) {
+          await onSaved();
+        }
+
+        return;
       }
+
+      const response = await api.post('movement-plans/', payload);
+      setActivePlan(response.data);
+      setPlanStatus(response.data?.status || null);
+      message.success('План переміщення створено.');
 
       if (onSaved) {
         await onSaved();
       }
-
-      onClose();
     } catch (err) {
       console.error('Failed to save movement plan:', err);
 
@@ -437,6 +451,15 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
             )}
           </Flex>
         </Card>
+        {activePlan?.id && (
+          <Card title="2. Позиції переміщення">
+            <Alert
+              type="info"
+              showIcon
+              message="Додавання позицій до плану переміщення буде додано наступним кроком."
+            />
+          </Card>
+        )}
       </Flex>
     </Drawer>
   );

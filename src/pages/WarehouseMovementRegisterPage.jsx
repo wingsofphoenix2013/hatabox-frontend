@@ -1,7 +1,11 @@
 // src/pages/WarehouseMovementRegisterPage.jsx
 
 import { useEffect, useMemo, useState } from 'react';
-import { AppstoreAddOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  AppstoreAddOutlined,
+  PlusOutlined,
+  WarningFilled,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -13,6 +17,7 @@ import {
   Select,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -272,9 +277,38 @@ function WarehouseMovementRegisterPage() {
       title: 'Заплановано',
       dataIndex: 'planned_at',
       key: 'planned_at',
-      width: 150,
+      width: 180,
       align: 'center',
-      render: (value) => formatDateDisplay(value),
+      render: (_, record) => {
+        if (!record.planned_at) {
+          return '—';
+        }
+
+        const dateText = formatDateDisplay(record.planned_at);
+        const hasStatusText = Boolean(record.planned_status_text);
+
+        const isToday = record.days_delta === 0;
+
+        const content = record.is_overdue ? (
+          <Tag color="error" style={{ fontWeight: 600 }}>
+            <WarningFilled style={{ marginRight: 4 }} />
+            {dateText}
+          </Tag>
+        ) : isToday ? (
+          <Tag color="warning" style={{ fontWeight: 600 }}>
+            <WarningFilled style={{ marginRight: 4 }} />
+            {dateText}
+          </Tag>
+        ) : (
+          <span>{dateText}</span>
+        );
+
+        if (!hasStatusText) {
+          return content;
+        }
+
+        return <Tooltip title={record.planned_status_text}>{content}</Tooltip>;
+      },
     },
     {
       title: 'Куди',

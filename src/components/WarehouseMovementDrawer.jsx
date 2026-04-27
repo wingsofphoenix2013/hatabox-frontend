@@ -219,7 +219,14 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     () =>
       locations.map((item) => ({
         value: item.id,
-        label: `${item.code || '—'} - ${item.name || '—'}`,
+        label: (
+          <Flex align="center" gap={6}>
+            <Tag style={getLocationTagStyle()}>{item.code || '—'}</Tag>
+            <Text>:</Text>
+            <span>{item.name || '—'}</span>
+          </Flex>
+        ),
+        searchLabel: `${item.code || ''} ${item.name || ''}`,
       })),
     [locations],
   );
@@ -359,7 +366,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
                   options={locationOptions}
                   loading={locationsLoading}
                   disabled={isReadonly || isDestinationLocked}
-                  optionFilterProp="label"
+                  optionFilterProp="searchLabel"
                   onChange={setTargetLocationId}
                 />
               </div>

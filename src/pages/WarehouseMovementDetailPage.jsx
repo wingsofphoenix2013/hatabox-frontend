@@ -303,26 +303,19 @@ function WarehouseMovementDetailPage() {
 
           <Card
             title={
-              <Flex justify="space-between" align="center" gap={12}>
-                <span style={{ fontWeight: 600 }}>Маршрут</span>
-                <Flex align="center" gap={8} wrap={false}>
-                  <span style={{ fontWeight: 600 }}>Куди</span>
+              <Flex align="center" gap={8} wrap={false}>
+                <span style={{ fontWeight: 600 }}>Маршрут:</span>
 
-                  <div
-                    style={{
-                      fontSize: 13,
-                    }}
-                  >
-                    {renderWarehousePlacement({
-                      locationCode: plan.target_location_code,
-                      locationName: plan.target_location_name,
-                      storagePlaceDisplayName:
-                        plan.target_storage_place_display_name,
-                      storagePlaceFullDisplay:
-                        plan.target_storage_place_full_display,
-                    })}
-                  </div>
-                </Flex>
+                <div style={{ fontSize: 14 }}>
+                  {renderWarehousePlacement({
+                    locationCode: plan.target_location_code,
+                    locationName: plan.target_location_name,
+                    storagePlaceDisplayName:
+                      plan.target_storage_place_display_name,
+                    storagePlaceFullDisplay:
+                      plan.target_storage_place_full_display,
+                  })}
+                </div>
               </Flex>
             }
           >

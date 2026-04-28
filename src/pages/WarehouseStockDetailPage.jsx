@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { AppstoreAddOutlined, SwapOutlined } from '@ant-design/icons';
+import {
+  AppstoreAddOutlined,
+  InfoCircleOutlined,
+  SwapOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -15,7 +19,7 @@ import {
   Tag,
   Typography,
 } from 'antd';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
@@ -264,6 +268,120 @@ function WarehouseStockDetailPage() {
     },
   ];
 
+  const incomingColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Заказ',
+      key: 'order',
+      render: (_, record) => {
+        const isTolling = record.source_type === 'tolling';
+        const orderId = isTolling
+          ? record.tolling_order_id
+          : record.external_order_id;
+        const orderNo = isTolling
+          ? record.tolling_order_no
+          : record.external_order_no;
+        const createdAt = isTolling
+          ? record.tolling_order_created_at
+          : record.external_order_created_at;
+        const orderUrl = isTolling
+          ? `/orders/tolling/${orderId}`
+          : `/orders/${orderId}`;
+
+        if (!orderId) {
+          return '—';
+        }
+
+        return (
+          <Link to={orderUrl} target="_blank" rel="noreferrer">
+            {`№${orderNo || '—'} від ${formatDateDisplay(createdAt)}`}
+          </Link>
+        );
+      },
+    },
+    {
+      title: 'Постачальник',
+      key: 'counterparty',
+      render: (_, record) => {
+        const counterpartyName =
+          record.vendor_name || record.organization_name || '—';
+
+        return (
+          <Flex align="center" gap={6} wrap={false}>
+            <span>{counterpartyName}</span>
+
+            {record.vendor_id ? (
+              <Link
+                to={`/orders/vendors/${record.vendor_id}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <InfoCircleOutlined style={{ color: '#1677ff' }} />
+              </Link>
+            ) : null}
+          </Flex>
+        );
+      },
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (_, record) => {
+        if (record.has_unconverted_quantity) {
+          return (
+            <span>
+              <Text type="danger">???</Text>
+              {unitSymbol ? ` ${unitSymbol}` : ''}
+            </span>
+          );
+        }
+
+        return unitSymbol
+          ? `${formatQuantity(record.quantity)} ${unitSymbol}`
+          : formatQuantity(record.quantity);
+      },
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 80,
+      align: 'center',
+      render: () => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'placeholder',
+                label: (
+                  <div style={{ padding: '4px 0' }}>
+                    Дії будуть додані пізніше
+                  </div>
+                ),
+              },
+            ],
+          }}
+          trigger={['click']}
+        >
+          <AppstoreAddOutlined
+            style={{
+              fontSize: 17,
+              color: '#8c8c8c',
+              cursor: 'pointer',
+            }}
+          />
+        </Dropdown>
+      ),
+    },
+  ];
+
   return (
     <div style={{ padding: 20 }}>
       <Flex vertical gap={20}>
@@ -376,7 +494,16 @@ function WarehouseStockDetailPage() {
 
             {incomingRows.length > 0 && (
               <Card title="Закупівля та очікування">
-                <Text type="secondary">Вміст буде додано пізніше.</Text>
+                <Table
+                  rowKey={(record) =>
+                    `${record.source_type}-${record.order_item_id}`
+                  }
+                  columns={incomingColumns}
+                  dataSource={incomingRows}
+                  pagination={false}
+                  size="small"
+                  tableLayout="fixed"
+                />
               </Card>
             )}
           </Col>

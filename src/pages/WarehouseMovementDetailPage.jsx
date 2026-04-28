@@ -181,7 +181,7 @@ function WarehouseMovementDetailPage() {
             <Text type="secondary">Дані з’являться пізніше.</Text>
           </Card>
 
-          {!isCancelled && (
+          {!isCancelled && !isExecuted && (
             <Card title="Навігація" style={{ marginBottom: 20 }}>
               <Flex vertical gap={8}>
                 {isDraft && (

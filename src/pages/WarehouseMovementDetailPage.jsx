@@ -305,18 +305,32 @@ function WarehouseMovementDetailPage() {
             title={
               <Flex justify="space-between" align="center" gap={12}>
                 <span>Маршрут</span>
+                <Flex align="center" gap={8} wrap={false}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: '#595959',
+                      marginRight: 4,
+                    }}
+                  >
+                    Куди
+                  </Text>
 
-                <Flex align="center" gap={6} wrap={false}>
-                  <Text strong>Куди</Text>
-
-                  {renderWarehousePlacement({
-                    locationCode: plan.target_location_code,
-                    locationName: plan.target_location_name,
-                    storagePlaceDisplayName:
-                      plan.target_storage_place_display_name,
-                    storagePlaceFullDisplay:
-                      plan.target_storage_place_full_display,
-                  })}
+                  <div
+                    style={{
+                      fontSize: 13,
+                    }}
+                  >
+                    {renderWarehousePlacement({
+                      locationCode: plan.target_location_code,
+                      locationName: plan.target_location_name,
+                      storagePlaceDisplayName:
+                        plan.target_storage_place_display_name,
+                      storagePlaceFullDisplay:
+                        plan.target_storage_place_full_display,
+                    })}
+                  </div>
                 </Flex>
               </Flex>
             }

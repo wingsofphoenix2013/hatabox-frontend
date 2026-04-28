@@ -652,6 +652,8 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       if (onSaved) {
         await onSaved();
       }
+
+      onClose();
     } catch (err) {
       console.error('Failed to execute movement plan:', err);
 

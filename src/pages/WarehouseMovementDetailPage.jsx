@@ -32,6 +32,7 @@ import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
 import { formatQuantity } from '../utils/formatNumber';
 import { renderWarehousePlacement } from '../utils/warehousePlacementRenderers';
+import WarehouseMovementDrawer from '../components/WarehouseMovementDrawer';
 import {
   MOVEMENT_PLAN_STATUS_LABELS,
   getMovementPlanStatusTagColor,
@@ -50,6 +51,8 @@ function WarehouseMovementDetailPage() {
   const [isEditingComment, setIsEditingComment] = useState(false);
   const [editingComment, setEditingComment] = useState('');
   const [savingComment, setSavingComment] = useState(false);
+
+  const [isMovementDrawerOpen, setIsMovementDrawerOpen] = useState(false);
 
   useEffect(() => {
     loadMovementPlanPage();
@@ -190,6 +193,7 @@ function WarehouseMovementDetailPage() {
                     <Button
                       block
                       icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                      onClick={() => setIsMovementDrawerOpen(true)}
                     >
                       Комплектація переміщення
                     </Button>
@@ -213,6 +217,7 @@ function WarehouseMovementDetailPage() {
                     <Button
                       block
                       icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                      onClick={() => setIsMovementDrawerOpen(true)}
                     >
                       Комплектація переміщення
                     </Button>
@@ -491,6 +496,13 @@ function WarehouseMovementDetailPage() {
           </Card>
         </Col>
       </Row>
+      <WarehouseMovementDrawer
+        key={plan.id}
+        open={isMovementDrawerOpen}
+        onClose={() => setIsMovementDrawerOpen(false)}
+        planId={plan.id}
+        onSaved={() => loadMovementPlanPage({ silent: true })}
+      />
     </div>
   );
 }

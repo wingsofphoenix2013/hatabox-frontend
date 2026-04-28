@@ -31,103 +31,12 @@ import {
   getMovementPlanStatusTagColor,
 } from '../constants/movementPlanStatus';
 import { formatDateDisplay } from '../utils/orderFormatters';
+import { renderWarehousePlacement } from '../utils/warehousePlacementRenderers';
 
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
 
 const pageSize = 50;
-
-const getLocationTagStyle = () => ({
-  color: '#595959',
-  background: '#fafafa',
-  borderColor: '#d9d9d9',
-  fontWeight: 600,
-  minWidth: 34,
-  textAlign: 'center',
-});
-
-const getPlacementTagColor = (label = '') => {
-  const normalized = label.toLowerCase();
-
-  if (normalized.includes('контейнер')) return 'processing';
-  if (normalized.includes('стелаж')) return 'success';
-  if (normalized.includes('бокс')) return 'warning';
-
-  return 'default';
-};
-
-const renderStoragePlaceChain = (value) => {
-  if (!value) return null;
-
-  const normalizedValue = value.replace(/\s+на локації\s*$/i, '');
-
-  const parts = normalizedValue
-    .split(',')
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  return (
-    <Flex wrap={false} gap={6} style={{ whiteSpace: 'nowrap' }}>
-      {parts.map((part, index) => {
-        const tokens = part.split(' ');
-        const code = tokens.pop();
-        const label = tokens.join(' ');
-
-        return (
-          <Flex key={`${part}-${index}`} align="center" gap={4}>
-            <span>{label}</span>
-            <Tag
-              color={getPlacementTagColor(label)}
-              style={{ marginInlineEnd: 0, fontWeight: 600 }}
-            >
-              {code}
-            </Tag>
-            {index < parts.length - 1 && <span>,</span>}
-          </Flex>
-        );
-      })}
-    </Flex>
-  );
-};
-
-const renderDestination = (record) => (
-  <Flex align="center" gap={6} wrap={false} style={{ minWidth: 0 }}>
-    <Tag
-      style={{
-        ...getLocationTagStyle(),
-        marginInlineEnd: 0,
-        maxWidth: 220,
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
-      }}
-      title={`${record.target_location_code || '—'} - ${
-        record.target_location_name || '—'
-      }`}
-    >
-      {(record.target_location_code || '—') +
-        ' - ' +
-        (record.target_location_name || '—')}
-    </Tag>
-
-    {record.target_storage_place ? (
-      <>
-        <Text type="secondary">:</Text>
-        <div
-          title={record.target_storage_place_display_name || undefined}
-          style={{
-            minWidth: 0,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {renderStoragePlaceChain(record.target_storage_place_full_display)}
-        </div>
-      </>
-    ) : null}
-  </Flex>
-);
 
 function WarehouseMovementRegisterPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -365,7 +274,13 @@ function WarehouseMovementRegisterPage() {
       title: 'Куди',
       key: 'destination',
       width: 420,
-      render: (_, record) => renderDestination(record),
+      render: (_, record) =>
+        renderWarehousePlacement({
+          locationCode: record.target_location_code,
+          locationName: record.target_location_name,
+          storagePlaceDisplayName: record.target_storage_place_display_name,
+          storagePlaceFullDisplay: record.target_storage_place_full_display,
+        }),
     },
     {
       title: 'Позицій',

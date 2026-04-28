@@ -18,9 +18,11 @@ import {
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
+import { formatDateDisplay } from '../utils/orderFormatters';
 import {
   getLocationTagStyle,
   renderStoragePlaceChain,
+  renderWarehousePlacement,
 } from '../utils/warehousePlacementRenderers';
 
 const { Title, Text } = Typography;
@@ -181,6 +183,87 @@ function WarehouseStockDetailPage() {
     },
   ];
 
+  const reservedStockColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Звідки',
+      key: 'source',
+      width: 360,
+      render: (_, record) =>
+        renderWarehousePlacement({
+          locationCode: record.location_code,
+          locationName: record.location_name,
+          storagePlaceDisplayName: record.storage_place_display_name,
+          storagePlaceFullDisplay: record.storage_place_full_display,
+        }),
+    },
+    {
+      title: 'Куди',
+      key: 'target',
+      width: 360,
+      render: (_, record) =>
+        renderWarehousePlacement({
+          locationCode: record.target_location_code,
+          locationName: record.target_location_name,
+          storagePlaceFullDisplay: record.target_storage_place_full_display,
+        }),
+    },
+    {
+      title: 'Коли',
+      key: 'planned_at',
+      width: 140,
+      align: 'center',
+      render: (_, record) => formatDateDisplay(record.movement_plan_planned_at),
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (_, record) =>
+        unitSymbol
+          ? `${formatQuantity(record.quantity)} ${unitSymbol}`
+          : formatQuantity(record.quantity),
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 80,
+      align: 'center',
+      render: () => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'placeholder',
+                label: (
+                  <div style={{ padding: '4px 0' }}>
+                    Дії будуть додані пізніше
+                  </div>
+                ),
+              },
+            ],
+          }}
+          trigger={['click']}
+        >
+          <AppstoreAddOutlined
+            style={{
+              fontSize: 17,
+              color: '#8c8c8c',
+              cursor: 'pointer',
+            }}
+          />
+        </Dropdown>
+      ),
+    },
+  ];
+
   return (
     <div style={{ padding: 20 }}>
       <Flex vertical gap={20}>
@@ -274,7 +357,14 @@ function WarehouseStockDetailPage() {
                 title="Зарезервовано на складах"
                 style={{ marginBottom: 20 }}
               >
-                <Text type="secondary">Вміст буде додано пізніше.</Text>
+                <Table
+                  rowKey={(record) => record.movement_plan_item_id}
+                  columns={reservedStockColumns}
+                  dataSource={reservedStockRows}
+                  pagination={false}
+                  size="small"
+                  tableLayout="fixed"
+                />
               </Card>
             )}
 

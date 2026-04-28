@@ -60,7 +60,6 @@ export const renderStoragePlaceChain = (value) => {
 export const renderWarehousePlacement = ({
   locationCode,
   locationName,
-  storagePlaceId,
   storagePlaceDisplayName,
   storagePlaceFullDisplay,
 }) => (
@@ -79,7 +78,7 @@ export const renderWarehousePlacement = ({
       {(locationCode || '—') + ' - ' + (locationName || '—')}
     </Tag>
 
-    {storagePlaceId ? (
+    {storagePlaceFullDisplay ? (
       <>
         <Text type="secondary">:</Text>
         <div

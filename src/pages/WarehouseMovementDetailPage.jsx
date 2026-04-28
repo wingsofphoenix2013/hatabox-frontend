@@ -7,6 +7,7 @@ import {
   StopOutlined,
   SwapOutlined,
   EditOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -23,11 +24,12 @@ import {
   Typography,
   message,
 } from 'antd';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
+import { formatQuantity } from '../utils/formatNumber';
 import { renderWarehousePlacement } from '../utils/warehousePlacementRenderers';
 import {
   MOVEMENT_PLAN_STATUS_LABELS,
@@ -341,6 +343,31 @@ function WarehouseMovementDetailPage() {
                   ),
                 },
                 {
+                  title: 'Товар',
+                  key: 'item',
+                  render: (_, record) => (
+                    <Flex align="center" gap={6} wrap>
+                      <span>{record.inventory_item_name || '—'}</span>
+
+                      {record.inventory_item_id && (
+                        <Link
+                          to={`/inventory/stock/${record.inventory_item_id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <InfoCircleOutlined
+                            style={{
+                              color: '#1677ff',
+                              fontSize: 14,
+                              cursor: 'pointer',
+                            }}
+                          />
+                        </Link>
+                      )}
+                    </Flex>
+                  ),
+                },
+                {
                   title: 'Звідки',
                   key: 'source',
                   render: (_, record) => (
@@ -363,7 +390,7 @@ function WarehouseMovementDetailPage() {
                   align: 'center',
                   render: (_, record) => (
                     <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                      {record.quantity} {record.unit_symbol}
+                      {formatQuantity(record.quantity)} {record.unit_symbol}
                     </div>
                   ),
                 },

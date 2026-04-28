@@ -317,6 +317,7 @@ function WarehouseMovementDetailPage() {
                 {
                   key: 'destination',
                   label: 'Куди',
+                  contentStyle: { textAlign: 'center' },
                   children: renderWarehousePlacement({
                     locationCode: plan.target_location_code,
                     locationName: plan.target_location_name,
@@ -329,6 +330,7 @@ function WarehouseMovementDetailPage() {
                 {
                   key: 'planned_at',
                   label: 'Заплановано на',
+                  contentStyle: { textAlign: 'center' },
                   children: (() => {
                     if (!plan.planned_at) return '—';
 
@@ -341,7 +343,7 @@ function WarehouseMovementDetailPage() {
 
                     if (plan.is_overdue) {
                       return (
-                        <Flex align="center" gap={6}>
+                        <Flex align="center" justify="center" gap={6}>
                           <Tag color="error">{dateText}</Tag>
                           {plan.planned_status_text && (
                             <Text type="secondary">
@@ -354,7 +356,7 @@ function WarehouseMovementDetailPage() {
 
                     if (plan.days_delta === 0) {
                       return (
-                        <Flex align="center" gap={6}>
+                        <Flex align="center" justify="center" gap={6}>
                           <Tag color="warning">{dateText}</Tag>
                           {plan.planned_status_text && (
                             <Text type="secondary">
@@ -366,7 +368,7 @@ function WarehouseMovementDetailPage() {
                     }
 
                     return (
-                      <Flex align="center" gap={6}>
+                      <Flex align="center" justify="center" gap={6}>
                         <span>{dateText}</span>
                         {plan.planned_status_text && (
                           <Text type="secondary">

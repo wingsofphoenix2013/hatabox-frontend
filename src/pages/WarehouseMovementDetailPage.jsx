@@ -250,57 +250,161 @@ function WarehouseMovementDetailPage() {
 
         <Col xs={24} lg={18}>
           <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-            <Alert
-              type="warning"
-              showIcon
-              message={
-                <Flex vertical gap={12}>
-                  <Flex justify="space-between" align="center">
-                    <Text strong>Коментар до переміщення</Text>
+            {!(isExecuted || isCancelled) || plan.comment ? (
+              <Alert
+                type="warning"
+                showIcon
+                message={
+                  <Flex vertical gap={12}>
+                    <Flex justify="space-between" align="center">
+                      <Text strong>Коментар до переміщення</Text>
 
-                    {!isEditingComment && !isExecuted && !isCancelled && (
-                      <EditOutlined
-                        style={{
-                          color: '#8c8c8c',
-                          cursor: 'pointer',
-                          fontSize: 16,
-                        }}
-                        onClick={handleStartEditComment}
-                      />
+                      {!isEditingComment && !isExecuted && !isCancelled && (
+                        <EditOutlined
+                          style={{
+                            color: '#8c8c8c',
+                            cursor: 'pointer',
+                            fontSize: 16,
+                          }}
+                          onClick={handleStartEditComment}
+                        />
+                      )}
+                    </Flex>
+
+                    {!isEditingComment ? (
+                      <Text style={{ whiteSpace: 'pre-wrap' }}>
+                        {plan.comment ? plan.comment : 'Додати коментар'}
+                      </Text>
+                    ) : (
+                      <Flex vertical gap={8}>
+                        <Input.TextArea
+                          value={editingComment}
+                          onChange={(e) => setEditingComment(e.target.value)}
+                          rows={3}
+                          autoFocus
+                        />
+
+                        <Flex gap={8}>
+                          <Button
+                            type="primary"
+                            size="small"
+                            loading={savingComment}
+                            onClick={handleSaveComment}
+                          >
+                            Зберегти
+                          </Button>
+
+                          <Button
+                            size="small"
+                            onClick={handleCancelEditComment}
+                          >
+                            Скасувати
+                          </Button>
+                        </Flex>
+                      </Flex>
                     )}
                   </Flex>
+                }
+              />
+            ) : null}
 
-                  {!isEditingComment ? (
-                    <Text style={{ whiteSpace: 'pre-wrap' }}>
-                      {plan.comment ? plan.comment : 'Додати коментар'}
-                    </Text>
-                  ) : (
-                    <Flex vertical gap={8}>
-                      <Input.TextArea
-                        value={editingComment}
-                        onChange={(e) => setEditingComment(e.target.value)}
-                        rows={3}
-                        autoFocus
-                      />
+            <Table
+              rowKey={() => 'main-info'}
+              dataSource={[plan]}
+              pagination={false}
+              size="small"
+              columns={[
+                {
+                  title: '',
+                  key: 'destination_label',
+                  width: 120,
+                  render: () => <Text strong>Куди:</Text>,
+                },
+                {
+                  title: '',
+                  key: 'destination_value',
+                  render: (_, record) =>
+                    renderWarehousePlacement({
+                      locationCode: record.target_location_code,
+                      locationName: record.target_location_name,
+                      storagePlaceDisplayName:
+                        record.target_storage_place_display_name,
+                      storagePlaceFullDisplay:
+                        record.target_storage_place_full_display,
+                    }),
+                },
+                {
+                  title: '',
+                  key: 'planned_label',
+                  width: 160,
+                  render: () => <Text strong>Заплановано на:</Text>,
+                },
+                {
+                  title: '',
+                  key: 'planned_value',
+                  render: (_, record) => {
+                    if (!record.planned_at) return '—';
 
-                      <Flex gap={8}>
-                        <Button
-                          type="primary"
-                          size="small"
-                          loading={savingComment}
-                          onClick={handleSaveComment}
-                        >
-                          Зберегти
-                        </Button>
+                    const dateText = formatDateDisplay(record.planned_at);
 
-                        <Button size="small" onClick={handleCancelEditComment}>
-                          Скасувати
-                        </Button>
+                    const showStatus = isDraft || isActive;
+
+                    if (!showStatus) {
+                      return dateText;
+                    }
+
+                    if (record.is_overdue) {
+                      return (
+                        <Flex align="center" gap={6}>
+                          <Tag color="error">{dateText}</Tag>
+                          {record.planned_status_text && (
+                            <Text type="secondary">
+                              {record.planned_status_text}
+                            </Text>
+                          )}
+                        </Flex>
+                      );
+                    }
+
+                    if (record.days_delta === 0) {
+                      return (
+                        <Flex align="center" gap={6}>
+                          <Tag color="warning">{dateText}</Tag>
+                          {record.planned_status_text && (
+                            <Text type="secondary">
+                              {record.planned_status_text}
+                            </Text>
+                          )}
+                        </Flex>
+                      );
+                    }
+
+                    return (
+                      <Flex align="center" gap={6}>
+                        <span>{dateText}</span>
+                        {record.planned_status_text && (
+                          <Text type="secondary">
+                            {record.planned_status_text}
+                          </Text>
+                        )}
                       </Flex>
-                    </Flex>
-                  )}
-                </Flex>
-              }
+                    );
+                  },
+                },
+              ]}
+              components={{
+                body: {
+                  cell: (props) => (
+                    <td
+                      {...props}
+                      style={{
+                        fontSize: 12.5,
+                        padding: '7px 8px',
+                      }}
+                    />
+                  ),
+                },
+              }}
             />
           </Card>
 

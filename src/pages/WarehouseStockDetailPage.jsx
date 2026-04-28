@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import {
   AppstoreAddOutlined,
   InfoCircleOutlined,
+  InfoCircleFilled,
+  WarningFilled,
   SwapOutlined,
 } from '@ant-design/icons';
 import {
@@ -17,6 +19,7 @@ import {
   Skeleton,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
@@ -326,6 +329,56 @@ function WarehouseStockDetailPage() {
               </Link>
             ) : null}
           </Flex>
+        );
+      },
+    },
+    {
+      title: 'Дата поставки',
+      key: 'delivery_date',
+      width: 180,
+      align: 'center',
+      render: (_, record) => {
+        const date = record.expected_delivery_date;
+        const delta = record.delivery_days_delta;
+        const isOverdue = record.is_delivery_overdue;
+        const statusText = record.delivery_status_text;
+
+        if (!date) {
+          return '—';
+        }
+
+        const dateText = formatDateDisplay(date);
+
+        if (isOverdue || (delta !== null && delta < 0)) {
+          const content = (
+            <Tag color="error" style={{ fontWeight: 600 }}>
+              <WarningFilled style={{ marginRight: 4 }} />
+              {dateText}
+            </Tag>
+          );
+
+          return statusText ? (
+            <Tooltip title={statusText}>{content}</Tooltip>
+          ) : (
+            content
+          );
+        }
+
+        if (delta === 0) {
+          return (
+            <Tag color="warning" style={{ fontWeight: 600 }}>
+              <InfoCircleFilled style={{ marginRight: 4 }} />
+              {dateText}
+            </Tag>
+          );
+        }
+
+        const content = <span>{dateText}</span>;
+
+        return statusText ? (
+          <Tooltip title={statusText}>{content}</Tooltip>
+        ) : (
+          content
         );
       },
     },

@@ -276,6 +276,20 @@ export const breadcrumbConfig = [
     ],
   },
   {
+    match: (pathname) => pathname.startsWith('/inventory/movements/'),
+    build: ({ pathname, state }) => {
+      const currentId = getCurrentId(pathname);
+      const movementLabel = state?.movementLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Склад'),
+        makeLinkItem('/inventory/movements', 'Переміщення товарів'),
+        makeTextItem(movementLabel || `Накладна №${currentId}`),
+      ];
+    },
+  },
+  {
     match: (pathname) => pathname === '/inventory/pending-intake',
     build: () => [
       makeHomeItem(),

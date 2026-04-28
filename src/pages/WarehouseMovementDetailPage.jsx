@@ -304,18 +304,9 @@ function WarehouseMovementDetailPage() {
           <Card
             title={
               <Flex justify="space-between" align="center" gap={12}>
-                <span>Маршрут</span>
+                <span style={{ fontWeight: 600 }}>Маршрут</span>
                 <Flex align="center" gap={8} wrap={false}>
-                  <span
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 600,
-                      color: 'rgba(0, 0, 0, 0.88)',
-                      marginRight: 4,
-                    }}
-                  >
-                    Куди
-                  </span>
+                  <span style={{ fontWeight: 600 }}>Куди</span>
 
                   <div
                     style={{

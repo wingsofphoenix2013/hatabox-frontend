@@ -306,16 +306,16 @@ function WarehouseMovementDetailPage() {
               <Flex justify="space-between" align="center" gap={12}>
                 <span>Маршрут</span>
                 <Flex align="center" gap={8} wrap={false}>
-                  <Text
+                  <span
                     style={{
-                      fontSize: 14,
-                      fontWeight: 500,
-                      color: '#595959',
+                      fontSize: 20,
+                      fontWeight: 600,
+                      color: 'rgba(0, 0, 0, 0.88)',
                       marginRight: 4,
                     }}
                   >
                     Куди
-                  </Text>
+                  </span>
 
                   <div
                     style={{

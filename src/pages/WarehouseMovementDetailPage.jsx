@@ -306,7 +306,7 @@ function WarehouseMovementDetailPage() {
               <Flex align="center" gap={8} wrap={false}>
                 <span style={{ fontWeight: 600 }}>Маршрут:</span>
 
-                <div style={{ fontSize: 14 }}>
+                <div style={{ fontSize: 13 }}>
                   {renderWarehousePlacement({
                     locationCode: plan.target_location_code,
                     locationName: plan.target_location_name,
@@ -319,7 +319,68 @@ function WarehouseMovementDetailPage() {
               </Flex>
             }
           >
-            <Text type="secondary">Дані з’являться пізніше.</Text>
+            <Table
+              rowKey={(record, index) => index}
+              dataSource={
+                Array.isArray(plan?.source_lines) ? plan.source_lines : []
+              }
+              pagination={false}
+              size="small"
+              locale={{
+                emptyText: 'Немає даних для відображення.',
+              }}
+              columns={[
+                {
+                  title: '№',
+                  key: 'index',
+                  width: 60,
+                  align: 'center',
+                  render: (_, __, index) => (
+                    <div style={{ textAlign: 'center' }}>{index + 1}</div>
+                  ),
+                },
+                {
+                  title: 'Звідки',
+                  key: 'source',
+                  render: (_, record) => (
+                    <div style={{ whiteSpace: 'nowrap' }}>
+                      {renderWarehousePlacement({
+                        locationCode: record.source_location_code,
+                        locationName: record.source_location_name,
+                        storagePlaceDisplayName:
+                          record.source_storage_place_display_name,
+                        storagePlaceFullDisplay:
+                          record.source_storage_place_full_display,
+                      })}
+                    </div>
+                  ),
+                },
+                {
+                  title: 'К-сть',
+                  key: 'quantity',
+                  width: 160,
+                  align: 'center',
+                  render: (_, record) => (
+                    <div style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      {record.quantity} {record.unit_symbol}
+                    </div>
+                  ),
+                },
+              ]}
+              components={{
+                body: {
+                  cell: (props) => (
+                    <td
+                      {...props}
+                      style={{
+                        fontSize: 12.5,
+                        padding: '7px 8px',
+                      }}
+                    />
+                  ),
+                },
+              }}
+            />
           </Card>
         </Col>
       </Row>

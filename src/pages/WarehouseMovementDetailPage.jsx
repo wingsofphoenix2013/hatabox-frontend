@@ -27,6 +27,7 @@ import { useParams } from 'react-router-dom';
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
+import { renderWarehousePlacement } from '../utils/warehousePlacementRenderers';
 import {
   MOVEMENT_PLAN_STATUS_LABELS,
   getMovementPlanStatusTagColor,
@@ -300,7 +301,26 @@ function WarehouseMovementDetailPage() {
             />
           </Card>
 
-          <Card title="Маршрут">
+          <Card
+            title={
+              <Flex justify="space-between" align="center" gap={12}>
+                <span>Маршрут</span>
+
+                <Flex align="center" gap={6} wrap={false}>
+                  <Text strong>Куди</Text>
+
+                  {renderWarehousePlacement({
+                    locationCode: plan.target_location_code,
+                    locationName: plan.target_location_name,
+                    storagePlaceDisplayName:
+                      plan.target_storage_place_display_name,
+                    storagePlaceFullDisplay:
+                      plan.target_storage_place_full_display,
+                  })}
+                </Flex>
+              </Flex>
+            }
+          >
             <Text type="secondary">Дані з’являться пізніше.</Text>
           </Card>
         </Col>

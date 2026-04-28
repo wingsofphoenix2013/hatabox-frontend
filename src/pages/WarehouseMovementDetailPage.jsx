@@ -14,6 +14,7 @@ import {
   Button,
   Card,
   Col,
+  Descriptions,
   Divider,
   Flex,
   Input,
@@ -307,72 +308,57 @@ function WarehouseMovementDetailPage() {
                 }
               />
             ) : null}
-
-            <Table
-              rowKey={() => 'main-info'}
-              dataSource={[plan]}
-              pagination={false}
+            <Descriptions
+              bordered
               size="small"
-              columns={[
+              column={2}
+              style={{ marginTop: 16 }}
+              items={[
                 {
-                  title: '',
-                  key: 'destination_label',
-                  width: 120,
-                  render: () => <Text strong>Куди:</Text>,
+                  key: 'destination',
+                  label: 'Куди',
+                  children: renderWarehousePlacement({
+                    locationCode: plan.target_location_code,
+                    locationName: plan.target_location_name,
+                    storagePlaceDisplayName:
+                      plan.target_storage_place_display_name,
+                    storagePlaceFullDisplay:
+                      plan.target_storage_place_full_display,
+                  }),
                 },
                 {
-                  title: '',
-                  key: 'destination_value',
-                  render: (_, record) =>
-                    renderWarehousePlacement({
-                      locationCode: record.target_location_code,
-                      locationName: record.target_location_name,
-                      storagePlaceDisplayName:
-                        record.target_storage_place_display_name,
-                      storagePlaceFullDisplay:
-                        record.target_storage_place_full_display,
-                    }),
-                },
-                {
-                  title: '',
-                  key: 'planned_label',
-                  width: 160,
-                  render: () => <Text strong>Заплановано на:</Text>,
-                },
-                {
-                  title: '',
-                  key: 'planned_value',
-                  render: (_, record) => {
-                    if (!record.planned_at) return '—';
+                  key: 'planned_at',
+                  label: 'Заплановано на',
+                  children: (() => {
+                    if (!plan.planned_at) return '—';
 
-                    const dateText = formatDateDisplay(record.planned_at);
-
+                    const dateText = formatDateDisplay(plan.planned_at);
                     const showStatus = isDraft || isActive;
 
                     if (!showStatus) {
                       return dateText;
                     }
 
-                    if (record.is_overdue) {
+                    if (plan.is_overdue) {
                       return (
                         <Flex align="center" gap={6}>
                           <Tag color="error">{dateText}</Tag>
-                          {record.planned_status_text && (
+                          {plan.planned_status_text && (
                             <Text type="secondary">
-                              {record.planned_status_text}
+                              {plan.planned_status_text}
                             </Text>
                           )}
                         </Flex>
                       );
                     }
 
-                    if (record.days_delta === 0) {
+                    if (plan.days_delta === 0) {
                       return (
                         <Flex align="center" gap={6}>
                           <Tag color="warning">{dateText}</Tag>
-                          {record.planned_status_text && (
+                          {plan.planned_status_text && (
                             <Text type="secondary">
-                              {record.planned_status_text}
+                              {plan.planned_status_text}
                             </Text>
                           )}
                         </Flex>
@@ -382,29 +368,16 @@ function WarehouseMovementDetailPage() {
                     return (
                       <Flex align="center" gap={6}>
                         <span>{dateText}</span>
-                        {record.planned_status_text && (
+                        {plan.planned_status_text && (
                           <Text type="secondary">
-                            {record.planned_status_text}
+                            {plan.planned_status_text}
                           </Text>
                         )}
                       </Flex>
                     );
-                  },
+                  })(),
                 },
               ]}
-              components={{
-                body: {
-                  cell: (props) => (
-                    <td
-                      {...props}
-                      style={{
-                        fontSize: 12.5,
-                        padding: '7px 8px',
-                      }}
-                    />
-                  ),
-                },
-              }}
             />
           </Card>
 

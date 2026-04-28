@@ -478,7 +478,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     }
   };
 
-  const planItems = Array.isArray(activePlan?.items) ? activePlan.items : [];
+  const planLines = Array.isArray(activePlan?.lines) ? activePlan.lines : [];
   const canManageItems = planStatus === 'active';
 
   const getActionIconStyle = (color) => ({
@@ -559,12 +559,8 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
   const handleStartEditPlanItem = (record) => {
     if (!canManageItems) return;
 
-    setEditingPlanItemId(record.id);
-    setEditingQuantity(
-      record.move_quantity !== null && record.move_quantity !== undefined
-        ? Number(record.move_quantity)
-        : Number(record.reserved_quantity),
-    );
+    setEditingPlanItemId(record.inventory_item_id);
+    setEditingQuantity(Number(record.quantity));
   };
 
   const handleSaveEditedPlanItem = async (record) => {
@@ -576,10 +572,13 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     }
 
     try {
-      await api.post(`movement-plans/${activePlanId}/change-item-quantity/`, {
-        item_id: record.id,
-        quantity: String(editingQuantity),
-      });
+      await api.post(
+        `movement-plans/${activePlanId}/change-inventory-item-quantity/`,
+        {
+          inventory_item: record.inventory_item_id,
+          quantity: String(editingQuantity),
+        },
+      );
 
       await loadActivePlan(activePlanId);
 
@@ -608,15 +607,15 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
     if (!activePlanId || !canManageItems) return;
 
     try {
-      setDeletingPlanItemId(record.id);
+      setDeletingPlanItemId(record.inventory_item_id);
 
-      await api.post(`movement-plans/${activePlanId}/remove-item/`, {
-        item_id: record.id,
+      await api.post(`movement-plans/${activePlanId}/remove-inventory-item/`, {
+        inventory_item: record.inventory_item_id,
       });
 
       await loadActivePlan(activePlanId);
 
-      if (editingPlanItemId === record.id) {
+      if (editingPlanItemId === record.inventory_item_id) {
         setEditingPlanItemId(null);
         setEditingQuantity(null);
       }
@@ -692,7 +691,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       width: 140,
       align: 'center',
       render: (_, record) => {
-        if (editingPlanItemId === record.id) {
+        if (editingPlanItemId === record.inventory_item_id) {
           return (
             <InputNumber
               min={0.001}
@@ -706,12 +705,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
           );
         }
 
-        const quantity =
-          record.move_quantity !== null && record.move_quantity !== undefined
-            ? record.move_quantity
-            : record.reserved_quantity;
-
-        return formatQuantity(quantity);
+        return `${formatQuantity(record.quantity)} ${record.unit_symbol || ''}`;
       },
     },
     {
@@ -729,7 +723,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
           );
         }
 
-        if (editingPlanItemId === record.id) {
+        if (editingPlanItemId === record.inventory_item_id) {
           return (
             <Flex justify="center" align="center" gap={12}>
               <SaveOutlined
@@ -758,7 +752,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
             >
               <DeleteOutlined
                 style={getActionIconStyle('#ff4d4f')}
-                spin={deletingPlanItemId === record.id}
+                spin={deletingPlanItemId === record.inventory_item_id}
               />
             </Popconfirm>
           </Flex>
@@ -977,7 +971,7 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
         {activePlan?.id && (
           <Card title="3. Склад накладної">
             <Flex vertical gap={12}>
-              {!canManageItems && planItems.length > 0 && (
+              {!canManageItems && planLines.length > 0 && (
                 <Alert
                   type="info"
                   showIcon
@@ -986,9 +980,9 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
               )}
 
               <Table
-                rowKey="id"
+                rowKey="inventory_item_id"
                 columns={planItemsColumns}
-                dataSource={planItems}
+                dataSource={planLines}
                 pagination={false}
                 size="small"
                 locale={{

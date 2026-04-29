@@ -77,6 +77,7 @@ function WarehouseMovementDetailPage() {
 
   const [executing, setExecuting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [generatingInvoice, setGeneratingInvoice] = useState(false);
 
   const handleExecutePlan = async () => {
     if (!plan?.id || plan.status !== 'active') return;
@@ -130,6 +131,30 @@ function WarehouseMovementDetailPage() {
       message.error(backendMessage || 'Не вдалося скасувати накладну.');
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    if (!plan?.id || plan.status !== 'active') return;
+
+    try {
+      setGeneratingInvoice(true);
+
+      const response = await api.post(
+        `movement-plans/${plan.id}/generate-invoice/`,
+        {},
+      );
+
+      setPlan(response.data);
+      message.success('Накладну сформовано.');
+    } catch (err) {
+      console.error('Failed to generate movement invoice:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(backendMessage || 'Не вдалося сформувати накладну.');
+    } finally {
+      setGeneratingInvoice(false);
     }
   };
 
@@ -490,22 +515,34 @@ function WarehouseMovementDetailPage() {
 
                 {isActive && (
                   <>
-                    <Popconfirm
-                      title="Виконати переміщення?"
-                      description="Після виконання товари будуть переміщені на обрану локацію або місце зберігання."
-                      okText="Так"
-                      cancelText="Ні"
-                      onConfirm={handleExecutePlan}
+                    <Tooltip
+                      title={
+                        plan.invoice_is_actual === false
+                          ? 'Перед виконанням потрібно сформувати актуальну накладну.'
+                          : ''
+                      }
                     >
-                      <Button
-                        block
-                        type="primary"
-                        loading={executing}
-                        icon={<SwapOutlined />}
-                      >
-                        Виконати переміщення
-                      </Button>
-                    </Popconfirm>
+                      <div>
+                        <Popconfirm
+                          title="Виконати переміщення?"
+                          description="Після виконання товари будуть переміщені на обрану локацію або місце зберігання."
+                          okText="Так"
+                          cancelText="Ні"
+                          onConfirm={handleExecutePlan}
+                          disabled={!plan.invoice_is_actual}
+                        >
+                          <Button
+                            block
+                            type="primary"
+                            loading={executing}
+                            disabled={!plan.invoice_is_actual}
+                            icon={<SwapOutlined />}
+                          >
+                            Виконати переміщення
+                          </Button>
+                        </Popconfirm>
+                      </div>
+                    </Tooltip>
 
                     <Divider dashed style={{ margin: '4px 0 8px 0' }} />
 
@@ -525,10 +562,37 @@ function WarehouseMovementDetailPage() {
 
                     <Button
                       block
+                      type="default"
+                      loading={generatingInvoice}
+                      disabled={generatingInvoice}
                       icon={<PrinterOutlined style={{ color: '#1677ff' }} />}
+                      onClick={handleGenerateInvoice}
                     >
-                      Роздрукувати накладну
+                      {generatingInvoice
+                        ? 'Формування...'
+                        : 'Роздрукувати накладну'}
                     </Button>
+
+                    {plan.invoice_file && (
+                      <>
+                        <Button
+                          block
+                          type="link"
+                          href={plan.invoice_file}
+                          target="_blank"
+                        >
+                          Відкрити накладну
+                        </Button>
+
+                        {!plan.invoice_is_actual && (
+                          <Alert
+                            type="warning"
+                            showIcon
+                            message="Накладна застаріла. Сформуйте нову перед виконанням."
+                          />
+                        )}
+                      </>
+                    )}
 
                     <Divider dashed style={{ margin: '4px 0 8px 0' }} />
 

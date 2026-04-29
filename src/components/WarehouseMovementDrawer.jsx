@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
-import { DeleteOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  SaveOutlined,
+  WarningFilled,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -15,6 +20,7 @@ import {
   Switch,
   Table,
   Tag,
+  Tooltip,
   Typography,
   message,
 } from 'antd';
@@ -332,6 +338,11 @@ function WarehouseMovementDrawer({
     if (!selectedStockItem) return null;
 
     const unit = selectedStockItem.inventory_item_unit_symbol || '';
+    const availablePlacements = Array.isArray(
+      selectedStockItem.available_placements,
+    )
+      ? selectedStockItem.available_placements
+      : [];
 
     const cellStyle = {
       flex: '1 1 140px',
@@ -404,6 +415,78 @@ function WarehouseMovementDrawer({
             </div>
           </div>
         </Flex>
+
+        {availablePlacements.length > 0 && (
+          <div style={{ marginTop: 14 }}>
+            <Text
+              type="secondary"
+              style={{
+                display: 'block',
+                fontSize: 12,
+                marginBottom: 6,
+              }}
+            >
+              Довідка про розміщення
+            </Text>
+
+            <Flex vertical gap={6}>
+              {availablePlacements.map((placement, index) => {
+                const isSameDestination =
+                  !activePlan?.target_storage_place &&
+                  placement.location_code === activePlan?.target_location_code;
+
+                return (
+                  <Flex
+                    key={`${placement.location_code || 'location'}-${
+                      placement.storage_place_full_display || 'root'
+                    }-${index}`}
+                    justify="space-between"
+                    align="center"
+                    gap={12}
+                  >
+                    <Flex align="center" gap={6} style={{ minWidth: 0 }}>
+                      {placement.storage_place_full_display ? (
+                        <>
+                          <Tag style={getLocationTagStyle()}>
+                            {placement.location_code || '—'}
+                          </Tag>
+                          <Text type="secondary">:</Text>
+                          {renderStoragePlaceChain(
+                            placement.storage_place_full_display,
+                          )}
+                        </>
+                      ) : (
+                        <Flex align="center" gap={6}>
+                          <Text>Локація</Text>
+                          <Tag style={getLocationTagStyle()}>
+                            {placement.location_code || '—'}
+                          </Tag>
+                          <Text>{placement.location_name || '—'}</Text>
+                        </Flex>
+                      )}
+
+                      {isSameDestination && (
+                        <Tooltip title="Цей товар вже знаходиться у вибраному місці призначення.">
+                          <WarningFilled
+                            style={{
+                              color: '#ff4d4f',
+                              fontSize: 14,
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Flex>
+
+                    <Text strong style={{ whiteSpace: 'nowrap' }}>
+                      {formatQuantity(placement.available_quantity)}{' '}
+                      {placement.unit_symbol || unit}
+                    </Text>
+                  </Flex>
+                );
+              })}
+            </Flex>
+          </div>
+        )}
       </Card>
     );
   };

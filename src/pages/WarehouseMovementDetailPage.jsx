@@ -42,6 +42,7 @@ import {
   renderStoragePlaceChain,
 } from '../utils/warehousePlacementRenderers';
 import WarehouseMovementDrawer from '../components/WarehouseMovementDrawer';
+import PdfPreview from '../components/PdfPreview';
 import {
   MOVEMENT_PLAN_STATUS_LABELS,
   getMovementPlanStatusTagColor,
@@ -471,7 +472,42 @@ function WarehouseMovementDetailPage() {
       <Row gutter={20} align="top">
         <Col xs={24} lg={6}>
           <Card title="Накладна" style={{ marginBottom: 20 }}>
-            <Text type="secondary">Дані з’являться пізніше.</Text>
+            <div
+              style={{
+                width: '100%',
+                aspectRatio: '1 / 1',
+                border: '1px solid #f0f0f0',
+                borderRadius: 12,
+                background: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                padding: 12,
+                cursor:
+                  plan.invoice_file && plan.invoice_is_actual
+                    ? 'pointer'
+                    : 'default',
+              }}
+              onClick={() => {
+                if (plan.invoice_file && plan.invoice_is_actual) {
+                  window.open(plan.invoice_file, '_blank');
+                }
+              }}
+            >
+              {plan.invoice_file && plan.invoice_is_actual ? (
+                <PdfPreview fileUrl={plan.invoice_file} width={220} />
+              ) : plan.invoice_file && plan.invoice_is_actual === false ? (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message="Накладна застаріла"
+                  description="Сформуйте нову накладну перед виконанням переміщення."
+                />
+              ) : (
+                <Text type="secondary">Накладна ще не сформована.</Text>
+              )}
+            </div>
           </Card>
 
           {!isCancelled && !isExecuted && (
@@ -565,35 +601,26 @@ function WarehouseMovementDetailPage() {
                       block
                       type="default"
                       loading={generatingInvoice}
-                      disabled={generatingInvoice}
-                      icon={<PrinterOutlined style={{ color: '#1677ff' }} />}
+                      disabled={
+                        generatingInvoice || plan.invoice_is_actual === true
+                      }
+                      icon={
+                        <PrinterOutlined
+                          style={{
+                            color:
+                              generatingInvoice ||
+                              plan.invoice_is_actual === true
+                                ? '#bfbfbf'
+                                : '#1677ff',
+                          }}
+                        />
+                      }
                       onClick={handleGenerateInvoice}
                     >
                       {generatingInvoice
                         ? 'Формування...'
                         : 'Роздрукувати накладну'}
                     </Button>
-
-                    {plan.invoice_file && (
-                      <>
-                        <Button
-                          block
-                          type="link"
-                          href={plan.invoice_file}
-                          target="_blank"
-                        >
-                          Відкрити накладну
-                        </Button>
-
-                        {!plan.invoice_is_actual && (
-                          <Alert
-                            type="warning"
-                            showIcon
-                            message="Накладна застаріла. Сформуйте нову перед виконанням."
-                          />
-                        )}
-                      </>
-                    )}
 
                     <Divider dashed style={{ margin: '4px 0 8px 0' }} />
 
@@ -614,15 +641,6 @@ function WarehouseMovementDetailPage() {
                       </Button>
                     </Popconfirm>
                   </>
-                )}
-
-                {isExecuted && (
-                  <Button
-                    block
-                    icon={<PrinterOutlined style={{ color: '#1677ff' }} />}
-                  >
-                    Роздрукувати накладну
-                  </Button>
                 )}
               </Flex>
             </Card>

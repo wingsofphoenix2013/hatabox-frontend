@@ -350,8 +350,8 @@ function WarehouseMovementDrawer({
         <Flex vertical gap={12}>
           <div>
             <Text
-              strong
-              style={{ display: 'block', fontSize: 13, marginBottom: 6 }}
+              type="secondary"
+              style={{ display: 'block', fontSize: 12, marginBottom: 6 }}
             >
               Інформація
             </Text>
@@ -377,8 +377,8 @@ function WarehouseMovementDrawer({
 
           <div>
             <Text
-              strong
-              style={{ display: 'block', fontSize: 13, marginBottom: 6 }}
+              type="secondary"
+              style={{ display: 'block', fontSize: 12, marginBottom: 6 }}
             >
               Доступність
             </Text>
@@ -414,8 +414,8 @@ function WarehouseMovementDrawer({
           {availablePlacements.length > 0 && (
             <div style={{ marginTop: 2 }}>
               <Text
-                strong
-                style={{ display: 'block', fontSize: 13, marginBottom: 6 }}
+                type="secondary"
+                style={{ display: 'block', fontSize: 12, marginBottom: 6 }}
               >
                 Довідка про розміщення
               </Text>
@@ -432,7 +432,7 @@ function WarehouseMovementDrawer({
                       key={`${placement.location_code || 'location'}-${
                         placement.storage_place_full_display || 'root'
                       }-${index}`}
-                      align="center"
+                      align="flex-end"
                       gap={8}
                     >
                       <Flex align="center" gap={6} style={{ minWidth: 0 }}>
@@ -473,6 +473,7 @@ function WarehouseMovementDrawer({
                           flex: 1,
                           borderBottom: '1px dotted #d9d9d9',
                           margin: '0 6px',
+                          transform: 'translateY(-2px)',
                         }}
                       />
 

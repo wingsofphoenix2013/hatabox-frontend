@@ -35,7 +35,10 @@ import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
 import { formatQuantity } from '../utils/formatNumber';
-import { renderWarehousePlacement } from '../utils/warehousePlacementRenderers';
+import {
+  renderWarehousePlacement,
+  renderStoragePlaceChain,
+} from '../utils/warehousePlacementRenderers';
 import WarehouseMovementDrawer from '../components/WarehouseMovementDrawer';
 import {
   MOVEMENT_PLAN_STATUS_LABELS,
@@ -159,15 +162,10 @@ function WarehouseMovementDetailPage() {
       })),
       ...storagePlaces.map((item) => ({
         value: `storage_place:${item.id}`,
-        label: renderWarehousePlacement({
-          locationCode: item.location_code,
-          locationName: null,
-          storagePlaceDisplayName: item.display_name,
-          storagePlaceFullDisplay: item.display_name_verbose,
-        }),
-        searchLabel: `${item.location_code || ''} ${
-          item.display_name || ''
-        } ${item.display_name_verbose || ''}`,
+        label: renderStoragePlaceChain(item.display_name_verbose),
+        searchLabel: `${item.display_name || ''} ${
+          item.display_name_verbose || ''
+        }`,
       })),
     ],
     [locations, storagePlaces],
@@ -209,6 +207,9 @@ function WarehouseMovementDetailPage() {
 
   const handleStartEditDestination = () => {
     if (!canEditDestination) return;
+
+    setEditingPlannedAt(false);
+    setEditingPlannedAtValue(null);
 
     if (plan.target_storage_place) {
       setSelectedDestination(`storage_place:${plan.target_storage_place}`);
@@ -263,6 +264,9 @@ function WarehouseMovementDetailPage() {
 
   const handleStartEditPlannedAt = () => {
     if (!canEditPlannedAt) return;
+
+    setEditingDestination(false);
+    setSelectedDestination(null);
 
     setEditingPlannedAtValue(plan?.planned_at ? dayjs(plan.planned_at) : null);
     setEditingPlannedAt(true);
@@ -374,7 +378,13 @@ function WarehouseMovementDetailPage() {
                     <Button
                       block
                       icon={<SettingOutlined style={{ color: '#1677ff' }} />}
-                      onClick={() => setIsMovementDrawerOpen(true)}
+                      onClick={() => {
+                        setEditingDestination(false);
+                        setSelectedDestination(null);
+                        setEditingPlannedAt(false);
+                        setEditingPlannedAtValue(null);
+                        setIsMovementDrawerOpen(true);
+                      }}
                     >
                       Комплектація переміщення
                     </Button>
@@ -398,7 +408,13 @@ function WarehouseMovementDetailPage() {
                     <Button
                       block
                       icon={<SettingOutlined style={{ color: '#1677ff' }} />}
-                      onClick={() => setIsMovementDrawerOpen(true)}
+                      onClick={() => {
+                        setEditingDestination(false);
+                        setSelectedDestination(null);
+                        setEditingPlannedAt(false);
+                        setEditingPlannedAtValue(null);
+                        setIsMovementDrawerOpen(true);
+                      }}
                     >
                       Комплектація переміщення
                     </Button>

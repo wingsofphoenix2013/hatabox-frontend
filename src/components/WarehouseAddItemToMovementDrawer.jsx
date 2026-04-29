@@ -274,6 +274,20 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
   const handleChooseVariant = () => {
     if (selectedValue === 'create') {
       setStep('create_plan');
+      return;
+    }
+
+    if (selectedValue?.startsWith('plan:')) {
+      const planId = Number(selectedValue.replace('plan:', ''));
+      const selectedPlan = plans.find((plan) => plan.id === planId);
+
+      if (!selectedPlan) {
+        message.error('Не вдалося визначити накладну переміщення.');
+        return;
+      }
+
+      setActivePlan(selectedPlan);
+      setStep('add_item');
     }
   };
 
@@ -521,7 +535,9 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
                       type="secondary"
                       style={{ display: 'block', marginTop: 4 }}
                     >
-                      План переміщення №{activePlan.id} створено.
+                      {selectedValue === 'create'
+                        ? `План переміщення №${activePlan.id} створено.`
+                        : `План переміщення №${activePlan.id} обрано.`}
                     </Text>
                   )}
                 </div>

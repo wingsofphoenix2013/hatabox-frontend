@@ -117,15 +117,22 @@ function WarehouseMovementStockInfo({ stockItem, activePlan }) {
                           )}
                         </>
                       ) : (
-                        <Flex align="center" gap={6}>
-                          <Text>Локація</Text>
-
-                          <Tag style={getLocationTagStyle()}>
-                            {placement.location_code || '—'}
-                          </Tag>
-
-                          <Text>{placement.location_name || '—'}</Text>
-                        </Flex>
+                        <Tag
+                          style={{
+                            ...getLocationTagStyle(),
+                            maxWidth: 260,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                          title={`${placement.location_code || '—'} - ${
+                            placement.location_name || '—'
+                          }`}
+                        >
+                          {(placement.location_code || '—') +
+                            ' - ' +
+                            (placement.location_name || '—')}
+                        </Tag>
                       )}
 
                       {isSameDestination && (

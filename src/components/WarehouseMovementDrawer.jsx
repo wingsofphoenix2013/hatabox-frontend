@@ -1075,79 +1075,50 @@ function WarehouseMovementDrawer({
           </Card>
         )}
         {activePlan?.id && (
-          <Card title="3. Склад накладної">
-            <Flex vertical gap={12}>
-              {!canManageItems && planLines.length > 0 && (
-                <Alert
-                  type="info"
-                  showIcon
-                  message="Редагування та видалення товарів доступне лише для накладної у статусі «Активний»."
-                />
-              )}
-
-              <Table
-                rowKey="inventory_item_id"
-                columns={planItemsColumns}
-                dataSource={planLines}
-                pagination={false}
-                size="small"
-                locale={{
-                  emptyText: 'До накладної ще не додано товари.',
-                }}
-              />
-            </Flex>
-          </Card>
-        )}
-        {activePlan?.id && (
-          <Card title="4. Виконання накладної">
-            <Flex vertical gap={12} align="flex-start">
-              {planStatus === 'draft' && (
-                <Alert
-                  type="warning"
-                  showIcon
-                  message="Щоб виконати переміщення, додайте хоча б один товар до накладної."
-                />
-              )}
-
-              {planStatus === 'active' && (
-                <>
-                  <Popconfirm
-                    title="Виконати переміщення?"
-                    description="Після виконання товари будуть переміщені на обрану локацію або місце зберігання."
-                    okText="Так"
-                    cancelText="Ні"
-                    onConfirm={handleExecutePlan}
-                  >
-                    <Button type="primary" loading={executingPlan}>
-                      Виконати переміщення
-                    </Button>
-                  </Popconfirm>
-
+          <>
+            <Card title="3. Склад накладної">
+              <Flex vertical gap={12}>
+                {!canManageItems && planLines.length > 0 && (
                   <Alert
                     type="info"
                     showIcon
-                    message="Після виконання накладна стане доступною лише для перегляду."
+                    message="Редагування та видалення товарів доступне лише для накладної у статусі «Активний»."
                   />
-                </>
-              )}
+                )}
 
-              {planStatus === 'executed' && (
-                <Alert
-                  type="success"
-                  showIcon
-                  message="Переміщення за цією накладною виконано."
+                <Table
+                  rowKey="inventory_item_id"
+                  columns={planItemsColumns}
+                  dataSource={planLines}
+                  pagination={false}
+                  size="small"
+                  locale={{
+                    emptyText: 'До накладної ще не додано товари.',
+                  }}
                 />
-              )}
+              </Flex>
+            </Card>
 
-              {planStatus === 'cancelled' && (
-                <Alert
-                  type="info"
-                  showIcon
-                  message="Цю накладну скасовано. Виконання недоступне."
-                />
-              )}
+            <Flex justify="space-between">
+              <Button onClick={onClose}>Закрити</Button>
+
+              <Popconfirm
+                title="Виконати переміщення?"
+                description="Після виконання товари будуть переміщені на обрану локацію або місце зберігання."
+                okText="Так"
+                cancelText="Ні"
+                onConfirm={handleExecutePlan}
+              >
+                <Button
+                  type="primary"
+                  loading={executingPlan}
+                  disabled={planStatus !== 'active'}
+                >
+                  Виконати переміщення
+                </Button>
+              </Popconfirm>
             </Flex>
-          </Card>
+          </>
         )}
       </Flex>
     </Drawer>

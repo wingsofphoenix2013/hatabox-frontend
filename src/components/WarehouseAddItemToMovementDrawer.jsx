@@ -1,15 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Drawer, Typography, Select, Flex, Tag, Divider } from 'antd';
+import { Card, Drawer, Typography, Select, Flex, Tag } from 'antd';
 import api from '../api/client';
 import {
   getLocationTagStyle,
   renderStoragePlaceChain,
   renderWarehousePlacement,
 } from '../utils/warehousePlacementRenderers';
-import {
-  MOVEMENT_PLAN_STATUS_LABELS,
-  getMovementPlanStatusTagColor,
-} from '../constants/movementPlanStatus';
 
 const { Text } = Typography;
 
@@ -21,7 +17,10 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
   const [selectedValue, setSelectedValue] = useState(undefined);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setSelectedValue(undefined);
+      return;
+    }
 
     loadPlans();
   }, [open]);
@@ -59,42 +58,45 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
       ),
     },
     {
-      type: 'divider',
-    },
-    ...plans.map((plan) => ({
-      value: `plan:${plan.id}`,
+      type: 'group',
       label: (
-        <Flex align="center" gap={8} wrap={false}>
-          <Text strong>№ {plan.id}</Text>
-
-          {plan.target_storage_place ? (
-            <Flex align="center" gap={6} wrap={false}>
-              <Tag style={getLocationTagStyle()}>
-                {plan.target_location_code || '—'}
-              </Tag>
-
-              <Text type="secondary">:</Text>
-
-              {renderStoragePlaceChain(plan.target_storage_place_full_display)}
-            </Flex>
-          ) : (
-            renderWarehousePlacement({
-              locationCode: plan.target_location_code,
-              locationName: plan.target_location_name,
-              storagePlaceDisplayName: null,
-              storagePlaceFullDisplay: null,
-            })
-          )}
-
-          <Tag color={getMovementPlanStatusTagColor(plan.status)}>
-            {MOVEMENT_PLAN_STATUS_LABELS[plan.status]}
-          </Tag>
-        </Flex>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          Або оберіть існуючу:
+        </Text>
       ),
-      searchLabel: `${plan.id} ${plan.target_location_code || ''} ${
-        plan.target_location_name || ''
-      }`,
-    })),
+      options: plans.map((plan) => ({
+        value: `plan:${plan.id}`,
+        label: (
+          <Flex align="center" gap={8} wrap={false}>
+            <Text strong>№ {plan.id}</Text>
+
+            {plan.target_storage_place ? (
+              <Flex align="center" gap={6} wrap={false}>
+                <Tag style={getLocationTagStyle()}>
+                  {plan.target_location_code || '—'}
+                </Tag>
+
+                <Text type="secondary">:</Text>
+
+                {renderStoragePlaceChain(
+                  plan.target_storage_place_full_display,
+                )}
+              </Flex>
+            ) : (
+              renderWarehousePlacement({
+                locationCode: plan.target_location_code,
+                locationName: plan.target_location_name,
+                storagePlaceDisplayName: null,
+                storagePlaceFullDisplay: null,
+              })
+            )}
+          </Flex>
+        ),
+        searchLabel: `${plan.id} ${plan.target_location_code || ''} ${
+          plan.target_location_name || ''
+        } ${plan.target_storage_place_full_display || ''}`,
+      })),
+    },
   ];
 
   return (
@@ -105,24 +107,22 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
       size="large"
     >
       <Flex vertical gap={16}>
-        <div>
-          <Text style={{ display: 'block', marginBottom: 8 }}>
-            Накладна переміщення
-          </Text>
+        <Card title="Накладна переміщення">
+          <Flex vertical gap={8}>
+            <Text style={{ display: 'block' }}>Оберіть дію</Text>
 
-          <Select
-            showSearch
-            style={{ width: '100%' }}
-            placeholder="Оберіть або створіть накладну"
-            value={selectedValue}
-            options={options}
-            loading={loading}
-            optionFilterProp="searchLabel"
-            onChange={setSelectedValue}
-          />
-        </div>
-
-        <Divider />
+            <Select
+              showSearch
+              style={{ width: '100%' }}
+              placeholder="Оберіть або створіть накладну"
+              value={selectedValue}
+              options={options}
+              loading={loading}
+              optionFilterProp="searchLabel"
+              onChange={setSelectedValue}
+            />
+          </Flex>
+        </Card>
 
         <Text strong>{header?.inventory_item_name || 'Товар не обрано'}</Text>
       </Flex>

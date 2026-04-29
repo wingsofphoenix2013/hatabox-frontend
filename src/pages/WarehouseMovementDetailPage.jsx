@@ -21,6 +21,7 @@ import {
   Divider,
   Flex,
   Input,
+  Popconfirm,
   Row,
   Select,
   Skeleton,
@@ -71,6 +72,64 @@ function WarehouseMovementDetailPage() {
   const [editingPlannedAtValue, setEditingPlannedAtValue] = useState(null);
 
   const [savingMainInfo, setSavingMainInfo] = useState(false);
+
+  const [executing, setExecuting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleExecutePlan = async () => {
+    if (!plan?.id || plan.status !== 'active') return;
+
+    try {
+      setExecuting(true);
+
+      await api.post(`movement-plans/${plan.id}/execute/`, {});
+
+      message.success('Переміщення виконано.');
+
+      setEditingDestination(false);
+      setSelectedDestination(null);
+      setEditingPlannedAt(false);
+      setEditingPlannedAtValue(null);
+
+      await loadMovementPlanPage({ silent: true });
+    } catch (err) {
+      console.error('Failed to execute movement plan:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(backendMessage || 'Не вдалося виконати переміщення.');
+    } finally {
+      setExecuting(false);
+    }
+  };
+
+  const handleCancelPlan = async () => {
+    if (!plan?.id || (plan.status !== 'draft' && plan.status !== 'active'))
+      return;
+
+    try {
+      setCancelling(true);
+
+      await api.post(`movement-plans/${plan.id}/cancel/`, {});
+
+      message.success('Накладну скасовано.');
+
+      setEditingDestination(false);
+      setSelectedDestination(null);
+      setEditingPlannedAt(false);
+      setEditingPlannedAtValue(null);
+
+      await loadMovementPlanPage({ silent: true });
+    } catch (err) {
+      console.error('Failed to cancel movement plan:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(backendMessage || 'Не вдалося скасувати накладну.');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   useEffect(() => {
     loadMovementPlanPage();
@@ -396,17 +455,43 @@ function WarehouseMovementDetailPage() {
 
                     <Divider dashed style={{ margin: '4px 0 8px 0' }} />
 
-                    <Button block danger icon={<StopOutlined />}>
-                      Скасувати переміщення
-                    </Button>
+                    <Popconfirm
+                      title="Скасувати переміщення?"
+                      description="Резерв по всіх товарах буде знято, накладну буде переведено в статус «Скасовано»."
+                      okText="Так"
+                      cancelText="Ні"
+                      onConfirm={handleCancelPlan}
+                    >
+                      <Button
+                        block
+                        danger
+                        loading={cancelling}
+                        icon={<StopOutlined />}
+                      >
+                        Скасувати переміщення
+                      </Button>
+                    </Popconfirm>
                   </>
                 )}
 
                 {isActive && (
                   <>
-                    <Button block type="primary" icon={<SwapOutlined />}>
-                      Виконати переміщення
-                    </Button>
+                    <Popconfirm
+                      title="Виконати переміщення?"
+                      description="Після виконання товари будуть переміщені на обрану локацію або місце зберігання."
+                      okText="Так"
+                      cancelText="Ні"
+                      onConfirm={handleExecutePlan}
+                    >
+                      <Button
+                        block
+                        type="primary"
+                        loading={executing}
+                        icon={<SwapOutlined />}
+                      >
+                        Виконати переміщення
+                      </Button>
+                    </Popconfirm>
 
                     <Divider dashed style={{ margin: '4px 0 8px 0' }} />
 
@@ -433,9 +518,22 @@ function WarehouseMovementDetailPage() {
 
                     <Divider dashed style={{ margin: '4px 0 8px 0' }} />
 
-                    <Button block danger icon={<StopOutlined />}>
-                      Скасувати переміщення
-                    </Button>
+                    <Popconfirm
+                      title="Скасувати переміщення?"
+                      description="Резерв по всіх товарах буде знято, накладну буде переведено в статус «Скасовано»."
+                      okText="Так"
+                      cancelText="Ні"
+                      onConfirm={handleCancelPlan}
+                    >
+                      <Button
+                        block
+                        danger
+                        loading={cancelling}
+                        icon={<StopOutlined />}
+                      >
+                        Скасувати переміщення
+                      </Button>
+                    </Popconfirm>
                   </>
                 )}
 

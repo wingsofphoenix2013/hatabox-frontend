@@ -161,13 +161,13 @@ function WarehouseMovementDetailPage() {
         value: `storage_place:${item.id}`,
         label: renderWarehousePlacement({
           locationCode: item.location_code,
-          locationName: item.location_name,
+          locationName: null,
           storagePlaceDisplayName: item.display_name,
           storagePlaceFullDisplay: item.display_name_verbose,
         }),
         searchLabel: `${item.location_code || ''} ${
-          item.location_name || ''
-        } ${item.display_name || ''} ${item.display_name_verbose || ''}`,
+          item.display_name || ''
+        } ${item.display_name_verbose || ''}`,
       })),
     ],
     [locations, storagePlaces],

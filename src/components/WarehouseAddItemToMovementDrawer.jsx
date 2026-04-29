@@ -16,6 +16,7 @@ import {
 } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
+import WarehouseMovementStockInfo from './WarehouseMovementStockInfo';
 import {
   getLocationTagStyle,
   renderStoragePlaceChain,
@@ -30,6 +31,27 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
 
   const header = stockDetail?.header || null;
   const summary = stockDetail?.summary || {};
+  const stockRows = Array.isArray(stockDetail?.stock_rows)
+    ? stockDetail.stock_rows
+    : [];
+
+  const stockItemForInfo = header
+    ? {
+        inventory_item_code: header.inventory_item_code,
+        inventory_item_category_name: header.inventory_item_category_name,
+        inventory_item_unit_symbol: header.inventory_item_unit_symbol,
+        available_quantity: summary.total_available_quantity,
+        reserved_quantity: summary.reserved_quantity,
+        available_placements: stockRows.map((row) => ({
+          location_code: row.location_code,
+          location_name: row.location_name,
+          storage_place_display_name: row.storage_place_display_name,
+          storage_place_full_display: row.storage_place_full_display,
+          available_quantity: row.quantity,
+          unit_symbol: header.inventory_item_unit_symbol,
+        })),
+      }
+    : null;
 
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -481,9 +503,18 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
                     Товар
                   </Text>
 
-                  <Text strong>
-                    {header?.inventory_item_name || 'Товар не обрано'}
-                  </Text>
+                  <Select
+                    style={{ width: '100%' }}
+                    value={header?.inventory_item_id}
+                    open={false}
+                    suffixIcon={null}
+                    options={[
+                      {
+                        value: header?.inventory_item_id,
+                        label: header?.inventory_item_name || 'Товар не обрано',
+                      },
+                    ]}
+                  />
 
                   {activePlan?.id && (
                     <Text
@@ -495,16 +526,10 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
                   )}
                 </div>
 
-                <div>
-                  <Text style={{ display: 'block', marginBottom: 8 }}>
-                    Доступно для переміщення
-                  </Text>
-
-                  <Text strong style={{ color: '#52c41a' }}>
-                    {summary.total_available_quantity || '0'}{' '}
-                    {header?.inventory_item_unit_symbol || ''}
-                  </Text>
-                </div>
+                <WarehouseMovementStockInfo
+                  stockItem={stockItemForInfo}
+                  activePlan={activePlan}
+                />
 
                 <div>
                   <Text style={{ display: 'block', marginBottom: 8 }}>

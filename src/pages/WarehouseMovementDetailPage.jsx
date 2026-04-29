@@ -1,6 +1,7 @@
 // srs/pages/WarehouseMovementDetailPage.jsx
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import dayjs from 'dayjs';
 import {
   PrinterOutlined,
   SettingOutlined,
@@ -8,17 +9,20 @@ import {
   SwapOutlined,
   EditOutlined,
   InfoCircleOutlined,
+  SaveOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
   Button,
   Card,
   Col,
+  DatePicker,
   Descriptions,
   Divider,
   Flex,
   Input,
   Row,
+  Select,
   Skeleton,
   Table,
   Tag,
@@ -54,8 +58,20 @@ function WarehouseMovementDetailPage() {
 
   const [isMovementDrawerOpen, setIsMovementDrawerOpen] = useState(false);
 
+  const [locations, setLocations] = useState([]);
+  const [storagePlaces, setStoragePlaces] = useState([]);
+
+  const [editingDestination, setEditingDestination] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState(null);
+
+  const [editingPlannedAt, setEditingPlannedAt] = useState(false);
+  const [editingPlannedAtValue, setEditingPlannedAtValue] = useState(null);
+
+  const [savingMainInfo, setSavingMainInfo] = useState(false);
+
   useEffect(() => {
     loadMovementPlanPage();
+    loadDestinationOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -84,6 +100,78 @@ function WarehouseMovementDetailPage() {
   const isActive = plan?.status === 'active';
   const isExecuted = plan?.status === 'executed';
   const isCancelled = plan?.status === 'cancelled';
+
+  const canEditDestination = isDraft;
+  const canEditPlannedAt = isDraft || isActive;
+
+  const loadAllPaginated = async (endpoint, params = {}) => {
+    const allResults = [];
+    let page = 1;
+    let hasNext = true;
+
+    while (hasNext) {
+      const response = await api.get(endpoint, {
+        params: {
+          ...params,
+          page,
+        },
+      });
+
+      const results = Array.isArray(response.data?.results)
+        ? response.data.results
+        : [];
+
+      allResults.push(...results);
+
+      hasNext = Boolean(response.data?.next);
+      page += 1;
+    }
+
+    return allResults;
+  };
+
+  const loadDestinationOptions = async () => {
+    try {
+      const [locationResults, storagePlaceResults] = await Promise.all([
+        loadAllPaginated('warehouse-locations/', { is_active: true }),
+        loadAllPaginated('warehouse-storage-places/', { is_active: true }),
+      ]);
+
+      setLocations(locationResults);
+      setStoragePlaces(storagePlaceResults);
+    } catch (err) {
+      console.error('Failed to load destination options:', err);
+      message.error('Не вдалося завантажити напрямки переміщення.');
+    }
+  };
+
+  const destinationOptions = useMemo(
+    () => [
+      ...locations.map((item) => ({
+        value: `location:${item.id}`,
+        label: renderWarehousePlacement({
+          locationCode: item.code,
+          locationName: item.name,
+          storagePlaceDisplayName: null,
+          storagePlaceFullDisplay: null,
+        }),
+        searchLabel: `${item.code || ''} ${item.name || ''}`,
+      })),
+      ...storagePlaces.map((item) => ({
+        value: `storage_place:${item.id}`,
+        label: renderWarehousePlacement({
+          locationCode: item.location_code,
+          locationName: item.location_name,
+          storagePlaceDisplayName: item.display_name,
+          storagePlaceFullDisplay: item.display_name_verbose,
+        }),
+        searchLabel: `${item.location_code || ''} ${
+          item.location_name || ''
+        } ${item.display_name || ''} ${item.display_name_verbose || ''}`,
+      })),
+    ],
+    [locations, storagePlaces],
+  );
 
   const handleStartEditComment = () => {
     setEditingComment(plan?.comment || '');
@@ -116,6 +204,99 @@ function WarehouseMovementDetailPage() {
       message.error(backendMessage || 'Не вдалося зберегти коментар.');
     } finally {
       setSavingComment(false);
+    }
+  };
+
+  const handleStartEditDestination = () => {
+    if (!canEditDestination) return;
+
+    if (plan.target_storage_place) {
+      setSelectedDestination(`storage_place:${plan.target_storage_place}`);
+    } else if (plan.target_location) {
+      setSelectedDestination(`location:${plan.target_location}`);
+    } else {
+      setSelectedDestination(null);
+    }
+
+    setEditingDestination(true);
+  };
+
+  const handleSaveDestination = async () => {
+    if (!selectedDestination) {
+      message.error('Оберіть напрямок переміщення.');
+      return;
+    }
+
+    const [type, rawId] = selectedDestination.split(':');
+    const destinationId = Number(rawId);
+
+    const payload = {
+      target_location: type === 'location' ? destinationId : null,
+      target_storage_place: type === 'storage_place' ? destinationId : null,
+    };
+
+    try {
+      setSavingMainInfo(true);
+
+      const response = await api.patch(`movement-plans/${id}/`, payload);
+
+      setPlan(response.data);
+      setEditingDestination(false);
+      message.success('Напрямок переміщення оновлено.');
+      await loadMovementPlanPage({ silent: true });
+    } catch (err) {
+      console.error('Failed to update movement destination:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'target_location',
+        'target_storage_place',
+        'destination',
+      ]);
+
+      message.error(
+        backendMessage || 'Не вдалося оновити напрямок переміщення.',
+      );
+    } finally {
+      setSavingMainInfo(false);
+    }
+  };
+
+  const handleStartEditPlannedAt = () => {
+    if (!canEditPlannedAt) return;
+
+    setEditingPlannedAtValue(plan?.planned_at ? dayjs(plan.planned_at) : null);
+    setEditingPlannedAt(true);
+  };
+
+  const handleSavePlannedAt = async () => {
+    try {
+      setSavingMainInfo(true);
+
+      const response = await api.patch(`movement-plans/${id}/`, {
+        planned_at: editingPlannedAtValue
+          ? editingPlannedAtValue
+              .hour(12)
+              .minute(0)
+              .second(0)
+              .millisecond(0)
+              .toISOString()
+          : null,
+      });
+
+      setPlan(response.data);
+      setEditingPlannedAt(false);
+      message.success('Планову дату оновлено.');
+      await loadMovementPlanPage({ silent: true });
+    } catch (err) {
+      console.error('Failed to update movement planned date:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'planned_at',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося оновити планову дату.');
+    } finally {
+      setSavingMainInfo(false);
     }
   };
 
@@ -323,66 +504,152 @@ function WarehouseMovementDetailPage() {
                   key: 'destination',
                   label: 'Куди',
                   contentStyle: { textAlign: 'center' },
-                  children: renderWarehousePlacement({
-                    locationCode: plan.target_location_code,
-                    locationName: plan.target_location_name,
-                    storagePlaceDisplayName:
-                      plan.target_storage_place_display_name,
-                    storagePlaceFullDisplay:
-                      plan.target_storage_place_full_display,
-                  }),
+                  children: (
+                    <Flex align="center" justify="space-between" gap={8}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {editingDestination ? (
+                          <Select
+                            showSearch
+                            style={{ width: '100%' }}
+                            placeholder="Оберіть напрямок"
+                            value={selectedDestination}
+                            options={destinationOptions}
+                            optionFilterProp="searchLabel"
+                            onChange={setSelectedDestination}
+                          />
+                        ) : (
+                          renderWarehousePlacement({
+                            locationCode: plan.target_location_code,
+                            locationName: plan.target_location_name,
+                            storagePlaceDisplayName:
+                              plan.target_storage_place_display_name,
+                            storagePlaceFullDisplay:
+                              plan.target_storage_place_full_display,
+                          })
+                        )}
+                      </div>
+
+                      {canEditDestination &&
+                        (editingDestination ? (
+                          <SaveOutlined
+                            style={{
+                              color: '#52c41a',
+                              fontSize: 16,
+                              cursor: savingMainInfo
+                                ? 'not-allowed'
+                                : 'pointer',
+                            }}
+                            onClick={
+                              savingMainInfo ? undefined : handleSaveDestination
+                            }
+                          />
+                        ) : (
+                          <EditOutlined
+                            style={{
+                              color: '#1677ff',
+                              fontSize: 16,
+                              cursor: 'pointer',
+                            }}
+                            onClick={handleStartEditDestination}
+                          />
+                        ))}
+                    </Flex>
+                  ),
                 },
                 {
                   key: 'planned_at',
                   label: 'Заплановано на',
                   contentStyle: { textAlign: 'center' },
-                  children: (() => {
-                    if (!plan.planned_at) return '—';
+                  children: (
+                    <Flex align="center" justify="space-between" gap={8}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        {editingPlannedAt ? (
+                          <DatePicker
+                            style={{ width: '100%' }}
+                            format="DD-MM-YYYY"
+                            value={editingPlannedAtValue}
+                            onChange={setEditingPlannedAtValue}
+                            disabledDate={(current) =>
+                              current && current < dayjs().startOf('day')
+                            }
+                          />
+                        ) : (
+                          (() => {
+                            if (!plan.planned_at) return '—';
 
-                    const dateText = formatDateDisplay(plan.planned_at);
-                    const showStatus = isDraft || isActive;
+                            const dateText = formatDateDisplay(plan.planned_at);
+                            const showStatus = isDraft || isActive;
 
-                    if (!showStatus) {
-                      return dateText;
-                    }
+                            if (!showStatus) {
+                              return dateText;
+                            }
 
-                    if (plan.is_overdue) {
-                      return (
-                        <Flex align="center" justify="center" gap={6}>
-                          <Tag color="error">{dateText}</Tag>
-                          {plan.planned_status_text && (
-                            <Text type="secondary">
-                              {plan.planned_status_text}
-                            </Text>
-                          )}
-                        </Flex>
-                      );
-                    }
+                            if (plan.is_overdue) {
+                              return (
+                                <Flex align="center" justify="center" gap={6}>
+                                  <Tag color="error">{dateText}</Tag>
+                                  {plan.planned_status_text && (
+                                    <Text type="secondary">
+                                      {plan.planned_status_text}
+                                    </Text>
+                                  )}
+                                </Flex>
+                              );
+                            }
 
-                    if (plan.days_delta === 0) {
-                      return (
-                        <Flex align="center" justify="center" gap={6}>
-                          <Tag color="warning">{dateText}</Tag>
-                          {plan.planned_status_text && (
-                            <Text type="secondary">
-                              {plan.planned_status_text}
-                            </Text>
-                          )}
-                        </Flex>
-                      );
-                    }
+                            if (plan.days_delta === 0) {
+                              return (
+                                <Flex align="center" justify="center" gap={6}>
+                                  <Tag color="warning">{dateText}</Tag>
+                                  {plan.planned_status_text && (
+                                    <Text type="secondary">
+                                      {plan.planned_status_text}
+                                    </Text>
+                                  )}
+                                </Flex>
+                              );
+                            }
 
-                    return (
-                      <Flex align="center" justify="center" gap={6}>
-                        <span>{dateText}</span>
-                        {plan.planned_status_text && (
-                          <Text type="secondary">
-                            {plan.planned_status_text}
-                          </Text>
+                            return (
+                              <Flex align="center" justify="center" gap={6}>
+                                <span>{dateText}</span>
+                                {plan.planned_status_text && (
+                                  <Text type="secondary">
+                                    {plan.planned_status_text}
+                                  </Text>
+                                )}
+                              </Flex>
+                            );
+                          })()
                         )}
-                      </Flex>
-                    );
-                  })(),
+                      </div>
+
+                      {canEditPlannedAt &&
+                        (editingPlannedAt ? (
+                          <SaveOutlined
+                            style={{
+                              color: '#52c41a',
+                              fontSize: 16,
+                              cursor: savingMainInfo
+                                ? 'not-allowed'
+                                : 'pointer',
+                            }}
+                            onClick={
+                              savingMainInfo ? undefined : handleSavePlannedAt
+                            }
+                          />
+                        ) : (
+                          <EditOutlined
+                            style={{
+                              color: '#1677ff',
+                              fontSize: 16,
+                              cursor: 'pointer',
+                            }}
+                            onClick={handleStartEditPlannedAt}
+                          />
+                        ))}
+                    </Flex>
+                  ),
                 },
               ]}
             />

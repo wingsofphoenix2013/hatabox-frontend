@@ -11,6 +11,7 @@ import {
   Button,
   Card,
   DatePicker,
+  Descriptions,
   Drawer,
   Flex,
   Input,
@@ -344,149 +345,148 @@ function WarehouseMovementDrawer({
       ? selectedStockItem.available_placements
       : [];
 
-    const cellStyle = {
-      flex: '1 1 140px',
-      minWidth: 0,
-    };
-
-    const labelStyle = {
-      display: 'block',
-      fontSize: 11,
-      lineHeight: 1.2,
-    };
-
-    const valueStyle = {
-      fontSize: 13,
-      lineHeight: 1.3,
-      fontWeight: 600,
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-    };
-
     return (
       <Card size="small" style={{ background: '#fafafa' }}>
-        <Flex gap={18} wrap align="center">
-          <div style={cellStyle}>
-            <Text type="secondary" style={labelStyle}>
-              Артикул
-            </Text>
-            <div style={valueStyle}>
-              {selectedStockItem.inventory_item_code || '—'}
-            </div>
-          </div>
-
-          <div style={{ ...cellStyle, flex: '1.4 1 180px' }}>
-            <Text type="secondary" style={labelStyle}>
-              Категорія
-            </Text>
-            <div style={valueStyle}>
-              {selectedStockItem.inventory_item_category_name || '—'}
-            </div>
-          </div>
-
-          <div style={cellStyle}>
-            <Text type="secondary" style={labelStyle}>
-              Доступно для переміщення
-            </Text>
-            <div
-              style={{
-                ...valueStyle,
-                color: '#52c41a',
-                fontWeight: 700,
-              }}
-            >
-              {formatQuantity(selectedStockItem.available_quantity)} {unit}
-            </div>
-          </div>
-
-          <div style={cellStyle}>
-            <Text type="secondary" style={labelStyle}>
-              Вже зарезервовано
-            </Text>
-            <div
-              style={{
-                ...valueStyle,
-                color: '#8c8c8c',
-                fontWeight: 700,
-              }}
-            >
-              {formatQuantity(selectedStockItem.reserved_quantity)} {unit}
-            </div>
-          </div>
-        </Flex>
-
-        {availablePlacements.length > 0 && (
-          <div style={{ marginTop: 14 }}>
+        <Flex vertical gap={12}>
+          <div>
             <Text
-              type="secondary"
-              style={{
-                display: 'block',
-                fontSize: 12,
-                marginBottom: 6,
-              }}
+              strong
+              style={{ display: 'block', fontSize: 13, marginBottom: 6 }}
             >
-              Довідка про розміщення
+              Інформація
             </Text>
 
-            <Flex vertical gap={6}>
-              {availablePlacements.map((placement, index) => {
-                const isSameDestination =
-                  !activePlan?.target_storage_place &&
-                  placement.location_code === activePlan?.target_location_code;
-
-                return (
-                  <Flex
-                    key={`${placement.location_code || 'location'}-${
-                      placement.storage_place_full_display || 'root'
-                    }-${index}`}
-                    justify="space-between"
-                    align="center"
-                    gap={12}
-                  >
-                    <Flex align="center" gap={6} style={{ minWidth: 0 }}>
-                      {placement.storage_place_full_display ? (
-                        <>
-                          <Tag style={getLocationTagStyle()}>
-                            {placement.location_code || '—'}
-                          </Tag>
-                          <Text type="secondary">:</Text>
-                          {renderStoragePlaceChain(
-                            placement.storage_place_full_display,
-                          )}
-                        </>
-                      ) : (
-                        <Flex align="center" gap={6}>
-                          <Text>Локація</Text>
-                          <Tag style={getLocationTagStyle()}>
-                            {placement.location_code || '—'}
-                          </Tag>
-                          <Text>{placement.location_name || '—'}</Text>
-                        </Flex>
-                      )}
-
-                      {isSameDestination && (
-                        <Tooltip title="Цей товар вже знаходиться у вибраному місці призначення.">
-                          <WarningFilled
-                            style={{
-                              color: '#ff4d4f',
-                              fontSize: 14,
-                            }}
-                          />
-                        </Tooltip>
-                      )}
-                    </Flex>
-
-                    <Text strong style={{ whiteSpace: 'nowrap' }}>
-                      {formatQuantity(placement.available_quantity)}{' '}
-                      {placement.unit_symbol || unit}
-                    </Text>
-                  </Flex>
-                );
-              })}
-            </Flex>
+            <Descriptions
+              size="small"
+              column={2}
+              items={[
+                {
+                  key: 'code',
+                  label: 'Артикул',
+                  children: selectedStockItem.inventory_item_code || '—',
+                },
+                {
+                  key: 'category',
+                  label: 'Категорія',
+                  children:
+                    selectedStockItem.inventory_item_category_name || '—',
+                },
+              ]}
+            />
           </div>
-        )}
+
+          <div>
+            <Text
+              strong
+              style={{ display: 'block', fontSize: 13, marginBottom: 6 }}
+            >
+              Доступність
+            </Text>
+
+            <Descriptions
+              size="small"
+              column={2}
+              items={[
+                {
+                  key: 'available',
+                  label: 'Доступно для переміщення',
+                  children: (
+                    <Text strong style={{ color: '#52c41a' }}>
+                      {formatQuantity(selectedStockItem.available_quantity)}{' '}
+                      {unit}
+                    </Text>
+                  ),
+                },
+                {
+                  key: 'reserved',
+                  label: 'Вже зарезервовано',
+                  children: (
+                    <Text strong style={{ color: '#8c8c8c' }}>
+                      {formatQuantity(selectedStockItem.reserved_quantity)}{' '}
+                      {unit}
+                    </Text>
+                  ),
+                },
+              ]}
+            />
+          </div>
+
+          {availablePlacements.length > 0 && (
+            <div style={{ marginTop: 2 }}>
+              <Text
+                strong
+                style={{ display: 'block', fontSize: 13, marginBottom: 6 }}
+              >
+                Довідка про розміщення
+              </Text>
+
+              <Flex vertical gap={6}>
+                {availablePlacements.map((placement, index) => {
+                  const isSameDestination =
+                    !activePlan?.target_storage_place &&
+                    placement.location_code ===
+                      activePlan?.target_location_code;
+
+                  return (
+                    <Flex
+                      key={`${placement.location_code || 'location'}-${
+                        placement.storage_place_full_display || 'root'
+                      }-${index}`}
+                      align="center"
+                      gap={8}
+                    >
+                      <Flex align="center" gap={6} style={{ minWidth: 0 }}>
+                        {placement.storage_place_full_display ? (
+                          <>
+                            <Tag style={getLocationTagStyle()}>
+                              {placement.location_code || '—'}
+                            </Tag>
+                            <Text type="secondary">:</Text>
+                            {renderStoragePlaceChain(
+                              placement.storage_place_full_display,
+                            )}
+                          </>
+                        ) : (
+                          <Flex align="center" gap={6}>
+                            <Text>Локація</Text>
+                            <Tag style={getLocationTagStyle()}>
+                              {placement.location_code || '—'}
+                            </Tag>
+                            <Text>{placement.location_name || '—'}</Text>
+                          </Flex>
+                        )}
+
+                        {isSameDestination && (
+                          <Tooltip title="Цей товар вже знаходиться у вибраному місці призначення.">
+                            <WarningFilled
+                              style={{
+                                color: '#ff4d4f',
+                                fontSize: 14,
+                              }}
+                            />
+                          </Tooltip>
+                        )}
+                      </Flex>
+
+                      <div
+                        style={{
+                          flex: 1,
+                          borderBottom: '1px dotted #d9d9d9',
+                          margin: '0 6px',
+                        }}
+                      />
+
+                      <Text strong style={{ whiteSpace: 'nowrap' }}>
+                        {formatQuantity(placement.available_quantity)}{' '}
+                        {placement.unit_symbol || unit}
+                      </Text>
+                    </Flex>
+                  );
+                })}
+              </Flex>
+            </div>
+          )}
+        </Flex>
       </Card>
     );
   };

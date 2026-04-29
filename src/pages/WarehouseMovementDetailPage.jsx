@@ -172,6 +172,11 @@ function WarehouseMovementDetailPage() {
   );
 
   const handleStartEditComment = () => {
+    setEditingDestination(false);
+    setSelectedDestination(null);
+    setEditingPlannedAt(false);
+    setEditingPlannedAtValue(null);
+
     setEditingComment(plan?.comment || '');
     setIsEditingComment(true);
   };

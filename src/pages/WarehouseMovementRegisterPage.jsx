@@ -22,7 +22,7 @@ import {
   Typography,
   message,
 } from 'antd';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
 import WarehouseMovementDrawer from '../components/WarehouseMovementDrawer';
@@ -40,6 +40,7 @@ const pageSize = 50;
 
 function WarehouseMovementRegisterPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [items, setItems] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -476,6 +477,15 @@ function WarehouseMovementRegisterPage() {
         open={isCreateDrawerOpen}
         onClose={closeMovementDrawer}
         planId={editingPlanId}
+        onCreated={(createdPlan) => {
+          closeMovementDrawer();
+
+          if (createdPlan?.id) {
+            navigate(`/inventory/movements/${createdPlan.id}`, {
+              state: { openMovementDrawer: true },
+            });
+          }
+        }}
         onSaved={() => {
           if (!editingPlanId && currentPage !== 1) {
             setCurrentPage(1);

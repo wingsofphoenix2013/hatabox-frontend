@@ -30,7 +30,7 @@ import {
   Typography,
   message,
 } from 'antd';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
@@ -50,6 +50,8 @@ const { Title, Text } = Typography;
 
 function WarehouseMovementDetailPage() {
   const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [plan, setPlan] = useState(null);
 
@@ -136,6 +138,18 @@ function WarehouseMovementDetailPage() {
     loadDestinationOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (!location.state?.openMovementDrawer) return;
+    if (!plan?.id) return;
+
+    setIsMovementDrawerOpen(true);
+
+    navigate(location.pathname, {
+      replace: true,
+      state: {},
+    });
+  }, [location.state, location.pathname, navigate, plan?.id]);
 
   const loadMovementPlanPage = async ({ silent = false } = {}) => {
     try {

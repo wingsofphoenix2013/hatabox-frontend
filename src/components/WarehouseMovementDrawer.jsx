@@ -87,7 +87,13 @@ const renderStoragePlaceOption = (item) => (
   </Flex>
 );
 
-function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
+function WarehouseMovementDrawer({
+  open,
+  onClose,
+  planId = null,
+  onSaved,
+  onCreated,
+}) {
   const [locations, setLocations] = useState([]);
   const [storagePlaces, setStoragePlaces] = useState([]);
 
@@ -454,8 +460,14 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       }
 
       const response = await api.post('movement-plans/', payload);
-      await loadActivePlan(response.data.id);
+      const createdPlan = await loadActivePlan(response.data.id);
+
       message.success('План переміщення створено.');
+
+      if (onCreated) {
+        await onCreated(createdPlan || response.data);
+        return;
+      }
 
       if (onSaved) {
         await onSaved();
@@ -776,127 +788,129 @@ function WarehouseMovementDrawer({ open, onClose, planId = null, onSaved }) {
       onClose={onClose}
     >
       <Flex vertical gap={16}>
-        <Card title="1. Основна інформація" loading={planLoading}>
-          <Flex vertical gap={16}>
-            {isReadonly && (
-              <Alert
-                type="info"
-                showIcon
-                message="Цей план доступний лише для перегляду."
-              />
-            )}
+        {!isEditMode && (
+          <Card title="1. Основна інформація" loading={planLoading}>
+            <Flex vertical gap={16}>
+              {isReadonly && (
+                <Alert
+                  type="info"
+                  showIcon
+                  message="Цей план доступний лише для перегляду."
+                />
+              )}
 
-            {isDestinationLocked && (
-              <Alert
-                type="warning"
-                showIcon
-                message="Для активного плану не можна змінювати напрямок переміщення."
-              />
-            )}
+              {isDestinationLocked && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message="Для активного плану не можна змінювати напрямок переміщення."
+                />
+              )}
 
-            <div>
-              <Text style={{ display: 'block', marginBottom: 8 }}>
-                Тип напрямку
-              </Text>
-
-              <Switch
-                checked={destinationType === 'storage_place'}
-                checkedChildren="Місце"
-                unCheckedChildren="Локація"
-                disabled={isReadonly || isDestinationLocked}
-                onChange={(checked) => {
-                  setDestinationType(checked ? 'storage_place' : 'location');
-                  setTargetLocationId(null);
-                  setTargetStoragePlaceId(null);
-                }}
-              />
-            </div>
-
-            {destinationType === 'location' && (
               <div>
                 <Text style={{ display: 'block', marginBottom: 8 }}>
-                  Локація
+                  Тип напрямку
                 </Text>
 
-                <Select
-                  showSearch
-                  style={{ width: '100%' }}
-                  placeholder="Оберіть локацію"
-                  value={targetLocationId}
-                  options={locationOptions}
-                  loading={locationsLoading}
+                <Switch
+                  checked={destinationType === 'storage_place'}
+                  checkedChildren="Місце"
+                  unCheckedChildren="Локація"
                   disabled={isReadonly || isDestinationLocked}
-                  optionFilterProp="searchLabel"
-                  onChange={setTargetLocationId}
+                  onChange={(checked) => {
+                    setDestinationType(checked ? 'storage_place' : 'location');
+                    setTargetLocationId(null);
+                    setTargetStoragePlaceId(null);
+                  }}
                 />
               </div>
-            )}
 
-            {destinationType === 'storage_place' && (
+              {destinationType === 'location' && (
+                <div>
+                  <Text style={{ display: 'block', marginBottom: 8 }}>
+                    Локація
+                  </Text>
+
+                  <Select
+                    showSearch
+                    style={{ width: '100%' }}
+                    placeholder="Оберіть локацію"
+                    value={targetLocationId}
+                    options={locationOptions}
+                    loading={locationsLoading}
+                    disabled={isReadonly || isDestinationLocked}
+                    optionFilterProp="searchLabel"
+                    onChange={setTargetLocationId}
+                  />
+                </div>
+              )}
+
+              {destinationType === 'storage_place' && (
+                <div>
+                  <Text style={{ display: 'block', marginBottom: 8 }}>
+                    Місце зберігання
+                  </Text>
+
+                  <Select
+                    showSearch
+                    style={{ width: '100%' }}
+                    placeholder="Оберіть місце зберігання"
+                    value={targetStoragePlaceId}
+                    options={storagePlaceOptions}
+                    loading={storagePlacesLoading}
+                    disabled={isReadonly || isDestinationLocked}
+                    optionFilterProp="searchLabel"
+                    onChange={setTargetStoragePlaceId}
+                  />
+                </div>
+              )}
+
               <div>
                 <Text style={{ display: 'block', marginBottom: 8 }}>
-                  Місце зберігання
+                  Дата реалізації
                 </Text>
 
-                <Select
-                  showSearch
+                <DatePicker
                   style={{ width: '100%' }}
-                  placeholder="Оберіть місце зберігання"
-                  value={targetStoragePlaceId}
-                  options={storagePlaceOptions}
-                  loading={storagePlacesLoading}
-                  disabled={isReadonly || isDestinationLocked}
-                  optionFilterProp="searchLabel"
-                  onChange={setTargetStoragePlaceId}
+                  format="DD-MM-YYYY"
+                  value={plannedAt}
+                  disabled={isReadonly}
+                  onChange={setPlannedAt}
+                  disabledDate={(current) =>
+                    current && current < dayjs().startOf('day')
+                  }
                 />
               </div>
-            )}
 
-            <div>
-              <Text style={{ display: 'block', marginBottom: 8 }}>
-                Дата реалізації
-              </Text>
+              <div>
+                <Text style={{ display: 'block', marginBottom: 8 }}>
+                  Коментар
+                </Text>
 
-              <DatePicker
-                style={{ width: '100%' }}
-                format="DD-MM-YYYY"
-                value={plannedAt}
-                disabled={isReadonly}
-                onChange={setPlannedAt}
-                disabledDate={(current) =>
-                  current && current < dayjs().startOf('day')
-                }
-              />
-            </div>
+                <TextArea
+                  rows={4}
+                  value={comment}
+                  disabled={isReadonly}
+                  placeholder="Коментар до плану переміщення"
+                  onChange={(e) => setComment(e.target.value)}
+                />
+              </div>
 
-            <div>
-              <Text style={{ display: 'block', marginBottom: 8 }}>
-                Коментар
-              </Text>
-
-              <TextArea
-                rows={4}
-                value={comment}
-                disabled={isReadonly}
-                placeholder="Коментар до плану переміщення"
-                onChange={(e) => setComment(e.target.value)}
-              />
-            </div>
-
-            {!isReadonly && (
-              <Flex justify="flex-end">
-                <Button
-                  type="primary"
-                  loading={saving}
-                  disabled={!canSave}
-                  onClick={handleSave}
-                >
-                  {isEditMode ? 'Зберегти зміни' : 'Створити план'}
-                </Button>
-              </Flex>
-            )}
-          </Flex>
-        </Card>
+              {!isReadonly && (
+                <Flex justify="flex-end">
+                  <Button
+                    type="primary"
+                    loading={saving}
+                    disabled={!canSave}
+                    onClick={handleSave}
+                  >
+                    Створити план
+                  </Button>
+                </Flex>
+              )}
+            </Flex>
+          </Card>
+        )}
         {activePlan?.id && (
           <Card title="2. Додавання товару">
             <Flex vertical gap={16}>

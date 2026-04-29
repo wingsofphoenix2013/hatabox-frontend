@@ -182,6 +182,9 @@ function WarehouseStockRegisterPage() {
       if (selectedVariants.includes('has_stock')) {
         params.append('has_stock', 'true');
       }
+      if (selectedVariants.includes('has_reserved')) {
+        params.append('has_reserved', 'true');
+      }
       if (selectedVariants.includes('has_pending_intake')) {
         params.append('has_pending_intake', 'true');
       }
@@ -315,11 +318,20 @@ function WarehouseStockRegisterPage() {
       },
       render: (_, record) => {
         const unit = record.inventory_item_unit_symbol || '';
+        const reserved = Number(record.reserved_quantity) || 0;
 
         return (
-          <Text strong>
-            {formatQuantity(record.available_quantity)} {unit}
-          </Text>
+          <Flex vertical gap={2} align="center">
+            <Text strong>
+              {formatQuantity(record.available_quantity)} {unit}
+            </Text>
+
+            {reserved > 0 && (
+              <Text type="secondary" style={{ fontSize: 12, lineHeight: 1.2 }}>
+                {formatQuantity(record.reserved_quantity)} {unit} в резерві
+              </Text>
+            )}
+          </Flex>
         );
       },
     },
@@ -642,6 +654,7 @@ function WarehouseStockRegisterPage() {
               }}
               options={[
                 { value: 'has_stock', label: 'Є на складі' },
+                { value: 'has_reserved', label: 'Є в резерві' },
                 {
                   value: 'has_pending_intake',
                   label: 'Очікує оформлення',

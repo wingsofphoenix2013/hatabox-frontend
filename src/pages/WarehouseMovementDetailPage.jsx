@@ -546,7 +546,7 @@ function WarehouseMovementDetailPage() {
                         ) : (
                           <EditOutlined
                             style={{
-                              color: '#1677ff',
+                              color: '#8c8c8c',
                               fontSize: 16,
                               cursor: 'pointer',
                             }}
@@ -641,7 +641,7 @@ function WarehouseMovementDetailPage() {
                         ) : (
                           <EditOutlined
                             style={{
-                              color: '#1677ff',
+                              color: '#8c8c8c',
                               fontSize: 16,
                               cursor: 'pointer',
                             }}

@@ -93,6 +93,7 @@ function WarehouseMovementStockInfo({ stockItem, activePlan }) {
               {availablePlacements.map((placement, index) => {
                 const isSameDestination =
                   !activePlan?.target_storage_place &&
+                  !placement.storage_place_full_display &&
                   placement.location_code === activePlan?.target_location_code;
 
                 return (

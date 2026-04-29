@@ -31,6 +31,7 @@ import {
   renderStoragePlaceChain,
   renderWarehousePlacement,
 } from '../utils/warehousePlacementRenderers';
+import WarehouseAddItemToMovementDrawer from '../components/WarehouseAddItemToMovementDrawer';
 
 const { Title, Text } = Typography;
 
@@ -686,14 +687,11 @@ function WarehouseStockDetailPage() {
         </Row>
       </Flex>
 
-      <Drawer
-        title="Переміщення товару"
+      <WarehouseAddItemToMovementDrawer
         open={isMovementDrawerOpen}
         onClose={() => setIsMovementDrawerOpen(false)}
-        width={520}
-      >
-        <Text>Переміщення товару</Text>
-      </Drawer>
+        stockDetail={data}
+      />
     </div>
   );
 }

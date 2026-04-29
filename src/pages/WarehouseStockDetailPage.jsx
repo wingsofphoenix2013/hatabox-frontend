@@ -95,6 +95,7 @@ function WarehouseStockDetailPage() {
   const incomingRows = data.incoming_rows || [];
   const imageUrl = header.image || '';
   const unitSymbol = header.inventory_item_unit_symbol || '';
+  const hasAvailableStock = stockRows.some((row) => Number(row.quantity) > 0);
 
   const availableStockColumns = [
     {
@@ -603,7 +604,14 @@ function WarehouseStockDetailPage() {
               <Flex vertical gap={8}>
                 <Button
                   block
-                  icon={<SwapOutlined style={{ color: '#1677ff' }} />}
+                  disabled={!hasAvailableStock}
+                  icon={
+                    <SwapOutlined
+                      style={{
+                        color: hasAvailableStock ? '#1677ff' : '#bfbfbf',
+                      }}
+                    />
+                  }
                   onClick={() => setIsMovementDrawerOpen(true)}
                 >
                   Переміщення товару

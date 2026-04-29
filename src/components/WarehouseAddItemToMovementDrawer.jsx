@@ -12,7 +12,7 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
       title="Додати товар до переміщення"
       open={open}
       onClose={onClose}
-      width={620}
+      size="large"
     >
       <Text strong>{header?.inventory_item_name || 'Товар не обрано'}</Text>
     </Drawer>

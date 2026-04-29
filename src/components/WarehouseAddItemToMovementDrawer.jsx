@@ -7,12 +7,14 @@ import {
   Drawer,
   Flex,
   Input,
+  InputNumber,
   Select,
   Switch,
   Tag,
   Typography,
   message,
 } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import {
   getLocationTagStyle,
@@ -24,7 +26,10 @@ const { Text } = Typography;
 const { TextArea } = Input;
 
 function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
+  const navigate = useNavigate();
+
   const header = stockDetail?.header || null;
+  const summary = stockDetail?.summary || {};
 
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -45,6 +50,9 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
   const [creatingPlan, setCreatingPlan] = useState(false);
   const [activePlan, setActivePlan] = useState(null);
 
+  const [moveQuantity, setMoveQuantity] = useState(null);
+  const [addingItem, setAddingItem] = useState(false);
+
   useEffect(() => {
     if (!open) {
       setSelectedValue(undefined);
@@ -55,6 +63,7 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
       setPlannedAt(null);
       setComment('');
       setActivePlan(null);
+      setMoveQuantity(null);
       return;
     }
 
@@ -279,6 +288,42 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
     }
   };
 
+  const availableQuantity = Number(summary.total_available_quantity) || 0;
+  const requestedQuantity = Number(moveQuantity) || 0;
+
+  const isQuantityInvalid =
+    requestedQuantity > 0 && requestedQuantity > availableQuantity;
+
+  const canAddItem =
+    Boolean(activePlan?.id) &&
+    Boolean(header?.inventory_item_id) &&
+    requestedQuantity > 0 &&
+    !isQuantityInvalid;
+
+  const handleAddItem = async () => {
+    if (!canAddItem) return;
+
+    try {
+      setAddingItem(true);
+
+      await api.post(`movement-plans/${activePlan.id}/add-items/`, {
+        inventory_item: header.inventory_item_id,
+        quantity: String(moveQuantity),
+      });
+
+      message.success('Товар додано до переміщення.');
+
+      onClose();
+
+      navigate(`/inventory/movements/${activePlan.id}`);
+    } catch (err) {
+      console.error('Failed to add item to movement plan:', err);
+      message.error('Не вдалося додати товар до переміщення.');
+    } finally {
+      setAddingItem(false);
+    }
+  };
+
   return (
     <Drawer
       title="Додати товар до переміщення"
@@ -428,17 +473,79 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
         )}
 
         {step === 'add_item' && (
-          <Card title="2. Додавання товару">
-            <Text strong>
-              {header?.inventory_item_name || 'Товар не обрано'}
-            </Text>
+          <>
+            <Card title="2. Додавання товару">
+              <Flex vertical gap={16}>
+                <div>
+                  <Text style={{ display: 'block', marginBottom: 8 }}>
+                    Товар
+                  </Text>
 
-            {activePlan?.id && (
-              <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-                План переміщення №{activePlan.id} створено.
-              </Text>
-            )}
-          </Card>
+                  <Text strong>
+                    {header?.inventory_item_name || 'Товар не обрано'}
+                  </Text>
+
+                  {activePlan?.id && (
+                    <Text
+                      type="secondary"
+                      style={{ display: 'block', marginTop: 4 }}
+                    >
+                      План переміщення №{activePlan.id} створено.
+                    </Text>
+                  )}
+                </div>
+
+                <div>
+                  <Text style={{ display: 'block', marginBottom: 8 }}>
+                    Доступно для переміщення
+                  </Text>
+
+                  <Text strong style={{ color: '#52c41a' }}>
+                    {summary.total_available_quantity || '0'}{' '}
+                    {header?.inventory_item_unit_symbol || ''}
+                  </Text>
+                </div>
+
+                <div>
+                  <Text style={{ display: 'block', marginBottom: 8 }}>
+                    Кількість для переміщення
+                  </Text>
+
+                  <InputNumber
+                    min={0.001}
+                    max={availableQuantity || undefined}
+                    step={0.001}
+                    controls={false}
+                    style={{ width: '100%' }}
+                    placeholder="Вкажіть кількість"
+                    value={moveQuantity}
+                    status={isQuantityInvalid ? 'error' : undefined}
+                    onChange={setMoveQuantity}
+                  />
+                </div>
+
+                {isQuantityInvalid && (
+                  <Text type="danger">
+                    Кількість для переміщення не може перевищувати доступний
+                    залишок.
+                  </Text>
+                )}
+              </Flex>
+            </Card>
+
+            <Flex justify="space-between">
+              <Button onClick={onClose}>Закрити</Button>
+
+              <Button
+                type="primary"
+                loading={addingItem}
+                disabled={!canAddItem}
+                onClick={handleAddItem}
+              >
+                Додати товар
+              </Button>
+            </Flex>
+          </>
         )}
       </Flex>
     </Drawer>

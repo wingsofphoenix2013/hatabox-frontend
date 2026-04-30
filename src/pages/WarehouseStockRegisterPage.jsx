@@ -22,6 +22,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import WarehouseAddItemToMovementDrawer from '../components/WarehouseAddItemToMovementDrawer';
 import { formatQuantity } from '../utils/formatNumber';
+import { renderStoragePlaceChain } from '../utils/warehousePlacementRenderers';
 
 const { Title, Text } = Typography;
 
@@ -555,7 +556,8 @@ function WarehouseStockRegisterPage() {
             <Flex align="center" gap={6} wrap={false}>
               <Tag style={getLocationTagStyle()}>{locationCode}</Tag>
               <Text type="secondary">:</Text>
-              <span
+              <div
+                title={placement.storage_place_display_name || undefined}
                 style={{
                   minWidth: 0,
                   whiteSpace: 'nowrap',
@@ -563,8 +565,8 @@ function WarehouseStockRegisterPage() {
                   textOverflow: 'ellipsis',
                 }}
               >
-                {placement.storage_place_full_display}
-              </span>
+                {renderStoragePlaceChain(placement.storage_place_full_display)}
+              </div>
             </Flex>
           );
         };
@@ -580,12 +582,25 @@ function WarehouseStockRegisterPage() {
                 title={
                   <Flex vertical gap={4}>
                     {otherPlacements.map((placement, index) => (
-                      <div key={`${placement.location_code}-${index}`}>
-                        {placement.location_code || '—'}
-                        {placement.storage_place_full_display
-                          ? `: ${placement.storage_place_full_display}`
-                          : ''}
-                      </div>
+                      <Flex
+                        key={`${placement.location_code}-${index}`}
+                        align="center"
+                        gap={6}
+                        wrap={false}
+                      >
+                        <Tag style={getLocationTagStyle()}>
+                          {placement.location_code || '—'}
+                        </Tag>
+
+                        {placement.storage_place_full_display ? (
+                          <>
+                            <Text type="secondary">:</Text>
+                            {renderStoragePlaceChain(
+                              placement.storage_place_full_display,
+                            )}
+                          </>
+                        ) : null}
+                      </Flex>
                     ))}
                   </Flex>
                 }

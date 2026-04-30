@@ -547,14 +547,24 @@ function WarehouseStockRegisterPage() {
 
         const renderPlacement = (placement) => {
           const locationCode = placement.location_code || '—';
+          const locationName = placement.location_name || '—';
+          const locationTagStyle = {
+            ...getLocationTagStyle(),
+            marginInlineEnd: 0,
+            marginBottom: 0,
+          };
 
           if (!placement.storage_place_full_display) {
-            return <Tag style={getLocationTagStyle()}>{locationCode}</Tag>;
+            return (
+              <Tag style={locationTagStyle}>
+                {`${locationCode} - ${locationName}`}
+              </Tag>
+            );
           }
 
           return (
             <Flex align="center" gap={6} wrap={false}>
-              <Tag style={getLocationTagStyle()}>{locationCode}</Tag>
+              <Tag style={locationTagStyle}>{locationCode}</Tag>
               <Text type="secondary">:</Text>
               <div
                 title={placement.storage_place_display_name || undefined}
@@ -588,8 +598,18 @@ function WarehouseStockRegisterPage() {
                         gap={6}
                         wrap={false}
                       >
-                        <Tag style={getLocationTagStyle()}>
-                          {placement.location_code || '—'}
+                        <Tag
+                          style={{
+                            ...getLocationTagStyle(),
+                            marginInlineEnd: 0,
+                            marginBottom: 0,
+                          }}
+                        >
+                          {placement.storage_place_full_display
+                            ? placement.location_code || '—'
+                            : `${placement.location_code || '—'} - ${
+                                placement.location_name || '—'
+                              }`}
                         </Tag>
 
                         {placement.storage_place_full_display ? (

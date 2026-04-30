@@ -43,6 +43,7 @@ function WarehouseStockRegisterPage() {
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [storagePlaces, setStoragePlaces] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [movementDrawerOpen, setMovementDrawerOpen] = useState(false);
   const [movementStockDetail, setMovementStockDetail] = useState(null);
@@ -56,6 +57,9 @@ function WarehouseStockRegisterPage() {
   const [selectedLocationIds, setSelectedLocationIds] = useState(
     searchParams.getAll('location'),
   );
+  const [selectedStoragePlaceIds, setSelectedStoragePlaceIds] = useState(
+    searchParams.getAll('storage_place'),
+  );
   const [selectedVariants, setSelectedVariants] = useState(
     searchParams.getAll('variant'),
   );
@@ -66,6 +70,7 @@ function WarehouseStockRegisterPage() {
   const [loading, setLoading] = useState(true);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [locationsLoading, setLocationsLoading] = useState(true);
+  const [storagePlacesLoading, setStoragePlacesLoading] = useState(true);
 
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
@@ -75,6 +80,7 @@ function WarehouseStockRegisterPage() {
   useEffect(() => {
     loadCategories();
     loadLocations();
+    loadStoragePlaces();
   }, []);
 
   useEffect(() => {
@@ -85,6 +91,7 @@ function WarehouseStockRegisterPage() {
     searchText,
     selectedCategoryIds,
     selectedLocationIds,
+    selectedStoragePlaceIds,
     selectedVariants,
   ]);
 
@@ -104,6 +111,10 @@ function WarehouseStockRegisterPage() {
       params.append('location', locationId);
     });
 
+    selectedStoragePlaceIds.forEach((storagePlaceId) => {
+      params.append('storage_place', storagePlaceId);
+    });
+
     selectedVariants.forEach((variant) => {
       params.append('variant', variant);
     });
@@ -117,6 +128,7 @@ function WarehouseStockRegisterPage() {
     searchText,
     selectedCategoryIds,
     selectedLocationIds,
+    selectedStoragePlaceIds,
     selectedVariants,
     currentPage,
     setSearchParams,
@@ -161,6 +173,27 @@ function WarehouseStockRegisterPage() {
     }
   };
 
+  const loadStoragePlaces = async () => {
+    try {
+      setStoragePlacesLoading(true);
+
+      const response = await api.get('warehouse-storage-places/', {
+        params: { is_active: true },
+      });
+
+      const results = Array.isArray(response.data?.results)
+        ? response.data.results
+        : [];
+
+      setStoragePlaces(results);
+    } catch (err) {
+      console.error('Failed to load warehouse storage places:', err);
+      setStoragePlaces([]);
+    } finally {
+      setStoragePlacesLoading(false);
+    }
+  };
+
   const openMovementDrawer = async (record) => {
     if (!record?.inventory_item_id) return;
 
@@ -200,6 +233,10 @@ function WarehouseStockRegisterPage() {
 
       selectedLocationIds.forEach((locationId) => {
         params.append('location', locationId);
+      });
+
+      selectedStoragePlaceIds.forEach((storagePlaceId) => {
+        params.append('storage_place', storagePlaceId);
       });
 
       if (selectedVariants.includes('has_stock')) {
@@ -254,6 +291,15 @@ function WarehouseStockRegisterPage() {
         label: `${item.code || '—'} - ${item.name || '—'}`,
       })),
     [locations],
+  );
+
+  const storagePlaceOptions = useMemo(
+    () =>
+      storagePlaces.map((item) => ({
+        value: String(item.id),
+        label: item.display_name_verbose || item.display_name || '—',
+      })),
+    [storagePlaces],
   );
 
   const columns = [
@@ -755,6 +801,23 @@ function WarehouseStockRegisterPage() {
               options={locationOptions}
               optionFilterProp="label"
               loading={locationsLoading}
+            />
+
+            <Divider type="vertical" style={{ height: 28 }} />
+
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="Місце зберігання"
+              style={{ minWidth: 260 }}
+              value={selectedStoragePlaceIds}
+              onChange={(values) => {
+                setSelectedStoragePlaceIds(values);
+                setCurrentPage(1);
+              }}
+              options={storagePlaceOptions}
+              optionFilterProp="label"
+              loading={storagePlacesLoading}
             />
 
             <Divider type="vertical" style={{ height: 28 }} />

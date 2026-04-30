@@ -20,6 +20,7 @@ import {
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import WarehouseAddItemToMovementDrawer from '../components/WarehouseAddItemToMovementDrawer';
 import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
@@ -42,6 +43,8 @@ function WarehouseStockRegisterPage() {
   const [categories, setCategories] = useState([]);
   const [locations, setLocations] = useState([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [movementDrawerOpen, setMovementDrawerOpen] = useState(false);
+  const [movementStockDetail, setMovementStockDetail] = useState(null);
 
   const [searchText, setSearchText] = useState(
     searchParams.get('search') || '',
@@ -154,6 +157,25 @@ function WarehouseStockRegisterPage() {
       setLocations([]);
     } finally {
       setLocationsLoading(false);
+    }
+  };
+
+  const openMovementDrawer = async (record) => {
+    if (!record?.inventory_item_id) return;
+
+    try {
+      setError('');
+
+      const response = await api.get(
+        `warehouse-stock-detail/${record.inventory_item_id}/`,
+      );
+
+      setMovementStockDetail(response.data || null);
+      setMovementDrawerOpen(true);
+    } catch (err) {
+      console.error('Failed to load stock detail for movement:', err);
+      setError('Не вдалося завантажити дані товару для переміщення.');
+      setMovementStockDetail(null);
     }
   };
 
@@ -532,13 +554,15 @@ function WarehouseStockRegisterPage() {
       key: 'action',
       width: 56,
       align: 'center',
-      render: () => {
+      render: (_, record) => {
+        const hasAvailableStock = Number(record.available_quantity) > 0;
+
         const dropdownItems = [
           {
-            key: 'open',
-            label: (
-              <div style={{ padding: '4px 0' }}>Дії будуть додані пізніше</div>
-            ),
+            key: 'move',
+            label: 'Переміщення товару',
+            disabled: !hasAvailableStock,
+            onClick: () => openMovementDrawer(record),
           },
         ];
 
@@ -547,8 +571,8 @@ function WarehouseStockRegisterPage() {
             <AppstoreAddOutlined
               style={{
                 fontSize: 17,
-                color: '#8c8c8c',
-                cursor: 'pointer',
+                color: hasAvailableStock ? '#1677ff' : '#bfbfbf',
+                cursor: hasAvailableStock ? 'pointer' : 'not-allowed',
               }}
             />
           </Dropdown>
@@ -709,6 +733,15 @@ function WarehouseStockRegisterPage() {
           />
         </Card>
       </Flex>
+
+      <WarehouseAddItemToMovementDrawer
+        open={movementDrawerOpen}
+        onClose={() => {
+          setMovementDrawerOpen(false);
+          setMovementStockDetail(null);
+        }}
+        stockDetail={movementStockDetail}
+      />
     </div>
   );
 }

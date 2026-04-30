@@ -22,10 +22,7 @@ import {
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import WarehousePlacesDrawer from '../components/WarehousePlacesDrawer';
-import {
-  getLocationTagStyle,
-  renderStoragePlaceChain,
-} from '../utils/warehousePlacementRenderers';
+import { renderStoragePlaceChain } from '../utils/warehousePlacementRenderers';
 
 const { Title, Text } = Typography;
 

@@ -297,18 +297,22 @@ function WarehouseMovementRegisterPage() {
       width: 56,
       align: 'center',
       render: (_, record) => {
-        const dropdownItems = [
-          {
+        const dropdownItems = [];
+
+        if (record.status === 'draft' || record.status === 'active') {
+          dropdownItems.push({
             key: 'edit',
             label: <div style={{ padding: '4px 0' }}>Редагувати накладну</div>,
             onClick: () => openEditDrawer(record.id),
-          },
-        ];
+          });
+        }
 
         if (record.status === 'active') {
+          const canExecute = Boolean(record.can_execute);
+
           dropdownItems.push({
             key: 'execute',
-            label: (
+            label: canExecute ? (
               <Popconfirm
                 title="Виконати переміщення?"
                 description="Після виконання товари будуть переміщені на обрану локацію або місце зберігання."
@@ -329,9 +333,29 @@ function WarehouseMovementRegisterPage() {
                     : 'Виконати переміщення'}
                 </div>
               </Popconfirm>
+            ) : (
+              <Tooltip title="Неможливо виконати: накладна не актуальна або відсутні позиції">
+                <span style={{ color: '#bfbfbf' }}>Виконати переміщення</span>
+              </Tooltip>
             ),
-            disabled: executingPlanId === record.id,
+            onClick: () => {
+              if (!canExecute) return;
+            },
           });
+        }
+
+        const hasActiveActions = dropdownItems.length > 0;
+
+        if (!hasActiveActions) {
+          return (
+            <AppstoreAddOutlined
+              style={{
+                fontSize: 17,
+                color: '#bfbfbf',
+                cursor: 'not-allowed',
+              }}
+            />
+          );
         }
 
         return (
@@ -339,7 +363,7 @@ function WarehouseMovementRegisterPage() {
             <AppstoreAddOutlined
               style={{
                 fontSize: 17,
-                color: '#8c8c8c',
+                color: '#1677ff',
                 cursor: 'pointer',
               }}
             />

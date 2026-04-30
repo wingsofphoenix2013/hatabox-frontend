@@ -22,6 +22,10 @@ import {
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import WarehousePlacesDrawer from '../components/WarehousePlacesDrawer';
+import {
+  getLocationTagStyle,
+  renderStoragePlaceChain,
+} from '../utils/warehousePlacementRenderers';
 
 const { Title, Text } = Typography;
 
@@ -36,16 +40,6 @@ const getPlaceTypeTagColor = (placeType) => {
     default:
       return 'default';
   }
-};
-
-const getPlacementTagColor = (label) => {
-  const normalized = label.toLowerCase();
-
-  if (normalized.includes('контейнер')) return 'processing'; // синий
-  if (normalized.includes('стелаж')) return 'success'; // зелёный
-  if (normalized.includes('бокс')) return 'warning'; // оранжевый
-
-  return 'default';
 };
 
 function WarehouseRegisterPage() {
@@ -216,33 +210,7 @@ function WarehouseRegisterPage() {
           return value || '—';
         }
 
-        const parts = value.split(',').map((part) => part.trim());
-
-        return (
-          <Flex wrap gap={6}>
-            {parts.map((part, index) => {
-              const tokens = part.split(' ');
-              const code = tokens.pop();
-              const label = tokens.join(' ');
-
-              return (
-                <Flex key={index} align="center" gap={4}>
-                  <span>{label}</span>
-                  <Tag
-                    color={getPlacementTagColor(label)}
-                    style={{
-                      marginInlineEnd: 0,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {code}
-                  </Tag>
-                  {index < parts.length - 1 && <span>,</span>}
-                </Flex>
-              );
-            })}
-          </Flex>
-        );
+        return renderStoragePlaceChain(value);
       },
     },
     {
@@ -252,18 +220,7 @@ function WarehouseRegisterPage() {
       width: 110,
       align: 'center',
       render: (value) => (
-        <Tag
-          style={{
-            color: '#595959',
-            background: '#fafafa',
-            borderColor: '#d9d9d9',
-            fontWeight: 600,
-            minWidth: 34,
-            textAlign: 'center',
-          }}
-        >
-          {value || '—'}
-        </Tag>
+        <Tag style={getLocationTagStyle()}>{value || '—'}</Tag>
       ),
     },
     {

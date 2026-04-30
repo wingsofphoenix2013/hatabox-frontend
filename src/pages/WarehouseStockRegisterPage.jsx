@@ -295,11 +295,21 @@ function WarehouseStockRegisterPage() {
 
   const storagePlaceOptions = useMemo(
     () =>
-      storagePlaces.map((item) => ({
-        value: String(item.id),
-        label: item.display_name_verbose || item.display_name || '—',
-      })),
-    [storagePlaces],
+      storagePlaces
+        .filter((item) => {
+          if (selectedLocationIds.length === 0) return true;
+
+          return selectedLocationIds.includes(String(item.location));
+        })
+        .map((item) => ({
+          value: String(item.id),
+          label: (
+            item.display_name_verbose ||
+            item.display_name ||
+            '—'
+          ).replace(/\s+на локації\s*$/i, ''),
+        })),
+    [storagePlaces, selectedLocationIds],
   );
 
   const columns = [
@@ -796,6 +806,19 @@ function WarehouseStockRegisterPage() {
               value={selectedLocationIds}
               onChange={(values) => {
                 setSelectedLocationIds(values);
+
+                if (values.length > 0) {
+                  const allowedStoragePlaceIds = storagePlaces
+                    .filter((item) => values.includes(String(item.location)))
+                    .map((item) => String(item.id));
+
+                  setSelectedStoragePlaceIds((currentValues) =>
+                    currentValues.filter((storagePlaceId) =>
+                      allowedStoragePlaceIds.includes(storagePlaceId),
+                    ),
+                  );
+                }
+
                 setCurrentPage(1);
               }}
               options={locationOptions}

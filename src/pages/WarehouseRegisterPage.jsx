@@ -22,7 +22,10 @@ import {
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import WarehousePlacesDrawer from '../components/WarehousePlacesDrawer';
-import { renderStoragePlaceChain } from '../utils/warehousePlacementRenderers';
+import {
+  getLocationTagStyle,
+  renderStoragePlaceChain,
+} from '../utils/warehousePlacementRenderers';
 
 const { Title, Text } = Typography;
 
@@ -216,8 +219,15 @@ function WarehouseRegisterPage() {
       key: 'location_code',
       width: 110,
       align: 'center',
-      render: (value) => (
-        <Tag style={getLocationTagStyle()}>{value || '—'}</Tag>
+      render: (value, record) => (
+        <Link
+          to={`/inventory/warehouses/${record.location}`}
+          state={{
+            locationLabel: `${value || '—'}`,
+          }}
+        >
+          <Tag style={getLocationTagStyle()}>{value || '—'}</Tag>
+        </Link>
       ),
     },
     {

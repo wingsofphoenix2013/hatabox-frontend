@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   AppstoreAddOutlined,
+  FileTextOutlined,
   PlusOutlined,
   WarningFilled,
 } from '@ant-design/icons';
@@ -210,17 +211,29 @@ function WarehouseMovementRegisterPage() {
       title: 'Документ',
       key: 'document',
       width: 260,
-      render: (_, record) => (
-        <Link
-          to={`/inventory/movements/${record.id}`}
-          style={{
-            fontWeight: 500,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {`Накладна №${record.id} від ${formatDateDisplay(record.created_at)}`}
-        </Link>
-      ),
+      render: (_, record) => {
+        const comment = record.comment?.trim();
+
+        return (
+          <Flex align="center" gap={6} wrap={false}>
+            <Link
+              to={`/inventory/movements/${record.id}`}
+              style={{
+                fontWeight: 500,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {`Накладна №${record.id} від ${formatDateDisplay(record.created_at)}`}
+            </Link>
+
+            {comment ? (
+              <Tooltip title={comment}>
+                <FileTextOutlined style={{ color: '#faad14' }} />
+              </Tooltip>
+            ) : null}
+          </Flex>
+        );
+      },
     },
     {
       title: 'Статус',

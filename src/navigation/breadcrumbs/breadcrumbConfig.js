@@ -313,7 +313,20 @@ export const breadcrumbConfig = [
       makeTextItem('Каталог складів'),
     ],
   },
+  {
+    match: (pathname) => pathname.startsWith('/inventory/warehouses/'),
+    build: ({ pathname, state }) => {
+      const currentId = getCurrentId(pathname);
+      const locationLabel = state?.locationLabel;
 
+      return [
+        makeHomeItem(),
+        makeTextItem('Склад'),
+        makeLinkItem('/inventory/warehouses', 'Каталог складів'),
+        makeTextItem(locationLabel || `Location ID ${currentId}`),
+      ];
+    },
+  },
   {
     match: (pathname) => pathname === '/user',
     build: () => [makeHomeItem(), makeTextItem('Користувач')],

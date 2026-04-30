@@ -107,10 +107,10 @@ function WarehouseLocationDetailPage() {
               >
                 <span
                   style={{
-                    fontSize: 96,
+                    fontSize: 120,
                     fontWeight: 700,
                     lineHeight: 1,
-                    color: '#595959',
+                    color: '#000000',
                   }}
                 >
                   {location.code || '—'}
@@ -120,11 +120,17 @@ function WarehouseLocationDetailPage() {
 
             <Card title="Навігація">
               <Flex vertical gap={8}>
-                <Button block icon={<ApartmentOutlined />}>
+                <Button
+                  block
+                  icon={<ApartmentOutlined style={{ color: '#1677ff' }} />}
+                >
                   Переміщення місць зберігання
                 </Button>
 
-                <Button block icon={<SwapOutlined />}>
+                <Button
+                  block
+                  icon={<SwapOutlined style={{ color: '#1677ff' }} />}
+                >
                   Переміщення товару
                 </Button>
               </Flex>

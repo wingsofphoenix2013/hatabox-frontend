@@ -128,8 +128,6 @@ function WarehouseMovementDrawer({
   const [editingQuantity, setEditingQuantity] = useState(null);
   const [deletingPlanItemId, setDeletingPlanItemId] = useState(null);
 
-  const [executingPlan, setExecutingPlan] = useState(false);
-
   const activePlanId = planId || activePlan?.id;
   const isEditMode = Boolean(activePlanId);
 
@@ -150,7 +148,6 @@ function WarehouseMovementDrawer({
     setEditingPlanItemId(null);
     setEditingQuantity(null);
     setDeletingPlanItemId(null);
-    setExecutingPlan(false);
   };
 
   const loadAllPaginated = async (endpoint, params = {}) => {
@@ -577,35 +574,6 @@ function WarehouseMovementDrawer({
     }
   };
 
-  const handleExecutePlan = async () => {
-    if (!activePlanId || planStatus !== 'active') return;
-
-    try {
-      setExecutingPlan(true);
-
-      await api.post(`movement-plans/${activePlanId}/execute/`, {});
-
-      await loadActivePlan(activePlanId);
-
-      message.success('Переміщення виконано.');
-
-      if (onSaved) {
-        await onSaved();
-      }
-
-      onClose();
-    } catch (err) {
-      console.error('Failed to execute movement plan:', err);
-
-      const responseData = err?.response?.data;
-      const backendMessage = getApiErrorMessage(responseData);
-
-      message.error(backendMessage || 'Не вдалося виконати переміщення.');
-    } finally {
-      setExecutingPlan(false);
-    }
-  };
-
   const planItemsColumns = [
     {
       title: 'Товар',
@@ -948,22 +916,6 @@ function WarehouseMovementDrawer({
 
             <Flex justify="space-between">
               <Button onClick={onClose}>Закрити</Button>
-
-              <Popconfirm
-                title="Виконати переміщення?"
-                description="Після виконання товари будуть переміщені на обрану локацію або місце зберігання."
-                okText="Так"
-                cancelText="Ні"
-                onConfirm={handleExecutePlan}
-              >
-                <Button
-                  type="primary"
-                  loading={executingPlan}
-                  disabled={planStatus !== 'active'}
-                >
-                  Виконати переміщення
-                </Button>
-              </Popconfirm>
             </Flex>
           </>
         )}

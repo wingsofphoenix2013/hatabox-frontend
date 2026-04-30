@@ -560,9 +560,17 @@ function WarehouseStockRegisterPage() {
         const dropdownItems = [
           {
             key: 'move',
-            label: 'Переміщення товару',
-            disabled: !hasAvailableStock,
-            onClick: () => openMovementDrawer(record),
+            label: hasAvailableStock ? (
+              'Переміщення товару'
+            ) : (
+              <Tooltip title="Немає доступного залишку для переміщення">
+                <span style={{ color: '#bfbfbf' }}>Переміщення товару</span>
+              </Tooltip>
+            ),
+            onClick: () => {
+              if (!hasAvailableStock) return;
+              openMovementDrawer(record);
+            },
           },
         ];
 

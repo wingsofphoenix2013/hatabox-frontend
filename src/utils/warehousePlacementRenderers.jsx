@@ -70,11 +70,17 @@ export const renderStoragePlaceOption = (item) => {
     </Flex>
   );
 
-  if (!item.comment) {
+  if (!item.comment && !item.name) {
     return content;
   }
 
-  return <Tooltip title={item.comment}>{content}</Tooltip>;
+  return (
+    <Tooltip
+      title={item.comment ? `${item.name || '—'} | ${item.comment}` : item.name}
+    >
+      {content}
+    </Tooltip>
+  );
 };
 
 export const renderWarehousePlacement = ({

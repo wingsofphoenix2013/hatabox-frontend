@@ -530,21 +530,71 @@ function WarehouseStockRegisterPage() {
       key: 'locations',
       width: 320,
       render: (_, record) => {
-        const stockLocations = Array.isArray(record.locations)
-          ? record.locations
+        const availableQuantity = Number(record.available_quantity) || 0;
+        const reservedQuantity = Number(record.reserved_quantity) || 0;
+        const placements = Array.isArray(record.available_placements)
+          ? record.available_placements
           : [];
 
-        if (stockLocations.length === 0) {
+        if (availableQuantity <= 0 && reservedQuantity > 0) {
+          return <Text type="secondary">У резерві</Text>;
+        }
+
+        if (availableQuantity <= 0 || placements.length === 0) {
           return '—';
         }
 
+        const renderPlacement = (placement) => {
+          const locationCode = placement.location_code || '—';
+
+          if (!placement.storage_place_full_display) {
+            return <Tag style={getLocationTagStyle()}>{locationCode}</Tag>;
+          }
+
+          return (
+            <Flex align="center" gap={6} wrap={false}>
+              <Tag style={getLocationTagStyle()}>{locationCode}</Tag>
+              <Text type="secondary">:</Text>
+              <span
+                style={{
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {placement.storage_place_full_display}
+              </span>
+            </Flex>
+          );
+        };
+
+        const [firstPlacement, ...otherPlacements] = placements;
+
         return (
-          <Flex wrap>
-            {stockLocations.map((location) => (
-              <Tag key={location.id} style={getLocationTagStyle()}>
-                {(location.code || '—') + ' - ' + (location.name || '—')}
-              </Tag>
-            ))}
+          <Flex align="center" gap={6} wrap={false} style={{ minWidth: 0 }}>
+            {renderPlacement(firstPlacement)}
+
+            {otherPlacements.length > 0 && (
+              <Tooltip
+                title={
+                  <Flex vertical gap={4}>
+                    {otherPlacements.map((placement, index) => (
+                      <div key={`${placement.location_code}-${index}`}>
+                        {placement.location_code || '—'}
+                        {placement.storage_place_full_display
+                          ? `: ${placement.storage_place_full_display}`
+                          : ''}
+                      </div>
+                    ))}
+                  </Flex>
+                }
+              >
+                <Tag color="default" style={{ marginInlineEnd: 0 }}>
+                  +{otherPlacements.length}
+                </Tag>
+              </Tooltip>
+            )}
           </Flex>
         );
       },

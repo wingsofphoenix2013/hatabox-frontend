@@ -555,7 +555,7 @@ function WarehouseMovementDetailPage() {
                     <Tooltip
                       title={
                         plan.invoice_is_actual === false
-                          ? 'Перед виконанням потрібно сформувати актуальну накладну.'
+                          ? 'Перед виконанням потрібно роздрукувати актуальну накладну.'
                           : ''
                       }
                     >

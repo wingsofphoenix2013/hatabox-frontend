@@ -1,6 +1,6 @@
 // src/utils/warehousePlacementRenderers.jsx
 
-import { Flex, Tag, Typography } from 'antd';
+import { Flex, Tag, Tooltip, Typography } from 'antd';
 
 const { Text } = Typography;
 
@@ -55,6 +55,26 @@ export const renderStoragePlaceChain = (value) => {
       })}
     </Flex>
   );
+};
+
+export const renderStoragePlaceOption = (item) => {
+  const content = (
+    <Flex align="center" gap={6} wrap={false}>
+      <Tag style={{ ...getLocationTagStyle(), marginInlineEnd: 0 }}>
+        {item.location_code || '—'}
+      </Tag>
+
+      <Text type="secondary">:</Text>
+
+      {renderStoragePlaceChain(item.display_name_verbose)}
+    </Flex>
+  );
+
+  if (!item.comment) {
+    return content;
+  }
+
+  return <Tooltip title={item.comment}>{content}</Tooltip>;
 };
 
 export const renderWarehousePlacement = ({

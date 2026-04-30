@@ -20,6 +20,7 @@ import WarehouseMovementStockInfo from './WarehouseMovementStockInfo';
 import {
   getLocationTagStyle,
   renderStoragePlaceChain,
+  renderStoragePlaceOption,
   renderWarehousePlacement,
 } from '../utils/warehousePlacementRenderers';
 
@@ -251,18 +252,10 @@ function WarehouseAddItemToMovementDrawer({ open, onClose, stockDetail }) {
     () =>
       storagePlaces.map((item) => ({
         value: item.id,
-        label: (
-          <Flex align="center" gap={6} wrap={false}>
-            <Tag style={getLocationTagStyle()}>{item.location_code || '—'}</Tag>
-
-            <Text type="secondary">:</Text>
-
-            {renderStoragePlaceChain(item.display_name_verbose)}
-          </Flex>
-        ),
+        label: renderStoragePlaceOption(item),
         searchLabel: `${item.location_code || ''} ${item.display_name || ''} ${
           item.display_name_verbose || ''
-        }`,
+        } ${item.comment || ''}`,
       })),
     [storagePlaces],
   );

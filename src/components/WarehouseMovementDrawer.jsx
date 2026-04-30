@@ -28,72 +28,15 @@ import {
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatQuantity } from '../utils/formatNumber';
+
 import WarehouseMovementStockInfo from './WarehouseMovementStockInfo';
+import {
+  getLocationTagStyle,
+  renderStoragePlaceOption,
+} from '../utils/warehousePlacementRenderers';
 
 const { Text } = Typography;
 const { TextArea } = Input;
-
-const getLocationTagStyle = () => ({
-  color: '#595959',
-  background: '#fafafa',
-  borderColor: '#d9d9d9',
-  fontWeight: 600,
-  minWidth: 34,
-  textAlign: 'center',
-  marginInlineEnd: 0,
-});
-
-const getPlacementTagColor = (label = '') => {
-  const normalized = label.toLowerCase();
-
-  if (normalized.includes('контейнер')) return 'processing';
-  if (normalized.includes('стелаж')) return 'success';
-  if (normalized.includes('бокс')) return 'warning';
-
-  return 'default';
-};
-
-const renderStoragePlaceChain = (value) => {
-  if (!value) return null;
-
-  const normalizedValue = value.replace(/\s+на локації\s*$/i, '');
-
-  const parts = normalizedValue
-    .split(',')
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  return (
-    <Flex wrap={false} gap={6} style={{ whiteSpace: 'nowrap' }}>
-      {parts.map((part, index) => {
-        const tokens = part.split(' ');
-        const code = tokens.pop();
-        const label = tokens.join(' ');
-
-        return (
-          <Flex key={`${part}-${index}`} align="center" gap={4}>
-            <span>{label}</span>
-            <Tag
-              color={getPlacementTagColor(label)}
-              style={{ marginInlineEnd: 0, fontWeight: 600 }}
-            >
-              {code}
-            </Tag>
-            {index < parts.length - 1 && <span>,</span>}
-          </Flex>
-        );
-      })}
-    </Flex>
-  );
-};
-
-const renderStoragePlaceOption = (item) => (
-  <Flex align="center" gap={6} wrap={false} style={{ minWidth: 0 }}>
-    <Tag style={getLocationTagStyle()}>{item.location_code || '—'}</Tag>
-    <Text type="secondary">:</Text>
-    {renderStoragePlaceChain(item.display_name_verbose)}
-  </Flex>
-);
 
 function WarehouseMovementDrawer({
   open,
@@ -315,7 +258,9 @@ function WarehouseMovementDrawer({
         label: renderStoragePlaceOption(item),
         searchLabel: `${item.location_code || ''} ${
           item.display_name || ''
-        } ${item.display_name_verbose || ''} ${item.name || ''}`,
+        } ${item.display_name_verbose || ''} ${item.name || ''} ${
+          item.comment || ''
+        }`,
       })),
     [storagePlaces],
   );

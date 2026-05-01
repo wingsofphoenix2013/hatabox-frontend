@@ -24,6 +24,19 @@ import api from '../api/client';
 
 const { Title, Text } = Typography;
 
+const getPlaceTypeTagColor = (placeType) => {
+  switch (placeType) {
+    case 'container':
+      return 'processing';
+    case 'rack':
+      return 'success';
+    case 'box':
+      return 'warning';
+    default:
+      return 'default';
+  }
+};
+
 function WarehouseStoragePlaceDetailPage() {
   const { id } = useParams();
 
@@ -168,8 +181,7 @@ function WarehouseStoragePlaceDetailPage() {
       <Flex vertical gap={20}>
         <Flex justify="space-between" align="center" gap={16} wrap>
           <Title level={2} style={{ margin: 0 }}>
-            Інформація про місце зберігання:{' '}
-            {storagePlace.display_name_verbose || '—'}
+            Інформація про місце зберігання: {storagePlace.display_name || '—'}
           </Title>
         </Flex>
 
@@ -245,7 +257,7 @@ function WarehouseStoragePlaceDetailPage() {
                                 style={{ width: '100%' }}
                               />
                             ) : (
-                              <Text>{storagePlace.name || '—'}</Text>
+                              <Text strong>{storagePlace.name || '—'}</Text>
                             )}
                           </div>
 
@@ -281,17 +293,23 @@ function WarehouseStoragePlaceDetailPage() {
                       ),
                     },
                     {
-                      key: 'display_name',
+                      key: 'display_name_verbose',
                       label: 'Місце зберігання',
                       contentStyle: { textAlign: 'center' },
-                      children: storagePlace.display_name || '—',
+                      children: (
+                        <Text strong>
+                          {storagePlace.display_name_verbose || '—'}
+                        </Text>
+                      ),
                     },
                     {
                       key: 'place_type_name',
                       label: 'Тип',
                       contentStyle: { textAlign: 'center' },
                       children: (
-                        <Tag color="default">
+                        <Tag
+                          color={getPlaceTypeTagColor(storagePlace.place_type)}
+                        >
                           {storagePlace.place_type_name || '—'}
                         </Tag>
                       ),

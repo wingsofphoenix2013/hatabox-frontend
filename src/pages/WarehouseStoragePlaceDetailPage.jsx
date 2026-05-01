@@ -3,6 +3,8 @@ import {
   ApartmentOutlined,
   AppstoreAddOutlined,
   EditOutlined,
+  EyeOutlined,
+  FileTextOutlined,
   InfoCircleOutlined,
   QrcodeOutlined,
   SaveOutlined,
@@ -184,6 +186,7 @@ function WarehouseStoragePlaceDetailPage() {
   }
 
   const storagePlace = data.storage_place;
+  const children = data.children || [];
   const directStock = data.direct_stock || [];
   const directReservedStock = data.direct_reserved_stock || [];
   const nestedStock = data.nested_stock || [];
@@ -224,6 +227,130 @@ function WarehouseStoragePlaceDetailPage() {
       return acc;
     }, {}),
   );
+
+  const childrenColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Місце зберігання',
+      key: 'storage_place',
+      width: 320,
+      render: (_, record) => (
+        <Link
+          to={`/inventory/storage-places/${record.id}`}
+          state={{
+            locationId: storagePlace.location_id,
+            locationLabel: storagePlace.location_code,
+            storagePlaceLabel: record.display_name,
+          }}
+        >
+          {renderStoragePlaceChain(record.display_name_verbose)}
+        </Link>
+      ),
+    },
+    {
+      title: 'Назва',
+      dataIndex: 'name',
+      key: 'name',
+      render: (value) => value || '—',
+    },
+    {
+      title: 'Коментар',
+      key: 'comment',
+      width: 100,
+      align: 'center',
+      render: (_, record) =>
+        record.comment ? (
+          <Tooltip
+            title={
+              <div style={{ maxWidth: 280, whiteSpace: 'pre-wrap' }}>
+                {record.comment}
+              </div>
+            }
+          >
+            <FileTextOutlined style={{ color: '#faad14' }} />
+          </Tooltip>
+        ) : (
+          '—'
+        ),
+    },
+    {
+      title: 'Товари',
+      key: 'stock',
+      width: 140,
+      align: 'center',
+      render: (_, record) => {
+        const hasStock = nestedStock.some(
+          (item) => item.storage_place_id === record.id,
+        );
+
+        return hasStock ? (
+          <a href={`#nested-stock-${record.id}`}>
+            <EyeOutlined style={{ marginRight: 4 }} />
+            Переглянути
+          </a>
+        ) : (
+          '—'
+        );
+      },
+    },
+    {
+      title: 'Резерв',
+      key: 'reserved',
+      width: 140,
+      align: 'center',
+      render: (_, record) => {
+        const hasReserved = nestedReservedStock.some(
+          (item) => item.storage_place_id === record.id,
+        );
+
+        return hasReserved ? (
+          <a href={`#nested-reserved-${record.id}`}>
+            <EyeOutlined style={{ marginRight: 4 }} />
+            Переглянути
+          </a>
+        ) : (
+          '—'
+        );
+      },
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 80,
+      align: 'center',
+      render: () => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'placeholder',
+                label: (
+                  <div style={{ padding: '4px 0' }}>
+                    Дії будуть додані пізніше
+                  </div>
+                ),
+              },
+            ],
+          }}
+          trigger={['click']}
+        >
+          <AppstoreAddOutlined
+            style={{
+              fontSize: 17,
+              color: '#8c8c8c',
+              cursor: 'pointer',
+            }}
+          />
+        </Dropdown>
+      ),
+    },
+  ];
 
   const directStockColumns = [
     {
@@ -685,6 +812,22 @@ function WarehouseStoragePlaceDetailPage() {
               </Card>
             )}
 
+            {children.length > 0 && (
+              <Card
+                title="Ієрархія місць зберігання"
+                style={{ marginBottom: 20 }}
+              >
+                <Table
+                  rowKey="id"
+                  columns={childrenColumns}
+                  dataSource={children}
+                  pagination={false}
+                  size="small"
+                  tableLayout="fixed"
+                />
+              </Card>
+            )}
+
             {nestedStockGroups.length > 0 && (
               <Card
                 title="Доступні товари у вкладених місцях зберігання"
@@ -692,7 +835,10 @@ function WarehouseStoragePlaceDetailPage() {
               >
                 <Flex vertical gap={20}>
                   {nestedStockGroups.map((group) => (
-                    <div key={group.storagePlaceId}>
+                    <div
+                      key={group.storagePlaceId}
+                      id={`nested-stock-${group.storagePlaceId}`}
+                    >
                       <div style={{ marginBottom: 8 }}>
                         {renderStoragePlaceChain(group.storagePlaceFullDisplay)}
                       </div>
@@ -715,7 +861,10 @@ function WarehouseStoragePlaceDetailPage() {
               <Card title="Зарезервовані товари у вкладених місцях зберігання">
                 <Flex vertical gap={20}>
                   {nestedReservedStockGroups.map((group) => (
-                    <div key={group.storagePlaceId}>
+                    <div
+                      key={group.storagePlaceId}
+                      id={`nested-reserved-${group.storagePlaceId}`}
+                    >
                       <div style={{ marginBottom: 8 }}>
                         {renderStoragePlaceChain(group.storagePlaceFullDisplay)}
                       </div>

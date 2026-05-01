@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { ApartmentOutlined, SwapOutlined } from '@ant-design/icons';
+import {
+  ApartmentOutlined,
+  QrcodeOutlined,
+  SwapOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -88,25 +92,6 @@ function WarehouseStoragePlaceDetailPage() {
 
         <Row gutter={20} align="top">
           <Col xs={24} lg={6}>
-            <Card title="Місце зберігання" style={{ marginBottom: 20 }}>
-              <div
-                style={{
-                  width: '100%',
-                  aspectRatio: '1 / 1',
-                  border: '1px solid #f0f0f0',
-                  borderRadius: 12,
-                  background: '#ffffff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                  padding: 12,
-                }}
-              >
-                <Text type="secondary">Дані з’являться пізніше</Text>
-              </div>
-            </Card>
-
             <Card title="QR код" style={{ marginBottom: 20 }}>
               <div
                 style={{
@@ -140,6 +125,13 @@ function WarehouseStoragePlaceDetailPage() {
                   icon={<SwapOutlined style={{ color: '#1677ff' }} />}
                 >
                   Переміщення товару
+                </Button>
+
+                <Button
+                  block
+                  icon={<QrcodeOutlined style={{ color: '#1677ff' }} />}
+                >
+                  Згенерувати QR код
                 </Button>
               </Flex>
             </Card>

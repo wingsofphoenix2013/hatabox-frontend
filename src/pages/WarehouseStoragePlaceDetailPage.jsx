@@ -187,9 +187,28 @@ function WarehouseStoragePlaceDetailPage() {
   const directStock = data.direct_stock || [];
   const directReservedStock = data.direct_reserved_stock || [];
   const nestedStock = data.nested_stock || [];
+  const nestedReservedStock = data.nested_reserved_stock || [];
 
   const nestedStockGroups = Object.values(
     nestedStock.reduce((acc, item) => {
+      const key = item.storage_place_id;
+
+      if (!acc[key]) {
+        acc[key] = {
+          storagePlaceId: item.storage_place_id,
+          storagePlaceFullDisplay: item.storage_place_full_display,
+          items: [],
+        };
+      }
+
+      acc[key].items.push(item);
+
+      return acc;
+    }, {}),
+  );
+
+  const nestedReservedStockGroups = Object.values(
+    nestedReservedStock.reduce((acc, item) => {
       const key = item.storage_place_id;
 
       if (!acc[key]) {
@@ -667,7 +686,10 @@ function WarehouseStoragePlaceDetailPage() {
             )}
 
             {nestedStockGroups.length > 0 && (
-              <Card title="Доступні товари у вкладених місцях зберігання">
+              <Card
+                title="Доступні товари у вкладених місцях зберігання"
+                style={{ marginBottom: 20 }}
+              >
                 <Flex vertical gap={20}>
                   {nestedStockGroups.map((group) => (
                     <div key={group.storagePlaceId}>
@@ -678,6 +700,31 @@ function WarehouseStoragePlaceDetailPage() {
                       <Table
                         rowKey={(record) => record.inventory_item_id}
                         columns={directStockColumns}
+                        dataSource={group.items}
+                        pagination={false}
+                        size="small"
+                        tableLayout="fixed"
+                      />
+                    </div>
+                  ))}
+                </Flex>
+              </Card>
+            )}
+
+            {nestedReservedStockGroups.length > 0 && (
+              <Card title="Зарезервовані товари у вкладених місцях зберігання">
+                <Flex vertical gap={20}>
+                  {nestedReservedStockGroups.map((group) => (
+                    <div key={group.storagePlaceId}>
+                      <div style={{ marginBottom: 8 }}>
+                        {renderStoragePlaceChain(group.storagePlaceFullDisplay)}
+                      </div>
+
+                      <Table
+                        rowKey={(record) =>
+                          `${record.inventory_item_id}-${record.movement_plan_id}`
+                        }
+                        columns={reservedStockColumns}
                         dataSource={group.items}
                         pagination={false}
                         size="small"

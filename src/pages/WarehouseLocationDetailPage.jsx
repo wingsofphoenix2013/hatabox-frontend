@@ -20,6 +20,7 @@ import {
   Row,
   Skeleton,
   Table,
+  Tag,
   Typography,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';

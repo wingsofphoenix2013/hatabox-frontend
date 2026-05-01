@@ -166,23 +166,22 @@ function WarehouseLocationDetailPage() {
   const directReservedStock = data.direct_reserved_stock || [];
   const storagePlaces = data.storage_places || [];
 
-  const storagePlacesById = new Map();
+  const storagePlaceLevels = new Map();
 
   storagePlaces.forEach((item) => {
-    storagePlacesById.set(item.id, {
-      ...item,
-      children: [],
-    });
-  });
+    let level = 0;
+    let parentId = item.parent;
 
-  const storagePlaceTree = [];
+    while (parentId) {
+      const parent = storagePlaces.find((place) => place.id === parentId);
 
-  storagePlacesById.forEach((item) => {
-    if (item.parent && storagePlacesById.has(item.parent)) {
-      storagePlacesById.get(item.parent).children.push(item);
-    } else {
-      storagePlaceTree.push(item);
+      if (!parent) break;
+
+      level += 1;
+      parentId = parent.parent;
     }
+
+    storagePlaceLevels.set(item.id, level);
   });
 
   const directStockColumns = [
@@ -406,9 +405,11 @@ function WarehouseLocationDetailPage() {
       key: 'storage_place',
       width: 360,
       render: (_, record) => (
-        <Link to={`/inventory/storage-places/${record.id}`}>
-          {renderStoragePlaceChain(record.display_name_verbose)}
-        </Link>
+        <div style={{ paddingLeft: storagePlaceLevels.get(record.id) * 24 }}>
+          <Link to={`/inventory/storage-places/${record.id}`}>
+            {renderStoragePlaceChain(record.display_name_verbose)}
+          </Link>
+        </div>
       ),
     },
     {
@@ -755,7 +756,7 @@ function WarehouseLocationDetailPage() {
               <Table
                 rowKey="id"
                 columns={storagePlaceColumns}
-                dataSource={storagePlaceTree}
+                dataSource={storagePlaces}
                 pagination={false}
                 size="small"
                 tableLayout="fixed"

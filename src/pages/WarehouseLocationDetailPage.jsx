@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   ApartmentOutlined,
+  AppstoreAddOutlined,
   EditOutlined,
+  InfoCircleOutlined,
   PlusOutlined,
   SaveOutlined,
   SwapOutlined,
@@ -12,14 +14,17 @@ import {
   Card,
   Col,
   Descriptions,
+  Dropdown,
   Flex,
   Input,
   Row,
   Skeleton,
+  Table,
   Typography,
 } from 'antd';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
@@ -151,6 +156,76 @@ function WarehouseLocationDetailPage() {
   const location = data.location;
   const directStock = data.direct_stock || [];
   const directReservedStock = data.direct_reserved_stock || [];
+
+  const directStockColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Товар',
+      key: 'item',
+      render: (_, record) => (
+        <Flex align="center" gap={6} wrap={false}>
+          <span>{record.inventory_item_name || '—'}</span>
+
+          {record.inventory_item_id ? (
+            <Link
+              to={`/inventory/stock/${record.inventory_item_id}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <InfoCircleOutlined style={{ color: '#1677ff' }} />
+            </Link>
+          ) : null}
+        </Flex>
+      ),
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (_, record) =>
+        record.inventory_item_unit_symbol
+          ? `${formatQuantity(record.quantity)} ${record.inventory_item_unit_symbol}`
+          : formatQuantity(record.quantity),
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 80,
+      align: 'center',
+      render: () => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'placeholder',
+                label: (
+                  <div style={{ padding: '4px 0' }}>
+                    Дії будуть додані пізніше
+                  </div>
+                ),
+              },
+            ],
+          }}
+          trigger={['click']}
+        >
+          <AppstoreAddOutlined
+            style={{
+              fontSize: 17,
+              color: '#8c8c8c',
+              cursor: 'pointer',
+            }}
+          />
+        </Dropdown>
+      ),
+    },
+  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -398,7 +473,14 @@ function WarehouseLocationDetailPage() {
                 title="Доступні товари на локації"
                 style={{ marginBottom: 20 }}
               >
-                <Text type="secondary">Вміст буде додано пізніше.</Text>
+                <Table
+                  rowKey={(record) => record.inventory_item_id}
+                  columns={directStockColumns}
+                  dataSource={directStock}
+                  pagination={false}
+                  size="small"
+                  tableLayout="fixed"
+                />
               </Card>
             )}
 

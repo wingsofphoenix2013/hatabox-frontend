@@ -28,7 +28,10 @@ import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
-import { renderWarehousePlacement } from '../utils/warehousePlacementRenderers';
+import {
+  renderStoragePlaceChain,
+  renderWarehousePlacement,
+} from '../utils/warehousePlacementRenderers';
 
 const { Title, Text } = Typography;
 
@@ -183,6 +186,25 @@ function WarehouseStoragePlaceDetailPage() {
   const storagePlace = data.storage_place;
   const directStock = data.direct_stock || [];
   const directReservedStock = data.direct_reserved_stock || [];
+  const nestedStock = data.nested_stock || [];
+
+  const nestedStockGroups = Object.values(
+    nestedStock.reduce((acc, item) => {
+      const key = item.storage_place_id;
+
+      if (!acc[key]) {
+        acc[key] = {
+          storagePlaceId: item.storage_place_id,
+          storagePlaceFullDisplay: item.storage_place_full_display,
+          items: [],
+        };
+      }
+
+      acc[key].items.push(item);
+
+      return acc;
+    }, {}),
+  );
 
   const directStockColumns = [
     {
@@ -641,6 +663,29 @@ function WarehouseStoragePlaceDetailPage() {
                   size="small"
                   tableLayout="fixed"
                 />
+              </Card>
+            )}
+
+            {nestedStockGroups.length > 0 && (
+              <Card title="Доступні товари у вкладених місцях зберігання">
+                <Flex vertical gap={20}>
+                  {nestedStockGroups.map((group) => (
+                    <div key={group.storagePlaceId}>
+                      <div style={{ marginBottom: 8 }}>
+                        {renderStoragePlaceChain(group.storagePlaceFullDisplay)}
+                      </div>
+
+                      <Table
+                        rowKey={(record) => record.inventory_item_id}
+                        columns={directStockColumns}
+                        dataSource={group.items}
+                        pagination={false}
+                        size="small"
+                        tableLayout="fixed"
+                      />
+                    </div>
+                  ))}
+                </Flex>
               </Card>
             )}
           </Col>

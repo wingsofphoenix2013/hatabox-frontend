@@ -873,19 +873,29 @@ function WarehouseMovementDetailPage() {
 
           <Card
             title={
-              <Flex align="center" gap={8} wrap={false}>
-                <span style={{ fontWeight: 600 }}>Маршрут:</span>
+              <Flex justify="space-between" align="center" gap={12} wrap>
+                <Flex align="center" gap={8} wrap={false}>
+                  <span style={{ fontWeight: 600 }}>Маршрут:</span>
 
-                <div style={{ fontSize: 13 }}>
-                  {renderWarehousePlacement({
-                    locationCode: plan.target_location_code,
-                    locationName: plan.target_location_name,
-                    storagePlaceDisplayName:
-                      plan.target_storage_place_display_name,
-                    storagePlaceFullDisplay:
-                      plan.target_storage_place_full_display,
-                  })}
-                </div>
+                  <div style={{ fontSize: 13 }}>
+                    {renderWarehousePlacement({
+                      locationCode: plan.target_location_code,
+                      locationName: plan.target_location_name,
+                      storagePlaceDisplayName:
+                        plan.target_storage_place_display_name,
+                      storagePlaceFullDisplay:
+                        plan.target_storage_place_full_display,
+                    })}
+                  </div>
+                </Flex>
+
+                {Number(plan.id) <= 61 && (
+                  <Tooltip title="Для старих накладних джерело переміщення може відображатися некоректно через попередню логіку збереження історії.">
+                    <Tag color="warning" style={{ marginInlineEnd: 0 }}>
+                      Дані маршруту можуть бути неточними
+                    </Tag>
+                  </Tooltip>
+                )}
               </Flex>
             }
           >

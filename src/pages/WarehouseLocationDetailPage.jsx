@@ -3,6 +3,7 @@ import {
   ApartmentOutlined,
   AppstoreAddOutlined,
   EditOutlined,
+  FileTextOutlined,
   InfoCircleOutlined,
   PlusOutlined,
   SaveOutlined,
@@ -28,7 +29,10 @@ import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
-import { renderWarehousePlacement } from '../utils/warehousePlacementRenderers';
+import {
+  renderStoragePlaceChain,
+  renderWarehousePlacement,
+} from '../utils/warehousePlacementRenderers';
 
 const { Title, Text } = Typography;
 
@@ -160,6 +164,26 @@ function WarehouseLocationDetailPage() {
   const location = data.location;
   const directStock = data.direct_stock || [];
   const directReservedStock = data.direct_reserved_stock || [];
+  const storagePlaces = data.storage_places || [];
+
+  const storagePlacesById = new Map();
+
+  storagePlaces.forEach((item) => {
+    storagePlacesById.set(item.id, {
+      ...item,
+      children: [],
+    });
+  });
+
+  const storagePlaceTree = [];
+
+  storagePlacesById.forEach((item) => {
+    if (item.parent && storagePlacesById.has(item.parent)) {
+      storagePlacesById.get(item.parent).children.push(item);
+    } else {
+      storagePlaceTree.push(item);
+    }
+  });
 
   const directStockColumns = [
     {
@@ -335,6 +359,89 @@ function WarehouseLocationDetailPage() {
         record.inventory_item_unit_symbol
           ? `${formatQuantity(record.quantity)} ${record.inventory_item_unit_symbol}`
           : formatQuantity(record.quantity),
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 80,
+      align: 'center',
+      render: () => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'placeholder',
+                label: (
+                  <div style={{ padding: '4px 0' }}>
+                    Дії будуть додані пізніше
+                  </div>
+                ),
+              },
+            ],
+          }}
+          trigger={['click']}
+        >
+          <AppstoreAddOutlined
+            style={{
+              fontSize: 17,
+              color: '#8c8c8c',
+              cursor: 'pointer',
+            }}
+          />
+        </Dropdown>
+      ),
+    },
+  ];
+
+  const storagePlaceColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Місце зберігання',
+      key: 'storage_place',
+      width: 360,
+      render: (_, record) => (
+        <Link to={`/inventory/storage-places/${record.id}`}>
+          {renderStoragePlaceChain(record.display_name_verbose)}
+        </Link>
+      ),
+    },
+    {
+      title: 'Назва',
+      dataIndex: 'name',
+      key: 'name',
+      render: (value) => value || '—',
+    },
+    {
+      title: 'Коментар',
+      key: 'comment',
+      width: 120,
+      align: 'center',
+      render: (_, record) =>
+        record.comment ? (
+          <Tooltip
+            title={
+              <div style={{ maxWidth: 280, whiteSpace: 'pre-wrap' }}>
+                {record.comment}
+              </div>
+            }
+          >
+            <FileTextOutlined
+              style={{
+                color: '#faad14',
+                fontSize: 16,
+                cursor: 'pointer',
+              }}
+            />
+          </Tooltip>
+        ) : (
+          '—'
+        ),
     },
     {
       title: 'Дії',
@@ -645,7 +752,14 @@ function WarehouseLocationDetailPage() {
             )}
 
             <Card title="Ієрархія місць зберігання">
-              <Text type="secondary">Вміст буде додано пізніше.</Text>
+              <Table
+                rowKey="id"
+                columns={storagePlaceColumns}
+                dataSource={storagePlaceTree}
+                pagination={false}
+                size="small"
+                tableLayout="fixed"
+              />
             </Card>
           </Col>
         </Row>

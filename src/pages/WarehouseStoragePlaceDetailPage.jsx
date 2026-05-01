@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   ApartmentOutlined,
+  EditOutlined,
   QrcodeOutlined,
+  SaveOutlined,
   SwapOutlined,
 } from '@ant-design/icons';
 import {
@@ -9,9 +11,12 @@ import {
   Button,
   Card,
   Col,
+  Descriptions,
   Flex,
+  Input,
   Row,
   Skeleton,
+  Tag,
   Typography,
 } from 'antd';
 import { useParams } from 'react-router-dom';
@@ -26,10 +31,86 @@ function WarehouseStoragePlaceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [editingField, setEditingField] = useState(null);
+  const [editingValue, setEditingValue] = useState('');
+  const [savingField, setSavingField] = useState(null);
+
+  const [isEditingComment, setIsEditingComment] = useState(false);
+  const [editingComment, setEditingComment] = useState('');
+  const [savingComment, setSavingComment] = useState(false);
+
   useEffect(() => {
     loadPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const handleStartEditField = (fieldName, currentValue) => {
+    setIsEditingComment(false);
+    setEditingComment('');
+
+    setEditingField(fieldName);
+    setEditingValue(currentValue || '');
+  };
+
+  const handleSaveField = async (fieldName) => {
+    try {
+      setSavingField(fieldName);
+
+      const response = await api.patch(`warehouse-storage-places/${id}/`, {
+        [fieldName]: editingValue,
+      });
+
+      setData((prevData) => ({
+        ...prevData,
+        storage_place: response.data,
+      }));
+
+      setEditingField(null);
+      setEditingValue('');
+    } catch (err) {
+      console.error(
+        `Failed to update warehouse storage place ${fieldName}:`,
+        err,
+      );
+    } finally {
+      setSavingField(null);
+    }
+  };
+
+  const handleStartEditComment = () => {
+    setEditingField(null);
+    setEditingValue('');
+
+    setIsEditingComment(true);
+    setEditingComment(data?.storage_place?.comment || '');
+  };
+
+  const handleCancelEditComment = () => {
+    setIsEditingComment(false);
+    setEditingComment('');
+  };
+
+  const handleSaveComment = async () => {
+    try {
+      setSavingComment(true);
+
+      const response = await api.patch(`warehouse-storage-places/${id}/`, {
+        comment: editingComment,
+      });
+
+      setData((prevData) => ({
+        ...prevData,
+        storage_place: response.data,
+      }));
+
+      setIsEditingComment(false);
+      setEditingComment('');
+    } catch (err) {
+      console.error('Failed to update warehouse storage place comment:', err);
+    } finally {
+      setSavingComment(false);
+    }
+  };
 
   const loadPage = async () => {
     try {
@@ -78,6 +159,7 @@ function WarehouseStoragePlaceDetailPage() {
     );
   }
 
+  const storagePlace = data.storage_place;
   const directStock = data.direct_stock || [];
   const directReservedStock = data.direct_reserved_stock || [];
 
@@ -86,7 +168,8 @@ function WarehouseStoragePlaceDetailPage() {
       <Flex vertical gap={20}>
         <Flex justify="space-between" align="center" gap={16} wrap>
           <Title level={2} style={{ margin: 0 }}>
-            Інформація про місце зберігання
+            Інформація про місце зберігання:{' '}
+            {storagePlace.display_name_verbose || '—'}
           </Title>
         </Flex>
 
@@ -139,7 +222,141 @@ function WarehouseStoragePlaceDetailPage() {
 
           <Col xs={24} lg={18}>
             <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-              <Text type="secondary">Дані з’являться пізніше</Text>
+              <Flex vertical gap={16}>
+                <Descriptions
+                  bordered
+                  size="small"
+                  column={3}
+                  items={[
+                    {
+                      key: 'name',
+                      label: 'Назва',
+                      contentStyle: { textAlign: 'center' },
+                      children: (
+                        <Flex align="center" justify="space-between" gap={8}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            {editingField === 'name' ? (
+                              <Input
+                                value={editingValue}
+                                onChange={(e) =>
+                                  setEditingValue(e.target.value)
+                                }
+                                autoFocus
+                                style={{ width: '100%' }}
+                              />
+                            ) : (
+                              <Text>{storagePlace.name || '—'}</Text>
+                            )}
+                          </div>
+
+                          {editingField === 'name' ? (
+                            <SaveOutlined
+                              style={{
+                                color: '#52c41a',
+                                cursor:
+                                  savingField === 'name'
+                                    ? 'not-allowed'
+                                    : 'pointer',
+                                fontSize: 16,
+                              }}
+                              onClick={() => {
+                                if (savingField !== 'name') {
+                                  handleSaveField('name');
+                                }
+                              }}
+                            />
+                          ) : (
+                            <EditOutlined
+                              style={{
+                                color: '#8c8c8c',
+                                cursor: 'pointer',
+                                fontSize: 16,
+                              }}
+                              onClick={() =>
+                                handleStartEditField('name', storagePlace.name)
+                              }
+                            />
+                          )}
+                        </Flex>
+                      ),
+                    },
+                    {
+                      key: 'display_name',
+                      label: 'Місце зберігання',
+                      contentStyle: { textAlign: 'center' },
+                      children: storagePlace.display_name || '—',
+                    },
+                    {
+                      key: 'place_type_name',
+                      label: 'Тип',
+                      contentStyle: { textAlign: 'center' },
+                      children: (
+                        <Tag color="default">
+                          {storagePlace.place_type_name || '—'}
+                        </Tag>
+                      ),
+                    },
+                  ]}
+                />
+
+                <Alert
+                  type="warning"
+                  showIcon
+                  message={
+                    <Flex vertical gap={12}>
+                      <Flex justify="space-between" align="center">
+                        <Text strong>Коментар до місця зберігання</Text>
+
+                        {!isEditingComment && (
+                          <EditOutlined
+                            style={{
+                              color: '#8c8c8c',
+                              cursor: 'pointer',
+                              fontSize: 16,
+                            }}
+                            onClick={handleStartEditComment}
+                          />
+                        )}
+                      </Flex>
+
+                      {!isEditingComment ? (
+                        <Text style={{ whiteSpace: 'pre-wrap' }}>
+                          {storagePlace.comment
+                            ? storagePlace.comment
+                            : 'Додати коментар'}
+                        </Text>
+                      ) : (
+                        <Flex vertical gap={8}>
+                          <Input.TextArea
+                            value={editingComment}
+                            onChange={(e) => setEditingComment(e.target.value)}
+                            rows={3}
+                            autoFocus
+                          />
+
+                          <Flex gap={8}>
+                            <Button
+                              type="primary"
+                              size="small"
+                              loading={savingComment}
+                              onClick={handleSaveComment}
+                            >
+                              Зберегти
+                            </Button>
+
+                            <Button
+                              size="small"
+                              onClick={handleCancelEditComment}
+                            >
+                              Скасувати
+                            </Button>
+                          </Flex>
+                        </Flex>
+                      )}
+                    </Flex>
+                  }
+                />
+              </Flex>
             </Card>
 
             {directStock.length > 0 && (

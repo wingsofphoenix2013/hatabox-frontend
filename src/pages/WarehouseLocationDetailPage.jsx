@@ -218,28 +218,37 @@ function WarehouseLocationDetailPage() {
             <Card title="Основна інформація" style={{ marginBottom: 20 }}>
               <Flex vertical gap={16}>
                 <Descriptions
-                  column={1}
+                  bordered
                   size="small"
+                  column={2}
                   items={[
                     {
                       key: 'name',
                       label: 'Назва',
-                      children:
-                        editingField === 'name' ? (
-                          <Flex align="center" gap={8}>
-                            <Input
-                              value={editingValue}
-                              onChange={(e) => setEditingValue(e.target.value)}
-                              autoFocus
-                              style={{ maxWidth: 420 }}
-                            />
+                      contentStyle: { textAlign: 'center' },
+                      children: (
+                        <Flex align="center" justify="space-between" gap={8}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            {editingField === 'name' ? (
+                              <Input
+                                value={editingValue}
+                                onChange={(e) =>
+                                  setEditingValue(e.target.value)
+                                }
+                                autoFocus
+                                style={{ width: '100%' }}
+                              />
+                            ) : (
+                              <Text strong style={{ fontSize: 20 }}>
+                                {location.name || '—'}
+                              </Text>
+                            )}
+                          </div>
 
+                          {editingField === 'name' ? (
                             <SaveOutlined
                               style={{
-                                color:
-                                  savingField === 'name'
-                                    ? '#bfbfbf'
-                                    : '#8c8c8c',
+                                color: '#52c41a',
                                 cursor:
                                   savingField === 'name'
                                     ? 'not-allowed'
@@ -252,13 +261,7 @@ function WarehouseLocationDetailPage() {
                                 }
                               }}
                             />
-                          </Flex>
-                        ) : (
-                          <Flex align="center" gap={8}>
-                            <Text strong style={{ fontSize: 20 }}>
-                              {location.name || '—'}
-                            </Text>
-
+                          ) : (
                             <EditOutlined
                               style={{
                                 color: '#8c8c8c',
@@ -269,35 +272,35 @@ function WarehouseLocationDetailPage() {
                                 handleStartEditField('name', location.name)
                               }
                             />
-                          </Flex>
-                        ),
+                          )}
+                        </Flex>
+                      ),
                     },
-                  ]}
-                />
-
-                <Descriptions
-                  column={1}
-                  size="small"
-                  items={[
                     {
                       key: 'address',
                       label: 'Адреса',
-                      children:
-                        editingField === 'address' ? (
-                          <Flex align="center" gap={8}>
-                            <Input
-                              value={editingValue}
-                              onChange={(e) => setEditingValue(e.target.value)}
-                              autoFocus
-                              style={{ maxWidth: 520 }}
-                            />
+                      contentStyle: { textAlign: 'center' },
+                      children: (
+                        <Flex align="center" justify="space-between" gap={8}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            {editingField === 'address' ? (
+                              <Input
+                                value={editingValue}
+                                onChange={(e) =>
+                                  setEditingValue(e.target.value)
+                                }
+                                autoFocus
+                                style={{ width: '100%' }}
+                              />
+                            ) : (
+                              <Text>{location.address || '—'}</Text>
+                            )}
+                          </div>
 
+                          {editingField === 'address' ? (
                             <SaveOutlined
                               style={{
-                                color:
-                                  savingField === 'address'
-                                    ? '#bfbfbf'
-                                    : '#8c8c8c',
+                                color: '#52c41a',
                                 cursor:
                                   savingField === 'address'
                                     ? 'not-allowed'
@@ -310,11 +313,7 @@ function WarehouseLocationDetailPage() {
                                 }
                               }}
                             />
-                          </Flex>
-                        ) : (
-                          <Flex align="center" gap={8}>
-                            <Text>{location.address || '—'}</Text>
-
+                          ) : (
                             <EditOutlined
                               style={{
                                 color: '#8c8c8c',
@@ -328,8 +327,9 @@ function WarehouseLocationDetailPage() {
                                 )
                               }
                             />
-                          </Flex>
-                        ),
+                          )}
+                        </Flex>
+                      ),
                     },
                   ]}
                 />

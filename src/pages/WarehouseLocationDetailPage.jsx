@@ -405,7 +405,7 @@ function WarehouseLocationDetailPage() {
       key: 'storage_place',
       width: 360,
       render: (_, record) => (
-        <div style={{ paddingLeft: storagePlaceLevels.get(record.id) * 24 }}>
+        <div style={{ paddingLeft: storagePlaceLevels.get(record.id) * 16 }}>
           <Link to={`/inventory/storage-places/${record.id}`}>
             {renderStoragePlaceChain(record.display_name_verbose)}
           </Link>
@@ -484,10 +484,6 @@ function WarehouseLocationDetailPage() {
           <Title level={2} style={{ margin: 0 }}>
             Інформація про локацію
           </Title>
-
-          <Button type="primary" size="large" icon={<PlusOutlined />}>
-            Додати місце зберігання
-          </Button>
         </Flex>
 
         <Row gutter={20} align="top">
@@ -752,7 +748,14 @@ function WarehouseLocationDetailPage() {
               </Card>
             )}
 
-            <Card title="Ієрархія місць зберігання">
+            <Card
+              title="Ієрархія місць зберігання"
+              extra={
+                <Button type="primary" icon={<PlusOutlined />}>
+                  Додати місце зберігання
+                </Button>
+              }
+            >
               <Table
                 rowKey="id"
                 columns={storagePlaceColumns}

@@ -396,13 +396,23 @@ function WarehouseStoragePlaceDetailPage() {
     <div style={{ padding: 20 }}>
       <Flex vertical gap={20}>
         <Flex justify="space-between" align="center" gap={16} wrap>
-          <Flex align="center" gap={8}>
-            <Title level={2} style={{ margin: 0 }}>
+          <Flex align="center" gap={12} wrap>
+            <Title level={2} style={{ margin: 0, lineHeight: 1.2 }}>
               Інформація про місце зберігання:{' '}
               {storagePlace.display_name || '—'}
             </Title>
 
-            <Tag color={getPlaceTypeTagColor(storagePlace.place_type)}>
+            <Tag
+              color={getPlaceTypeTagColor(storagePlace.place_type)}
+              style={{
+                fontSize: 18,
+                padding: '6px 14px',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                marginInlineEnd: 0,
+              }}
+            >
               {storagePlace.place_type_name || '—'}
             </Tag>
           </Flex>

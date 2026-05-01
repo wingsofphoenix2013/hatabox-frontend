@@ -180,9 +180,16 @@ function WarehouseStoragePlaceDetailPage() {
     <div style={{ padding: 20 }}>
       <Flex vertical gap={20}>
         <Flex justify="space-between" align="center" gap={16} wrap>
-          <Title level={2} style={{ margin: 0 }}>
-            Інформація про місце зберігання: {storagePlace.display_name || '—'}
-          </Title>
+          <Flex align="center" gap={8}>
+            <Title level={2} style={{ margin: 0 }}>
+              Інформація про місце зберігання:{' '}
+              {storagePlace.display_name || '—'}
+            </Title>
+
+            <Tag color={getPlaceTypeTagColor(storagePlace.place_type)}>
+              {storagePlace.place_type_name || '—'}
+            </Tag>
+          </Flex>
         </Flex>
 
         <Row gutter={20} align="top">

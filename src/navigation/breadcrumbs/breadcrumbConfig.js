@@ -306,6 +306,22 @@ export const breadcrumbConfig = [
     ],
   },
   {
+    match: (pathname) => pathname.startsWith('/inventory/storage-places/'),
+    build: ({ pathname, state }) => {
+      const currentId = getCurrentId(pathname);
+      const locationLabel = state?.locationLabel;
+      const storagePlaceLabel = state?.storagePlaceLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Склад'),
+        makeLinkItem('/inventory/warehouses', 'Каталог складів'),
+        makeTextItem(locationLabel || 'Location'),
+        makeTextItem(storagePlaceLabel || `Storage place ID ${currentId}`),
+      ];
+    },
+  },
+  {
     match: (pathname) => pathname === '/inventory/warehouses',
     build: () => [
       makeHomeItem(),

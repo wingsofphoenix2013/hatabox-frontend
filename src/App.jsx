@@ -13,6 +13,7 @@ import ProtectedLayout from './layouts/ProtectedLayout';
 
 import WarehouseRegisterPage from './pages/WarehouseRegisterPage';
 import WarehouseLocationDetailPage from './pages/WarehouseLocationDetailPage';
+import WarehouseStoragePlaceDetailPage from './pages/WarehouseStoragePlaceDetailPage';
 import WarehousePendingIntakePage from './pages/WarehousePendingIntakePage';
 import WarehouseTollingPendingIntakePage from './pages/WarehouseTollingPendingIntakePage';
 import WarehouseStockRegisterPage from './pages/WarehouseStockRegisterPage';
@@ -193,6 +194,10 @@ function App() {
             <Route
               path="/inventory/warehouses/:id"
               element={<WarehouseLocationDetailPage />}
+            />
+            <Route
+              path="/inventory/storage-places/:id"
+              element={<WarehouseStoragePlaceDetailPage />}
             />
 
             <Route path="/user" element={<div>Користувач</div>} />

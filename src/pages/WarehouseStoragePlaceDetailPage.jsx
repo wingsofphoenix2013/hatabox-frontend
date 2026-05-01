@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   ApartmentOutlined,
+  AppstoreAddOutlined,
   EditOutlined,
+  InfoCircleOutlined,
   QrcodeOutlined,
   SaveOutlined,
   SwapOutlined,
@@ -12,15 +14,21 @@ import {
   Card,
   Col,
   Descriptions,
+  Dropdown,
   Flex,
   Input,
   Row,
   Skeleton,
+  Table,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuantity } from '../utils/formatNumber';
+import { formatDateDisplay } from '../utils/orderFormatters';
+import { renderWarehousePlacement } from '../utils/warehousePlacementRenderers';
 
 const { Title, Text } = Typography;
 
@@ -175,6 +183,214 @@ function WarehouseStoragePlaceDetailPage() {
   const storagePlace = data.storage_place;
   const directStock = data.direct_stock || [];
   const directReservedStock = data.direct_reserved_stock || [];
+
+  const directStockColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Товар',
+      key: 'item',
+      render: (_, record) => (
+        <Flex align="center" gap={6} wrap={false}>
+          <span>{record.inventory_item_name || '—'}</span>
+
+          {record.inventory_item_id ? (
+            <Link
+              to={`/inventory/stock/${record.inventory_item_id}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <InfoCircleOutlined style={{ color: '#1677ff' }} />
+            </Link>
+          ) : null}
+        </Flex>
+      ),
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (_, record) =>
+        record.inventory_item_unit_symbol
+          ? `${formatQuantity(record.quantity)} ${record.inventory_item_unit_symbol}`
+          : formatQuantity(record.quantity),
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 80,
+      align: 'center',
+      render: () => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'placeholder',
+                label: (
+                  <div style={{ padding: '4px 0' }}>
+                    Дії будуть додані пізніше
+                  </div>
+                ),
+              },
+            ],
+          }}
+          trigger={['click']}
+        >
+          <AppstoreAddOutlined
+            style={{
+              fontSize: 17,
+              color: '#8c8c8c',
+              cursor: 'pointer',
+            }}
+          />
+        </Dropdown>
+      ),
+    },
+  ];
+
+  const reservedStockColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Товар',
+      key: 'item',
+      render: (_, record) => (
+        <Flex align="center" gap={6} wrap={false}>
+          <span>{record.inventory_item_name || '—'}</span>
+
+          {record.inventory_item_id ? (
+            <Link
+              to={`/inventory/stock/${record.inventory_item_id}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <InfoCircleOutlined style={{ color: '#1677ff' }} />
+            </Link>
+          ) : null}
+        </Flex>
+      ),
+    },
+    {
+      title: 'Куди',
+      key: 'target',
+      width: 320,
+      render: (_, record) =>
+        renderWarehousePlacement({
+          locationCode: record.target_location_code,
+          locationName: record.target_location_name,
+          storagePlaceDisplayName: record.target_storage_place_display_name,
+          storagePlaceFullDisplay: record.target_storage_place_full_display,
+        }),
+    },
+    {
+      title: 'Коли',
+      key: 'planned_at',
+      width: 200,
+      align: 'center',
+      render: (_, record) => {
+        const date = record.movement_plan_planned_at;
+
+        if (!date) return '—';
+
+        const dateText = formatDateDisplay(date);
+        const isOverdue = record.movement_plan_is_overdue;
+        const delta = record.movement_plan_days_delta;
+        const statusText = record.movement_plan_planned_status_text;
+
+        let content;
+
+        if (isOverdue || (delta !== null && delta < 0)) {
+          content = (
+            <Tag color="error" style={{ fontWeight: 600 }}>
+              {dateText}
+            </Tag>
+          );
+        } else if (delta === 0) {
+          content = (
+            <Tag color="warning" style={{ fontWeight: 600 }}>
+              {dateText}
+            </Tag>
+          );
+        } else {
+          content = <span>{dateText}</span>;
+        }
+
+        const wrapped = statusText ? (
+          <Tooltip title={statusText}>{content}</Tooltip>
+        ) : (
+          content
+        );
+
+        return (
+          <Flex align="center" justify="center" gap={6}>
+            {wrapped}
+
+            {record.movement_plan_id ? (
+              <Link
+                to={`/inventory/movements/${record.movement_plan_id}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <InfoCircleOutlined style={{ color: '#1677ff' }} />
+              </Link>
+            ) : null}
+          </Flex>
+        );
+      },
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (_, record) =>
+        record.inventory_item_unit_symbol
+          ? `${formatQuantity(record.quantity)} ${record.inventory_item_unit_symbol}`
+          : formatQuantity(record.quantity),
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 80,
+      align: 'center',
+      render: () => (
+        <Dropdown
+          menu={{
+            items: [
+              {
+                key: 'placeholder',
+                label: (
+                  <div style={{ padding: '4px 0' }}>
+                    Дії будуть додані пізніше
+                  </div>
+                ),
+              },
+            ],
+          }}
+          trigger={['click']}
+        >
+          <AppstoreAddOutlined
+            style={{
+              fontSize: 17,
+              color: '#8c8c8c',
+              cursor: 'pointer',
+            }}
+          />
+        </Dropdown>
+      ),
+    },
+  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -389,7 +605,14 @@ function WarehouseStoragePlaceDetailPage() {
                 title="Доступні товари у місці зберігання"
                 style={{ marginBottom: 20 }}
               >
-                <Text type="secondary">Дані з’являться пізніше</Text>
+                <Table
+                  rowKey={(record) => record.inventory_item_id}
+                  columns={directStockColumns}
+                  dataSource={directStock}
+                  pagination={false}
+                  size="small"
+                  tableLayout="fixed"
+                />
               </Card>
             )}
 
@@ -398,7 +621,16 @@ function WarehouseStoragePlaceDetailPage() {
                 title="Зарезервовані товари у місці зберігання"
                 style={{ marginBottom: 20 }}
               >
-                <Text type="secondary">Дані з’являться пізніше</Text>
+                <Table
+                  rowKey={(record) =>
+                    `${record.inventory_item_id}-${record.movement_plan_id}`
+                  }
+                  columns={reservedStockColumns}
+                  dataSource={directReservedStock}
+                  pagination={false}
+                  size="small"
+                  tableLayout="fixed"
+                />
               </Card>
             )}
           </Col>

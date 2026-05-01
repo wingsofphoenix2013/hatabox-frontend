@@ -184,7 +184,15 @@ function WarehouseRegisterPage() {
       key: 'display_name',
       width: 180,
       render: (value, record) => (
-        <Link to={`/inventory/warehouses/${record.id}`}>{value}</Link>
+        <Link
+          to={`/inventory/storage-places/${record.id}`}
+          state={{
+            locationLabel: record.location_code,
+            storagePlaceLabel: record.display_name,
+          }}
+        >
+          {value}
+        </Link>
       ),
     },
     {

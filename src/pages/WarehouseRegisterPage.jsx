@@ -187,6 +187,7 @@ function WarehouseRegisterPage() {
         <Link
           to={`/inventory/storage-places/${record.id}`}
           state={{
+            locationId: record.location,
             locationLabel: record.location_code,
             storagePlaceLabel: record.display_name,
           }}

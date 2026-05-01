@@ -316,7 +316,11 @@ export const breadcrumbConfig = [
         makeHomeItem(),
         makeTextItem('Склад'),
         makeLinkItem('/inventory/warehouses', 'Каталог складів'),
-        makeTextItem(locationLabel || 'Location'),
+        makeLinkItem(
+          `/inventory/warehouses/${state?.locationId || ''}`,
+          locationLabel || 'Location',
+          { locationLabel },
+        ),
         makeTextItem(storagePlaceLabel || `Storage place ID ${currentId}`),
       ];
     },

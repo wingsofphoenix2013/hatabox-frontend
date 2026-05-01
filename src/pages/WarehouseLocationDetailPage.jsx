@@ -406,7 +406,14 @@ function WarehouseLocationDetailPage() {
       width: 360,
       render: (_, record) => (
         <div style={{ paddingLeft: storagePlaceLevels.get(record.id) * 16 }}>
-          <Link to={`/inventory/storage-places/${record.id}`}>
+          <Link
+            to={`/inventory/storage-places/${record.id}`}
+            state={{
+              locationId: location.id,
+              locationLabel: location.code,
+              storagePlaceLabel: record.display_name,
+            }}
+          >
             {renderStoragePlaceChain(record.display_name_verbose)}
           </Link>
         </div>

@@ -217,6 +217,7 @@ function WarehouseStoragePlaceDetailPage() {
   }
 
   const storagePlace = data.storage_place;
+  const parentStoragePlace = data.parent_storage_place;
   const children = data.children || [];
   const directStock = data.direct_stock || [];
   const directReservedStock = data.direct_reserved_stock || [];
@@ -709,7 +710,11 @@ function WarehouseStoragePlaceDetailPage() {
           </Col>
 
           <Col xs={24} lg={18}>
-            <Card title="Основна інформація" style={{ marginBottom: 20 }}>
+            <Card
+              title="Основна інформація"
+              extra={renderStoragePlaceChain(storagePlace.display_name_verbose)}
+              style={{ marginBottom: 20 }}
+            >
               <Flex vertical gap={16}>
                 <Descriptions
                   bordered
@@ -769,25 +774,38 @@ function WarehouseStoragePlaceDetailPage() {
                       ),
                     },
                     {
-                      key: 'display_name_verbose',
-                      label: 'Місце зберігання',
+                      key: 'location',
+                      label: 'Локація',
                       contentStyle: { textAlign: 'center' },
                       children: (
-                        <Text strong>
-                          {storagePlace.display_name_verbose || '—'}
-                        </Text>
+                        <Link
+                          to={`/inventory/warehouses/${storagePlace.location_id}`}
+                        >
+                          {`${storagePlace.location_code || '—'} - ${
+                            storagePlace.location_name || '—'
+                          }`}
+                        </Link>
                       ),
                     },
                     {
-                      key: 'place_type_name',
-                      label: 'Тип',
+                      key: 'parent_storage_place',
+                      label: 'Знаходиться',
                       contentStyle: { textAlign: 'center' },
-                      children: (
-                        <Tag
-                          color={getPlaceTypeTagColor(storagePlace.place_type)}
+                      children: parentStoragePlace ? (
+                        <Link
+                          to={`/inventory/storage-places/${parentStoragePlace.id}`}
+                          state={{
+                            locationId: storagePlace.location_id,
+                            locationLabel: storagePlace.location_code,
+                            storagePlaceLabel: parentStoragePlace.display_name,
+                          }}
                         >
-                          {storagePlace.place_type_name || '—'}
-                        </Tag>
+                          {renderStoragePlaceChain(
+                            parentStoragePlace.display_name_verbose,
+                          )}
+                        </Link>
+                      ) : (
+                        <Tag color="default">на локації</Tag>
                       ),
                     },
                   ]}

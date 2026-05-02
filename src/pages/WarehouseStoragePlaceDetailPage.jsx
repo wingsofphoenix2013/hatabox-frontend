@@ -31,6 +31,7 @@ import {
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
 import {
@@ -69,6 +70,7 @@ function WarehouseStoragePlaceDetailPage() {
   const [editingComment, setEditingComment] = useState('');
   const [savingComment, setSavingComment] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   useEffect(() => {
     loadPage();
@@ -146,6 +148,7 @@ function WarehouseStoragePlaceDetailPage() {
   const handleDeleteStoragePlace = async () => {
     try {
       setDeleting(true);
+      setDeleteError('');
 
       await api.delete(`warehouse-storage-places/${id}/`);
 
@@ -156,6 +159,11 @@ function WarehouseStoragePlaceDetailPage() {
       });
     } catch (err) {
       console.error('Failed to delete warehouse storage place:', err);
+
+      setDeleteError(
+        getApiErrorMessage(err.response?.data) ||
+          'Не вдалося видалити місце зберігання.',
+      );
     } finally {
       setDeleting(false);
     }
@@ -654,6 +662,10 @@ function WarehouseStoragePlaceDetailPage() {
                 </Button>
 
                 <Divider style={{ margin: '8px 0' }} />
+
+                {deleteError && (
+                  <Alert type="error" description={deleteError} showIcon />
+                )}
 
                 {storagePlace.can_delete ? (
                   <Popconfirm

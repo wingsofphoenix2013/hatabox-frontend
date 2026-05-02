@@ -265,6 +265,25 @@ function WarehouseLocationDetailPage() {
       render: (_, __, index) => index + 1,
     },
     {
+      title: 'Документ',
+      key: 'document',
+      width: 220,
+      render: (_, record) =>
+        record.movement_plan_id ? (
+          <Link
+            to={`/inventory/movements/${record.movement_plan_id}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {`Накладна №${record.movement_plan_id} від ${formatDateDisplay(
+              record.movement_plan_created_at,
+            )}`}
+          </Link>
+        ) : (
+          '—'
+        ),
+    },
+    {
       title: 'Товар',
       key: 'item',
       render: (_, record) => (
@@ -298,7 +317,7 @@ function WarehouseLocationDetailPage() {
     {
       title: 'Коли',
       key: 'planned_at',
-      width: 200,
+      width: 160,
       align: 'center',
       render: (_, record) => {
         const date = record.movement_plan_planned_at;
@@ -328,26 +347,10 @@ function WarehouseLocationDetailPage() {
           content = <span>{dateText}</span>;
         }
 
-        const wrapped = statusText ? (
+        return statusText ? (
           <Tooltip title={statusText}>{content}</Tooltip>
         ) : (
           content
-        );
-
-        return (
-          <Flex align="center" justify="center" gap={6}>
-            {wrapped}
-
-            {record.movement_plan_id ? (
-              <Link
-                to={`/inventory/movements/${record.movement_plan_id}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <InfoCircleOutlined style={{ color: '#1677ff' }} />
-              </Link>
-            ) : null}
-          </Flex>
         );
       },
     },

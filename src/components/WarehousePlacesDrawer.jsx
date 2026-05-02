@@ -263,7 +263,10 @@ function WarehousePlacesDrawer({
                     value={selectedPlacementValue}
                     onChange={setSelectedPlacementValue}
                     loading={loadingPlacementOptions}
-                    disabled={!selectedLocationId}
+                    disabled={
+                      !selectedLocationId ||
+                      Boolean(initialLocationId && initialPlacementValue)
+                    }
                     showSearch
                     optionFilterProp="label"
                   />

@@ -8,6 +8,7 @@ import {
   InfoCircleOutlined,
   QrcodeOutlined,
   SaveOutlined,
+  StopOutlined,
   SwapOutlined,
 } from '@ant-design/icons';
 import {
@@ -16,9 +17,11 @@ import {
   Card,
   Col,
   Descriptions,
+  Divider,
   Dropdown,
   Flex,
   Input,
+  Popconfirm,
   Row,
   Skeleton,
   Table,
@@ -26,7 +29,7 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
@@ -52,6 +55,7 @@ const getPlaceTypeTagColor = (placeType) => {
 
 function WarehouseStoragePlaceDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +68,7 @@ function WarehouseStoragePlaceDetailPage() {
   const [isEditingComment, setIsEditingComment] = useState(false);
   const [editingComment, setEditingComment] = useState('');
   const [savingComment, setSavingComment] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadPage();
@@ -135,6 +140,24 @@ function WarehouseStoragePlaceDetailPage() {
       console.error('Failed to update warehouse storage place comment:', err);
     } finally {
       setSavingComment(false);
+    }
+  };
+
+  const handleDeleteStoragePlace = async () => {
+    try {
+      setDeleting(true);
+
+      await api.delete(`warehouse-storage-places/${id}/`);
+
+      navigate(`/inventory/warehouses/${data.storage_place.location_id}`, {
+        state: {
+          locationLabel: data.storage_place.location_code,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to delete warehouse storage place:', err);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -629,6 +652,34 @@ function WarehouseStoragePlaceDetailPage() {
                 >
                   Згенерувати QR код
                 </Button>
+
+                <Divider style={{ margin: '8px 0' }} />
+
+                {storagePlace.can_delete ? (
+                  <Popconfirm
+                    title="Видалити місце зберігання?"
+                    description="Цю дію неможливо скасувати."
+                    okText="Видалити"
+                    cancelText="Скасувати"
+                    okButtonProps={{ danger: true }}
+                    onConfirm={handleDeleteStoragePlace}
+                  >
+                    <Button
+                      block
+                      danger
+                      loading={deleting}
+                      icon={<StopOutlined />}
+                    >
+                      Видалити місце
+                    </Button>
+                  </Popconfirm>
+                ) : (
+                  <Tooltip title="Це місце не можна видалити, оскільки в ньому є товари або вкладені місця зберігання.">
+                    <Button block disabled icon={<StopOutlined />}>
+                      Видалити місце
+                    </Button>
+                  </Tooltip>
+                )}
               </Flex>
             </Card>
           </Col>

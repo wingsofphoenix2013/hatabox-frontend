@@ -6,6 +6,7 @@ import {
   EyeOutlined,
   FileTextOutlined,
   InfoCircleOutlined,
+  PlusOutlined,
   QrcodeOutlined,
   SaveOutlined,
   StopOutlined,

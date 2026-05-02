@@ -24,7 +24,14 @@ const compactLabelStyle = {
   lineHeight: 1.2,
 };
 
-function WarehousePlacesDrawer({ open, onClose, locations = [], onCreated }) {
+function WarehousePlacesDrawer({
+  open,
+  onClose,
+  locations = [],
+  onCreated,
+  initialLocationId = null,
+  initialPlacementValue = 'location-root',
+}) {
   const [form] = Form.useForm();
 
   const [saving, setSaving] = useState(false);
@@ -58,12 +65,22 @@ function WarehousePlacesDrawer({ open, onClose, locations = [], onCreated }) {
     }
 
     form.resetFields();
+
+    if (initialLocationId) {
+      form.setFieldValue('location', initialLocationId);
+      form.setFieldValue('placement', initialPlacementValue);
+      setSelectedLocationId(initialLocationId);
+      setSelectedPlacementValue(initialPlacementValue);
+      loadPlacementOptions(initialLocationId);
+      return;
+    }
+
     setSelectedLocationId(null);
     setSelectedPlacementValue(null);
     setPlacementOptions([
       { value: 'location-root', label: 'На локації', parentId: null },
     ]);
-  }, [open, form]);
+  }, [open, form, initialLocationId, initialPlacementValue]);
 
   const loadPlacementOptions = async (locationId) => {
     if (!locationId) {
@@ -216,6 +233,7 @@ function WarehousePlacesDrawer({ open, onClose, locations = [], onCreated }) {
                     placeholder="Оберіть локацію"
                     options={locationOptions}
                     onChange={handleLocationChange}
+                    disabled={Boolean(initialLocationId)}
                   />
                 </Form.Item>
               </div>

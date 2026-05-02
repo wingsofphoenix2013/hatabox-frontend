@@ -27,6 +27,7 @@ import {
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
+import WarehousePlacesDrawer from '../components/WarehousePlacesDrawer';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
 import {
@@ -42,6 +43,7 @@ function WarehouseLocationDetailPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   const [editingField, setEditingField] = useState(null);
   const [editingValue, setEditingValue] = useState('');
@@ -758,7 +760,11 @@ function WarehouseLocationDetailPage() {
             <Card
               title="Ієрархія місць зберігання"
               extra={
-                <Button type="primary" icon={<PlusOutlined />}>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setIsCreateDrawerOpen(true)}
+                >
                   Додати місце зберігання
                 </Button>
               }
@@ -775,6 +781,14 @@ function WarehouseLocationDetailPage() {
           </Col>
         </Row>
       </Flex>
+      <WarehousePlacesDrawer
+        open={isCreateDrawerOpen}
+        onClose={() => setIsCreateDrawerOpen(false)}
+        locations={[location]}
+        initialLocationId={location.id}
+        initialPlacementValue="location-root"
+        onCreated={loadPage}
+      />
     </div>
   );
 }

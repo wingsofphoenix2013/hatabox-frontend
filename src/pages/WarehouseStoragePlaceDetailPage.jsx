@@ -780,6 +780,9 @@ function WarehouseStoragePlaceDetailPage() {
                       children: (
                         <Link
                           to={`/inventory/warehouses/${storagePlace.location_id}`}
+                          state={{
+                            locationLabel: storagePlace.location_code,
+                          }}
                         >
                           <Tag color="default" style={{ marginInlineEnd: 0 }}>
                             {`${storagePlace.location_code || '—'} - ${

@@ -686,7 +686,19 @@ function WarehouseStoragePlaceDetailPage() {
                     </Button>
                   </Popconfirm>
                 ) : (
-                  <Tooltip title="Це місце не можна видалити, оскільки в ньому є товари або вкладені місця зберігання.">
+                  <Tooltip
+                    title={
+                      storagePlace.delete_block_reasons?.length > 0 ? (
+                        <Flex vertical gap={4}>
+                          {storagePlace.delete_block_reasons.map((reason) => (
+                            <span key={reason}>{reason}</span>
+                          ))}
+                        </Flex>
+                      ) : (
+                        'Це місце не можна видалити.'
+                      )
+                    }
+                  >
                     <Button block disabled icon={<StopOutlined />}>
                       Видалити місце
                     </Button>

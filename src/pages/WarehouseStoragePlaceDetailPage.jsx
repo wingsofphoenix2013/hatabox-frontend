@@ -349,10 +349,17 @@ function WarehouseStoragePlaceDetailPage() {
         );
 
         return hasStock ? (
-          <a href={`#nested-stock-${record.id}`}>
+          <Link
+            to={`/inventory/storage-places/${storagePlace.id}#nested-stock-${record.id}`}
+            state={{
+              locationId: storagePlace.location_id,
+              locationLabel: storagePlace.location_code,
+              storagePlaceLabel: storagePlace.display_name,
+            }}
+          >
             <EyeOutlined style={{ marginRight: 4 }} />
             Переглянути
-          </a>
+          </Link>
         ) : (
           '—'
         );
@@ -369,10 +376,17 @@ function WarehouseStoragePlaceDetailPage() {
         );
 
         return hasReserved ? (
-          <a href={`#nested-reserved-${record.id}`}>
+          <Link
+            to={`/inventory/storage-places/${storagePlace.id}#nested-reserved-${record.id}`}
+            state={{
+              locationId: storagePlace.location_id,
+              locationLabel: storagePlace.location_code,
+              storagePlaceLabel: storagePlace.display_name,
+            }}
+          >
             <EyeOutlined style={{ marginRight: 4 }} />
             Переглянути
-          </a>
+          </Link>
         ) : (
           '—'
         );

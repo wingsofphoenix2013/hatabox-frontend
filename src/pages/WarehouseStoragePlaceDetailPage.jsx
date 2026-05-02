@@ -31,6 +31,7 @@ import {
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
+import WarehousePlacesDrawer from '../components/WarehousePlacesDrawer';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
@@ -71,6 +72,8 @@ function WarehouseStoragePlaceDetailPage() {
   const [savingComment, setSavingComment] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   useEffect(() => {
     loadPage();
@@ -219,6 +222,29 @@ function WarehouseStoragePlaceDetailPage() {
   const storagePlace = data.storage_place;
   const parentStoragePlace = storagePlace.parent_storage_place;
   const children = data.children || [];
+
+  const allowedPlaceTypes = (() => {
+    if (!storagePlace) return [];
+
+    if (storagePlace.place_type === 'container') {
+      return ['rack', 'box'];
+    }
+
+    if (storagePlace.place_type === 'rack') {
+      return ['box'];
+    }
+
+    if (storagePlace.place_type === 'box') {
+      if (parentStoragePlace?.place_type === 'box') {
+        return [];
+      }
+      return ['box'];
+    }
+
+    return [];
+  })();
+
+  const canCreateChild = allowedPlaceTypes.length > 0;
   const directStock = data.direct_stock || [];
   const directReservedStock = data.direct_reserved_stock || [];
   const nestedStock = data.nested_stock || [];
@@ -910,11 +936,28 @@ function WarehouseStoragePlaceDetailPage() {
               </Card>
             )}
 
-            {children.length > 0 && (
-              <Card
-                title="Ієрархія місць зберігання"
-                style={{ marginBottom: 20 }}
-              >
+            <Card
+              title="Ієрархія місць зберігання"
+              style={{ marginBottom: 20 }}
+              extra={
+                canCreateChild ? (
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => setIsCreateDrawerOpen(true)}
+                  >
+                    Додати місце зберігання
+                  </Button>
+                ) : (
+                  <Tooltip title="У цьому місці зберігання не можна створювати вкладені точки.">
+                    <Button icon={<PlusOutlined />} disabled>
+                      Додати місце зберігання
+                    </Button>
+                  </Tooltip>
+                )
+              }
+            >
+              {children.length > 0 ? (
                 <Table
                   rowKey="id"
                   columns={childrenColumns}
@@ -923,8 +966,12 @@ function WarehouseStoragePlaceDetailPage() {
                   size="small"
                   tableLayout="fixed"
                 />
-              </Card>
-            )}
+              ) : (
+                <Text type="secondary">
+                  Вкладені місця зберігання відсутні.
+                </Text>
+              )}
+            </Card>
 
             {nestedStockGroups.length > 0 && (
               <Card
@@ -985,6 +1032,21 @@ function WarehouseStoragePlaceDetailPage() {
           </Col>
         </Row>
       </Flex>
+      <WarehousePlacesDrawer
+        open={isCreateDrawerOpen}
+        onClose={() => setIsCreateDrawerOpen(false)}
+        locations={[
+          {
+            id: storagePlace.location_id,
+            code: storagePlace.location_code,
+            name: storagePlace.location_name,
+          },
+        ]}
+        initialLocationId={storagePlace.location_id}
+        initialPlacementValue={`parent-${storagePlace.id}`}
+        allowedPlaceTypes={allowedPlaceTypes}
+        onCreated={loadPage}
+      />
     </div>
   );
 }

@@ -31,6 +31,7 @@ function WarehousePlacesDrawer({
   onCreated,
   initialLocationId = null,
   initialPlacementValue = 'location-root',
+  allowedPlaceTypes = null,
 }) {
   const [form] = Form.useForm();
 
@@ -50,6 +51,20 @@ function WarehousePlacesDrawer({
       label: `${item.code || '—'} — ${item.name || '—'}`,
     }));
   }, [locations]);
+
+  const placeTypeOptions = useMemo(() => {
+    const options = [
+      { value: 'container', label: 'Контейнер' },
+      { value: 'rack', label: 'Стелаж' },
+      { value: 'box', label: 'Бокс' },
+    ];
+
+    if (!allowedPlaceTypes) {
+      return options;
+    }
+
+    return options.filter((option) => allowedPlaceTypes.includes(option.value));
+  }, [allowedPlaceTypes]);
 
   useEffect(() => {
     if (!open) {
@@ -213,13 +228,6 @@ function WarehousePlacesDrawer({
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit}>
         <Flex vertical gap={16}>
-          <Alert
-            type="info"
-            showIcon
-            message="Спочатку оберіть локацію та розміщення"
-            description="Після цього вкажіть тип місця зберігання, назву та коментар."
-          />
-
           <Card title="Шаг 1. Оберіть локацію">
             <Flex vertical gap={14}>
               <div>
@@ -280,11 +288,7 @@ function WarehousePlacesDrawer({
                 >
                   <Select
                     placeholder="Оберіть тип"
-                    options={[
-                      { value: 'container', label: 'Контейнер' },
-                      { value: 'rack', label: 'Стелаж' },
-                      { value: 'box', label: 'Бокс' },
-                    ]}
+                    options={placeTypeOptions}
                   />
                 </Form.Item>
               </div>

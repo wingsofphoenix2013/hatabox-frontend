@@ -29,6 +29,7 @@ import {
   Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
@@ -77,6 +78,7 @@ function WarehouseStoragePlaceDetailPage() {
 
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [movementStockDetail, setMovementStockDetail] = useState(null);
+  const [executingPlanIds, setExecutingPlanIds] = useState([]);
 
   useEffect(() => {
     loadPage();
@@ -427,6 +429,26 @@ function WarehouseStoragePlaceDetailPage() {
     },
   ];
 
+  const handleExecuteMovementPlan = async (movementPlanId) => {
+    if (executingPlanIds.includes(movementPlanId)) return;
+
+    try {
+      setExecutingPlanIds((prevIds) => [...prevIds, movementPlanId]);
+
+      await api.post(`movement-plans/${movementPlanId}/execute/`, {});
+
+      message.success('Переміщення виконано.');
+      await loadPage();
+    } catch (err) {
+      console.error('Failed to execute movement plan:', err);
+      message.error('Не вдалося виконати переміщення.');
+    } finally {
+      setExecutingPlanIds((prevIds) =>
+        prevIds.filter((planId) => planId !== movementPlanId),
+      );
+    }
+  };
+
   const openMovementDrawer = (record) => {
     setMovementStockDetail({
       header: {
@@ -637,31 +659,47 @@ function WarehouseStoragePlaceDetailPage() {
       key: 'actions',
       width: 80,
       align: 'center',
-      render: () => (
-        <Dropdown
-          menu={{
-            items: [
-              {
-                key: 'placeholder',
-                label: (
-                  <div style={{ padding: '4px 0' }}>
-                    Дії будуть додані пізніше
-                  </div>
-                ),
-              },
-            ],
-          }}
-          trigger={['click']}
-        >
-          <AppstoreAddOutlined
-            style={{
-              fontSize: 17,
-              color: '#8c8c8c',
-              cursor: 'pointer',
+      render: (_, record) => {
+        const isExecuting = executingPlanIds.includes(record.movement_plan_id);
+        const canExecute =
+          record.movement_plan_can_execute === true && !isExecuting;
+
+        return (
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'execute',
+                  disabled: !canExecute,
+                  label: canExecute ? (
+                    <div style={{ padding: '4px 0' }}>Виконати переміщення</div>
+                  ) : (
+                    <Tooltip title="Неможливо виконати: накладна не актуальна або не роздрукована">
+                      <div style={{ padding: '4px 0' }}>
+                        Виконати переміщення
+                      </div>
+                    </Tooltip>
+                  ),
+                  onClick: () => {
+                    if (canExecute) {
+                      handleExecuteMovementPlan(record.movement_plan_id);
+                    }
+                  },
+                },
+              ],
             }}
-          />
-        </Dropdown>
-      ),
+            trigger={['click']}
+          >
+            <AppstoreAddOutlined
+              style={{
+                fontSize: 17,
+                color: canExecute ? '#1677ff' : '#8c8c8c',
+                cursor: 'pointer',
+              }}
+            />
+          </Dropdown>
+        );
+      },
     },
   ];
 

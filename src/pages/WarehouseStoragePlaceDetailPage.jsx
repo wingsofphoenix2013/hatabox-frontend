@@ -10,7 +10,6 @@ import {
   QrcodeOutlined,
   SaveOutlined,
   StopOutlined,
-  SwapOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -757,13 +756,6 @@ function WarehouseStoragePlaceDetailPage() {
                   icon={<ApartmentOutlined style={{ color: '#1677ff' }} />}
                 >
                   Переміщення місць зберігання
-                </Button>
-
-                <Button
-                  block
-                  icon={<SwapOutlined style={{ color: '#1677ff' }} />}
-                >
-                  Переміщення товару
                 </Button>
 
                 <Button

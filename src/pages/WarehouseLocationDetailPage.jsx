@@ -7,7 +7,6 @@ import {
   InfoCircleOutlined,
   PlusOutlined,
   SaveOutlined,
-  SwapOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -599,13 +598,6 @@ function WarehouseLocationDetailPage() {
                   icon={<ApartmentOutlined style={{ color: '#1677ff' }} />}
                 >
                   Переміщення місць зберігання
-                </Button>
-
-                <Button
-                  block
-                  icon={<SwapOutlined style={{ color: '#1677ff' }} />}
-                >
-                  Переміщення товару
                 </Button>
               </Flex>
             </Card>

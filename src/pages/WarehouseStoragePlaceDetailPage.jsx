@@ -217,7 +217,7 @@ function WarehouseStoragePlaceDetailPage() {
   }
 
   const storagePlace = data.storage_place;
-  const parentStoragePlace = data.parent_storage_place;
+  const parentStoragePlace = storagePlace.parent_storage_place;
   const children = data.children || [];
   const directStock = data.direct_stock || [];
   const directReservedStock = data.direct_reserved_stock || [];
@@ -781,9 +781,11 @@ function WarehouseStoragePlaceDetailPage() {
                         <Link
                           to={`/inventory/warehouses/${storagePlace.location_id}`}
                         >
-                          {`${storagePlace.location_code || '—'} - ${
-                            storagePlace.location_name || '—'
-                          }`}
+                          <Tag color="default" style={{ marginInlineEnd: 0 }}>
+                            {`${storagePlace.location_code || '—'} - ${
+                              storagePlace.location_name || '—'
+                            }`}
+                          </Tag>
                         </Link>
                       ),
                     },

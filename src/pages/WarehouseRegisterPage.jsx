@@ -228,16 +228,21 @@ function WarehouseRegisterPage() {
       key: 'location_code',
       width: 110,
       align: 'center',
-      render: (value, record) => (
-        <Link
-          to={`/inventory/warehouses/${record.location}`}
-          state={{
-            locationLabel: `${value || '—'}`,
-          }}
-        >
-          <Tag style={getLocationTagStyle()}>{value || '—'}</Tag>
-        </Link>
-      ),
+      render: (value, record) => {
+        const location = locations.find((item) => item.id === record.location);
+        const locationLabel = `${value || '—'} - ${location?.name || '—'}`;
+
+        return (
+          <Link
+            to={`/inventory/warehouses/${record.location}`}
+            state={{
+              locationLabel: value || '—',
+            }}
+          >
+            <Tag style={getLocationTagStyle()}>{locationLabel}</Tag>
+          </Link>
+        );
+      },
     },
     {
       title: 'Назва',

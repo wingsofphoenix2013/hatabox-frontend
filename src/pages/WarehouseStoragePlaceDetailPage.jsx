@@ -751,19 +751,17 @@ function WarehouseStoragePlaceDetailPage() {
 
             <Card title="Навігація">
               <Flex vertical gap={8}>
-                <Button
-                  block
-                  icon={<ApartmentOutlined style={{ color: '#1677ff' }} />}
-                >
-                  Переміщення місць зберігання
-                </Button>
+                <Tooltip title="Функціонал буде додано пізніше">
+                  <Button block disabled icon={<ApartmentOutlined />}>
+                    Переміщення місць зберігання
+                  </Button>
+                </Tooltip>
 
-                <Button
-                  block
-                  icon={<QrcodeOutlined style={{ color: '#1677ff' }} />}
-                >
-                  Згенерувати QR код
-                </Button>
+                <Tooltip title="Функціонал буде додано пізніше">
+                  <Button block disabled icon={<QrcodeOutlined />}>
+                    Згенерувати QR код
+                  </Button>
+                </Tooltip>
 
                 <Divider style={{ margin: '8px 0' }} />
 

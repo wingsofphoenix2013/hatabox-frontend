@@ -593,12 +593,11 @@ function WarehouseLocationDetailPage() {
 
             <Card title="Навігація">
               <Flex vertical gap={8}>
-                <Button
-                  block
-                  icon={<ApartmentOutlined style={{ color: '#1677ff' }} />}
-                >
-                  Переміщення місць зберігання
-                </Button>
+                <Tooltip title="Функціонал буде додано пізніше">
+                  <Button block disabled icon={<ApartmentOutlined />}>
+                    Переміщення місць зберігання
+                  </Button>
+                </Tooltip>
               </Flex>
             </Card>
           </Col>

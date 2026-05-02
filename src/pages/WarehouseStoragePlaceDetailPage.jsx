@@ -33,6 +33,7 @@ import {
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import WarehousePlacesDrawer from '../components/WarehousePlacesDrawer';
+import WarehouseAddItemToMovementDrawer from '../components/WarehouseAddItemToMovementDrawer';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatQuantity } from '../utils/formatNumber';
 import { formatDateDisplay } from '../utils/orderFormatters';
@@ -75,6 +76,7 @@ function WarehouseStoragePlaceDetailPage() {
   const [deleteError, setDeleteError] = useState('');
 
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [movementStockDetail, setMovementStockDetail] = useState(null);
 
   useEffect(() => {
     loadPage();
@@ -425,6 +427,34 @@ function WarehouseStoragePlaceDetailPage() {
     },
   ];
 
+  const openMovementDrawer = (record) => {
+    setMovementStockDetail({
+      header: {
+        inventory_item_id: record.inventory_item_id,
+        inventory_item_code: record.inventory_item_code,
+        inventory_item_name: record.inventory_item_name,
+        inventory_item_category_name: '',
+        inventory_item_unit_symbol: record.inventory_item_unit_symbol,
+      },
+      summary: {
+        total_available_quantity: record.quantity,
+        reserved_quantity: '0.000',
+      },
+      stock_rows: [
+        {
+          location_code: storagePlace.location_code,
+          location_name: storagePlace.location_name,
+          storage_place_display_name:
+            record.storage_place_display_name || storagePlace.display_name,
+          storage_place_full_display:
+            record.storage_place_full_display ||
+            storagePlace.display_name_verbose,
+          quantity: record.quantity,
+        },
+      ],
+    });
+  };
+
   const directStockColumns = [
     {
       title: '№',
@@ -467,17 +497,16 @@ function WarehouseStoragePlaceDetailPage() {
       key: 'actions',
       width: 80,
       align: 'center',
-      render: () => (
+      render: (_, record) => (
         <Dropdown
           menu={{
             items: [
               {
-                key: 'placeholder',
+                key: 'move',
                 label: (
-                  <div style={{ padding: '4px 0' }}>
-                    Дії будуть додані пізніше
-                  </div>
+                  <div style={{ padding: '4px 0' }}>Переміщення товару</div>
                 ),
+                onClick: () => openMovementDrawer(record),
               },
             ],
           }}
@@ -486,7 +515,7 @@ function WarehouseStoragePlaceDetailPage() {
           <AppstoreAddOutlined
             style={{
               fontSize: 17,
-              color: '#8c8c8c',
+              color: '#1677ff',
               cursor: 'pointer',
             }}
           />
@@ -1064,6 +1093,12 @@ function WarehouseStoragePlaceDetailPage() {
         initialPlacementValue={`parent-${storagePlace.id}`}
         allowedPlaceTypes={allowedPlaceTypes}
         onCreated={loadPage}
+      />
+
+      <WarehouseAddItemToMovementDrawer
+        open={Boolean(movementStockDetail)}
+        onClose={() => setMovementStockDetail(null)}
+        stockDetail={movementStockDetail}
       />
     </div>
   );

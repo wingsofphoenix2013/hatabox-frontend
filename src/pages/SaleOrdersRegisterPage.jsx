@@ -248,7 +248,7 @@ function SaleOrdersRegisterPage() {
 
           return (
             <Link
-              to={`/sales-orders/${record.id}`}
+              to={`/sales/orders/${record.id}`}
               state={{
                 orderLabel,
               }}

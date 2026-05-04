@@ -56,6 +56,27 @@ const militaryBranchOptions = [
   { value: 'kms', label: 'КМС' },
 ];
 
+const militaryCorpsOptions = [
+  { value: '1_nsu_azov', label: '1-й корпус НГУ «Азов»' },
+  { value: '2_nsu_khartiia', label: '2-й корпус НГУ «Хартія»' },
+  { value: '3_ak', label: '3-й армійський корпус' },
+  { value: '7_dshv', label: '7-й корпус ДШВ' },
+  { value: '8_dshv', label: '8-й корпус ДШВ' },
+  { value: '9_ak', label: '9-й армійський корпус' },
+  { value: '10_ak', label: '10-й армійський корпус' },
+  { value: '11_ak', label: '11-й армійський корпус' },
+  { value: '12_ak', label: '12-й армійський корпус' },
+  { value: '14_ak', label: '14-й армійський корпус' },
+  { value: '15_ak', label: '15-й армійський корпус' },
+  { value: '16_ak', label: '16-й армійський корпус' },
+  { value: '17_ak', label: '17-й армійський корпус' },
+  { value: '18_ak', label: '18-й армійський корпус' },
+  { value: '19_ak', label: '19-й армійський корпус' },
+  { value: '20_ak', label: '20-й армійський корпус' },
+  { value: '21_ak', label: '21-й армійський корпус' },
+  { value: '30_marine_corps', label: '30-й корпус морської піхоти' },
+];
+
 function OrganizationCreateDrawer({ open, onClose, onCreated }) {
   const [organizationForm] = Form.useForm();
   const [profileForm] = Form.useForm();
@@ -63,8 +84,6 @@ function OrganizationCreateDrawer({ open, onClose, onCreated }) {
   const [savingOrganization, setSavingOrganization] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [createdOrganization, setCreatedOrganization] = useState(null);
-
-  const selectedOrganizationType = Form.useWatch('type', organizationForm);
 
   useEffect(() => {
     if (!open) {
@@ -149,7 +168,6 @@ function OrganizationCreateDrawer({ open, onClose, onCreated }) {
       }
 
       message.success('Додаткову інформацію збережено.');
-
       handleCloseDrawer();
 
       if (onCreated) {
@@ -266,7 +284,11 @@ function OrganizationCreateDrawer({ open, onClose, onCreated }) {
           <div>
             <Text style={compactLabelStyle}>Корпус</Text>
             <Form.Item name="military_corps" style={{ marginBottom: 0 }}>
-              <Input placeholder="Корпус" />
+              <Select
+                placeholder="Оберіть корпус"
+                options={militaryCorpsOptions}
+                allowClear
+              />
             </Form.Item>
           </div>
         </>
@@ -284,97 +306,108 @@ function OrganizationCreateDrawer({ open, onClose, onCreated }) {
       open={open}
       onClose={handleCloseDrawer}
     >
-      {!createdOrganization ? (
+      <Flex vertical gap={16}>
         <Form
           form={organizationForm}
           layout="vertical"
           onFinish={handleCreateOrganization}
         >
-          <Flex vertical gap={16}>
-            <Card title="Шаг 1. Створіть організацію">
-              <Flex vertical gap={14}>
-                <div>
-                  <Text style={compactLabelStyle}>Коротка назва</Text>
-                  <Form.Item
-                    name="name"
-                    style={{ marginBottom: 0 }}
-                    rules={[
-                      { required: true, message: 'Вкажіть коротку назву' },
-                    ]}
-                  >
-                    <Input placeholder="Коротка назва" />
-                  </Form.Item>
-                </div>
+          <Card title="Шаг 1. Створіть організацію">
+            <Flex vertical gap={14}>
+              <div>
+                <Text style={compactLabelStyle}>Коротка назва</Text>
+                <Form.Item
+                  name="name"
+                  style={{ marginBottom: 0 }}
+                  rules={[{ required: true, message: 'Вкажіть коротку назву' }]}
+                >
+                  <Input
+                    placeholder="Коротка назва"
+                    disabled={!!createdOrganization}
+                  />
+                </Form.Item>
+              </div>
 
-                <div>
-                  <Text style={compactLabelStyle}>Юридична назва</Text>
-                  <Form.Item
-                    name="legal_name"
-                    style={{ marginBottom: 0 }}
-                    rules={[
-                      { required: true, message: 'Вкажіть юридичну назву' },
-                    ]}
-                  >
-                    <Input placeholder="Юридична назва" />
-                  </Form.Item>
-                </div>
+              <div>
+                <Text style={compactLabelStyle}>Юридична назва</Text>
+                <Form.Item
+                  name="legal_name"
+                  style={{ marginBottom: 0 }}
+                  rules={[
+                    { required: true, message: 'Вкажіть юридичну назву' },
+                  ]}
+                >
+                  <Input
+                    placeholder="Юридична назва"
+                    disabled={!!createdOrganization}
+                  />
+                </Form.Item>
+              </div>
 
-                <div>
-                  <Text style={compactLabelStyle}>Тип організації</Text>
-                  <Form.Item
-                    name="type"
-                    style={{ marginBottom: 0 }}
-                    rules={[
-                      { required: true, message: 'Оберіть тип організації' },
-                    ]}
-                  >
-                    <Select
-                      placeholder="Оберіть тип організації"
-                      options={organizationTypeOptions}
-                    />
-                  </Form.Item>
-                </div>
+              <div>
+                <Text style={compactLabelStyle}>Тип організації</Text>
+                <Form.Item
+                  name="type"
+                  style={{ marginBottom: 0 }}
+                  rules={[
+                    { required: true, message: 'Оберіть тип організації' },
+                  ]}
+                >
+                  <Select
+                    placeholder="Оберіть тип організації"
+                    options={organizationTypeOptions}
+                    disabled={!!createdOrganization}
+                  />
+                </Form.Item>
+              </div>
 
-                <div>
-                  <Text style={compactLabelStyle}>ЄДРПОУ</Text>
-                  <Form.Item name="edrpou" style={{ marginBottom: 0 }}>
-                    <Input placeholder="ЄДРПОУ" />
-                  </Form.Item>
-                </div>
-              </Flex>
-            </Card>
+              <div>
+                <Text style={compactLabelStyle}>ЄДРПОУ</Text>
+                <Form.Item name="edrpou" style={{ marginBottom: 0 }}>
+                  <Input
+                    placeholder="ЄДРПОУ"
+                    disabled={!!createdOrganization}
+                  />
+                </Form.Item>
+              </div>
+            </Flex>
+          </Card>
 
-            <Flex justify="space-between" gap={8}>
+          {!createdOrganization && (
+            <Flex justify="space-between" gap={8} style={{ marginTop: 16 }}>
               <Button onClick={handleCloseDrawer}>Закрити</Button>
               <Button
                 type="primary"
                 htmlType="submit"
                 loading={savingOrganization}
-                disabled={!selectedOrganizationType}
               >
                 Створити організацію
               </Button>
             </Flex>
-          </Flex>
+          )}
         </Form>
-      ) : (
-        <Form form={profileForm} layout="vertical" onFinish={handleSaveProfile}>
-          <Flex vertical gap={16}>
+
+        {createdOrganization && (
+          <Form
+            form={profileForm}
+            layout="vertical"
+            onFinish={handleSaveProfile}
+          >
             <Card title="Шаг 2. Додаткова інформація">
               <Flex vertical gap={14}>
                 {renderProfileFields()}
               </Flex>
             </Card>
 
-            <Flex justify="space-between" gap={8}>
+            <Flex justify="space-between" gap={8} style={{ marginTop: 16 }}>
               <Button onClick={handleCloseDrawer}>Закрити</Button>
               <Button type="primary" htmlType="submit" loading={savingProfile}>
                 Зберегти інформацію
               </Button>
             </Flex>
-          </Flex>
-        </Form>
-      )}
+          </Form>
+        )}
+      </Flex>
     </Drawer>
   );
 }

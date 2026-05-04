@@ -115,7 +115,12 @@ const moduleConfig = {
   '/organizations': {
     pages: [],
     actions: [],
-    dictionaries: [],
+    dictionaries: [
+      {
+        label: 'Каталог організацій',
+        path: '/organizations',
+      },
+    ],
   },
 
   '/service': {

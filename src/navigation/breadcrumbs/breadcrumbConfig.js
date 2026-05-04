@@ -348,6 +348,14 @@ export const breadcrumbConfig = [
     },
   },
   {
+    match: (pathname) => pathname === '/organizations',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Організації'),
+      makeTextItem('Каталог організацій'),
+    ],
+  },
+  {
     match: (pathname) => pathname === '/user',
     build: () => [makeHomeItem(), makeTextItem('Користувач')],
   },

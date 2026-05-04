@@ -43,6 +43,8 @@ import ProductionProductMaterialPlanPage from './pages/ProductionProductMaterial
 import ProductionProductStepCreatePage from './pages/ProductionProductStepCreatePage';
 import ProductionProductStepDetailPage from './pages/ProductionProductStepDetailPage';
 
+import OrganisationsRegisterPage from './pages/OrganisationsRegisterPage';
+
 function App() {
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);

@@ -95,7 +95,14 @@ function OrganisationsRegisterPage() {
   useEffect(() => {
     loadOrganizations(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, debouncedSearchText, selectedTypes]);
+  }, [
+    currentPage,
+    debouncedSearchText,
+    selectedTypes,
+    selectedMilitaryTypes,
+    selectedMilitaryBranches,
+    isMilitaryFiltersDisabled,
+  ]);
 
   useEffect(() => {
     const params = new URLSearchParams();

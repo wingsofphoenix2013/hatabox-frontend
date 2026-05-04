@@ -201,6 +201,10 @@ function App() {
               path="/inventory/storage-places/:id"
               element={<WarehouseStoragePlaceDetailPage />}
             />
+            <Route
+              path="/organizations"
+              element={<OrganisationsRegisterPage />}
+            />
 
             <Route path="/user" element={<div>Користувач</div>} />
           </Route>

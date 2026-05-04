@@ -46,6 +46,8 @@ import ProductionProductStepDetailPage from './pages/ProductionProductStepDetail
 import OrganisationsRegisterPage from './pages/OrganisationsRegisterPage';
 import OrganizationDetailsPage from './pages/OrganizationDetailsPage';
 
+import SaleOrdersRegisterPage from './pages/SaleOrdersRegisterPage';
+
 function App() {
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
@@ -103,6 +105,8 @@ function App() {
           {/* layout */}
           <Route element={<ProtectedLayout />}>
             <Route path="/home" element={<div>Головна</div>} />
+
+            <Route path="/sales/orders" element={<SaleOrdersRegisterPage />} />
 
             <Route path="/orders/register" element={<OrdersRegisterPage />} />
             <Route path="/orders/new" element={<OrderCreatePage />} />

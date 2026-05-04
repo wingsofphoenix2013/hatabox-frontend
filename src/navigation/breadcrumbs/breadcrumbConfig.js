@@ -7,6 +7,14 @@ import {
 
 export const breadcrumbConfig = [
   {
+    match: (pathname) => pathname === '/sales/orders',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Продажі'),
+      makeTextItem('Реєстр замовлень'),
+    ],
+  },
+  {
     match: (pathname) => pathname.startsWith('/production/components/'),
     build: ({ pathname, search }) => {
       const currentId = getCurrentId(pathname);

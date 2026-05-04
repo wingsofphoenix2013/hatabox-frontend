@@ -39,7 +39,12 @@ const { Text } = Typography;
 
 const moduleConfig = {
   '/sales': {
-    pages: [],
+    pages: [
+      {
+        label: 'Реєстр замовлень',
+        path: '/sales/orders',
+      },
+    ],
     actions: [],
     dictionaries: [],
   },

@@ -226,11 +226,21 @@ function OrganisationsRegisterPage() {
         title: 'Тип',
         dataIndex: 'type_display',
         key: 'type',
-        width: 170,
+        width: 260,
         render: (value, record) => (
-          <Tag color={getOrganizationTypeTagColor(record.type)}>
-            {value || record.type || '—'}
-          </Tag>
+          <Flex align="center" gap={6} wrap>
+            <Tag color={getOrganizationTypeTagColor(record.type)}>
+              {value || record.type || '—'}
+            </Tag>
+
+            {record.military_type_display ? (
+              <Tag color="default">{record.military_type_display}</Tag>
+            ) : null}
+
+            {record.military_branch_display ? (
+              <Tag color="default">{record.military_branch_display}</Tag>
+            ) : null}
+          </Flex>
         ),
       },
       {

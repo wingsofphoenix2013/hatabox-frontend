@@ -18,10 +18,10 @@ import {
   Table,
   Tag,
   Typography,
-  message,
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import OrganizationCreateDrawer from '../components/OrganizationCreateDrawer';
 
 const { Title, Text } = Typography;
 
@@ -78,6 +78,8 @@ function OrganisationsRegisterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
+
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   const isMilitaryFiltersDisabled =
     selectedTypes.length > 0 && !selectedTypes.includes('military');
@@ -183,6 +185,14 @@ function OrganisationsRegisterPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openCreateDrawer = () => {
+    setIsCreateDrawerOpen(true);
+  };
+
+  const closeCreateDrawer = () => {
+    setIsCreateDrawerOpen(false);
   };
 
   const columns = useMemo(
@@ -309,9 +319,7 @@ function OrganisationsRegisterPage() {
             type="primary"
             size="large"
             icon={<PlusOutlined />}
-            onClick={() => {
-              message.info('Створення організації буде додано пізніше.');
-            }}
+            onClick={openCreateDrawer}
           >
             Додати організацію
           </Button>
@@ -460,6 +468,11 @@ function OrganisationsRegisterPage() {
           />
         </Card>
       </Flex>
+      <OrganizationCreateDrawer
+        open={isCreateDrawerOpen}
+        onClose={closeCreateDrawer}
+        onCreated={() => loadOrganizations(currentPage)}
+      />
     </div>
   );
 }

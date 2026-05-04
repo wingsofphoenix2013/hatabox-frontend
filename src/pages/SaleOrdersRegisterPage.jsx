@@ -20,10 +20,10 @@ import {
   Table,
   Tag,
   Typography,
-  message,
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import SaleOrderCreateDrawer from '../components/SaleOrderCreateDrawer';
 import { formatDateUa } from '../utils/orderFormatters';
 
 const { Title, Text } = Typography;
@@ -101,6 +101,8 @@ function SaleOrdersRegisterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
+
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -210,6 +212,14 @@ function SaleOrdersRegisterPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openCreateDrawer = () => {
+    setIsCreateDrawerOpen(true);
+  };
+
+  const closeCreateDrawer = () => {
+    setIsCreateDrawerOpen(false);
   };
 
   const handleTableChange = (_, __, sorter) => {
@@ -421,9 +431,7 @@ function SaleOrdersRegisterPage() {
             type="primary"
             size="large"
             icon={<PlusOutlined />}
-            onClick={() => {
-              message.info('Створення замовлення буде додано пізніше.');
-            }}
+            onClick={openCreateDrawer}
           >
             Додати нове замовлення
           </Button>
@@ -542,6 +550,10 @@ function SaleOrdersRegisterPage() {
           />
         </Card>
       </Flex>
+      <SaleOrderCreateDrawer
+        open={isCreateDrawerOpen}
+        onClose={closeCreateDrawer}
+      />
     </div>
   );
 }

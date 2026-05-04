@@ -356,6 +356,20 @@ export const breadcrumbConfig = [
     ],
   },
   {
+    match: (pathname) => pathname.startsWith('/organizations/'),
+    build: ({ pathname, state }) => {
+      const currentId = getCurrentId(pathname);
+      const organizationLabel = state?.organizationLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Організації'),
+        makeLinkItem('/organizations', 'Каталог організацій'),
+        makeTextItem(organizationLabel || `Organization ID ${currentId}`),
+      ];
+    },
+  },
+  {
     match: (pathname) => pathname === '/user',
     build: () => [makeHomeItem(), makeTextItem('Користувач')],
   },

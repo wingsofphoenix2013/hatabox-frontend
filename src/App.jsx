@@ -44,6 +44,7 @@ import ProductionProductStepCreatePage from './pages/ProductionProductStepCreate
 import ProductionProductStepDetailPage from './pages/ProductionProductStepDetailPage';
 
 import OrganisationsRegisterPage from './pages/OrganisationsRegisterPage';
+import OrganizationDetailsPage from './pages/OrganizationDetailsPage';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -204,6 +205,11 @@ function App() {
             <Route
               path="/organizations"
               element={<OrganisationsRegisterPage />}
+            />
+
+            <Route
+              path="/organizations/:id"
+              element={<OrganizationDetailsPage />}
             />
 
             <Route path="/user" element={<div>Користувач</div>} />

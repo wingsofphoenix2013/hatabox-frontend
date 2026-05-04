@@ -20,7 +20,7 @@ import {
   Typography,
   message,
 } from 'antd';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 
 const { Title, Text } = Typography;
@@ -65,6 +65,12 @@ function OrganisationsRegisterPage() {
   const [selectedTypes, setSelectedTypes] = useState(
     searchParams.getAll('type'),
   );
+  const [selectedMilitaryTypes, setSelectedMilitaryTypes] = useState(
+    searchParams.getAll('military_type'),
+  );
+  const [selectedMilitaryBranches, setSelectedMilitaryBranches] = useState(
+    searchParams.getAll('military_branch'),
+  );
   const [currentPage, setCurrentPage] = useState(
     Number(searchParams.get('page')) || 1,
   );
@@ -72,6 +78,9 @@ function OrganisationsRegisterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
+
+  const isMilitaryFiltersDisabled =
+    selectedTypes.length > 0 && !selectedTypes.includes('military');
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -99,12 +108,30 @@ function OrganisationsRegisterPage() {
       params.append('type', type);
     });
 
+    if (!isMilitaryFiltersDisabled) {
+      selectedMilitaryTypes.forEach((type) => {
+        params.append('military_type', type);
+      });
+
+      selectedMilitaryBranches.forEach((branch) => {
+        params.append('military_branch', branch);
+      });
+    }
+
     if (currentPage > 1) {
       params.set('page', String(currentPage));
     }
 
     setSearchParams(params);
-  }, [debouncedSearchText, selectedTypes, currentPage, setSearchParams]);
+  }, [
+    debouncedSearchText,
+    selectedTypes,
+    selectedMilitaryTypes,
+    selectedMilitaryBranches,
+    isMilitaryFiltersDisabled,
+    currentPage,
+    setSearchParams,
+  ]);
 
   const loadOrganizations = async (page) => {
     try {
@@ -122,6 +149,16 @@ function OrganisationsRegisterPage() {
       selectedTypes.forEach((type) => {
         params.append('type', type);
       });
+
+      if (!isMilitaryFiltersDisabled) {
+        selectedMilitaryTypes.forEach((type) => {
+          params.append('military_type', type);
+        });
+
+        selectedMilitaryBranches.forEach((branch) => {
+          params.append('military_branch', branch);
+        });
+      }
 
       const response = await api.get(`organizations/?${params.toString()}`);
 
@@ -155,7 +192,16 @@ function OrganisationsRegisterPage() {
         dataIndex: 'name',
         key: 'name',
         width: 260,
-        render: (value) => value || '—',
+        render: (value, record) => (
+          <Link
+            to={`/organizations/${record.id}`}
+            state={{
+              organizationLabel: record.name,
+            }}
+          >
+            {value || '—'}
+          </Link>
+        ),
       },
       {
         title: 'Юридична назва',
@@ -274,11 +320,25 @@ function OrganisationsRegisterPage() {
 
             <Divider type="vertical" style={{ height: 28 }} />
 
+            <Input
+              placeholder="Пошук по назві або ЄДРПОУ"
+              allowClear
+              prefix={<SearchOutlined />}
+              style={{ width: 320 }}
+              value={searchText}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+
+            <Divider type="vertical" style={{ height: 28 }} />
+
             <Select
               mode="multiple"
               allowClear
               placeholder="Тип"
-              style={{ minWidth: 240 }}
+              style={{ minWidth: 220 }}
               value={selectedTypes}
               onChange={(values) => {
                 setSelectedTypes(values);
@@ -290,16 +350,55 @@ function OrganisationsRegisterPage() {
 
             <Divider type="vertical" style={{ height: 28 }} />
 
-            <Input
-              placeholder="Пошук по назві або ЄДРПОУ"
+            <Select
+              mode="multiple"
               allowClear
-              prefix={<SearchOutlined />}
-              style={{ width: 320 }}
-              value={searchText}
-              onChange={(e) => {
-                setSearchText(e.target.value);
+              placeholder="Військовий тип"
+              style={{ minWidth: 220 }}
+              value={selectedMilitaryTypes}
+              disabled={isMilitaryFiltersDisabled}
+              onChange={(values) => {
+                setSelectedMilitaryTypes(values);
                 setCurrentPage(1);
               }}
+              options={[
+                { value: 'zsu', label: 'ЗСУ' },
+                { value: 'ngu', label: 'НГУ' },
+                { value: 'dpsu', label: 'ДПСУ' },
+                { value: 'dsns', label: 'ДСНС' },
+                { value: 'mvs', label: 'МВС' },
+                { value: 'sbu', label: 'СБУ' },
+              ]}
+              optionFilterProp="label"
+            />
+
+            <Divider type="vertical" style={{ height: 28 }} />
+
+            <Select
+              mode="multiple"
+              allowClear
+              placeholder="Вид військ"
+              style={{ minWidth: 220 }}
+              value={selectedMilitaryBranches}
+              disabled={isMilitaryFiltersDisabled}
+              onChange={(values) => {
+                setSelectedMilitaryBranches(values);
+                setCurrentPage(1);
+              }}
+              options={[
+                { value: 'sv', label: 'СВ' },
+                { value: 'ps', label: 'ПС' },
+                { value: 'vms', label: 'ВМС' },
+                { value: 'dshv', label: 'ДШВ' },
+                { value: 'sbs', label: 'СБС' },
+                { value: 'sp', label: 'СП' },
+                { value: 'sl', label: 'СЛ' },
+                { value: 'gur', label: 'ГУР' },
+                { value: 'sso', label: 'ССО' },
+                { value: 'tro', label: 'ТРО' },
+                { value: 'kms', label: 'КМС' },
+              ]}
+              optionFilterProp="label"
             />
           </Flex>
         </Card>

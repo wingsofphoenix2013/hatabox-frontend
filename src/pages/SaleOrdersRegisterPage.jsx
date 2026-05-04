@@ -283,6 +283,8 @@ function SaleOrdersRegisterPage() {
                 state={{
                   organizationLabel: value,
                 }}
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <InfoCircleOutlined />
               </Link>
@@ -314,7 +316,11 @@ function SaleOrdersRegisterPage() {
               </div>
 
               {record.product ? (
-                <Link to={`/production/products/${record.product}`}>
+                <Link
+                  to={`/production/products/${record.product}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <InfoCircleOutlined />
                 </Link>
               ) : null}

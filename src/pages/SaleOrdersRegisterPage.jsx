@@ -241,11 +241,22 @@ function SaleOrdersRegisterPage() {
         title: 'Замовлення',
         key: 'order',
         width: 180,
-        render: (_, record) => (
-          <span>
-            № {record.id} від {formatDateUa(record.created_at)}
-          </span>
-        ),
+        render: (_, record) => {
+          const orderLabel = `№ ${record.id} від ${formatDateUa(
+            record.created_at,
+          )}`;
+
+          return (
+            <Link
+              to={`/sales-orders/${record.id}`}
+              state={{
+                orderLabel,
+              }}
+            >
+              {orderLabel}
+            </Link>
+          );
+        },
       },
       {
         title: 'Замовник',

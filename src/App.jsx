@@ -47,6 +47,7 @@ import OrganisationsRegisterPage from './pages/OrganisationsRegisterPage';
 import OrganizationDetailsPage from './pages/OrganizationDetailsPage';
 
 import SaleOrdersRegisterPage from './pages/SaleOrdersRegisterPage';
+import SaleOrdersDetailPage from './pages/SaleOrdersDetailPage';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -107,6 +108,11 @@ function App() {
             <Route path="/home" element={<div>Головна</div>} />
 
             <Route path="/sales/orders" element={<SaleOrdersRegisterPage />} />
+
+            <Route
+              path="/sales/orders/:id"
+              element={<SaleOrdersDetailPage />}
+            />
 
             <Route path="/orders/register" element={<OrdersRegisterPage />} />
             <Route path="/orders/new" element={<OrderCreatePage />} />

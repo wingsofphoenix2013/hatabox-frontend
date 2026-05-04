@@ -15,6 +15,20 @@ export const breadcrumbConfig = [
     ],
   },
   {
+    match: (pathname) => pathname.startsWith('/sales/orders/'),
+    build: ({ pathname, state }) => {
+      const currentId = getCurrentId(pathname);
+      const orderLabel = state?.orderLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Продажі'),
+        makeLinkItem('/sales/orders', 'Реєстр замовлень'),
+        makeTextItem(orderLabel || `Order ID ${currentId}`),
+      ];
+    },
+  },
+  {
     match: (pathname) => pathname.startsWith('/production/components/'),
     build: ({ pathname, search }) => {
       const currentId = getCurrentId(pathname);

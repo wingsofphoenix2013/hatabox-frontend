@@ -164,6 +164,10 @@ function ContactCreateDrawer({ open, onClose, onCreated }) {
 
       setCreatedPerson(response.data);
       message.success('Контакт створено.');
+
+      if (onCreated) {
+        await onCreated();
+      }
     } catch (err) {
       console.error('Failed to create person:', err);
 
@@ -293,8 +297,8 @@ function ContactCreateDrawer({ open, onClose, onCreated }) {
       open={open}
       onClose={handleCloseDrawer}
     >
-      <Form form={form} layout="vertical" onFinish={handleCreatePerson}>
-        <Flex vertical gap={16}>
+      <Flex vertical gap={16}>
+        <Form form={form} layout="vertical" onFinish={handleCreatePerson}>
           <Card title="1. Створити контакт">
             <Flex vertical gap={14}>
               <Flex gap={12}>
@@ -432,81 +436,82 @@ function ContactCreateDrawer({ open, onClose, onCreated }) {
             htmlType="submit"
             loading={saving}
             disabled={!!createdPerson}
+            style={{ marginTop: 16 }}
           >
             Створити контакт
           </Button>
+        </Form>
 
-          <Form
-            form={assignmentForm}
-            layout="vertical"
-            onFinish={handleSaveAssignment}
-          >
-            <Card title="2. Місце служби">
-              <Flex vertical gap={14}>
-                <div>
-                  <Text style={compactLabelStyle}>Організація</Text>
-                  <Form.Item
-                    name="organization"
-                    style={{ marginBottom: 0 }}
-                    rules={[{ required: true, message: 'Оберіть організацію' }]}
-                  >
-                    <Select
-                      showSearch
-                      placeholder={
-                        createdPerson
-                          ? 'Почніть вводити назву організації'
-                          : 'Спочатку створіть контакт'
-                      }
-                      options={organizationOptions}
-                      loading={organizationsLoading}
-                      filterOption={false}
-                      onSearch={loadOrganizationOptions}
-                      onFocus={() => loadOrganizationOptions()}
-                      disabled={!createdPerson}
-                    />
-                  </Form.Item>
-                </div>
+        <Form
+          form={assignmentForm}
+          layout="vertical"
+          onFinish={handleSaveAssignment}
+        >
+          <Card title="2. Місце служби">
+            <Flex vertical gap={14}>
+              <div>
+                <Text style={compactLabelStyle}>Організація</Text>
+                <Form.Item
+                  name="organization"
+                  style={{ marginBottom: 0 }}
+                  rules={[{ required: true, message: 'Оберіть організацію' }]}
+                >
+                  <Select
+                    showSearch
+                    placeholder={
+                      createdPerson
+                        ? 'Почніть вводити назву організації'
+                        : 'Спочатку створіть контакт'
+                    }
+                    options={organizationOptions}
+                    loading={organizationsLoading}
+                    filterOption={false}
+                    onSearch={loadOrganizationOptions}
+                    onFocus={() => loadOrganizationOptions()}
+                    disabled={!createdPerson}
+                  />
+                </Form.Item>
+              </div>
 
-                <div>
-                  <Text style={compactLabelStyle}>Посада</Text>
-                  <Form.Item
-                    name="position"
-                    style={{ marginBottom: 0 }}
-                    rules={[{ required: true, message: 'Оберіть посаду' }]}
-                  >
-                    <Select
-                      showSearch
-                      placeholder={
-                        createdPerson
-                          ? 'Почніть вводити назву посади'
-                          : 'Спочатку створіть контакт'
-                      }
-                      options={positionOptions}
-                      loading={positionsLoading}
-                      filterOption={false}
-                      onSearch={loadPositionOptions}
-                      onFocus={() => loadPositionOptions()}
-                      disabled={!createdPerson}
-                    />
-                  </Form.Item>
-                </div>
-              </Flex>
-            </Card>
-
-            <Flex justify="space-between" style={{ marginTop: 16 }}>
-              <Button onClick={handleCloseDrawer}>Закрити</Button>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={savingAssignment}
-                disabled={!createdPerson}
-              >
-                Зберегти
-              </Button>
+              <div>
+                <Text style={compactLabelStyle}>Посада</Text>
+                <Form.Item
+                  name="position"
+                  style={{ marginBottom: 0 }}
+                  rules={[{ required: true, message: 'Оберіть посаду' }]}
+                >
+                  <Select
+                    showSearch
+                    placeholder={
+                      createdPerson
+                        ? 'Почніть вводити назву посади'
+                        : 'Спочатку створіть контакт'
+                    }
+                    options={positionOptions}
+                    loading={positionsLoading}
+                    filterOption={false}
+                    onSearch={loadPositionOptions}
+                    onFocus={() => loadPositionOptions()}
+                    disabled={!createdPerson}
+                  />
+                </Form.Item>
+              </div>
             </Flex>
-          </Form>
-        </Flex>
-      </Form>
+          </Card>
+
+          <Flex justify="space-between" style={{ marginTop: 16 }}>
+            <Button onClick={handleCloseDrawer}>Закрити</Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={savingAssignment}
+              disabled={!createdPerson}
+            >
+              Зберегти
+            </Button>
+          </Flex>
+        </Form>
+      </Flex>
     </Drawer>
   );
 }

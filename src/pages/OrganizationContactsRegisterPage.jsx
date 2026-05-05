@@ -23,6 +23,7 @@ import {
 } from 'antd';
 import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import ContactCreateDrawer from '../components/ContactCreateDrawer';
 
 const { Title, Text } = Typography;
 
@@ -56,6 +57,8 @@ function OrganizationContactsRegisterPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
+
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -114,6 +117,14 @@ function OrganizationContactsRegisterPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const openCreateDrawer = () => {
+    setIsCreateDrawerOpen(true);
+  };
+
+  const closeCreateDrawer = () => {
+    setIsCreateDrawerOpen(false);
   };
 
   const columns = useMemo(
@@ -245,7 +256,12 @@ function OrganizationContactsRegisterPage() {
             <Text type="secondary">Реєстр контактів організацій.</Text>
           </Flex>
 
-          <Button type="primary" size="large" icon={<PlusOutlined />}>
+          <Button
+            type="primary"
+            size="large"
+            icon={<PlusOutlined />}
+            onClick={openCreateDrawer}
+          >
             Додати контакт
           </Button>
         </Flex>
@@ -319,6 +335,11 @@ function OrganizationContactsRegisterPage() {
           />
         </Card>
       </Flex>
+      <ContactCreateDrawer
+        open={isCreateDrawerOpen}
+        onClose={closeCreateDrawer}
+        onCreated={() => loadPeople(currentPage)}
+      />
     </div>
   );
 }

@@ -378,6 +378,14 @@ export const breadcrumbConfig = [
     ],
   },
   {
+    match: (pathname) => pathname === '/organizations/contacts',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Організації'),
+      makeTextItem('Адресна книга'),
+    ],
+  },
+  {
     match: (pathname) => pathname.startsWith('/organizations/'),
     build: ({ pathname, state }) => {
       const currentId = getCurrentId(pathname);

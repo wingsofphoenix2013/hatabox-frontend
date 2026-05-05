@@ -45,6 +45,7 @@ import ProductionProductStepDetailPage from './pages/ProductionProductStepDetail
 
 import OrganisationsRegisterPage from './pages/OrganisationsRegisterPage';
 import OrganizationDetailsPage from './pages/OrganizationDetailsPage';
+import OrganizationContactsRegisterPage from './pages/OrganizationContactsRegisterPage';
 
 import SaleOrdersRegisterPage from './pages/SaleOrdersRegisterPage';
 import SaleOrdersDetailPage from './pages/SaleOrdersDetailPage';
@@ -220,6 +221,11 @@ function App() {
             <Route
               path="/organizations/:id"
               element={<OrganizationDetailsPage />}
+            />
+
+            <Route
+              path="/organizations/contacts"
+              element={<OrganizationContactsRegisterPage />}
             />
 
             <Route path="/user" element={<div>Користувач</div>} />

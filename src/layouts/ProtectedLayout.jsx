@@ -125,6 +125,10 @@ const moduleConfig = {
         label: 'Каталог організацій',
         path: '/organizations',
       },
+      {
+        label: 'Адресна книга',
+        path: '/organizations/contacts',
+      },
     ],
   },
 

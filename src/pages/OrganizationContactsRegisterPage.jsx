@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   AlertFilled,
   AppstoreAddOutlined,
+  InfoCircleOutlined,
   PlusOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
@@ -136,7 +137,10 @@ function OrganizationContactsRegisterPage() {
         key: 'full_name',
         width: 280,
         render: (_, record) => {
-          const fullName = record.full_name || '—';
+          const displayName =
+            [record.first_name, record.middle_name, record.last_name]
+              .filter(Boolean)
+              .join(' ') || '—';
 
           const hasBirthday = isBirthdayToday(
             record.birth_day,
@@ -145,7 +149,9 @@ function OrganizationContactsRegisterPage() {
 
           return (
             <Flex align="center" gap={8}>
-              <Link to={`/contacts/${record.id}`}>{fullName}</Link>
+              <Link to={`/contacts/${record.id}`} style={{ fontWeight: 600 }}>
+                {displayName}
+              </Link>
 
               {hasBirthday ? (
                 <Tooltip title="Сьогодні день народження">
@@ -168,7 +174,27 @@ function OrganizationContactsRegisterPage() {
             return '—';
           }
 
-          return `${record.current_position_name} в ${record.current_organization_name}`;
+          return (
+            <Flex align="center" gap={8}>
+              <span>
+                {record.current_position_name} в{' '}
+                {record.current_organization_name}
+              </span>
+
+              {record.current_organization_id ? (
+                <Link
+                  to={`/organizations/${record.current_organization_id}`}
+                  state={{
+                    organizationLabel: record.current_organization_name,
+                  }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <InfoCircleOutlined style={{ color: '#1677ff' }} />
+                </Link>
+              ) : null}
+            </Flex>
+          );
         },
       },
       {

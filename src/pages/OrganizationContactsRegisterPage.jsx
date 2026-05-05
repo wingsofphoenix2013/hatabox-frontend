@@ -178,7 +178,9 @@ function OrganizationContactsRegisterPage() {
             <Flex align="center" gap={8}>
               <span>
                 {record.current_position_name} в{' '}
-                {record.current_organization_name}
+                <span style={{ fontWeight: 600 }}>
+                  {record.current_organization_name}
+                </span>
               </span>
 
               {record.current_organization_id ? (

@@ -32,9 +32,12 @@ function SaleOrderCreateDrawer({ open, onClose }) {
   const [saving, setSaving] = useState(false);
   const [organizationsLoading, setOrganizationsLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [responsiblePersonsLoading, setResponsiblePersonsLoading] =
+    useState(false);
 
   const [organizationOptions, setOrganizationOptions] = useState([]);
   const [productOptions, setProductOptions] = useState([]);
+  const [responsiblePersonOptions, setResponsiblePersonOptions] = useState([]);
 
   useEffect(() => {
     if (!open) {
@@ -42,13 +45,16 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setSaving(false);
       setOrganizationsLoading(false);
       setProductsLoading(false);
+      setResponsiblePersonsLoading(false);
       setOrganizationOptions([]);
       setProductOptions([]);
+      setResponsiblePersonOptions([]);
     }
   }, [open, form]);
 
   const handleCloseDrawer = () => {
     form.resetFields();
+    setResponsiblePersonOptions([]);
     onClose();
   };
 
@@ -76,6 +82,41 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setOrganizationOptions([]);
     } finally {
       setOrganizationsLoading(false);
+    }
+  };
+
+  const loadResponsiblePersonOptions = async (organizationId) => {
+    if (!organizationId) {
+      setResponsiblePersonOptions([]);
+      return;
+    }
+
+    try {
+      setResponsiblePersonsLoading(true);
+
+      const response = await api.get(
+        `organization-person-assignments/?organization=${organizationId}&is_current=true`,
+      );
+
+      const results = Array.isArray(response.data.results)
+        ? response.data.results
+        : Array.isArray(response.data)
+          ? response.data
+          : [];
+
+      setResponsiblePersonOptions(
+        results.map((item) => ({
+          value: item.person,
+          label: `${item.person_full_name || '—'} — ${
+            item.position_name || '—'
+          }`,
+        })),
+      );
+    } catch (err) {
+      console.error('Failed to load responsible person options:', err);
+      setResponsiblePersonOptions([]);
+    } finally {
+      setResponsiblePersonsLoading(false);
     }
   };
 
@@ -110,11 +151,18 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     try {
       setSaving(true);
 
-      const response = await api.post('sales-orders/', {
+      const payload = {
         organization: values.organization,
         product: values.product,
         comment: values.comment || '',
-      });
+      };
+
+      if (values.customer_responsible_person) {
+        payload.customer_responsible_person =
+          values.customer_responsible_person;
+      }
+
+      const response = await api.post('sales-orders/', payload);
 
       message.success('Замовлення створено.');
       handleCloseDrawer();
@@ -134,6 +182,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       const backendMessage = getApiErrorMessage(err?.response?.data, [
         'organization',
         'product',
+        'customer_responsible_person',
         'comment',
       ]);
 
@@ -170,10 +219,37 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                     filterOption={false}
                     onSearch={loadOrganizationOptions}
                     onFocus={() => loadOrganizationOptions()}
+                    onChange={(value) => {
+                      form.setFieldValue(
+                        'customer_responsible_person',
+                        undefined,
+                      );
+                      loadResponsiblePersonOptions(value);
+                    }}
                   />
                 </Form.Item>
               </div>
-
+              <div>
+                <Text style={compactLabelStyle}>
+                  Відповідальний від замовника
+                </Text>
+                <Form.Item
+                  name="customer_responsible_person"
+                  style={{ marginBottom: 0 }}
+                >
+                  <Select
+                    allowClear
+                    placeholder={
+                      form.getFieldValue('organization')
+                        ? 'Оберіть відповідального'
+                        : 'Спочатку оберіть замовника'
+                    }
+                    options={responsiblePersonOptions}
+                    loading={responsiblePersonsLoading}
+                    disabled={!form.getFieldValue('organization')}
+                  />
+                </Form.Item>
+              </div>
               <div>
                 <Text style={compactLabelStyle}>Продукція</Text>
                 <Form.Item

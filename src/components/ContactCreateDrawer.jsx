@@ -100,7 +100,7 @@ const navyRankOptions = [
   { value: 'admiral', label: 'Адмірал' },
 ];
 
-function ContactCreateDrawer({ open, onClose }) {
+function ContactCreateDrawer({ open, onClose, onCreated }) {
   const [form] = Form.useForm();
   const [assignmentForm] = Form.useForm();
 
@@ -265,6 +265,10 @@ function ContactCreateDrawer({ open, onClose }) {
 
       message.success('Місце служби збережено.');
       handleCloseDrawer();
+
+      if (onCreated) {
+        await onCreated();
+      }
     } catch (err) {
       console.error('Failed to create assignment:', err);
 

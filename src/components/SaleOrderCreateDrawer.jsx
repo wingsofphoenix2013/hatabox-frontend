@@ -462,6 +462,10 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                   Після створення замовлення тут буде налаштування товарів
                   замовника.
                 </Text>
+              ) : !usesCustomerGoods ? (
+                <Text type="secondary">
+                  Товари замовника не використовуються.
+                </Text>
               ) : (
                 <Flex vertical gap={16}>
                   <Flex align="center" gap={10}>

@@ -3,8 +3,8 @@ import {
   CheckCircleFilled,
   CheckCircleOutlined,
   CloseCircleFilled,
-  CloseCircleOutlined,
   InfoCircleFilled,
+  WarningFilled,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -441,13 +441,11 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                         align: 'center',
                         render: (value) =>
                           value ? (
-                            <CheckCircleOutlined
-                              style={{ color: '#52c41a', fontSize: 18 }}
-                            />
-                          ) : (
-                            <CloseCircleOutlined
+                            <WarningFilled
                               style={{ color: '#ff4d4f', fontSize: 18 }}
                             />
+                          ) : (
+                            <span style={{ color: '#bfbfbf' }}>—</span>
                           ),
                       },
                     ]}

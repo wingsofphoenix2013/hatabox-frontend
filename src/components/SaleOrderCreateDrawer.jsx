@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react';
 import {
+  CheckCircleFilled,
+  CheckCircleOutlined,
+  CloseCircleFilled,
+  CloseCircleOutlined,
+  InfoCircleFilled,
+} from '@ant-design/icons';
+import {
+  Alert,
   Button,
   Card,
   Drawer,
@@ -7,12 +15,15 @@ import {
   Form,
   Input,
   Select,
+  Skeleton,
   Switch,
+  Table,
   Typography,
   message,
 } from 'antd';
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -30,6 +41,10 @@ function SaleOrderCreateDrawer({ open, onClose }) {
   const [saving, setSaving] = useState(false);
   const [createdSaleOrder, setCreatedSaleOrder] = useState(null);
   const [usesCustomerGoods, setUsesCustomerGoods] = useState(false);
+
+  const [warehouseCheckStarted, setWarehouseCheckStarted] = useState(false);
+  const [warehouseLoading, setWarehouseLoading] = useState(false);
+  const [warehouseAvailability, setWarehouseAvailability] = useState(null);
   const [organizationsLoading, setOrganizationsLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [responsiblePersonsLoading, setResponsiblePersonsLoading] =
@@ -51,6 +66,10 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setResponsiblePersonOptions([]);
       setCreatedSaleOrder(null);
       setUsesCustomerGoods(false);
+
+      setWarehouseCheckStarted(false);
+      setWarehouseLoading(false);
+      setWarehouseAvailability(null);
     }
   }, [open, form]);
 
@@ -59,6 +78,10 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     setResponsiblePersonOptions([]);
     setCreatedSaleOrder(null);
     setUsesCustomerGoods(false);
+
+    setWarehouseCheckStarted(false);
+    setWarehouseLoading(false);
+    setWarehouseAvailability(null);
     onClose();
   };
 
@@ -148,6 +171,27 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setProductOptions([]);
     } finally {
       setProductsLoading(false);
+    }
+  };
+
+  const handleCheckWarehouseAvailability = async () => {
+    if (!createdSaleOrder?.id) return;
+
+    try {
+      setWarehouseCheckStarted(true);
+      setWarehouseLoading(true);
+
+      const response = await api.get(
+        `warehouse-sales-order-availability/${createdSaleOrder.id}/`,
+      );
+
+      setWarehouseAvailability(response.data);
+    } catch (err) {
+      console.error('Failed to check warehouse availability:', err);
+
+      message.error('Не вдалося перевірити склад.');
+    } finally {
+      setWarehouseLoading(false);
     }
   };
 
@@ -307,12 +351,127 @@ function SaleOrderCreateDrawer({ open, onClose }) {
             </Text>
           </Card>
 
-          {createdSaleOrder && (
+          {warehouseCheckStarted && (
+            <Card title="3. Перевірка складу на наявність компонентів">
+              {warehouseLoading ? (
+                <Skeleton active paragraph={{ rows: 4 }} />
+              ) : warehouseAvailability ? (
+                <Flex vertical gap={14}>
+                  <Flex align="flex-end" gap={10}>
+                    <Text strong style={{ fontSize: 18 }}>
+                      Замовлення готове для оформлення
+                    </Text>
+
+                    <div
+                      style={{
+                        flex: 1,
+                        borderBottom: '1px dotted #262626',
+                        transform: 'translateY(-5px)',
+                      }}
+                    />
+
+                    <Flex align="center" gap={8}>
+                      {warehouseAvailability.can_confirm ? (
+                        <CheckCircleFilled
+                          style={{ color: '#52c41a', fontSize: 22 }}
+                        />
+                      ) : (
+                        <CloseCircleFilled
+                          style={{ color: '#ff4d4f', fontSize: 22 }}
+                        />
+                      )}
+
+                      <Text strong style={{ fontSize: 18 }}>
+                        {warehouseAvailability.can_confirm ? 'Так' : 'Ні'}
+                      </Text>
+                    </Flex>
+                  </Flex>
+
+                  {warehouseAvailability.can_confirm === false && (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      icon={<InfoCircleFilled />}
+                      message="Замовлення не може бути підтверджене в поточний момент. Компоненти не будуть заброньовані."
+                    />
+                  )}
+
+                  <Text strong>Звіт по складу</Text>
+
+                  <Table
+                    rowKey="component_id"
+                    size="small"
+                    pagination={false}
+                    dataSource={(warehouseAvailability.components || []).filter(
+                      (item) => Number(item.missing_quantity) > 0,
+                    )}
+                    columns={[
+                      {
+                        title: 'Назва',
+                        dataIndex: 'inv_item_name',
+                        key: 'inv_item_name',
+                        render: (value) => value || '—',
+                      },
+                      {
+                        title: 'Дефіцит',
+                        dataIndex: 'missing_quantity',
+                        key: 'missing_quantity',
+                        width: 140,
+                        align: 'center',
+                        render: (value) => formatQuantity(value),
+                      },
+                      {
+                        title: 'Критично',
+                        dataIndex: 'is_required_for_start',
+                        key: 'is_required_for_start',
+                        width: 120,
+                        align: 'center',
+                        render: (value) =>
+                          value ? (
+                            <CheckCircleOutlined
+                              style={{ color: '#52c41a', fontSize: 18 }}
+                            />
+                          ) : (
+                            <CloseCircleOutlined
+                              style={{ color: '#ff4d4f', fontSize: 18 }}
+                            />
+                          ),
+                      },
+                    ]}
+                    locale={{
+                      emptyText: 'Дефіцит не виявлено.',
+                    }}
+                  />
+                </Flex>
+              ) : (
+                <Text type="secondary">Дані перевірки ще не отримані.</Text>
+              )}
+            </Card>
+          )}
+
+          {createdSaleOrder && !warehouseCheckStarted && (
             <Flex justify="space-between" gap={8}>
               <Button onClick={handleCloseDrawer}>Закрити</Button>
-              <Button type="primary">
+              <Button
+                type="primary"
+                onClick={
+                  usesCustomerGoods
+                    ? undefined
+                    : handleCheckWarehouseAvailability
+                }
+              >
                 {usesCustomerGoods ? 'Зберегти зміни' : 'Перевірка складу'}
               </Button>
+            </Flex>
+          )}
+
+          {warehouseCheckStarted && (
+            <Flex justify="space-between" gap={8}>
+              <Button onClick={handleCloseDrawer}>Закрити</Button>
+
+              {warehouseAvailability?.can_confirm && (
+                <Button type="primary">Підтвердити замовлення</Button>
+              )}
             </Flex>
           )}
         </Flex>

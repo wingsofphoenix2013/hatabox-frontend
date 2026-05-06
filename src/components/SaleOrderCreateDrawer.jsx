@@ -57,6 +57,8 @@ function SaleOrderCreateDrawer({ open, onClose }) {
   const [warehouseLoading, setWarehouseLoading] = useState(false);
   const [warehouseAvailability, setWarehouseAvailability] = useState(null);
 
+  const isMainInfoLocked = Boolean(createdSaleOrder);
+
   const isCustomerComponentsLocked = warehouseCheckStarted && warehouseLoading;
   const [organizationsLoading, setOrganizationsLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
@@ -380,6 +382,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                     options={organizationOptions}
                     loading={organizationsLoading}
                     filterOption={false}
+                    disabled={isMainInfoLocked}
                     onSearch={loadOrganizationOptions}
                     onFocus={() => loadOrganizationOptions()}
                     onChange={(value) => {
@@ -409,7 +412,9 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                     }
                     options={responsiblePersonOptions}
                     loading={responsiblePersonsLoading}
-                    disabled={!form.getFieldValue('organization')}
+                    disabled={
+                      !form.getFieldValue('organization') || isMainInfoLocked
+                    }
                   />
                 </Form.Item>
               </div>
@@ -426,6 +431,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                     options={productOptions}
                     loading={productsLoading}
                     filterOption={false}
+                    disabled={isMainInfoLocked}
                     onSearch={loadProductOptions}
                     onFocus={() => loadProductOptions()}
                   />
@@ -435,7 +441,11 @@ function SaleOrderCreateDrawer({ open, onClose }) {
               <div>
                 <Text style={compactLabelStyle}>Коментар</Text>
                 <Form.Item name="comment" style={{ marginBottom: 0 }}>
-                  <TextArea rows={2} placeholder="Коментар до замовлення" />
+                  <TextArea
+                    rows={2}
+                    placeholder="Коментар до замовлення"
+                    disabled={isMainInfoLocked}
+                  />
                 </Form.Item>
               </div>
 

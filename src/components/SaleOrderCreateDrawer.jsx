@@ -56,6 +56,8 @@ function SaleOrderCreateDrawer({ open, onClose }) {
   const [warehouseCheckStarted, setWarehouseCheckStarted] = useState(false);
   const [warehouseLoading, setWarehouseLoading] = useState(false);
   const [warehouseAvailability, setWarehouseAvailability] = useState(null);
+
+  const isCustomerComponentsLocked = warehouseCheckStarted && warehouseLoading;
   const [organizationsLoading, setOrganizationsLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [responsiblePersonsLoading, setResponsiblePersonsLoading] =
@@ -233,8 +235,14 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       label: `${item.inv_item_name || '—'} | ${formatQuantity(item.quantity)}`,
     }));
 
+  const resetWarehouseCheck = () => {
+    setWarehouseCheckStarted(false);
+    setWarehouseLoading(false);
+    setWarehouseAvailability(null);
+  };
+
   const handleAddCustomerComponent = () => {
-    if (!selectedComponentId) return;
+    if (!selectedComponentId || isCustomerComponentsLocked) return;
 
     const component = (
       Array.isArray(saleOrderDetail?.components)
@@ -249,12 +257,16 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     setSelectedComponentId(null);
     setComponentSearchText('');
     setDebouncedComponentSearchText('');
+    resetWarehouseCheck();
   };
 
   const handleDeleteCustomerComponent = (componentId) => {
+    if (isCustomerComponentsLocked) return;
+
     setCustomerComponents((prev) =>
       prev.filter((item) => item.id !== componentId),
     );
+    resetWarehouseCheck();
   };
 
   const handleSaveCustomerComponents = async () => {
@@ -271,15 +283,17 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       );
 
       setSaleOrderDetail(response.data);
-
-      await handleCheckWarehouseAvailability();
+      message.success('Компоненти замовника збережено.');
     } catch (err) {
       console.error('Failed to save customer components:', err);
 
       message.error('Не вдалося зберегти компоненти замовника.');
+      return;
     } finally {
       setSavingCustomerComponents(false);
     }
+
+    await handleCheckWarehouseAvailability();
   };
 
   const handleCheckWarehouseAvailability = async () => {
@@ -477,18 +491,25 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                       options={availableComponentOptions}
                       filterOption={false}
                       searchValue={componentSearchText}
+                      disabled={isCustomerComponentsLocked}
                       onSearch={setComponentSearchText}
                       onChange={setSelectedComponentId}
                     />
 
                     <SaveOutlined
                       style={{
-                        color: selectedComponentId ? '#52c41a' : '#bfbfbf',
+                        color:
+                          selectedComponentId && !isCustomerComponentsLocked
+                            ? '#52c41a'
+                            : '#bfbfbf',
                         fontSize: 20,
-                        cursor: selectedComponentId ? 'pointer' : 'not-allowed',
+                        cursor:
+                          selectedComponentId && !isCustomerComponentsLocked
+                            ? 'pointer'
+                            : 'not-allowed',
                       }}
                       onClick={
-                        selectedComponentId
+                        selectedComponentId && !isCustomerComponentsLocked
                           ? handleAddCustomerComponent
                           : undefined
                       }
@@ -536,12 +557,19 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                           render: (_, record) => (
                             <DeleteOutlined
                               style={{
-                                color: '#ff4d4f',
-                                cursor: 'pointer',
+                                color: isCustomerComponentsLocked
+                                  ? '#bfbfbf'
+                                  : '#ff4d4f',
+                                cursor: isCustomerComponentsLocked
+                                  ? 'not-allowed'
+                                  : 'pointer',
                                 fontSize: 16,
                               }}
-                              onClick={() =>
-                                handleDeleteCustomerComponent(record.id)
+                              onClick={
+                                isCustomerComponentsLocked
+                                  ? undefined
+                                  : () =>
+                                      handleDeleteCustomerComponent(record.id)
                               }
                             />
                           ),
@@ -555,7 +583,11 @@ function SaleOrderCreateDrawer({ open, onClose }) {
           )}
 
           {warehouseCheckStarted && (
-            <Card title="2. Перевірка складу на наявність компонентів">
+            <Card
+              title={`${
+                usesCustomerGoods ? '3' : '2'
+              }. Перевірка складу на наявність компонентів`}
+            >
               {warehouseLoading ? (
                 <Flex
                   vertical

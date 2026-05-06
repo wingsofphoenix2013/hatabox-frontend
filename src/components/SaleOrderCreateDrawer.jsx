@@ -7,13 +7,12 @@ import {
   Form,
   Input,
   Select,
+  Switch,
   Typography,
   message,
 } from 'antd';
-import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
-import { formatDateUa } from '../utils/orderFormatters';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -27,9 +26,10 @@ const compactLabelStyle = {
 
 function SaleOrderCreateDrawer({ open, onClose }) {
   const [form] = Form.useForm();
-  const navigate = useNavigate();
 
   const [saving, setSaving] = useState(false);
+  const [createdSaleOrder, setCreatedSaleOrder] = useState(null);
+  const [usesCustomerGoods, setUsesCustomerGoods] = useState(false);
   const [organizationsLoading, setOrganizationsLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [responsiblePersonsLoading, setResponsiblePersonsLoading] =
@@ -49,12 +49,16 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setOrganizationOptions([]);
       setProductOptions([]);
       setResponsiblePersonOptions([]);
+      setCreatedSaleOrder(null);
+      setUsesCustomerGoods(false);
     }
   }, [open, form]);
 
   const handleCloseDrawer = () => {
     form.resetFields();
     setResponsiblePersonOptions([]);
+    setCreatedSaleOrder(null);
+    setUsesCustomerGoods(false);
     onClose();
   };
 
@@ -165,17 +169,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       const response = await api.post('sales-orders/', payload);
 
       message.success('Замовлення створено.');
-      handleCloseDrawer();
-
-      const orderLabel = `№ ${response.data.id} від ${formatDateUa(
-        response.data.created_at,
-      )}`;
-
-      navigate(`/sales/orders/${response.data.id}`, {
-        state: {
-          orderLabel,
-        },
-      });
+      setCreatedSaleOrder(response.data);
     } catch (err) {
       console.error('Failed to create sale order:', err);
 
@@ -272,18 +266,55 @@ function SaleOrderCreateDrawer({ open, onClose }) {
               <div>
                 <Text style={compactLabelStyle}>Коментар</Text>
                 <Form.Item name="comment" style={{ marginBottom: 0 }}>
-                  <TextArea rows={4} placeholder="Коментар до замовлення" />
+                  <TextArea rows={2} placeholder="Коментар до замовлення" />
                 </Form.Item>
               </div>
+
+              {!createdSaleOrder && (
+                <Flex justify="flex-end">
+                  <Button type="primary" htmlType="submit" loading={saving}>
+                    Створити замовлення
+                  </Button>
+                </Flex>
+              )}
             </Flex>
           </Card>
 
-          <Flex justify="space-between" gap={8}>
-            <Button onClick={handleCloseDrawer}>Закрити</Button>
-            <Button type="primary" htmlType="submit" loading={saving}>
-              Створити замовлення
-            </Button>
-          </Flex>
+          <Card
+            title={
+              <Flex justify="space-between" align="center" gap={12}>
+                <span>2. Товар замовника</span>
+
+                <Flex align="center" gap={8}>
+                  <Text type="secondary">Використовуємо</Text>
+                  <Switch
+                    checked={usesCustomerGoods}
+                    checkedChildren="Так"
+                    unCheckedChildren="Ні"
+                    disabled={!createdSaleOrder}
+                    onChange={setUsesCustomerGoods}
+                  />
+                </Flex>
+              </Flex>
+            }
+            style={{
+              opacity: createdSaleOrder ? 1 : 0.55,
+            }}
+          >
+            <Text type="secondary">
+              Після створення замовлення тут буде налаштування товарів
+              замовника.
+            </Text>
+          </Card>
+
+          {createdSaleOrder && (
+            <Flex justify="space-between" gap={8}>
+              <Button onClick={handleCloseDrawer}>Закрити</Button>
+              <Button type="primary">
+                {usesCustomerGoods ? 'Зберегти зміни' : 'Перевірка складу'}
+              </Button>
+            </Flex>
+          )}
         </Flex>
       </Form>
     </Drawer>

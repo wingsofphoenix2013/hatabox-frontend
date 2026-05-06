@@ -3,7 +3,9 @@ import {
   CheckCircleFilled,
   CheckCircleOutlined,
   CloseCircleFilled,
+  DeleteOutlined,
   InfoCircleFilled,
+  SaveOutlined,
   WarningFilled,
 } from '@ant-design/icons';
 import {
@@ -40,7 +42,16 @@ function SaleOrderCreateDrawer({ open, onClose }) {
 
   const [saving, setSaving] = useState(false);
   const [createdSaleOrder, setCreatedSaleOrder] = useState(null);
+  const [saleOrderDetail, setSaleOrderDetail] = useState(null);
   const [usesCustomerGoods, setUsesCustomerGoods] = useState(false);
+
+  const [componentSearchText, setComponentSearchText] = useState('');
+  const [debouncedComponentSearchText, setDebouncedComponentSearchText] =
+    useState('');
+  const [selectedComponentId, setSelectedComponentId] = useState(null);
+  const [customerComponents, setCustomerComponents] = useState([]);
+  const [savingCustomerComponents, setSavingCustomerComponents] =
+    useState(false);
 
   const [warehouseCheckStarted, setWarehouseCheckStarted] = useState(false);
   const [warehouseLoading, setWarehouseLoading] = useState(false);
@@ -55,6 +66,16 @@ function SaleOrderCreateDrawer({ open, onClose }) {
   const [responsiblePersonOptions, setResponsiblePersonOptions] = useState([]);
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedComponentSearchText(componentSearchText);
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [componentSearchText]);
+
+  useEffect(() => {
     if (!open) {
       form.resetFields();
       setSaving(false);
@@ -65,7 +86,13 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setProductOptions([]);
       setResponsiblePersonOptions([]);
       setCreatedSaleOrder(null);
+      setSaleOrderDetail(null);
       setUsesCustomerGoods(false);
+      setComponentSearchText('');
+      setDebouncedComponentSearchText('');
+      setSelectedComponentId(null);
+      setCustomerComponents([]);
+      setSavingCustomerComponents(false);
 
       setWarehouseCheckStarted(false);
       setWarehouseLoading(false);
@@ -77,7 +104,13 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     form.resetFields();
     setResponsiblePersonOptions([]);
     setCreatedSaleOrder(null);
+    setSaleOrderDetail(null);
     setUsesCustomerGoods(false);
+    setComponentSearchText('');
+    setDebouncedComponentSearchText('');
+    setSelectedComponentId(null);
+    setCustomerComponents([]);
+    setSavingCustomerComponents(false);
 
     setWarehouseCheckStarted(false);
     setWarehouseLoading(false);
@@ -174,6 +207,81 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     }
   };
 
+  const availableComponentOptions = (
+    Array.isArray(saleOrderDetail?.components) ? saleOrderDetail.components : []
+  )
+    .filter(
+      (item) =>
+        !customerComponents.some((selectedItem) => selectedItem.id === item.id),
+    )
+    .filter((item) => {
+      if (!debouncedComponentSearchText.trim()) return true;
+
+      const normalizedSearch = debouncedComponentSearchText.toLowerCase();
+
+      return (
+        String(item.inv_item_name || '')
+          .toLowerCase()
+          .includes(normalizedSearch) ||
+        String(item.inv_item_code || '')
+          .toLowerCase()
+          .includes(normalizedSearch)
+      );
+    })
+    .map((item) => ({
+      value: item.id,
+      label: `${item.inv_item_name || '—'} | ${formatQuantity(item.quantity)}`,
+    }));
+
+  const handleAddCustomerComponent = () => {
+    if (!selectedComponentId) return;
+
+    const component = (
+      Array.isArray(saleOrderDetail?.components)
+        ? saleOrderDetail.components
+        : []
+    ).find((item) => item.id === selectedComponentId);
+
+    if (!component) return;
+
+    setCustomerComponents((prev) => [...prev, component]);
+
+    setSelectedComponentId(null);
+    setComponentSearchText('');
+    setDebouncedComponentSearchText('');
+  };
+
+  const handleDeleteCustomerComponent = (componentId) => {
+    setCustomerComponents((prev) =>
+      prev.filter((item) => item.id !== componentId),
+    );
+  };
+
+  const handleSaveCustomerComponents = async () => {
+    if (!createdSaleOrder?.id) return;
+
+    try {
+      setSavingCustomerComponents(true);
+
+      const response = await api.post(
+        `sales-orders/${createdSaleOrder.id}/set-customer-components/`,
+        {
+          component_ids: customerComponents.map((item) => item.id),
+        },
+      );
+
+      setSaleOrderDetail(response.data);
+
+      await handleCheckWarehouseAvailability();
+    } catch (err) {
+      console.error('Failed to save customer components:', err);
+
+      message.error('Не вдалося зберегти компоненти замовника.');
+    } finally {
+      setSavingCustomerComponents(false);
+    }
+  };
+
   const handleCheckWarehouseAvailability = async () => {
     if (!createdSaleOrder?.id) return;
 
@@ -212,8 +320,11 @@ function SaleOrderCreateDrawer({ open, onClose }) {
 
       const response = await api.post('sales-orders/', payload);
 
+      const detailResponse = await api.get(`sales-orders/${response.data.id}/`);
+
       message.success('Замовлення створено.');
       setCreatedSaleOrder(response.data);
+      setSaleOrderDetail(detailResponse.data);
     } catch (err) {
       console.error('Failed to create sale order:', err);
 
@@ -346,10 +457,96 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                 opacity: createdSaleOrder ? 1 : 0.55,
               }}
             >
-              <Text type="secondary">
-                Після створення замовлення тут буде налаштування товарів
-                замовника.
-              </Text>
+              {!createdSaleOrder ? (
+                <Text type="secondary">
+                  Після створення замовлення тут буде налаштування товарів
+                  замовника.
+                </Text>
+              ) : (
+                <Flex vertical gap={16}>
+                  <Flex align="center" gap={10}>
+                    <Select
+                      showSearch
+                      placeholder="Почніть вводити назву компонента"
+                      style={{ flex: 1 }}
+                      value={selectedComponentId}
+                      options={availableComponentOptions}
+                      filterOption={false}
+                      searchValue={componentSearchText}
+                      onSearch={setComponentSearchText}
+                      onChange={setSelectedComponentId}
+                    />
+
+                    <SaveOutlined
+                      style={{
+                        color: selectedComponentId ? '#52c41a' : '#bfbfbf',
+                        fontSize: 20,
+                        cursor: selectedComponentId ? 'pointer' : 'not-allowed',
+                      }}
+                      onClick={
+                        selectedComponentId
+                          ? handleAddCustomerComponent
+                          : undefined
+                      }
+                    />
+                  </Flex>
+
+                  <Flex vertical gap={10}>
+                    <Text strong>Очікуємо від замовника</Text>
+
+                    <Table
+                      rowKey="id"
+                      size="small"
+                      pagination={false}
+                      dataSource={customerComponents}
+                      locale={{
+                        emptyText: 'Компоненти ще не обрані.',
+                      }}
+                      columns={[
+                        {
+                          title: '№',
+                          key: 'index',
+                          width: 60,
+                          align: 'center',
+                          render: (_, __, index) => index + 1,
+                        },
+                        {
+                          title: 'Назва',
+                          dataIndex: 'inv_item_name',
+                          key: 'inv_item_name',
+                          render: (value) => value || '—',
+                        },
+                        {
+                          title: 'К-сть',
+                          dataIndex: 'quantity',
+                          key: 'quantity',
+                          width: 120,
+                          align: 'center',
+                          render: (value) => formatQuantity(value),
+                        },
+                        {
+                          title: 'Дії',
+                          key: 'actions',
+                          width: 80,
+                          align: 'center',
+                          render: (_, record) => (
+                            <DeleteOutlined
+                              style={{
+                                color: '#ff4d4f',
+                                cursor: 'pointer',
+                                fontSize: 16,
+                              }}
+                              onClick={() =>
+                                handleDeleteCustomerComponent(record.id)
+                              }
+                            />
+                          ),
+                        },
+                      ]}
+                    />
+                  </Flex>
+                </Flex>
+              )}
             </Card>
           )}
 
@@ -465,9 +662,10 @@ function SaleOrderCreateDrawer({ open, onClose }) {
               <Button onClick={handleCloseDrawer}>Закрити</Button>
               <Button
                 type="primary"
+                loading={savingCustomerComponents}
                 onClick={
                   usesCustomerGoods
-                    ? undefined
+                    ? handleSaveCustomerComponents
                     : handleCheckWarehouseAvailability
                 }
               >

@@ -15,7 +15,7 @@ import {
   Form,
   Input,
   Select,
-  Skeleton,
+  Spin,
   Switch,
   Table,
   Typography,
@@ -324,37 +324,50 @@ function SaleOrderCreateDrawer({ open, onClose }) {
             </Flex>
           </Card>
 
-          <Card
-            title={
-              <Flex justify="space-between" align="center" gap={12}>
-                <span>2. Товар замовника</span>
+          {(!warehouseCheckStarted || usesCustomerGoods) && (
+            <Card
+              title={
+                <Flex justify="space-between" align="center" gap={12}>
+                  <span>2. Товар замовника</span>
 
-                <Flex align="center" gap={8}>
-                  <Text type="secondary">Використовуємо</Text>
-                  <Switch
-                    checked={usesCustomerGoods}
-                    checkedChildren="Так"
-                    unCheckedChildren="Ні"
-                    disabled={!createdSaleOrder}
-                    onChange={setUsesCustomerGoods}
-                  />
+                  <Flex align="center" gap={8}>
+                    <Text type="secondary">Використовуємо</Text>
+                    <Switch
+                      checked={usesCustomerGoods}
+                      checkedChildren="Так"
+                      unCheckedChildren="Ні"
+                      disabled={!createdSaleOrder}
+                      onChange={setUsesCustomerGoods}
+                    />
+                  </Flex>
                 </Flex>
-              </Flex>
-            }
-            style={{
-              opacity: createdSaleOrder ? 1 : 0.55,
-            }}
-          >
-            <Text type="secondary">
-              Після створення замовлення тут буде налаштування товарів
-              замовника.
-            </Text>
-          </Card>
+              }
+              style={{
+                opacity: createdSaleOrder ? 1 : 0.55,
+              }}
+            >
+              <Text type="secondary">
+                Після створення замовлення тут буде налаштування товарів
+                замовника.
+              </Text>
+            </Card>
+          )}
 
           {warehouseCheckStarted && (
-            <Card title="3. Перевірка складу на наявність компонентів">
+            <Card title="2. Перевірка складу на наявність компонентів">
               {warehouseLoading ? (
-                <Skeleton active paragraph={{ rows: 4 }} />
+                <Flex
+                  vertical
+                  align="center"
+                  justify="center"
+                  gap={12}
+                  style={{ padding: '28px 0' }}
+                >
+                  <Spin size="large" />
+                  <Text type="secondary">
+                    Перевіряємо складські залишки та наявність компонентів...
+                  </Text>
+                </Flex>
               ) : warehouseAvailability ? (
                 <Flex vertical gap={14}>
                   <Flex align="flex-end" gap={10}>

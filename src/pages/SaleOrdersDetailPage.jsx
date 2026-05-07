@@ -337,37 +337,42 @@ function SaleOrdersDetailPage() {
                 </Flex>
               }
             >
-              <Flex vertical gap={16}>
-                <Flex vertical gap={10}>
-                  <Text strong>Компоненти від замовника</Text>
+              {refreshingShortages ? (
+                <Skeleton active paragraph={{ rows: 6 }} />
+              ) : (
+                <Flex vertical gap={16}>
+                  <Flex vertical gap={10}>
+                    <Text strong>Компоненти від замовника</Text>
 
-                  <Table
-                    rowKey="id"
-                    size="small"
-                    pagination={false}
-                    dataSource={customerShortages}
-                    columns={shortageColumns}
-                    locale={{
-                      emptyText: 'Дефіцит компонентів від замовника відсутній.',
-                    }}
-                  />
+                    <Table
+                      rowKey="id"
+                      size="small"
+                      pagination={false}
+                      dataSource={customerShortages}
+                      columns={shortageColumns}
+                      locale={{
+                        emptyText:
+                          'Дефіцит компонентів від замовника відсутній.',
+                      }}
+                    />
+                  </Flex>
+
+                  <Flex vertical gap={10}>
+                    <Text strong>Загальний перелік компонентів</Text>
+
+                    <Table
+                      rowKey="id"
+                      size="small"
+                      pagination={false}
+                      dataSource={mixedShortages}
+                      columns={shortageColumns}
+                      locale={{
+                        emptyText: 'Загальний дефіцит компонентів відсутній.',
+                      }}
+                    />
+                  </Flex>
                 </Flex>
-
-                <Flex vertical gap={10}>
-                  <Text strong>Загальний перелік компонентів</Text>
-
-                  <Table
-                    rowKey="id"
-                    size="small"
-                    pagination={false}
-                    dataSource={mixedShortages}
-                    columns={shortageColumns}
-                    locale={{
-                      emptyText: 'Загальний дефіцит компонентів відсутній.',
-                    }}
-                  />
-                </Flex>
-              </Flex>
+              )}
             </Card>
           )}
         </Col>

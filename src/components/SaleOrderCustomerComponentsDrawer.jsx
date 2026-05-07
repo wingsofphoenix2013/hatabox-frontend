@@ -1,6 +1,15 @@
 import { useEffect, useState } from 'react';
 import { DeleteOutlined, SaveOutlined } from '@ant-design/icons';
-import { Button, Drawer, Flex, Select, Table, Typography, message } from 'antd';
+import {
+  Button,
+  Card,
+  Drawer,
+  Flex,
+  Select,
+  Table,
+  Typography,
+  message,
+} from 'antd';
 
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
@@ -158,99 +167,103 @@ function SaleOrderCustomerComponentsDrawer({
       onClose={onClose}
     >
       <Flex vertical gap={16}>
-        <Flex align="center" gap={10}>
-          <Select
-            showSearch
-            allowClear
-            placeholder="Почніть вводити назву компонента"
-            style={{ flex: 1 }}
-            value={selectedComponentId}
-            options={availableComponentOptions}
-            filterOption={false}
-            searchValue={componentSearchText}
-            loading={loading}
-            disabled={loading || saving}
-            onSearch={setComponentSearchText}
-            onChange={setSelectedComponentId}
-            onClear={() => {
-              setSelectedComponentId(null);
-              setComponentSearchText('');
-              setDebouncedComponentSearchText('');
-            }}
-          />
+        <Card title="Товар замовника">
+          <Flex vertical gap={16}>
+            <Flex align="center" gap={10}>
+              <Select
+                showSearch
+                allowClear
+                placeholder="Почніть вводити назву компонента"
+                style={{ flex: 1 }}
+                value={selectedComponentId}
+                options={availableComponentOptions}
+                filterOption={false}
+                searchValue={componentSearchText}
+                loading={loading}
+                disabled={loading || saving}
+                onSearch={setComponentSearchText}
+                onChange={setSelectedComponentId}
+                onClear={() => {
+                  setSelectedComponentId(null);
+                  setComponentSearchText('');
+                  setDebouncedComponentSearchText('');
+                }}
+              />
 
-          <SaveOutlined
-            style={{
-              color: selectedComponentId && !saving ? '#52c41a' : '#bfbfbf',
-              fontSize: 20,
-              cursor:
-                selectedComponentId && !saving ? 'pointer' : 'not-allowed',
-            }}
-            onClick={
-              selectedComponentId && !saving
-                ? handleAddCustomerComponent
-                : undefined
-            }
-          />
-        </Flex>
+              <SaveOutlined
+                style={{
+                  color: selectedComponentId && !saving ? '#52c41a' : '#bfbfbf',
+                  fontSize: 20,
+                  cursor:
+                    selectedComponentId && !saving ? 'pointer' : 'not-allowed',
+                }}
+                onClick={
+                  selectedComponentId && !saving
+                    ? handleAddCustomerComponent
+                    : undefined
+                }
+              />
+            </Flex>
 
-        <Flex vertical gap={10}>
-          <Text strong>Очікуємо від замовника</Text>
+            <Flex vertical gap={10}>
+              <Text strong>Очікуємо від замовника</Text>
 
-          <Table
-            rowKey="id"
-            size="small"
-            loading={loading}
-            pagination={false}
-            dataSource={customerComponents}
-            locale={{
-              emptyText: 'Компоненти ще не обрані.',
-            }}
-            columns={[
-              {
-                title: '№',
-                key: 'index',
-                width: 60,
-                align: 'center',
-                render: (_, __, index) => index + 1,
-              },
-              {
-                title: 'Назва',
-                dataIndex: 'inv_item_name',
-                key: 'inv_item_name',
-                render: (value) => value || '—',
-              },
-              {
-                title: 'К-сть',
-                dataIndex: 'quantity',
-                key: 'quantity',
-                width: 120,
-                align: 'center',
-                render: (value) => formatQuantity(value),
-              },
-              {
-                title: 'Дії',
-                key: 'actions',
-                width: 80,
-                align: 'center',
-                render: (_, record) => (
-                  <DeleteOutlined
-                    style={{
-                      color: saving ? '#bfbfbf' : '#ff4d4f',
-                      cursor: saving ? 'not-allowed' : 'pointer',
-                      fontSize: 16,
-                    }}
-                    onClick={
-                      saving
-                        ? undefined
-                        : () => handleDeleteCustomerComponent(record.id)
-                    }
-                  />
-                ),
-              },
-            ]}
-          />
-        </Flex>
+              <Table
+                rowKey="id"
+                size="small"
+                loading={loading}
+                pagination={false}
+                dataSource={customerComponents}
+                locale={{
+                  emptyText: 'Компоненти ще не обрані.',
+                }}
+                columns={[
+                  {
+                    title: '№',
+                    key: 'index',
+                    width: 60,
+                    align: 'center',
+                    render: (_, __, index) => index + 1,
+                  },
+                  {
+                    title: 'Назва',
+                    dataIndex: 'inv_item_name',
+                    key: 'inv_item_name',
+                    render: (value) => value || '—',
+                  },
+                  {
+                    title: 'К-сть',
+                    dataIndex: 'quantity',
+                    key: 'quantity',
+                    width: 120,
+                    align: 'center',
+                    render: (value) => formatQuantity(value),
+                  },
+                  {
+                    title: 'Дії',
+                    key: 'actions',
+                    width: 80,
+                    align: 'center',
+                    render: (_, record) => (
+                      <DeleteOutlined
+                        style={{
+                          color: saving ? '#bfbfbf' : '#ff4d4f',
+                          cursor: saving ? 'not-allowed' : 'pointer',
+                          fontSize: 16,
+                        }}
+                        onClick={
+                          saving
+                            ? undefined
+                            : () => handleDeleteCustomerComponent(record.id)
+                        }
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </Flex>
+          </Flex>
+        </Card>
 
         <Flex justify="space-between" gap={8}>
           <Button onClick={onClose}>Закрити</Button>

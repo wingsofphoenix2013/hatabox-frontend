@@ -439,7 +439,7 @@ function SaleOrdersDetailPage() {
         open={isCustomerComponentsDrawerOpen}
         onClose={() => setIsCustomerComponentsDrawerOpen(false)}
         orderId={order.id}
-        onSaved={loadOrderPage}
+        onSaved={handleRefreshWarehouseShortages}
       />
     </div>
   );

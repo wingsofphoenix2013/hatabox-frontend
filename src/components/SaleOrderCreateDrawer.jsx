@@ -21,6 +21,7 @@ import {
   Spin,
   Switch,
   Table,
+  Tooltip,
   Typography,
   message,
 } from 'antd';
@@ -532,6 +533,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                   <Flex align="center" gap={10}>
                     <Select
                       showSearch
+                      allowClear
                       placeholder="Почніть вводити назву компонента"
                       style={{ flex: 1 }}
                       value={selectedComponentId}
@@ -541,6 +543,11 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                       disabled={isCustomerComponentsLocked}
                       onSearch={setComponentSearchText}
                       onChange={setSelectedComponentId}
+                      onClear={() => {
+                        setSelectedComponentId(null);
+                        setComponentSearchText('');
+                        setDebouncedComponentSearchText('');
+                      }}
                     />
 
                     <SaveOutlined
@@ -743,17 +750,28 @@ function SaleOrderCreateDrawer({ open, onClose }) {
           {createdSaleOrder && !warehouseCheckStarted && (
             <Flex justify="space-between" gap={8}>
               <Button onClick={handleCloseDrawer}>Закрити</Button>
-              <Button
-                type="primary"
-                loading={savingCustomerComponents}
-                onClick={
-                  usesCustomerGoods
-                    ? handleSaveCustomerComponents
-                    : handleCheckWarehouseAvailability
+              <Tooltip
+                title={
+                  usesCustomerGoods && selectedComponentId
+                    ? 'Спочатку потрібно зберегти обраний компонент до списку.'
+                    : ''
                 }
               >
-                {usesCustomerGoods ? 'Зберегти зміни' : 'Перевірка складу'}
-              </Button>
+                <div>
+                  <Button
+                    type="primary"
+                    loading={savingCustomerComponents}
+                    disabled={usesCustomerGoods && Boolean(selectedComponentId)}
+                    onClick={
+                      usesCustomerGoods
+                        ? handleSaveCustomerComponents
+                        : handleCheckWarehouseAvailability
+                    }
+                  >
+                    {usesCustomerGoods ? 'Зберегти зміни' : 'Перевірка складу'}
+                  </Button>
+                </div>
+              </Tooltip>
             </Flex>
           )}
 

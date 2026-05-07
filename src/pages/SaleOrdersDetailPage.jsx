@@ -64,6 +64,7 @@ function SaleOrdersDetailPage() {
   const [error, setError] = useState('');
 
   const [refreshingShortages, setRefreshingShortages] = useState(false);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
 
   const [isCustomerComponentsDrawerOpen, setIsCustomerComponentsDrawerOpen] =
     useState(false);
@@ -184,6 +185,25 @@ function SaleOrdersDetailPage() {
       message.error(backendMessage || 'Не вдалося оновити відповідального.');
     } finally {
       setSavingResponsiblePerson(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    try {
+      setCancellingOrder(true);
+
+      const response = await api.post(`sales-orders/${id}/cancel/`, {});
+
+      setOrder(response.data);
+      message.success('Замовлення відмінено.');
+    } catch (err) {
+      console.error('Failed to cancel sale order:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(backendMessage || 'Не вдалося відмінити замовлення.');
+    } finally {
+      setCancellingOrder(false);
     }
   };
 
@@ -443,8 +463,14 @@ function SaleOrdersDetailPage() {
                   description="Ця дія є незворотною. Після відміни замовлення буде переведене у статус «Скасовано»."
                   okText="Так"
                   cancelText="Ні"
+                  onConfirm={handleCancelOrder}
                 >
-                  <Button block danger icon={<StopOutlined />}>
+                  <Button
+                    block
+                    danger
+                    loading={cancellingOrder}
+                    icon={<StopOutlined />}
+                  >
                     Відміна замовлення
                   </Button>
                 </Popconfirm>

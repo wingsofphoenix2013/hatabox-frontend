@@ -3,6 +3,7 @@ import {
   EditOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
+  SaveOutlined,
   SettingOutlined,
   StopOutlined,
   WarningFilled,
@@ -15,18 +16,22 @@ import {
   Descriptions,
   Divider,
   Flex,
+  Input,
   Popconfirm,
   Row,
+  Select,
   Skeleton,
   Table,
   Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 
 import api from '../api/client';
 import SaleOrderCustomerComponentsDrawer from '../components/SaleOrderCustomerComponentsDrawer';
+import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
 import { formatQuantity } from '../utils/formatNumber';
 
@@ -63,6 +68,19 @@ function SaleOrdersDetailPage() {
   const [isCustomerComponentsDrawerOpen, setIsCustomerComponentsDrawerOpen] =
     useState(false);
 
+  const [isEditingComment, setIsEditingComment] = useState(false);
+  const [editingComment, setEditingComment] = useState('');
+  const [savingComment, setSavingComment] = useState(false);
+
+  const [isEditingResponsiblePerson, setIsEditingResponsiblePerson] =
+    useState(false);
+  const [responsiblePersonOptions, setResponsiblePersonOptions] = useState([]);
+  const [responsiblePersonsLoading, setResponsiblePersonsLoading] =
+    useState(false);
+  const [editingResponsiblePerson, setEditingResponsiblePerson] =
+    useState(null);
+  const [savingResponsiblePerson, setSavingResponsiblePerson] = useState(false);
+
   const loadOrderPage = async () => {
     try {
       setLoading(true);
@@ -76,6 +94,96 @@ function SaleOrdersDetailPage() {
       setOrder(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStartEditComment = () => {
+    setEditingComment(order?.comment || '');
+    setIsEditingComment(true);
+  };
+
+  const handleSaveComment = async () => {
+    try {
+      setSavingComment(true);
+
+      const response = await api.post(`sales-orders/${id}/update-details/`, {
+        comment: editingComment || '',
+      });
+
+      setOrder(response.data);
+      setIsEditingComment(false);
+      message.success('Коментар збережено.');
+    } catch (err) {
+      console.error('Failed to update sale order comment:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'comment',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося зберегти коментар.');
+    } finally {
+      setSavingComment(false);
+    }
+  };
+
+  const loadResponsiblePersonOptions = async () => {
+    if (!order?.organization) return;
+
+    try {
+      setResponsiblePersonsLoading(true);
+
+      const response = await api.get(
+        `organization-person-assignments/?organization=${order.organization}&is_current=true`,
+      );
+
+      const results = Array.isArray(response.data?.results)
+        ? response.data.results
+        : [];
+
+      setResponsiblePersonOptions(
+        results.map((item) => ({
+          value: item.person,
+          label: `${item.person_full_name || '—'} — ${
+            item.position_name || '—'
+          }`,
+        })),
+      );
+    } catch (err) {
+      console.error('Failed to load responsible person options:', err);
+      message.error('Не вдалося завантажити відповідальних осіб.');
+      setResponsiblePersonOptions([]);
+    } finally {
+      setResponsiblePersonsLoading(false);
+    }
+  };
+
+  const handleStartEditResponsiblePerson = async () => {
+    setEditingResponsiblePerson(order?.customer_responsible_person || null);
+    setIsEditingResponsiblePerson(true);
+    await loadResponsiblePersonOptions();
+  };
+
+  const handleSaveResponsiblePerson = async () => {
+    try {
+      setSavingResponsiblePerson(true);
+
+      const response = await api.post(`sales-orders/${id}/update-details/`, {
+        customer_responsible_person: editingResponsiblePerson || null,
+      });
+
+      setOrder(response.data);
+      setIsEditingResponsiblePerson(false);
+      message.success('Відповідального оновлено.');
+    } catch (err) {
+      console.error('Failed to update responsible person:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'customer_responsible_person',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося оновити відповідального.');
+    } finally {
+      setSavingResponsiblePerson(false);
     }
   };
 
@@ -126,6 +234,7 @@ function SaleOrdersDetailPage() {
   const isDraft = order.status === 'draft';
   const isConfirmed = order.status === 'confirmed';
   const canCancel = isDraft || isConfirmed;
+  const canEditDetails = !['completed', 'cancelled'].includes(order.status);
 
   const warehouseShortages = Array.isArray(order.warehouse_shortages)
     ? order.warehouse_shortages
@@ -357,19 +466,20 @@ function SaleOrdersDetailPage() {
         </Col>
 
         <Col xs={24} lg={18}>
-          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-            <Flex vertical gap={16}>
-              <Flex vertical gap={4}>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  Продукт
-                </Text>
+          <Card
+            title={
+              <Flex justify="space-between" align="center" gap={12}>
+                <span>Основна інформація</span>
 
-                <Text strong style={{ fontSize: 16 }}>
+                <Text strong>
                   {order.product_code || '—'} |{' '}
                   {order.product_family_name || '—'}
                 </Text>
               </Flex>
-
+            }
+            style={{ marginBottom: 20 }}
+          >
+            <Flex vertical gap={16}>
               <Descriptions
                 bordered
                 size="small"
@@ -409,34 +519,65 @@ function SaleOrdersDetailPage() {
                         gap={8}
                         style={{ minWidth: 0 }}
                       >
-                        <Flex align="center" gap={6} style={{ minWidth: 0 }}>
-                          <span>
-                            {order.customer_responsible_person_name || '—'}
-                          </span>
+                        {isEditingResponsiblePerson ? (
+                          <Select
+                            allowClear
+                            style={{ flex: 1 }}
+                            value={editingResponsiblePerson}
+                            options={responsiblePersonOptions}
+                            loading={responsiblePersonsLoading}
+                            disabled={savingResponsiblePerson}
+                            onChange={setEditingResponsiblePerson}
+                          />
+                        ) : (
+                          <Flex align="center" gap={6} style={{ minWidth: 0 }}>
+                            <span>
+                              {order.customer_responsible_person_name || '—'}
+                            </span>
 
-                          {order.customer_responsible_person && (
-                            <Link
-                              to={`/contacts/${order.customer_responsible_person}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <InfoCircleOutlined
-                                style={{
-                                  color: '#8c8c8c',
-                                  fontSize: 14,
-                                }}
-                              />
-                            </Link>
-                          )}
-                        </Flex>
+                            {order.customer_responsible_person && (
+                              <Link
+                                to={`/contacts/${order.customer_responsible_person}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <InfoCircleOutlined
+                                  style={{
+                                    color: '#8c8c8c',
+                                    fontSize: 14,
+                                  }}
+                                />
+                              </Link>
+                            )}
+                          </Flex>
+                        )}
 
-                        <EditOutlined
-                          style={{
-                            color: '#8c8c8c',
-                            fontSize: 16,
-                            cursor: 'pointer',
-                          }}
-                        />
+                        {canEditDetails &&
+                          (isEditingResponsiblePerson ? (
+                            <SaveOutlined
+                              style={{
+                                color: '#8c8c8c',
+                                fontSize: 16,
+                                cursor: savingResponsiblePerson
+                                  ? 'not-allowed'
+                                  : 'pointer',
+                              }}
+                              onClick={
+                                savingResponsiblePerson
+                                  ? undefined
+                                  : handleSaveResponsiblePerson
+                              }
+                            />
+                          ) : (
+                            <EditOutlined
+                              style={{
+                                color: '#8c8c8c',
+                                fontSize: 16,
+                                cursor: 'pointer',
+                              }}
+                              onClick={handleStartEditResponsiblePerson}
+                            />
+                          ))}
                       </Flex>
                     ),
                   },
@@ -472,12 +613,49 @@ function SaleOrdersDetailPage() {
                 type="warning"
                 showIcon
                 message={
-                  <Flex vertical gap={8}>
-                    <Text strong>Коментар до замовлення</Text>
+                  <Flex vertical gap={10}>
+                    <Flex justify="space-between" align="center" gap={8}>
+                      <Text strong>Коментар до замовлення</Text>
 
-                    <Text style={{ whiteSpace: 'pre-wrap' }}>
-                      {order.comment || 'Коментар відсутній.'}
-                    </Text>
+                      {canEditDetails &&
+                        (isEditingComment ? (
+                          <SaveOutlined
+                            style={{
+                              color: '#8c8c8c',
+                              fontSize: 16,
+                              cursor: savingComment ? 'not-allowed' : 'pointer',
+                            }}
+                            onClick={
+                              savingComment ? undefined : handleSaveComment
+                            }
+                          />
+                        ) : (
+                          <EditOutlined
+                            style={{
+                              color: '#8c8c8c',
+                              fontSize: 16,
+                              cursor: 'pointer',
+                            }}
+                            onClick={handleStartEditComment}
+                          />
+                        ))}
+                    </Flex>
+
+                    {isEditingComment ? (
+                      <Input.TextArea
+                        value={editingComment}
+                        onChange={(event) =>
+                          setEditingComment(event.target.value)
+                        }
+                        rows={3}
+                        autoFocus
+                        disabled={savingComment}
+                      />
+                    ) : (
+                      <Text style={{ whiteSpace: 'pre-wrap' }}>
+                        {order.comment || 'Коментар відсутній.'}
+                      </Text>
+                    )}
                   </Flex>
                 }
               />

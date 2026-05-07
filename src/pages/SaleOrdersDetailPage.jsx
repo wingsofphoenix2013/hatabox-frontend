@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  EditOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
   SettingOutlined,
@@ -11,6 +12,7 @@ import {
   Button,
   Card,
   Col,
+  Descriptions,
   Divider,
   Flex,
   Popconfirm,
@@ -356,7 +358,130 @@ function SaleOrdersDetailPage() {
 
         <Col xs={24} lg={18}>
           <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-            <Text type="secondary">Дані з’являться пізніше.</Text>
+            <Flex vertical gap={16}>
+              <Flex vertical gap={4}>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Продукт
+                </Text>
+
+                <Text strong style={{ fontSize: 16 }}>
+                  {order.product_code || '—'} |{' '}
+                  {order.product_family_name || '—'}
+                </Text>
+              </Flex>
+
+              <Descriptions
+                bordered
+                size="small"
+                column={2}
+                items={[
+                  {
+                    key: 'organization',
+                    label: 'Військова частина',
+                    children: (
+                      <Flex align="center" gap={6}>
+                        <span>{order.organization_name || '—'}</span>
+
+                        {order.organization && (
+                          <Link
+                            to={`/organizations/${order.organization}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <InfoCircleOutlined
+                              style={{
+                                color: '#8c8c8c',
+                                fontSize: 14,
+                              }}
+                            />
+                          </Link>
+                        )}
+                      </Flex>
+                    ),
+                  },
+                  {
+                    key: 'customer_responsible_person',
+                    label: 'Відповідальний',
+                    children: (
+                      <Flex
+                        align="center"
+                        justify="space-between"
+                        gap={8}
+                        style={{ minWidth: 0 }}
+                      >
+                        <Flex align="center" gap={6} style={{ minWidth: 0 }}>
+                          <span>
+                            {order.customer_responsible_person_name || '—'}
+                          </span>
+
+                          {order.customer_responsible_person && (
+                            <Link
+                              to={`/contacts/${order.customer_responsible_person}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <InfoCircleOutlined
+                                style={{
+                                  color: '#8c8c8c',
+                                  fontSize: 14,
+                                }}
+                              />
+                            </Link>
+                          )}
+                        </Flex>
+
+                        <EditOutlined
+                          style={{
+                            color: '#8c8c8c',
+                            fontSize: 16,
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </Flex>
+                    ),
+                  },
+                ]}
+              />
+
+              <Descriptions
+                bordered
+                size="small"
+                column={3}
+                items={[
+                  {
+                    key: 'created_at',
+                    label: 'Створено',
+                    children: formatDateDisplay(order.created_at),
+                  },
+                  {
+                    key: 'updated_at',
+                    label: 'Оновлено',
+                    children: formatDateDisplay(order.updated_at),
+                  },
+                  {
+                    key: 'completed_at',
+                    label: 'Завершено',
+                    children: order.completed_at
+                      ? formatDateDisplay(order.completed_at)
+                      : '—',
+                  },
+                ]}
+              />
+
+              <Alert
+                type="warning"
+                showIcon
+                message={
+                  <Flex vertical gap={8}>
+                    <Text strong>Коментар до замовлення</Text>
+
+                    <Text style={{ whiteSpace: 'pre-wrap' }}>
+                      {order.comment || 'Коментар відсутній.'}
+                    </Text>
+                  </Flex>
+                }
+              />
+            </Flex>
           </Card>
 
           {order.has_warehouse_shortages && (

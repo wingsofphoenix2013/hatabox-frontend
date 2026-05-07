@@ -16,6 +16,7 @@ import {
   Flex,
   Form,
   Input,
+  Popconfirm,
   Select,
   Spin,
   Switch,
@@ -52,6 +53,8 @@ function SaleOrderCreateDrawer({ open, onClose }) {
   const [customerComponents, setCustomerComponents] = useState([]);
   const [savingCustomerComponents, setSavingCustomerComponents] =
     useState(false);
+
+  const [confirmingOrder, setConfirmingOrder] = useState(false);
 
   const [warehouseCheckStarted, setWarehouseCheckStarted] = useState(false);
   const [warehouseLoading, setWarehouseLoading] = useState(false);
@@ -97,6 +100,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setSelectedComponentId(null);
       setCustomerComponents([]);
       setSavingCustomerComponents(false);
+      setConfirmingOrder(false);
 
       setWarehouseCheckStarted(false);
       setWarehouseLoading(false);
@@ -115,6 +119,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     setSelectedComponentId(null);
     setCustomerComponents([]);
     setSavingCustomerComponents(false);
+    setConfirmingOrder(false);
 
     setWarehouseCheckStarted(false);
     setWarehouseLoading(false);
@@ -296,6 +301,34 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     }
 
     await handleCheckWarehouseAvailability();
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!createdSaleOrder?.id) return;
+
+    try {
+      setConfirmingOrder(true);
+
+      await api.post(`sales-orders/${createdSaleOrder.id}/confirm/`, {});
+
+      message.success('Замовлення підтверджено.');
+
+      handleCloseDrawer();
+
+      window.open(
+        `/sales/orders/${createdSaleOrder.id}`,
+        '_blank',
+        'noopener,noreferrer',
+      );
+    } catch (err) {
+      console.error('Failed to confirm sale order:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(backendMessage || 'Не вдалося підтвердити замовлення.');
+    } finally {
+      setConfirmingOrder(false);
+    }
   };
 
   const handleCheckWarehouseAvailability = async () => {
@@ -725,7 +758,17 @@ function SaleOrderCreateDrawer({ open, onClose }) {
               <Button onClick={handleCloseDrawer}>Закрити</Button>
 
               {warehouseAvailability?.can_confirm && (
-                <Button type="primary">Підтвердити замовлення</Button>
+                <Popconfirm
+                  title="Підтвердити замовлення?"
+                  description="Після підтвердження компоненти будуть заброньовані, а редагування замовлення стане недоступним."
+                  okText="Підтвердити"
+                  cancelText="Скасувати"
+                  onConfirm={handleConfirmOrder}
+                >
+                  <Button type="primary" loading={confirmingOrder}>
+                    Підтвердити замовлення
+                  </Button>
+                </Popconfirm>
               )}
             </Flex>
           )}

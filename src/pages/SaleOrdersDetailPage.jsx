@@ -24,6 +24,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 
 import api from '../api/client';
+import SaleOrderCustomerComponentsDrawer from '../components/SaleOrderCustomerComponentsDrawer';
 import { formatDateDisplay } from '../utils/orderFormatters';
 import { formatQuantity } from '../utils/formatNumber';
 
@@ -56,6 +57,9 @@ function SaleOrdersDetailPage() {
   const [error, setError] = useState('');
 
   const [refreshingShortages, setRefreshingShortages] = useState(false);
+
+  const [isCustomerComponentsDrawerOpen, setIsCustomerComponentsDrawerOpen] =
+    useState(false);
 
   const loadOrderPage = async () => {
     try {
@@ -280,8 +284,8 @@ function SaleOrdersDetailPage() {
 
                   <Button
                     block
-                    disabled
-                    icon={<SettingOutlined style={{ color: '#bfbfbf' }} />}
+                    icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                    onClick={() => setIsCustomerComponentsDrawerOpen(true)}
                   >
                     Налаштування товарів замовника
                   </Button>
@@ -302,8 +306,6 @@ function SaleOrdersDetailPage() {
 
               {order.has_warehouse_shortages && (
                 <>
-                  <Divider dashed style={{ margin: '4px 0 8px 0' }} />
-
                   <Button
                     block
                     icon={
@@ -432,6 +434,13 @@ function SaleOrdersDetailPage() {
           )}
         </Col>
       </Row>
+
+      <SaleOrderCustomerComponentsDrawer
+        open={isCustomerComponentsDrawerOpen}
+        onClose={() => setIsCustomerComponentsDrawerOpen(false)}
+        orderId={order.id}
+        onSaved={loadOrderPage}
+      />
     </div>
   );
 }

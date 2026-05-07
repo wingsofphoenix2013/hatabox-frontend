@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { ReloadOutlined, StopOutlined } from '@ant-design/icons';
+import {
+  InfoCircleOutlined,
+  ReloadOutlined,
+  StopOutlined,
+  WarningFilled,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -10,14 +15,16 @@ import {
   Popconfirm,
   Row,
   Skeleton,
+  Table,
   Tag,
   Tooltip,
   Typography,
 } from 'antd';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 
 import api from '../api/client';
 import { formatDateDisplay } from '../utils/orderFormatters';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
@@ -112,6 +119,80 @@ function SaleOrdersDetailPage() {
   const isDraft = order.status === 'draft';
   const isConfirmed = order.status === 'confirmed';
   const canCancel = isDraft || isConfirmed;
+
+  const warehouseShortages = Array.isArray(order.warehouse_shortages)
+    ? order.warehouse_shortages
+    : [];
+
+  const customerShortages = warehouseShortages.filter(
+    (item) => item.fulfillment_mode === 'customer',
+  );
+
+  const mixedShortages = warehouseShortages.filter(
+    (item) => item.fulfillment_mode === 'mixed',
+  );
+
+  const shortageColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 60,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Компонент',
+      key: 'component',
+      render: (_, record) => (
+        <Flex align="center" gap={6} wrap>
+          <span>
+            {record.inv_item_name || '—'} | {record.inv_item_code || '—'}
+          </span>
+
+          {record.inv_item && (
+            <Link
+              to={`/inventory/stock/${record.inv_item}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <InfoCircleOutlined
+                style={{
+                  color: '#1677ff',
+                  fontSize: 14,
+                  cursor: 'pointer',
+                }}
+              />
+            </Link>
+          )}
+        </Flex>
+      ),
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 140,
+      align: 'center',
+      render: (_, record) => (
+        <span>
+          {formatQuantity(record.missing_quantity)}{' '}
+          {record.inv_item_unit_symbol || ''}
+        </span>
+      ),
+    },
+    {
+      title: 'Крит.',
+      dataIndex: 'is_required_for_start',
+      key: 'is_required_for_start',
+      width: 100,
+      align: 'center',
+      render: (value) =>
+        value ? (
+          <WarningFilled style={{ color: '#ff4d4f', fontSize: 18 }} />
+        ) : (
+          <span style={{ color: '#bfbfbf' }}>—</span>
+        ),
+    },
+  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -256,7 +337,37 @@ function SaleOrdersDetailPage() {
                 </Flex>
               }
             >
-              <Text type="secondary">Дані з’являться пізніше.</Text>
+              <Flex vertical gap={16}>
+                <Flex vertical gap={10}>
+                  <Text strong>Компоненти від замовника</Text>
+
+                  <Table
+                    rowKey="id"
+                    size="small"
+                    pagination={false}
+                    dataSource={customerShortages}
+                    columns={shortageColumns}
+                    locale={{
+                      emptyText: 'Дефіцит компонентів від замовника відсутній.',
+                    }}
+                  />
+                </Flex>
+
+                <Flex vertical gap={10}>
+                  <Text strong>Загальний перелік компонентів</Text>
+
+                  <Table
+                    rowKey="id"
+                    size="small"
+                    pagination={false}
+                    dataSource={mixedShortages}
+                    columns={shortageColumns}
+                    locale={{
+                      emptyText: 'Загальний дефіцит компонентів відсутній.',
+                    }}
+                  />
+                </Flex>
+              </Flex>
             </Card>
           )}
         </Col>

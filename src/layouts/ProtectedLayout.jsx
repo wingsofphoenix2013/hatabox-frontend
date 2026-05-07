@@ -114,6 +114,10 @@ const moduleConfig = {
         label: 'Каталог постачальників',
         path: '/orders/vendors',
       },
+      {
+        label: 'Реєстр дефіциту',
+        path: '/orders/shortage',
+      },
     ],
   },
 

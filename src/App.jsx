@@ -27,6 +27,7 @@ import OrdersTollingRegisterPage from './pages/OrdersTollingRegisterPage';
 import OrderTollingDetailsPage from './pages/OrderTollingDetailsPage';
 import OrderCreatePage from './pages/OrderCreatePage';
 import OrderEditPage from './pages/OrderEditPage';
+import OrdersShortageRegisterPage from './pages/OrdersShortageRegisterPage';
 
 import VendorsPage from './pages/VendorsPage';
 import VendorDetailPage from './pages/VendorDetailPage';
@@ -136,6 +137,11 @@ function App() {
 
             <Route path="/orders/:id" element={<OrderDetailPage />} />
             <Route path="/orders/:id/edit" element={<OrderEditPage />} />
+
+            <Route
+              path="/orders/shortage"
+              element={<OrdersShortageRegisterPage />}
+            />
 
             <Route
               path="/production/products"

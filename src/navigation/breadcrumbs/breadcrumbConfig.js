@@ -222,6 +222,14 @@ export const breadcrumbConfig = [
     },
   },
   {
+    match: (pathname) => pathname === '/orders/shortage',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Закупівлі'),
+      makeTextItem('Реєстр дефіциту'),
+    ],
+  },
+  {
     match: (pathname) =>
       pathname.startsWith('/orders/') && pathname.endsWith('/edit'),
     build: ({ pathname, state }) => {

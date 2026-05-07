@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StopOutlined } from '@ant-design/icons';
+import { ReloadOutlined, StopOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -47,6 +47,8 @@ function SaleOrdersDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [refreshingShortages, setRefreshingShortages] = useState(false);
+
   const loadOrderPage = async () => {
     try {
       setLoading(true);
@@ -60,6 +62,21 @@ function SaleOrdersDetailPage() {
       setOrder(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefreshWarehouseShortages = async () => {
+    try {
+      setRefreshingShortages(true);
+
+      await api.get(`warehouse-sales-order-availability/${id}/`);
+
+      const response = await api.get(`sales-orders/${id}/`);
+      setOrder(response.data);
+    } catch (err) {
+      console.error('Failed to refresh warehouse shortages:', err);
+    } finally {
+      setRefreshingShortages(false);
     }
   };
 
@@ -205,7 +222,40 @@ function SaleOrdersDetailPage() {
           </Card>
 
           {order.has_warehouse_shortages && (
-            <Card title="Дефіцит компонентів">
+            <Card
+              title={
+                <Flex justify="space-between" align="center" gap={12}>
+                  <span>Дефіцит компонентів</span>
+
+                  <Flex align="center" gap={8}>
+                    <Text type="secondary">
+                      Перевірено:{' '}
+                      {formatDateDisplay(
+                        order.warehouse_shortages_last_checked_at,
+                      )}
+                    </Text>
+
+                    <Tooltip title="Оновити">
+                      <ReloadOutlined
+                        spin={refreshingShortages}
+                        style={{
+                          color: '#1677ff',
+                          fontSize: 16,
+                          cursor: refreshingShortages
+                            ? 'not-allowed'
+                            : 'pointer',
+                        }}
+                        onClick={
+                          refreshingShortages
+                            ? undefined
+                            : handleRefreshWarehouseShortages
+                        }
+                      />
+                    </Tooltip>
+                  </Flex>
+                </Flex>
+              }
+            >
               <Text type="secondary">Дані з’являться пізніше.</Text>
             </Card>
           )}

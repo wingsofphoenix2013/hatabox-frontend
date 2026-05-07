@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   InfoCircleOutlined,
   ReloadOutlined,
+  SettingOutlined,
   StopOutlined,
   WarningFilled,
 } from '@ant-design/icons';
@@ -256,15 +257,69 @@ function SaleOrdersDetailPage() {
           <Card title="Навігація" style={{ marginBottom: 20 }}>
             <Flex vertical gap={8}>
               {isDraft && (
-                <Button block type="primary">
-                  Підтвердити замовлення
-                </Button>
+                <>
+                  <Tooltip
+                    title={
+                      order.can_try_confirm
+                        ? ''
+                        : 'Неможливо підтвердити замовлення: наявний дефіцит критичних компонентів'
+                    }
+                  >
+                    <div>
+                      <Button
+                        block
+                        type="primary"
+                        disabled={!order.can_try_confirm}
+                      >
+                        Підтвердити замовлення
+                      </Button>
+                    </div>
+                  </Tooltip>
+
+                  <Divider dashed style={{ margin: '4px 0 8px 0' }} />
+
+                  <Button
+                    block
+                    disabled
+                    icon={<SettingOutlined style={{ color: '#bfbfbf' }} />}
+                  >
+                    Налаштування товарів замовника
+                  </Button>
+                </>
               )}
 
               {isConfirmed && (
-                <Button block type="primary">
-                  Передати в виробництво
-                </Button>
+                <>
+                  <Tooltip title="Функціонал передачі ще не реалізовано">
+                    <div>
+                      <Button block type="primary" disabled>
+                        Передати в виробництво
+                      </Button>
+                    </div>
+                  </Tooltip>
+                </>
+              )}
+
+              {order.has_warehouse_shortages && (
+                <>
+                  <Divider dashed style={{ margin: '4px 0 8px 0' }} />
+
+                  <Button
+                    block
+                    icon={
+                      <ReloadOutlined
+                        spin={refreshingShortages}
+                        style={{
+                          color: refreshingShortages ? '#bfbfbf' : '#1677ff',
+                        }}
+                      />
+                    }
+                    disabled={refreshingShortages}
+                    onClick={handleRefreshWarehouseShortages}
+                  >
+                    Оновити звіт по дефіциту
+                  </Button>
+                </>
               )}
 
               <Divider dashed style={{ margin: '4px 0 8px 0' }} />

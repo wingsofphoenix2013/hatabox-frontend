@@ -24,6 +24,7 @@ import {
   Typography,
   message,
 } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatQuantity } from '../utils/formatNumber';
@@ -40,6 +41,7 @@ const compactLabelStyle = {
 
 function SaleOrderCreateDrawer({ open, onClose }) {
   const [form] = Form.useForm();
+  const navigate = useNavigate();
 
   const [saving, setSaving] = useState(false);
   const [createdSaleOrder, setCreatedSaleOrder] = useState(null);
@@ -315,11 +317,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
 
       handleCloseDrawer();
 
-      window.open(
-        `/sales/orders/${createdSaleOrder.id}`,
-        '_blank',
-        'noopener,noreferrer',
-      );
+      navigate(`/sales/orders/${createdSaleOrder.id}`);
     } catch (err) {
       console.error('Failed to confirm sale order:', err);
 

@@ -26,6 +26,8 @@ function SaleOrderCustomerComponentsDrawer({
 }) {
   const [components, setComponents] = useState([]);
   const [customerComponents, setCustomerComponents] = useState([]);
+  const [initialCustomerComponentIds, setInitialCustomerComponentIds] =
+    useState([]);
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -48,6 +50,7 @@ function SaleOrderCustomerComponentsDrawer({
   const resetState = () => {
     setComponents([]);
     setCustomerComponents([]);
+    setInitialCustomerComponentIds([]);
     setLoading(false);
     setSaving(false);
     setComponentSearchText('');
@@ -64,9 +67,14 @@ function SaleOrderCustomerComponentsDrawer({
       const response = await api.get(`sales-orders/${orderId}/components/`);
       const results = Array.isArray(response.data) ? response.data : [];
 
+      const initialCustomerComponents = results.filter(
+        (item) => item.fulfillment_mode === 'customer',
+      );
+
       setComponents(results);
-      setCustomerComponents(
-        results.filter((item) => item.fulfillment_mode === 'customer'),
+      setCustomerComponents(initialCustomerComponents);
+      setInitialCustomerComponentIds(
+        initialCustomerComponents.map((item) => item.id),
       );
     } catch (err) {
       console.error('Failed to load sale order components:', err);
@@ -87,6 +95,20 @@ function SaleOrderCustomerComponentsDrawer({
     loadComponents();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, orderId]);
+
+  const customerComponentIds = customerComponents
+    .map((item) => item.id)
+    .sort((a, b) => a - b);
+
+  const sortedInitialCustomerComponentIds = [
+    ...initialCustomerComponentIds,
+  ].sort((a, b) => a - b);
+
+  const hasCustomerComponentsChanges =
+    customerComponentIds.length !== sortedInitialCustomerComponentIds.length ||
+    customerComponentIds.some(
+      (idValue, index) => idValue !== sortedInitialCustomerComponentIds[index],
+    );
 
   const availableComponentOptions = components
     .filter(
@@ -145,11 +167,11 @@ function SaleOrderCustomerComponentsDrawer({
 
       message.success('Компоненти замовника збережено.');
 
+      onClose();
+
       if (onSaved) {
         await onSaved();
       }
-
-      onClose();
     } catch (err) {
       console.error('Failed to save sale order customer components:', err);
       message.error('Не вдалося зберегти компоненти замовника.');
@@ -270,7 +292,9 @@ function SaleOrderCustomerComponentsDrawer({
           <Button
             type="primary"
             loading={saving}
-            disabled={Boolean(selectedComponentId)}
+            disabled={
+              Boolean(selectedComponentId) || !hasCustomerComponentsChanges
+            }
             onClick={handleSave}
           >
             Зберегти зміни

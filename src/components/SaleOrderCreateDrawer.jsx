@@ -45,7 +45,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
 
   const [saving, setSaving] = useState(false);
   const [createdSaleOrder, setCreatedSaleOrder] = useState(null);
-  const [saleOrderDetail, setSaleOrderDetail] = useState(null);
+  const [saleOrderComponents, setSaleOrderComponents] = useState([]);
   const [usesCustomerGoods, setUsesCustomerGoods] = useState(false);
 
   const [componentSearchText, setComponentSearchText] = useState('');
@@ -95,7 +95,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setProductOptions([]);
       setResponsiblePersonOptions([]);
       setCreatedSaleOrder(null);
-      setSaleOrderDetail(null);
+      setSaleOrderComponents([]);
       setUsesCustomerGoods(false);
       setComponentSearchText('');
       setDebouncedComponentSearchText('');
@@ -114,7 +114,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     form.resetFields();
     setResponsiblePersonOptions([]);
     setCreatedSaleOrder(null);
-    setSaleOrderDetail(null);
+    setSaleOrderComponents([]);
     setUsesCustomerGoods(false);
     setComponentSearchText('');
     setDebouncedComponentSearchText('');
@@ -218,9 +218,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     }
   };
 
-  const availableComponentOptions = (
-    Array.isArray(saleOrderDetail?.components) ? saleOrderDetail.components : []
-  )
+  const availableComponentOptions = saleOrderComponents
     .filter(
       (item) =>
         !customerComponents.some((selectedItem) => selectedItem.id === item.id),
@@ -253,11 +251,9 @@ function SaleOrderCreateDrawer({ open, onClose }) {
   const handleAddCustomerComponent = () => {
     if (!selectedComponentId || isCustomerComponentsLocked) return;
 
-    const component = (
-      Array.isArray(saleOrderDetail?.components)
-        ? saleOrderDetail.components
-        : []
-    ).find((item) => item.id === selectedComponentId);
+    const component = saleOrderComponents.find(
+      (item) => item.id === selectedComponentId,
+    );
 
     if (!component) return;
 
@@ -284,14 +280,20 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     try {
       setSavingCustomerComponents(true);
 
-      const response = await api.post(
+      await api.post(
         `sales-orders/${createdSaleOrder.id}/set-customer-components/`,
         {
           component_ids: customerComponents.map((item) => item.id),
         },
       );
 
-      setSaleOrderDetail(response.data);
+      const componentsResponse = await api.get(
+        `sales-orders/${createdSaleOrder.id}/components/`,
+      );
+
+      setSaleOrderComponents(
+        Array.isArray(componentsResponse.data) ? componentsResponse.data : [],
+      );
       message.success('Компоненти замовника збережено.');
     } catch (err) {
       console.error('Failed to save customer components:', err);
@@ -367,11 +369,15 @@ function SaleOrderCreateDrawer({ open, onClose }) {
 
       const response = await api.post('sales-orders/', payload);
 
-      const detailResponse = await api.get(`sales-orders/${response.data.id}/`);
+      const componentsResponse = await api.get(
+        `sales-orders/${response.data.id}/components/`,
+      );
 
       message.success('Замовлення створено.');
       setCreatedSaleOrder(response.data);
-      setSaleOrderDetail(detailResponse.data);
+      setSaleOrderComponents(
+        Array.isArray(componentsResponse.data) ? componentsResponse.data : [],
+      );
     } catch (err) {
       console.error('Failed to create sale order:', err);
 

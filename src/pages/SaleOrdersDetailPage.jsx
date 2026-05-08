@@ -64,6 +64,7 @@ function SaleOrdersDetailPage() {
   const [error, setError] = useState('');
 
   const [refreshingShortages, setRefreshingShortages] = useState(false);
+  const [confirmingOrder, setConfirmingOrder] = useState(false);
   const [cancellingOrder, setCancellingOrder] = useState(false);
 
   const [isCustomerComponentsDrawerOpen, setIsCustomerComponentsDrawerOpen] =
@@ -185,6 +186,25 @@ function SaleOrdersDetailPage() {
       message.error(backendMessage || 'Не вдалося оновити відповідального.');
     } finally {
       setSavingResponsiblePerson(false);
+    }
+  };
+
+  const handleConfirmOrder = async () => {
+    try {
+      setConfirmingOrder(true);
+
+      const response = await api.post(`sales-orders/${id}/confirm/`, {});
+
+      setOrder(response.data);
+      message.success('Замовлення підтверджено.');
+    } catch (err) {
+      console.error('Failed to confirm sale order:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(backendMessage || 'Не вдалося підтвердити замовлення.');
+    } finally {
+      setConfirmingOrder(false);
     }
   };
 
@@ -401,13 +421,23 @@ function SaleOrdersDetailPage() {
                     }
                   >
                     <div>
-                      <Button
-                        block
-                        type="primary"
+                      <Popconfirm
+                        title="Підтвердити замовлення?"
+                        description="Після підтвердження компоненти будуть заброньовані, а редагування товарів замовника стане недоступним."
+                        okText="Підтвердити"
+                        cancelText="Скасувати"
+                        onConfirm={handleConfirmOrder}
                         disabled={!order.can_try_confirm}
                       >
-                        Підтвердити замовлення
-                      </Button>
+                        <Button
+                          block
+                          type="primary"
+                          loading={confirmingOrder}
+                          disabled={!order.can_try_confirm}
+                        >
+                          Підтвердити замовлення
+                        </Button>
+                      </Popconfirm>
                     </div>
                   </Tooltip>
 

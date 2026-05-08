@@ -11,6 +11,7 @@ import {
   Button,
   Card,
   Col,
+  Descriptions,
   Drawer,
   Dropdown,
   Flex,
@@ -35,10 +36,31 @@ import WarehouseAddItemToMovementDrawer from '../components/WarehouseAddItemToMo
 
 const { Title, Text } = Typography;
 
+const SALES_ORDER_STATUS_LABELS = {
+  draft: 'Чернетка',
+  confirmed: 'Підтверджено',
+  in_progress: 'В роботі',
+};
+
+const getFulfillmentModeLabel = (mode) => {
+  if (mode === 'customer') return 'Від замовників';
+  if (mode === 'mixed') return 'Закупівля';
+
+  return '—';
+};
+
+const getFulfillmentModeTagColor = (mode) => {
+  if (mode === 'customer') return 'default';
+  if (mode === 'mixed') return 'processing';
+
+  return 'default';
+};
+
 function WarehouseStockDetailPage() {
   const { id } = useParams();
 
   const [data, setData] = useState(null);
+  const [shortageData, setShortageData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMovementDrawerOpen, setIsMovementDrawerOpen] = useState(false);
@@ -53,12 +75,18 @@ function WarehouseStockDetailPage() {
       setLoading(true);
       setError('');
 
-      const response = await api.get(`warehouse-stock-detail/${id}/`);
-      setData(response.data || null);
+      const [stockResponse, shortageResponse] = await Promise.all([
+        api.get(`warehouse-stock-detail/${id}/`),
+        api.get(`warehouse-shortage-detail/${id}/`),
+      ]);
+
+      setData(stockResponse.data || null);
+      setShortageData(shortageResponse.data || null);
     } catch (err) {
       console.error('Failed to load warehouse stock detail page:', err);
       setError('Не вдалося завантажити дані складського залишку.');
       setData(null);
+      setShortageData(null);
     } finally {
       setLoading(false);
     }
@@ -93,6 +121,10 @@ function WarehouseStockDetailPage() {
   const reservedStockRows = data.reserved_stock_rows || [];
   const pendingIntakeRows = data.pending_intake_rows || [];
   const incomingRows = data.incoming_rows || [];
+  const shortageRows = shortageData?.rows || [];
+  const shortageSummary = shortageData?.summary || {};
+  const shouldShowShortageCard =
+    Number(shortageSummary.total_missing_quantity) > 0;
   const imageUrl = header.image || '';
   const unitSymbol = header.inventory_item_unit_symbol || '';
   const hasAvailableStock = stockRows.some((row) => Number(row.quantity) > 0);
@@ -387,6 +419,139 @@ function WarehouseStockDetailPage() {
     },
   ];
 
+  const shortageColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Замовлення',
+      key: 'sales_order',
+      width: 360,
+      render: (_, record) => {
+        const statusLabel =
+          SALES_ORDER_STATUS_LABELS[record.sales_order_status] ||
+          record.sales_order_status ||
+          '—';
+
+        return (
+          <Flex vertical gap={2} style={{ minWidth: 0 }}>
+            <Flex align="center" gap={6} style={{ minWidth: 0 }}>
+              <Text
+                strong
+                style={{
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                title={record.organization_name || '—'}
+              >
+                {record.organization_name || '—'}
+              </Text>
+
+              {record.organization ? (
+                <Link
+                  to={`/organizations/${record.organization}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <InfoCircleOutlined style={{ color: '#1677ff' }} />
+                </Link>
+              ) : null}
+            </Flex>
+
+            <Flex align="center" gap={6} style={{ minWidth: 0 }}>
+              <Text
+                type="secondary"
+                style={{
+                  fontSize: 12,
+                  lineHeight: 1.2,
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                №{record.sales_order || '—'} від{' '}
+                {formatDateDisplay(record.sales_order_created_at)} |{' '}
+                {statusLabel}
+              </Text>
+
+              {record.sales_order ? (
+                <Link
+                  to={`/sales/orders/${record.sales_order}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
+                </Link>
+              ) : null}
+            </Flex>
+          </Flex>
+        );
+      },
+    },
+    {
+      title: 'Виріб',
+      key: 'product',
+      render: (_, record) => (
+        <Flex vertical gap={2} style={{ minWidth: 0 }}>
+          <Text
+            strong
+            style={{
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={record.product_name || '—'}
+          >
+            {record.product_name || '—'}
+          </Text>
+
+          <Text
+            type="secondary"
+            style={{
+              fontSize: 12,
+              lineHeight: 1.2,
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={record.product_code || '—'}
+          >
+            {record.product_code || '—'}
+          </Text>
+        </Flex>
+      ),
+    },
+    {
+      title: 'К-сть',
+      key: 'missing_quantity',
+      width: 150,
+      align: 'center',
+      render: (_, record) => (
+        <Flex vertical gap={4} align="center">
+          <Text strong>
+            {formatQuantity(record.missing_quantity)} {unitSymbol}
+          </Text>
+
+          <Tag
+            color={getFulfillmentModeTagColor(record.fulfillment_mode)}
+            style={{ marginInlineEnd: 0 }}
+          >
+            {getFulfillmentModeLabel(record.fulfillment_mode)}
+          </Tag>
+        </Flex>
+      ),
+    },
+  ];
+
   const incomingColumns = [
     {
       title: '№',
@@ -628,6 +793,83 @@ function WarehouseStockDetailPage() {
             <Card title="Основна інформація" style={{ marginBottom: 20 }}>
               <Text type="secondary">Вміст буде додано пізніше.</Text>
             </Card>
+
+            {shouldShowShortageCard && (
+              <Card
+                title="Дефіцит за замовленнями"
+                style={{ marginBottom: 20 }}
+              >
+                <Flex vertical gap={16}>
+                  <Descriptions
+                    size="small"
+                    column={2}
+                    bordered
+                    items={[
+                      {
+                        key: 'sales_orders_count',
+                        label: 'Замовлень',
+                        children:
+                          Number(shortageSummary.sales_orders_count) || 0,
+                      },
+                      {
+                        key: 'is_required_for_start',
+                        label: 'Критичність',
+                        children: shortageData?.is_required_for_start ? (
+                          <Tooltip title="Критично для старту виробництва">
+                            <WarningFilled
+                              style={{
+                                color: '#ff4d4f',
+                                fontSize: 16,
+                              }}
+                            />
+                          </Tooltip>
+                        ) : (
+                          <Text type="secondary">—</Text>
+                        ),
+                      },
+                    ]}
+                  />
+
+                  <Descriptions
+                    size="small"
+                    column={3}
+                    bordered
+                    items={[
+                      {
+                        key: 'total_missing_quantity',
+                        label: 'Загально',
+                        children: `${formatQuantity(
+                          shortageSummary.total_missing_quantity,
+                        )} ${unitSymbol}`,
+                      },
+                      {
+                        key: 'mixed_missing_quantity',
+                        label: 'Закупівля',
+                        children: `${formatQuantity(
+                          shortageSummary.mixed_missing_quantity,
+                        )} ${unitSymbol}`,
+                      },
+                      {
+                        key: 'customer_missing_quantity',
+                        label: 'Від замовників',
+                        children: `${formatQuantity(
+                          shortageSummary.customer_missing_quantity,
+                        )} ${unitSymbol}`,
+                      },
+                    ]}
+                  />
+
+                  <Table
+                    rowKey={(record) => record.shortage_id}
+                    columns={shortageColumns}
+                    dataSource={shortageRows}
+                    pagination={false}
+                    size="small"
+                    tableLayout="fixed"
+                  />
+                </Flex>
+              </Card>
+            )}
 
             {stockRows.length > 0 && (
               <Card title="Доступно на складах" style={{ marginBottom: 20 }}>

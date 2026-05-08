@@ -166,6 +166,9 @@ function OrdersShortageRegisterPage() {
             <Flex vertical gap={2} style={{ minWidth: 0 }}>
               <Link
                 to={stockHref}
+                state={{
+                  inventoryItemLabel: record.inv_item_name || undefined,
+                }}
                 style={{
                   fontWeight: 600,
                   lineHeight: 1.3,

@@ -448,18 +448,19 @@ function WarehouseStockDetailPage() {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                 }}
-                title={record.organization_name || '—'}
               >
-                {record.organization_name || '—'}
+                №{record.sales_order || '—'} від{' '}
+                {formatDateDisplay(record.sales_order_created_at)} |{' '}
+                {statusLabel}
               </Text>
 
-              {record.organization ? (
+              {record.sales_order ? (
                 <Link
-                  to={`/organizations/${record.organization}`}
+                  to={`/sales/orders/${record.sales_order}`}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <InfoCircleOutlined style={{ color: '#1677ff' }} />
+                  <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
                 </Link>
               ) : null}
             </Flex>
@@ -475,19 +476,18 @@ function WarehouseStockDetailPage() {
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                 }}
+                title={record.organization_name || '—'}
               >
-                №{record.sales_order || '—'} від{' '}
-                {formatDateDisplay(record.sales_order_created_at)} |{' '}
-                {statusLabel}
+                {record.organization_name || '—'}
               </Text>
 
-              {record.sales_order ? (
+              {record.organization ? (
                 <Link
-                  to={`/sales/orders/${record.sales_order}`}
+                  to={`/organizations/${record.organization}`}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
+                  <InfoCircleOutlined style={{ color: '#1677ff' }} />
                 </Link>
               ) : null}
             </Flex>
@@ -808,23 +808,40 @@ function WarehouseStockDetailPage() {
                       {
                         key: 'sales_orders_count',
                         label: 'Замовлень',
-                        children:
-                          Number(shortageSummary.sales_orders_count) || 0,
+                        children: (
+                          <Text
+                            strong
+                            style={{ display: 'block', textAlign: 'center' }}
+                          >
+                            {Number(shortageSummary.sales_orders_count) || 0}
+                          </Text>
+                        ),
                       },
                       {
                         key: 'is_required_for_start',
                         label: 'Критичність',
                         children: shortageData?.is_required_for_start ? (
                           <Tooltip title="Критично для старту виробництва">
-                            <WarningFilled
-                              style={{
-                                color: '#ff4d4f',
-                                fontSize: 16,
-                              }}
-                            />
+                            <Flex justify="center" align="center" gap={6}>
+                              <WarningFilled
+                                style={{
+                                  color: '#ff4d4f',
+                                  fontSize: 16,
+                                }}
+                              />
+                              <Text strong type="danger">
+                                Так
+                              </Text>
+                            </Flex>
                           </Tooltip>
                         ) : (
-                          <Text type="secondary">—</Text>
+                          <Text
+                            strong
+                            type="secondary"
+                            style={{ display: 'block', textAlign: 'center' }}
+                          >
+                            —
+                          </Text>
                         ),
                       },
                     ]}
@@ -838,23 +855,53 @@ function WarehouseStockDetailPage() {
                       {
                         key: 'total_missing_quantity',
                         label: 'Загально',
-                        children: `${formatQuantity(
-                          shortageSummary.total_missing_quantity,
-                        )} ${unitSymbol}`,
+                        children: (
+                          <Text
+                            strong
+                            style={{
+                              display: 'block',
+                              textAlign: 'center',
+                              background: '#fff1f0',
+                              borderRadius: 6,
+                              padding: '2px 6px',
+                            }}
+                          >
+                            {formatQuantity(
+                              shortageSummary.total_missing_quantity,
+                            )}{' '}
+                            {unitSymbol}
+                          </Text>
+                        ),
                       },
                       {
                         key: 'mixed_missing_quantity',
                         label: 'Закупівля',
-                        children: `${formatQuantity(
-                          shortageSummary.mixed_missing_quantity,
-                        )} ${unitSymbol}`,
+                        children: (
+                          <Text
+                            strong
+                            style={{ display: 'block', textAlign: 'center' }}
+                          >
+                            {formatQuantity(
+                              shortageSummary.mixed_missing_quantity,
+                            )}{' '}
+                            {unitSymbol}
+                          </Text>
+                        ),
                       },
                       {
                         key: 'customer_missing_quantity',
                         label: 'Від замовників',
-                        children: `${formatQuantity(
-                          shortageSummary.customer_missing_quantity,
-                        )} ${unitSymbol}`,
+                        children: (
+                          <Text
+                            strong
+                            style={{ display: 'block', textAlign: 'center' }}
+                          >
+                            {formatQuantity(
+                              shortageSummary.customer_missing_quantity,
+                            )}{' '}
+                            {unitSymbol}
+                          </Text>
+                        ),
                       },
                     ]}
                   />

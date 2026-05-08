@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   AppstoreAddOutlined,
-  InfoCircleOutlined,
   QuestionCircleOutlined,
   SearchOutlined,
   WarningFilled,
@@ -29,7 +28,7 @@ const pageSize = 50;
 
 const fulfillmentModeOptions = [
   { value: 'customer', label: 'Від замовників' },
-  { value: 'mixed', label: 'Charity / procurement' },
+  { value: 'mixed', label: 'Закупівля' },
 ];
 
 const requiredForStartOptions = [
@@ -39,7 +38,7 @@ const requiredForStartOptions = [
 
 const getFulfillmentModeLabel = (mode) => {
   if (mode === 'customer') return 'Від замовників';
-  if (mode === 'mixed') return 'Charity / procurement';
+  if (mode === 'mixed') return 'Закупівля';
 
   return '—';
 };
@@ -157,24 +156,16 @@ function OrdersShortageRegisterPage() {
   const columns = useMemo(
     () => [
       {
-        title: '№',
-        key: 'row_number',
-        width: 64,
-        align: 'center',
-        render: (_, __, index) => (currentPage - 1) * pageSize + index + 1,
-      },
-      {
         title: 'Компонент',
         key: 'component',
         width: 430,
         render: (_, record) => {
-          const detailHref = `/orders/shortage/${record.inv_item}`;
           const stockHref = `/inventory/stock/${record.inv_item}`;
 
           return (
             <Flex vertical gap={2} style={{ minWidth: 0 }}>
               <Link
-                to={detailHref}
+                to={stockHref}
                 style={{
                   fontWeight: 600,
                   lineHeight: 1.3,
@@ -188,40 +179,20 @@ function OrdersShortageRegisterPage() {
                 {record.inv_item_name || '—'}
               </Link>
 
-              <Flex align="center" gap={6} style={{ minWidth: 0 }}>
-                <Text
-                  type="secondary"
-                  style={{
-                    fontSize: 12,
-                    lineHeight: 1.2,
-                    minWidth: 0,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                  title={record.inv_item_code || '—'}
-                >
-                  {record.inv_item_code || '—'}
-                </Text>
-
-                {record.inv_item ? (
-                  <Tooltip title="Відкрити складську картку компонента">
-                    <a
-                      href={stockHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <InfoCircleOutlined
-                        style={{
-                          color: '#1677ff',
-                          fontSize: 13,
-                          cursor: 'pointer',
-                        }}
-                      />
-                    </a>
-                  </Tooltip>
-                ) : null}
-              </Flex>
+              <Text
+                type="secondary"
+                style={{
+                  fontSize: 12,
+                  lineHeight: 1.2,
+                  minWidth: 0,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                title={record.inv_item_code || '—'}
+              >
+                {record.inv_item_code || '—'}
+              </Text>
             </Flex>
           );
         },
@@ -229,30 +200,33 @@ function OrdersShortageRegisterPage() {
       {
         title: 'Дефіцит',
         key: 'missing_quantity',
-        width: 210,
+        width: 150,
         align: 'center',
         render: (_, record) => {
           const unit = record.inventory_item_unit_symbol || '';
 
-          return (
-            <Flex align="center" justify="center" gap={6}>
-              <Tag
-                color={getFulfillmentModeTagColor(record.fulfillment_mode)}
-                style={{ marginInlineEnd: 0 }}
-              >
-                {getFulfillmentModeLabel(record.fulfillment_mode)}
-              </Tag>
-
-              {record.missing_quantity ? (
-                <Text strong>
-                  {formatQuantity(record.missing_quantity)} {unit}
-                </Text>
-              ) : (
-                <Text type="secondary">—</Text>
-              )}
-            </Flex>
+          return record.missing_quantity ? (
+            <Text strong>
+              {formatQuantity(record.missing_quantity)} {unit}
+            </Text>
+          ) : (
+            <Text type="secondary">—</Text>
           );
         },
+      },
+      {
+        title: 'Джерело',
+        key: 'fulfillment_mode',
+        width: 160,
+        align: 'center',
+        render: (_, record) => (
+          <Tag
+            color={getFulfillmentModeTagColor(record.fulfillment_mode)}
+            style={{ marginInlineEnd: 0 }}
+          >
+            {getFulfillmentModeLabel(record.fulfillment_mode)}
+          </Tag>
+        ),
       },
       {
         title: 'Очікуємо',
@@ -353,7 +327,7 @@ function OrdersShortageRegisterPage() {
         ),
       },
     ],
-    [currentPage],
+    [],
   );
 
   return (
@@ -409,7 +383,7 @@ function OrdersShortageRegisterPage() {
 
             <Select
               allowClear
-              placeholder="Контур"
+              placeholder="Джерело"
               style={{ minWidth: 220 }}
               value={selectedFulfillmentMode}
               onChange={(value) => {

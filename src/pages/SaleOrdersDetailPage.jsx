@@ -59,6 +59,10 @@ function SaleOrdersDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [confirmationStatus, setConfirmationStatus] = useState(null);
+  const [confirmationStatusLoading, setConfirmationStatusLoading] =
+    useState(false);
+
   const [confirmingOrder, setConfirmingOrder] = useState(false);
   const [cancellingOrder, setCancellingOrder] = useState(false);
 
@@ -78,17 +82,37 @@ function SaleOrdersDetailPage() {
     useState(null);
   const [savingResponsiblePerson, setSavingResponsiblePerson] = useState(false);
 
+  const loadConfirmationStatus = async () => {
+    try {
+      setConfirmationStatusLoading(true);
+
+      const response = await api.get(`sales-orders/${id}/confirmation-status/`);
+      setConfirmationStatus(response.data);
+    } catch (err) {
+      console.error('Failed to load confirmation status:', err);
+      setConfirmationStatus(null);
+    } finally {
+      setConfirmationStatusLoading(false);
+    }
+  };
+
   const loadOrderPage = async () => {
     try {
       setLoading(true);
       setError('');
+      setConfirmationStatus(null);
 
       const response = await api.get(`sales-orders/${id}/`);
       setOrder(response.data);
+
+      if (response.data?.status === 'draft') {
+        await loadConfirmationStatus();
+      }
     } catch (err) {
       console.error('Failed to load sale order page:', err);
       setError('Не вдалося завантажити дані замовлення.');
       setOrder(null);
+      setConfirmationStatus(null);
     } finally {
       setLoading(false);
     }
@@ -202,6 +226,7 @@ function SaleOrdersDetailPage() {
       const response = await api.post(`sales-orders/${id}/confirm/`, {});
 
       setOrder(response.data);
+      setConfirmationStatus(null);
       message.success('Замовлення підтверджено.');
     } catch (err) {
       console.error('Failed to confirm sale order:', err);
@@ -266,6 +291,7 @@ function SaleOrdersDetailPage() {
   const isConfirmed = order.status === 'confirmed';
   const canCancel = isDraft || isConfirmed;
   const canEditDetails = !['completed', 'cancelled'].includes(order.status);
+  const canConfirmOrder = Boolean(confirmationStatus?.can_confirm);
 
   return (
     <div style={{ padding: 20 }}>
@@ -330,17 +356,46 @@ function SaleOrdersDetailPage() {
             <Flex vertical gap={8}>
               {isDraft && (
                 <>
-                  <Popconfirm
-                    title="Підтвердити замовлення?"
-                    description="Перед підтвердженням система перевірить, чи отримано всі компоненти від замовника."
-                    okText="Підтвердити"
-                    cancelText="Скасувати"
-                    onConfirm={handleConfirmOrder}
-                  >
-                    <Button block type="primary" loading={confirmingOrder}>
-                      Підтвердити замовлення
-                    </Button>
-                  </Popconfirm>
+                  <Flex vertical gap={6}>
+                    <Tooltip
+                      title={
+                        !confirmationStatusLoading && !canConfirmOrder
+                          ? 'Не вистачає товару замовника'
+                          : ''
+                      }
+                    >
+                      <div>
+                        <Popconfirm
+                          title="Підтвердити замовлення?"
+                          description="Після підтвердження customer stock буде зарезервовано backend’ом."
+                          okText="Підтвердити"
+                          cancelText="Скасувати"
+                          onConfirm={handleConfirmOrder}
+                          disabled={!canConfirmOrder}
+                        >
+                          <Button
+                            block
+                            type="primary"
+                            loading={
+                              confirmingOrder || confirmationStatusLoading
+                            }
+                            disabled={!canConfirmOrder}
+                          >
+                            Підтвердити замовлення
+                          </Button>
+                        </Popconfirm>
+                      </div>
+                    </Tooltip>
+
+                    <Text
+                      type={canConfirmOrder ? 'success' : 'secondary'}
+                      style={{ fontSize: 12 }}
+                    >
+                      {canConfirmOrder
+                        ? 'Замовлення можна підтвердити'
+                        : 'Не вистачає товару замовника'}
+                    </Text>
+                  </Flex>
 
                   <Divider dashed style={{ margin: '4px 0 8px 0' }} />
 

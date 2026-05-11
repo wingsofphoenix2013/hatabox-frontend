@@ -19,6 +19,7 @@ import {
   Row,
   Select,
   Skeleton,
+  Table,
   Tag,
   Tooltip,
   Typography,
@@ -30,6 +31,7 @@ import api from '../api/client';
 import SaleOrderCustomerComponentsDrawer from '../components/SaleOrderCustomerComponentsDrawer';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
@@ -292,6 +294,72 @@ function SaleOrdersDetailPage() {
   const canCancel = isDraft || isConfirmed;
   const canEditDetails = !['completed', 'cancelled'].includes(order.status);
   const canConfirmOrder = Boolean(confirmationStatus?.can_confirm);
+
+  const missingCustomerComponents = Array.isArray(
+    confirmationStatus?.missing_components,
+  )
+    ? confirmationStatus.missing_components
+    : [];
+
+  const missingCustomerComponentColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 60,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Компонент',
+      key: 'component',
+      render: (_, record) => (
+        <Flex align="center" gap={6} wrap>
+          <span>
+            {record.inv_item_name || '—'} | {record.inv_item_code || '—'}
+          </span>
+
+          {record.inv_item && (
+            <Link
+              to={`/inventory/stock/${record.inv_item}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <InfoCircleOutlined
+                style={{
+                  color: '#8c8c8c',
+                  fontSize: 14,
+                }}
+              />
+            </Link>
+          )}
+        </Flex>
+      ),
+    },
+    {
+      title: 'Потрібно',
+      dataIndex: 'required_quantity',
+      key: 'required_quantity',
+      width: 130,
+      align: 'center',
+      render: (value) => formatQuantity(value),
+    },
+    {
+      title: 'Наявно',
+      dataIndex: 'available_quantity',
+      key: 'available_quantity',
+      width: 130,
+      align: 'center',
+      render: (value) => formatQuantity(value),
+    },
+    {
+      title: 'Дефіцит',
+      dataIndex: 'missing_quantity',
+      key: 'missing_quantity',
+      width: 130,
+      align: 'center',
+      render: (value) => formatQuantity(value),
+    },
+  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -649,6 +717,20 @@ function SaleOrdersDetailPage() {
               />
             </Flex>
           </Card>
+          {isDraft && missingCustomerComponents.length > 0 && (
+            <Card title="Дефіцит товарів замовника">
+              <Table
+                rowKey="component_id"
+                size="small"
+                pagination={false}
+                dataSource={missingCustomerComponents}
+                columns={missingCustomerComponentColumns}
+                locale={{
+                  emptyText: 'Дефіцит товарів замовника відсутній.',
+                }}
+              />
+            </Card>
+          )}
         </Col>
       </Row>
 

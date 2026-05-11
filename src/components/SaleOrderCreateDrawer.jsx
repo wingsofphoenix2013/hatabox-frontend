@@ -665,7 +665,7 @@ function SaleOrderCreateDrawer({ open, onClose, onCreated }) {
                 <Flex vertical gap={14}>
                   <Flex align="flex-end" gap={10}>
                     <Text strong style={{ fontSize: 18 }}>
-                      Товари замовника готові до підтвердження
+                      Компоненти від замовника отримано
                     </Text>
 
                     <div

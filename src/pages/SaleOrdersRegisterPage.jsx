@@ -553,6 +553,7 @@ function SaleOrdersRegisterPage() {
       <SaleOrderCreateDrawer
         open={isCreateDrawerOpen}
         onClose={closeCreateDrawer}
+        onCreated={() => loadSaleOrders(currentPage)}
       />
     </div>
   );

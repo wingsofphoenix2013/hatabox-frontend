@@ -40,7 +40,7 @@ const compactLabelStyle = {
   lineHeight: 1.2,
 };
 
-function SaleOrderCreateDrawer({ open, onClose }) {
+function SaleOrderCreateDrawer({ open, onClose, onCreated }) {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
@@ -59,13 +59,15 @@ function SaleOrderCreateDrawer({ open, onClose }) {
 
   const [confirmingOrder, setConfirmingOrder] = useState(false);
 
-  const [warehouseCheckStarted, setWarehouseCheckStarted] = useState(false);
-  const [warehouseLoading, setWarehouseLoading] = useState(false);
-  const [warehouseAvailability, setWarehouseAvailability] = useState(null);
+  const [confirmationCheckStarted, setConfirmationCheckStarted] =
+    useState(false);
+  const [confirmationLoading, setConfirmationLoading] = useState(false);
+  const [confirmationStatus, setConfirmationStatus] = useState(null);
 
   const isMainInfoLocked = Boolean(createdSaleOrder);
 
-  const isCustomerComponentsLocked = warehouseCheckStarted && warehouseLoading;
+  const isCustomerComponentsLocked =
+    confirmationCheckStarted && confirmationLoading;
   const [organizationsLoading, setOrganizationsLoading] = useState(false);
   const [productsLoading, setProductsLoading] = useState(false);
   const [responsiblePersonsLoading, setResponsiblePersonsLoading] =
@@ -105,9 +107,9 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setSavingCustomerComponents(false);
       setConfirmingOrder(false);
 
-      setWarehouseCheckStarted(false);
-      setWarehouseLoading(false);
-      setWarehouseAvailability(null);
+      setConfirmationCheckStarted(false);
+      setConfirmationLoading(false);
+      setConfirmationStatus(null);
     }
   }, [open, form]);
 
@@ -124,9 +126,9 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     setSavingCustomerComponents(false);
     setConfirmingOrder(false);
 
-    setWarehouseCheckStarted(false);
-    setWarehouseLoading(false);
-    setWarehouseAvailability(null);
+    setConfirmationCheckStarted(false);
+    setConfirmationLoading(false);
+    setConfirmationStatus(null);
     onClose();
   };
 
@@ -243,10 +245,10 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       label: `${item.inv_item_name || '—'} | ${formatQuantity(item.quantity)}`,
     }));
 
-  const resetWarehouseCheck = () => {
-    setWarehouseCheckStarted(false);
-    setWarehouseLoading(false);
-    setWarehouseAvailability(null);
+  const resetConfirmationCheck = () => {
+    setConfirmationCheckStarted(false);
+    setConfirmationLoading(false);
+    setConfirmationStatus(null);
   };
 
   const handleAddCustomerComponent = () => {
@@ -263,7 +265,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     setSelectedComponentId(null);
     setComponentSearchText('');
     setDebouncedComponentSearchText('');
-    resetWarehouseCheck();
+    resetConfirmationCheck();
   };
 
   const handleDeleteCustomerComponent = (componentId) => {
@@ -272,7 +274,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     setCustomerComponents((prev) =>
       prev.filter((item) => item.id !== componentId),
     );
-    resetWarehouseCheck();
+    resetConfirmationCheck();
   };
 
   const handleSaveCustomerComponents = async () => {
@@ -305,7 +307,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setSavingCustomerComponents(false);
     }
 
-    await handleCheckWarehouseAvailability();
+    await handleCheckConfirmationStatus();
   };
 
   const handleConfirmOrder = async () => {
@@ -332,24 +334,24 @@ function SaleOrderCreateDrawer({ open, onClose }) {
     }
   };
 
-  const handleCheckWarehouseAvailability = async () => {
+  const handleCheckConfirmationStatus = async () => {
     if (!createdSaleOrder?.id) return;
 
     try {
-      setWarehouseCheckStarted(true);
-      setWarehouseLoading(true);
+      setConfirmationCheckStarted(true);
+      setConfirmationLoading(true);
 
       const response = await api.get(
-        `warehouse-sales-order-availability/${createdSaleOrder.id}/`,
+        `sales-orders/${createdSaleOrder.id}/confirmation-status/`,
       );
 
-      setWarehouseAvailability(response.data);
+      setConfirmationStatus(response.data);
     } catch (err) {
-      console.error('Failed to check warehouse availability:', err);
+      console.error('Failed to check confirmation status:', err);
 
-      message.error('Не вдалося перевірити склад.');
+      message.error('Не вдалося перевірити можливість підтвердження.');
     } finally {
-      setWarehouseLoading(false);
+      setConfirmationLoading(false);
     }
   };
 
@@ -379,6 +381,10 @@ function SaleOrderCreateDrawer({ open, onClose }) {
       setSaleOrderComponents(
         Array.isArray(componentsResponse.data) ? componentsResponse.data : [],
       );
+
+      if (onCreated) {
+        await onCreated();
+      }
     } catch (err) {
       console.error('Failed to create sale order:', err);
 
@@ -497,7 +503,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
             </Flex>
           </Card>
 
-          {(!warehouseCheckStarted || usesCustomerGoods) && (
+          {(!confirmationCheckStarted || usesCustomerGoods) && (
             <Card
               title={
                 <Flex justify="space-between" align="center" gap={12}>
@@ -636,13 +642,13 @@ function SaleOrderCreateDrawer({ open, onClose }) {
             </Card>
           )}
 
-          {warehouseCheckStarted && (
+          {confirmationCheckStarted && (
             <Card
               title={`${
                 usesCustomerGoods ? '3' : '2'
-              }. Перевірка складу на наявність компонентів`}
+              }. Перевірка товарів замовника`}
             >
-              {warehouseLoading ? (
+              {confirmationLoading ? (
                 <Flex
                   vertical
                   align="center"
@@ -652,14 +658,14 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                 >
                   <Spin size="large" />
                   <Text type="secondary">
-                    Перевіряємо складські залишки та наявність компонентів...
+                    Перевіряємо наявність товарів замовника...
                   </Text>
                 </Flex>
-              ) : warehouseAvailability ? (
+              ) : confirmationStatus ? (
                 <Flex vertical gap={14}>
                   <Flex align="flex-end" gap={10}>
                     <Text strong style={{ fontSize: 18 }}>
-                      Замовлення готове для оформлення
+                      Товари замовника готові до підтвердження
                     </Text>
 
                     <div
@@ -671,7 +677,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                     />
 
                     <Flex align="center" gap={8}>
-                      {warehouseAvailability.can_confirm ? (
+                      {confirmationStatus.can_confirm ? (
                         <CheckCircleFilled
                           style={{ color: '#52c41a', fontSize: 22 }}
                         />
@@ -682,62 +688,63 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                       )}
 
                       <Text strong style={{ fontSize: 18 }}>
-                        {warehouseAvailability.can_confirm ? 'Так' : 'Ні'}
+                        {confirmationStatus.can_confirm ? 'Так' : 'Ні'}
                       </Text>
                     </Flex>
                   </Flex>
 
-                  {warehouseAvailability.can_confirm === false && (
+                  {confirmationStatus.can_confirm === false && (
                     <Alert
                       type="warning"
                       showIcon
                       icon={<InfoCircleFilled />}
-                      message="Замовлення не може бути підтверджене в поточний момент. Компоненти не будуть заброньовані."
+                      message="Замовлення не може бути підтверджене: не вистачає товарів замовника."
                     />
                   )}
 
-                  <Text strong>Звіт по складу</Text>
+                  <Text strong>Товари замовника</Text>
 
                   <Table
                     rowKey="component_id"
                     size="small"
                     pagination={false}
-                    dataSource={(warehouseAvailability.components || []).filter(
-                      (item) => Number(item.missing_quantity) > 0,
-                    )}
+                    dataSource={confirmationStatus.missing_components || []}
                     columns={[
                       {
                         title: 'Назва',
-                        dataIndex: 'inv_item_name',
-                        key: 'inv_item_name',
-                        render: (value) => value || '—',
+                        key: 'name',
+                        render: (_, record) =>
+                          `${record.inv_item_name || '—'} | ${
+                            record.inv_item_code || '—'
+                          }`,
+                      },
+                      {
+                        title: 'Потрібно',
+                        dataIndex: 'required_quantity',
+                        key: 'required_quantity',
+                        width: 120,
+                        align: 'center',
+                        render: (value) => formatQuantity(value),
+                      },
+                      {
+                        title: 'Наявно',
+                        dataIndex: 'available_quantity',
+                        key: 'available_quantity',
+                        width: 120,
+                        align: 'center',
+                        render: (value) => formatQuantity(value),
                       },
                       {
                         title: 'Дефіцит',
                         dataIndex: 'missing_quantity',
                         key: 'missing_quantity',
-                        width: 140,
+                        width: 120,
                         align: 'center',
                         render: (value) => formatQuantity(value),
                       },
-                      {
-                        title: 'Критично',
-                        dataIndex: 'is_required_for_start',
-                        key: 'is_required_for_start',
-                        width: 120,
-                        align: 'center',
-                        render: (value) =>
-                          value ? (
-                            <WarningFilled
-                              style={{ color: '#ff4d4f', fontSize: 18 }}
-                            />
-                          ) : (
-                            <span style={{ color: '#bfbfbf' }}>—</span>
-                          ),
-                      },
                     ]}
                     locale={{
-                      emptyText: 'Дефіцит не виявлено.',
+                      emptyText: 'Дефіцит товарів замовника не виявлено.',
                     }}
                   />
                 </Flex>
@@ -747,7 +754,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
             </Card>
           )}
 
-          {createdSaleOrder && !warehouseCheckStarted && (
+          {createdSaleOrder && !confirmationCheckStarted && (
             <Flex justify="space-between" gap={8}>
               <Button onClick={handleCloseDrawer}>Закрити</Button>
               <Tooltip
@@ -765,7 +772,7 @@ function SaleOrderCreateDrawer({ open, onClose }) {
                     onClick={
                       usesCustomerGoods
                         ? handleSaveCustomerComponents
-                        : handleCheckWarehouseAvailability
+                        : handleCheckConfirmationStatus
                     }
                   >
                     {usesCustomerGoods ? 'Зберегти зміни' : 'Перевірка складу'}
@@ -775,11 +782,11 @@ function SaleOrderCreateDrawer({ open, onClose }) {
             </Flex>
           )}
 
-          {warehouseCheckStarted && (
+          {confirmationCheckStarted && (
             <Flex justify="space-between" gap={8}>
               <Button onClick={handleCloseDrawer}>Закрити</Button>
 
-              {warehouseAvailability?.can_confirm && (
+              {confirmationStatus?.can_confirm && (
                 <Popconfirm
                   title="Підтвердити замовлення?"
                   description="Після підтвердження компоненти будуть заброньовані, а редагування замовлення стане недоступним."

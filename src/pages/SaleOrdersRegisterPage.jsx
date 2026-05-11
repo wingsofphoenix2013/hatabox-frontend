@@ -342,12 +342,42 @@ function SaleOrdersRegisterPage() {
         title: 'Статус',
         dataIndex: 'status',
         key: 'status',
-        width: 190,
-        render: (value) => (
-          <Tag color={getStatusTagColor(value)}>
-            {STATUS_LABELS[value] || value || '—'}
-          </Tag>
-        ),
+        width: 230,
+        render: (value, record) => {
+          const totalIssues =
+            Number(record.open_confirmation_issues_count) || 0;
+          const criticalIssues =
+            Number(record.open_critical_confirmation_issues_count) || 0;
+
+          return (
+            <Flex align="center" gap={6} wrap>
+              <Tag color={getStatusTagColor(value)}>
+                {STATUS_LABELS[value] || value || '—'}
+              </Tag>
+
+              {value === 'draft' && (
+                <Tag color={record.can_confirm_now ? 'success' : 'error'}>
+                  Проблем:{' '}
+                  {totalIssues === 0 && criticalIssues === 0 ? (
+                    '—'
+                  ) : (
+                    <>
+                      {totalIssues}/
+                      <span
+                        style={{
+                          color: '#cf1322',
+                          fontWeight: 700,
+                        }}
+                      >
+                        {criticalIssues}
+                      </span>
+                    </>
+                  )}
+                </Tag>
+              )}
+            </Flex>
+          );
+        },
       },
       {
         title: 'Створено',

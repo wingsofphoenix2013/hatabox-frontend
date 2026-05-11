@@ -2,11 +2,9 @@ import { useEffect, useState } from 'react';
 import {
   EditOutlined,
   InfoCircleOutlined,
-  ReloadOutlined,
   SaveOutlined,
   SettingOutlined,
   StopOutlined,
-  WarningFilled,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -21,7 +19,6 @@ import {
   Row,
   Select,
   Skeleton,
-  Table,
   Tag,
   Tooltip,
   Typography,
@@ -33,7 +30,6 @@ import api from '../api/client';
 import SaleOrderCustomerComponentsDrawer from '../components/SaleOrderCustomerComponentsDrawer';
 import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
-import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
@@ -63,7 +59,6 @@ function SaleOrdersDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [refreshingShortages, setRefreshingShortages] = useState(false);
   const [confirmingOrder, setConfirmingOrder] = useState(false);
   const [cancellingOrder, setCancellingOrder] = useState(false);
 
@@ -193,6 +188,17 @@ function SaleOrdersDetailPage() {
     try {
       setConfirmingOrder(true);
 
+      const confirmationResponse = await api.get(
+        `sales-orders/${id}/confirmation-status/`,
+      );
+
+      if (!confirmationResponse.data?.can_confirm) {
+        message.error(
+          'Неможливо підтвердити замовлення: не отримано всі компоненти від замовника.',
+        );
+        return;
+      }
+
       const response = await api.post(`sales-orders/${id}/confirm/`, {});
 
       setOrder(response.data);
@@ -224,21 +230,6 @@ function SaleOrdersDetailPage() {
       message.error(backendMessage || 'Не вдалося відмінити замовлення.');
     } finally {
       setCancellingOrder(false);
-    }
-  };
-
-  const handleRefreshWarehouseShortages = async () => {
-    try {
-      setRefreshingShortages(true);
-
-      await api.get(`warehouse-sales-order-availability/${id}/`);
-
-      const response = await api.get(`sales-orders/${id}/`);
-      setOrder(response.data);
-    } catch (err) {
-      console.error('Failed to refresh warehouse shortages:', err);
-    } finally {
-      setRefreshingShortages(false);
     }
   };
 
@@ -275,80 +266,6 @@ function SaleOrdersDetailPage() {
   const isConfirmed = order.status === 'confirmed';
   const canCancel = isDraft || isConfirmed;
   const canEditDetails = !['completed', 'cancelled'].includes(order.status);
-
-  const warehouseShortages = Array.isArray(order.warehouse_shortages)
-    ? order.warehouse_shortages
-    : [];
-
-  const customerShortages = warehouseShortages.filter(
-    (item) => item.fulfillment_mode === 'customer',
-  );
-
-  const mixedShortages = warehouseShortages.filter(
-    (item) => item.fulfillment_mode === 'mixed',
-  );
-
-  const shortageColumns = [
-    {
-      title: '№',
-      key: 'index',
-      width: 60,
-      align: 'center',
-      render: (_, __, index) => index + 1,
-    },
-    {
-      title: 'Компонент',
-      key: 'component',
-      render: (_, record) => (
-        <Flex align="center" gap={6} wrap>
-          <span>
-            {record.inv_item_name || '—'} | {record.inv_item_code || '—'}
-          </span>
-
-          {record.inv_item && (
-            <Link
-              to={`/inventory/stock/${record.inv_item}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <InfoCircleOutlined
-                style={{
-                  color: '#1677ff',
-                  fontSize: 14,
-                  cursor: 'pointer',
-                }}
-              />
-            </Link>
-          )}
-        </Flex>
-      ),
-    },
-    {
-      title: 'К-сть',
-      key: 'quantity',
-      width: 140,
-      align: 'center',
-      render: (_, record) => (
-        <span>
-          {formatQuantity(record.missing_quantity)}{' '}
-          {record.inv_item_unit_symbol || ''}
-        </span>
-      ),
-    },
-    {
-      title: 'Крит.',
-      dataIndex: 'is_required_for_start',
-      key: 'is_required_for_start',
-      width: 100,
-      align: 'center',
-      render: (value) =>
-        value ? (
-          <WarningFilled style={{ color: '#ff4d4f', fontSize: 18 }} />
-        ) : (
-          <span style={{ color: '#bfbfbf' }}>—</span>
-        ),
-    },
-  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -413,33 +330,17 @@ function SaleOrdersDetailPage() {
             <Flex vertical gap={8}>
               {isDraft && (
                 <>
-                  <Tooltip
-                    title={
-                      order.can_try_confirm
-                        ? ''
-                        : 'Неможливо підтвердити замовлення: наявний дефіцит критичних компонентів'
-                    }
+                  <Popconfirm
+                    title="Підтвердити замовлення?"
+                    description="Перед підтвердженням система перевірить, чи отримано всі компоненти від замовника."
+                    okText="Підтвердити"
+                    cancelText="Скасувати"
+                    onConfirm={handleConfirmOrder}
                   >
-                    <div>
-                      <Popconfirm
-                        title="Підтвердити замовлення?"
-                        description="Після підтвердження компоненти будуть заброньовані, а редагування товарів замовника стане недоступним."
-                        okText="Підтвердити"
-                        cancelText="Скасувати"
-                        onConfirm={handleConfirmOrder}
-                        disabled={!order.can_try_confirm}
-                      >
-                        <Button
-                          block
-                          type="primary"
-                          loading={confirmingOrder}
-                          disabled={!order.can_try_confirm}
-                        >
-                          Підтвердити замовлення
-                        </Button>
-                      </Popconfirm>
-                    </div>
-                  </Tooltip>
+                    <Button block type="primary" loading={confirmingOrder}>
+                      Підтвердити замовлення
+                    </Button>
+                  </Popconfirm>
 
                   <Divider dashed style={{ margin: '4px 0 8px 0' }} />
 
@@ -462,26 +363,6 @@ function SaleOrdersDetailPage() {
                       </Button>
                     </div>
                   </Tooltip>
-                </>
-              )}
-
-              {order.has_warehouse_shortages && (
-                <>
-                  <Button
-                    block
-                    icon={
-                      <ReloadOutlined
-                        spin={refreshingShortages}
-                        style={{
-                          color: refreshingShortages ? '#bfbfbf' : '#1677ff',
-                        }}
-                      />
-                    }
-                    disabled={refreshingShortages}
-                    onClick={handleRefreshWarehouseShortages}
-                  >
-                    Оновити звіт по дефіциту
-                  </Button>
                 </>
               )}
 
@@ -717,80 +598,6 @@ function SaleOrdersDetailPage() {
               />
             </Flex>
           </Card>
-
-          {order.has_warehouse_shortages && (
-            <Card
-              title={
-                <Flex justify="space-between" align="center" gap={12}>
-                  <span>Дефіцит компонентів</span>
-
-                  <Flex align="center" gap={8}>
-                    <Text type="secondary">
-                      Перевірено:{' '}
-                      {formatDateDisplay(
-                        order.warehouse_shortages_last_checked_at,
-                      )}
-                    </Text>
-
-                    <Tooltip title="Оновити">
-                      <ReloadOutlined
-                        spin={refreshingShortages}
-                        style={{
-                          color: '#1677ff',
-                          fontSize: 16,
-                          cursor: refreshingShortages
-                            ? 'not-allowed'
-                            : 'pointer',
-                        }}
-                        onClick={
-                          refreshingShortages
-                            ? undefined
-                            : handleRefreshWarehouseShortages
-                        }
-                      />
-                    </Tooltip>
-                  </Flex>
-                </Flex>
-              }
-            >
-              {refreshingShortages ? (
-                <Skeleton active paragraph={{ rows: 6 }} />
-              ) : (
-                <Flex vertical gap={16}>
-                  <Flex vertical gap={10}>
-                    <Text strong>Компоненти від замовника</Text>
-
-                    <Table
-                      rowKey="id"
-                      size="small"
-                      pagination={false}
-                      dataSource={customerShortages}
-                      columns={shortageColumns}
-                      locale={{
-                        emptyText:
-                          'Дефіцит компонентів від замовника відсутній.',
-                      }}
-                    />
-                  </Flex>
-
-                  <Flex vertical gap={10}>
-                    <Text strong>Загальний перелік компонентів</Text>
-
-                    <Table
-                      rowKey="id"
-                      size="small"
-                      pagination={false}
-                      dataSource={mixedShortages}
-                      columns={shortageColumns}
-                      locale={{
-                        emptyText: 'Загальний дефіцит компонентів відсутній.',
-                      }}
-                    />
-                  </Flex>
-                </Flex>
-              )}
-            </Card>
-          )}
         </Col>
       </Row>
 
@@ -798,7 +605,7 @@ function SaleOrdersDetailPage() {
         open={isCustomerComponentsDrawerOpen}
         onClose={() => setIsCustomerComponentsDrawerOpen(false)}
         orderId={order.id}
-        onSaved={handleRefreshWarehouseShortages}
+        onSaved={loadOrderPage}
       />
     </div>
   );

@@ -529,7 +529,12 @@ function SaleOrdersDetailPage() {
                   {
                     key: 'created_at',
                     label: 'Створено',
-                    children: formatDateDisplay(order.created_at),
+                    children: (
+                      <span>
+                        {formatDateDisplay(order.created_at)} |{' '}
+                        {order.created_by_username || '—'}
+                      </span>
+                    ),
                   },
                   {
                     key: 'updated_at',

@@ -344,8 +344,6 @@ function SaleOrdersRegisterPage() {
         key: 'status',
         width: 230,
         render: (value, record) => {
-          const totalIssues =
-            Number(record.open_confirmation_issues_count) || 0;
           const criticalIssues =
             Number(record.open_critical_confirmation_issues_count) || 0;
 
@@ -356,13 +354,18 @@ function SaleOrdersRegisterPage() {
               </Tag>
 
               {value === 'draft' && (
-                <Tag color={record.can_confirm_now ? 'success' : 'error'}>
-                  Проблем:{' '}
-                  {totalIssues === 0 && criticalIssues === 0 ? (
-                    '—'
-                  ) : (
-                    <>
-                      {totalIssues}/
+                <Tooltip
+                  title={
+                    record.can_confirm_now
+                      ? 'Замовлення можна підтвердити.'
+                      : 'Не вистачає товару замовника для підтвердження замовлення.'
+                  }
+                >
+                  <Tag color={record.can_confirm_now ? 'success' : 'error'}>
+                    Проблем:{' '}
+                    {criticalIssues === 0 ? (
+                      '—'
+                    ) : (
                       <span
                         style={{
                           color: '#cf1322',
@@ -371,9 +374,9 @@ function SaleOrdersRegisterPage() {
                       >
                         {criticalIssues}
                       </span>
-                    </>
-                  )}
-                </Tag>
+                    )}
+                  </Tag>
+                </Tooltip>
               )}
             </Flex>
           );

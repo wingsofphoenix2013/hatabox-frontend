@@ -386,15 +386,6 @@ function SaleOrdersDetailPage() {
                         </Popconfirm>
                       </div>
                     </Tooltip>
-
-                    <Text
-                      type={canConfirmOrder ? 'success' : 'secondary'}
-                      style={{ fontSize: 12 }}
-                    >
-                      {canConfirmOrder
-                        ? 'Замовлення можна підтвердити'
-                        : 'Не вистачає товару замовника'}
-                    </Text>
                   </Flex>
 
                   <Divider dashed style={{ margin: '4px 0 8px 0' }} />

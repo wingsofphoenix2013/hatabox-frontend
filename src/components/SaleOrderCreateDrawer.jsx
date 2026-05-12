@@ -40,7 +40,7 @@ const compactLabelStyle = {
   lineHeight: 1.2,
 };
 
-function SaleOrderCreateDrawer({ open, onClose, onCreated }) {
+function SaleOrderCreateDrawer({ open, onClose, onCreated, onChanged }) {
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
@@ -318,6 +318,10 @@ function SaleOrderCreateDrawer({ open, onClose, onCreated }) {
 
       await api.post(`sales-orders/${createdSaleOrder.id}/confirm/`, {});
 
+      if (onChanged) {
+        await onChanged();
+      }
+
       message.success('Замовлення підтверджено.');
 
       handleCloseDrawer();
@@ -346,6 +350,10 @@ function SaleOrderCreateDrawer({ open, onClose, onCreated }) {
       );
 
       setConfirmationStatus(response.data);
+
+      if (onChanged) {
+        await onChanged();
+      }
     } catch (err) {
       console.error('Failed to check confirmation status:', err);
 

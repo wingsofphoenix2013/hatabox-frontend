@@ -588,6 +588,7 @@ function SaleOrdersRegisterPage() {
         open={isCreateDrawerOpen}
         onClose={closeCreateDrawer}
         onCreated={() => loadSaleOrders(currentPage)}
+        onChanged={() => loadSaleOrders(currentPage)}
       />
     </div>
   );

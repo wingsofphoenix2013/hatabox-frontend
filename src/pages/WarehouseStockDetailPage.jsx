@@ -42,20 +42,6 @@ const SALES_ORDER_STATUS_LABELS = {
   in_progress: 'В роботі',
 };
 
-const getFulfillmentModeLabel = (mode) => {
-  if (mode === 'customer') return 'Від замовників';
-  if (mode === 'mixed') return 'Закупівля';
-
-  return '—';
-};
-
-const getFulfillmentModeTagColor = (mode) => {
-  if (mode === 'customer') return 'default';
-  if (mode === 'mixed') return 'processing';
-
-  return 'default';
-};
-
 function WarehouseStockDetailPage() {
   const { id } = useParams();
 
@@ -123,8 +109,7 @@ function WarehouseStockDetailPage() {
   const incomingRows = data.incoming_rows || [];
   const shortageRows = shortageData?.rows || [];
   const shortageSummary = shortageData?.summary || {};
-  const shouldShowShortageCard =
-    Number(shortageSummary.total_missing_quantity) > 0;
+  const shouldShowShortageCard = Number(shortageSummary.missing_quantity) > 0;
   const imageUrl = header.image || '';
   const unitSymbol = header.inventory_item_unit_symbol || '';
   const hasAvailableStock = stockRows.some((row) => Number(row.quantity) > 0);
@@ -531,23 +516,14 @@ function WarehouseStockDetailPage() {
       ),
     },
     {
-      title: 'К-сть',
-      key: 'missing_quantity',
+      title: 'Потреба',
+      key: 'required_quantity',
       width: 150,
       align: 'center',
       render: (_, record) => (
-        <Flex vertical gap={4} align="center">
-          <Text strong>
-            {formatQuantity(record.missing_quantity)} {unitSymbol}
-          </Text>
-
-          <Tag
-            color={getFulfillmentModeTagColor(record.fulfillment_mode)}
-            style={{ marginInlineEnd: 0 }}
-          >
-            {getFulfillmentModeLabel(record.fulfillment_mode)}
-          </Tag>
-        </Flex>
+        <Text strong>
+          {formatQuantity(record.required_quantity)} {unitSymbol}
+        </Text>
       ),
     },
   ];
@@ -818,29 +794,18 @@ function WarehouseStockDetailPage() {
                         ),
                       },
                       {
-                        key: 'is_required_for_start',
-                        label: 'Критичність',
-                        children: shortageData?.is_required_for_start ? (
-                          <Tooltip title="Критично для старту виробництва">
-                            <Flex justify="center" align="center" gap={6}>
-                              <WarningFilled
-                                style={{
-                                  color: '#ff4d4f',
-                                  fontSize: 16,
-                                }}
-                              />
-                              <Text strong type="danger">
-                                Так
-                              </Text>
-                            </Flex>
-                          </Tooltip>
-                        ) : (
+                        key: 'last_recalculated_at',
+                        label: 'Оновлено',
+                        children: (
                           <Text
                             strong
-                            type="secondary"
                             style={{ display: 'block', textAlign: 'center' }}
                           >
-                            —
+                            {shortageSummary.last_recalculated_at
+                              ? new Date(
+                                  shortageSummary.last_recalculated_at,
+                                ).toLocaleString('uk-UA')
+                              : '—'}
                           </Text>
                         ),
                       },
@@ -853,11 +818,38 @@ function WarehouseStockDetailPage() {
                     bordered
                     items={[
                       {
-                        key: 'total_missing_quantity',
-                        label: 'Загально',
+                        key: 'required_quantity',
+                        label: 'Потреба',
                         children: (
                           <Text
                             strong
+                            style={{ display: 'block', textAlign: 'center' }}
+                          >
+                            {formatQuantity(shortageSummary.required_quantity)}{' '}
+                            {unitSymbol}
+                          </Text>
+                        ),
+                      },
+                      {
+                        key: 'available_quantity',
+                        label: 'Доступно',
+                        children: (
+                          <Text
+                            strong
+                            style={{ display: 'block', textAlign: 'center' }}
+                          >
+                            {formatQuantity(shortageSummary.available_quantity)}{' '}
+                            {unitSymbol}
+                          </Text>
+                        ),
+                      },
+                      {
+                        key: 'missing_quantity',
+                        label: 'Дефіцит',
+                        children: (
+                          <Text
+                            strong
+                            type="danger"
                             style={{
                               display: 'block',
                               textAlign: 'center',
@@ -866,39 +858,7 @@ function WarehouseStockDetailPage() {
                               padding: '2px 6px',
                             }}
                           >
-                            {formatQuantity(
-                              shortageSummary.total_missing_quantity,
-                            )}{' '}
-                            {unitSymbol}
-                          </Text>
-                        ),
-                      },
-                      {
-                        key: 'mixed_missing_quantity',
-                        label: 'Закупівля',
-                        children: (
-                          <Text
-                            strong
-                            style={{ display: 'block', textAlign: 'center' }}
-                          >
-                            {formatQuantity(
-                              shortageSummary.mixed_missing_quantity,
-                            )}{' '}
-                            {unitSymbol}
-                          </Text>
-                        ),
-                      },
-                      {
-                        key: 'customer_missing_quantity',
-                        label: 'Від замовників',
-                        children: (
-                          <Text
-                            strong
-                            style={{ display: 'block', textAlign: 'center' }}
-                          >
-                            {formatQuantity(
-                              shortageSummary.customer_missing_quantity,
-                            )}{' '}
+                            {formatQuantity(shortageSummary.missing_quantity)}{' '}
                             {unitSymbol}
                           </Text>
                         ),
@@ -907,7 +867,9 @@ function WarehouseStockDetailPage() {
                   />
 
                   <Table
-                    rowKey={(record) => record.shortage_id}
+                    rowKey={(record) =>
+                      `${record.sales_order}-${record.component_id}`
+                    }
                     columns={shortageColumns}
                     dataSource={shortageRows}
                     pagination={false}

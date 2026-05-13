@@ -3,7 +3,6 @@ import {
   AppstoreAddOutlined,
   QuestionCircleOutlined,
   SearchOutlined,
-  WarningFilled,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -26,30 +25,6 @@ const { Title, Text } = Typography;
 
 const pageSize = 50;
 
-const fulfillmentModeOptions = [
-  { value: 'customer', label: 'Від замовників' },
-  { value: 'mixed', label: 'Закупівля' },
-];
-
-const requiredForStartOptions = [
-  { value: 'true', label: 'Критичні для старту' },
-  { value: 'false', label: 'Некритичні для старту' },
-];
-
-const getFulfillmentModeLabel = (mode) => {
-  if (mode === 'customer') return 'Від замовників';
-  if (mode === 'mixed') return 'Закупівля';
-
-  return '—';
-};
-
-const getFulfillmentModeTagColor = (mode) => {
-  if (mode === 'customer') return 'default';
-  if (mode === 'mixed') return 'processing';
-
-  return 'default';
-};
-
 function OrdersShortageRegisterPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -58,12 +33,6 @@ function OrdersShortageRegisterPage() {
 
   const [searchText, setSearchText] = useState(
     searchParams.get('search') || '',
-  );
-  const [selectedFulfillmentMode, setSelectedFulfillmentMode] = useState(
-    searchParams.get('fulfillment_mode') || undefined,
-  );
-  const [selectedRequiredForStart, setSelectedRequiredForStart] = useState(
-    searchParams.get('is_required_for_start') || undefined,
   );
   const [currentPage, setCurrentPage] = useState(
     Number(searchParams.get('page')) || 1,
@@ -76,12 +45,7 @@ function OrdersShortageRegisterPage() {
   useEffect(() => {
     loadShortageOverview(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    currentPage,
-    searchText,
-    selectedFulfillmentMode,
-    selectedRequiredForStart,
-  ]);
+  }, [currentPage, searchText]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -91,26 +55,12 @@ function OrdersShortageRegisterPage() {
       params.set('search', normalizedSearch);
     }
 
-    if (selectedFulfillmentMode) {
-      params.set('fulfillment_mode', selectedFulfillmentMode);
-    }
-
-    if (selectedRequiredForStart) {
-      params.set('is_required_for_start', selectedRequiredForStart);
-    }
-
     if (currentPage > 1) {
       params.set('page', String(currentPage));
     }
 
     setSearchParams(params);
-  }, [
-    searchText,
-    selectedFulfillmentMode,
-    selectedRequiredForStart,
-    currentPage,
-    setSearchParams,
-  ]);
+  }, [searchText, currentPage, setSearchParams]);
 
   const loadShortageOverview = async (page) => {
     try {
@@ -123,14 +73,6 @@ function OrdersShortageRegisterPage() {
       const normalizedSearch = searchText.trim();
       if (normalizedSearch) {
         params.append('search', normalizedSearch);
-      }
-
-      if (selectedFulfillmentMode) {
-        params.append('fulfillment_mode', selectedFulfillmentMode);
-      }
-
-      if (selectedRequiredForStart) {
-        params.append('is_required_for_start', selectedRequiredForStart);
       }
 
       const response = await api.get(
@@ -201,6 +143,38 @@ function OrdersShortageRegisterPage() {
         },
       },
       {
+        title: 'Потреба',
+        key: 'required_quantity',
+        width: 150,
+        align: 'center',
+        render: (_, record) => {
+          const unit = record.inventory_item_unit_symbol || '';
+
+          return record.required_quantity ? (
+            <Text strong>
+              {formatQuantity(record.required_quantity)} {unit}
+            </Text>
+          ) : (
+            <Text type="secondary">—</Text>
+          );
+        },
+      },
+      {
+        title: 'Доступно',
+        key: 'available_quantity',
+        width: 150,
+        align: 'center',
+        render: (_, record) => {
+          const unit = record.inventory_item_unit_symbol || '';
+
+          return (
+            <Text>
+              {formatQuantity(record.available_quantity)} {unit}
+            </Text>
+          );
+        },
+      },
+      {
         title: 'Дефіцит',
         key: 'missing_quantity',
         width: 150,
@@ -209,27 +183,13 @@ function OrdersShortageRegisterPage() {
           const unit = record.inventory_item_unit_symbol || '';
 
           return record.missing_quantity ? (
-            <Text strong>
+            <Text strong type="danger">
               {formatQuantity(record.missing_quantity)} {unit}
             </Text>
           ) : (
             <Text type="secondary">—</Text>
           );
         },
-      },
-      {
-        title: 'Джерело',
-        key: 'fulfillment_mode',
-        width: 160,
-        align: 'center',
-        render: (_, record) => (
-          <Tag
-            color={getFulfillmentModeTagColor(record.fulfillment_mode)}
-            style={{ marginInlineEnd: 0 }}
-          >
-            {getFulfillmentModeLabel(record.fulfillment_mode)}
-          </Tag>
-        ),
       },
       {
         title: 'Очікуємо',
@@ -275,32 +235,18 @@ function OrdersShortageRegisterPage() {
         },
       },
       {
-        title: 'Критично',
-        key: 'is_required_for_start',
-        width: 110,
+        title: 'Оновлено',
+        key: 'last_recalculated_at',
+        width: 150,
         align: 'center',
         render: (_, record) =>
-          record.is_required_for_start ? (
-            <Tooltip title="Критично для старту виробництва">
-              <WarningFilled
-                style={{
-                  color: '#ff4d4f',
-                  fontSize: 16,
-                }}
-              />
-            </Tooltip>
+          record.last_recalculated_at ? (
+            <Text>
+              {new Date(record.last_recalculated_at).toLocaleString('uk-UA')}
+            </Text>
           ) : (
             <Text type="secondary">—</Text>
           ),
-      },
-      {
-        title: 'Замов.',
-        key: 'sales_orders_count',
-        width: 100,
-        align: 'center',
-        render: (_, record) => (
-          <Text strong>{Number(record.sales_orders_count) || 0}</Text>
-        ),
       },
       {
         title: '',
@@ -343,8 +289,8 @@ function OrdersShortageRegisterPage() {
             </Title>
 
             <Text type="secondary">
-              Агрегований дефіцит компонентів за замовленнями продажу,
-              розрахований під час перевірки доступності.
+              Поточний дефіцит компонентів для підтверджених замовлень. Дані
+              оновлюються після кожного підтвердження замовлень.
             </Text>
           </Flex>
         </Flex>
@@ -380,36 +326,6 @@ function OrdersShortageRegisterPage() {
                 setSearchText(e.target.value);
                 setCurrentPage(1);
               }}
-            />
-
-            <Divider type="vertical" style={{ height: 28 }} />
-
-            <Select
-              allowClear
-              placeholder="Джерело"
-              style={{ minWidth: 220 }}
-              value={selectedFulfillmentMode}
-              onChange={(value) => {
-                setSelectedFulfillmentMode(value);
-                setCurrentPage(1);
-              }}
-              options={fulfillmentModeOptions}
-              optionFilterProp="label"
-            />
-
-            <Divider type="vertical" style={{ height: 28 }} />
-
-            <Select
-              allowClear
-              placeholder="Критичність"
-              style={{ minWidth: 220 }}
-              value={selectedRequiredForStart}
-              onChange={(value) => {
-                setSelectedRequiredForStart(value);
-                setCurrentPage(1);
-              }}
-              options={requiredForStartOptions}
-              optionFilterProp="label"
             />
           </Flex>
         </Card>
@@ -450,7 +366,7 @@ function OrdersShortageRegisterPage() {
             locale={{
               emptyText: 'Немає позицій дефіциту для відображення.',
             }}
-            scroll={{ x: 1120 }}
+            scroll={{ x: 1180 }}
           />
         </Card>
       </Flex>

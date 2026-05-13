@@ -428,7 +428,7 @@ function SaleOrdersDetailPage() {
                     <Tooltip
                       title={
                         !confirmationStatusLoading && !canConfirmOrder
-                          ? 'Не вистачає товару замовника'
+                          ? 'Товар замовника ще не доступний для цього замовлення'
                           : ''
                       }
                     >

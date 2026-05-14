@@ -844,9 +844,84 @@ function SaleOrdersDetailPage() {
                         </Flex>
                       }
                     >
-                      <Text type="secondary">
-                        Дані етапу будуть додані пізніше.
-                      </Text>
+                      {Array.isArray(step.issues) && step.issues.length > 0 ? (
+                        <Table
+                          rowKey="issue"
+                          size="small"
+                          pagination={false}
+                          dataSource={step.issues}
+                          columns={[
+                            {
+                              title: '№',
+                              key: 'index',
+                              width: 56,
+                              align: 'center',
+                              render: (_, __, index) => index + 1,
+                            },
+                            {
+                              title: 'Компонент',
+                              key: 'component',
+                              render: (_, record) => (
+                                <Flex align="center" gap={6} wrap>
+                                  <span>
+                                    {record.inv_item_name || '—'} |{' '}
+                                    {record.inv_item_code || '—'}
+                                  </span>
+
+                                  {record.inv_item ? (
+                                    <Link
+                                      to={`/inventory/stock/${record.inv_item}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      <InfoCircleOutlined
+                                        style={{ color: '#8c8c8c' }}
+                                      />
+                                    </Link>
+                                  ) : null}
+                                </Flex>
+                              ),
+                            },
+                            {
+                              title: 'Дефіцит',
+                              key: 'missing_quantity',
+                              width: 160,
+                              align: 'center',
+                              render: (_, record) => (
+                                <Text strong>
+                                  {formatQuantity(record.missing_quantity)}{' '}
+                                  {record.unit_symbol || ''}
+                                </Text>
+                              ),
+                            },
+                            {
+                              title: 'Крит.',
+                              key: 'severity',
+                              width: 90,
+                              align: 'center',
+                              render: (_, record) =>
+                                record.severity === 'critical' ? (
+                                  <Tooltip title={record.message || ''}>
+                                    <WarningFilled
+                                      style={{
+                                        color: '#ff4d4f',
+                                        fontSize: 18,
+                                      }}
+                                    />
+                                  </Tooltip>
+                                ) : (
+                                  <span style={{ color: '#bfbfbf' }}>—</span>
+                                ),
+                            },
+                          ]}
+                        />
+                      ) : (
+                        <Alert
+                          type="success"
+                          showIcon
+                          message="Проблем для підтвердження етапу не виявлено."
+                        />
+                      )}
                     </Card>
                   ))}
                 </Flex>

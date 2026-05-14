@@ -798,9 +798,12 @@ function SaleOrdersDetailPage() {
 
                           <Tooltip
                             title={
-                              step.can_be_confirmed
-                                ? ''
-                                : 'Етап не може бути підтверджений, поки не вирішені критичні проблеми з постачанням комплектуючих.'
+                              !step.can_be_confirmed
+                                ? 'Етап не може бути підтверджений, поки не вирішені критичні проблеми.'
+                                : productionReadiness?.summary?.next_step !==
+                                    step.production_order_step
+                                  ? 'Спочатку потрібно підтвердити попередній етап.'
+                                  : ''
                             }
                           >
                             <div>
@@ -809,12 +812,29 @@ function SaleOrdersDetailPage() {
                                 description="Після підтвердження етапу процедура буде незворотною."
                                 okText="Підтвердити"
                                 cancelText="Скасувати"
-                                disabled={!step.can_be_confirmed}
+                                disabled={
+                                  !step.can_be_confirmed ||
+                                  productionReadiness?.summary?.next_step !==
+                                    step.production_order_step
+                                }
                               >
                                 <Button
                                   size="small"
-                                  type="primary"
+                                  type={
+                                    step.can_be_confirmed &&
+                                    productionReadiness?.summary?.next_step ===
+                                      step.production_order_step
+                                      ? 'primary'
+                                      : 'default'
+                                  }
                                   disabled={!step.can_be_confirmed}
+                                  onClick={
+                                    step.can_be_confirmed &&
+                                    productionReadiness?.summary?.next_step !==
+                                      step.production_order_step
+                                      ? (event) => event.preventDefault()
+                                      : undefined
+                                  }
                                 >
                                   Підтвердити етап
                                 </Button>

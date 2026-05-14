@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   EditOutlined,
   InfoCircleOutlined,
@@ -20,6 +20,7 @@ import {
   Row,
   Select,
   Skeleton,
+  Spin,
   Table,
   Tag,
   Tooltip,
@@ -78,6 +79,8 @@ function SaleOrdersDetailPage() {
   const [productionReadinessLoading, setProductionReadinessLoading] =
     useState(false);
 
+  const productionReadinessPollRef = useRef(null);
+
   const [confirmingOrder, setConfirmingOrder] = useState(false);
   const [cancellingOrder, setCancellingOrder] = useState(false);
 
@@ -97,20 +100,39 @@ function SaleOrdersDetailPage() {
     useState(null);
   const [savingResponsiblePerson, setSavingResponsiblePerson] = useState(false);
 
-  const loadProductionReadiness = async () => {
+  const clearProductionReadinessPoll = () => {
+    if (productionReadinessPollRef.current) {
+      window.clearTimeout(productionReadinessPollRef.current);
+      productionReadinessPollRef.current = null;
+    }
+  };
+
+  const loadProductionReadiness = async ({ silent = false } = {}) => {
     try {
-      setProductionReadinessLoading(true);
+      clearProductionReadinessPoll();
+
+      if (!silent) {
+        setProductionReadinessLoading(true);
+      }
 
       const response = await api.get(
         `sales-orders/${id}/production-readiness/`,
       );
 
       setProductionReadiness(response.data || null);
+
+      if (response.data?.readiness_status === 'pending') {
+        productionReadinessPollRef.current = window.setTimeout(() => {
+          loadProductionReadiness({ silent: true });
+        }, 2000);
+      }
     } catch (err) {
       console.error('Failed to load production readiness:', err);
       setProductionReadiness(null);
     } finally {
-      setProductionReadinessLoading(false);
+      if (!silent) {
+        setProductionReadinessLoading(false);
+      }
     }
   };
 
@@ -133,6 +155,8 @@ function SaleOrdersDetailPage() {
       setLoading(true);
       setError('');
       setConfirmationStatus(null);
+      setProductionReadiness(null);
+      clearProductionReadinessPoll();
 
       const response = await api.get(`sales-orders/${id}/`);
       setOrder(response.data);
@@ -298,6 +322,14 @@ function SaleOrdersDetailPage() {
     loadOrderPage();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(
+    () => () => {
+      clearProductionReadinessPoll();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
 
   if (loading) {
     return (
@@ -769,6 +801,29 @@ function SaleOrdersDetailPage() {
             <Card title="Готовність виробництва">
               {productionReadinessLoading ? (
                 <Skeleton active paragraph={{ rows: 6 }} />
+              ) : productionReadiness?.readiness_status === 'pending' ? (
+                <Flex
+                  vertical
+                  align="center"
+                  justify="center"
+                  gap={12}
+                  style={{ padding: '28px 0' }}
+                >
+                  <Spin size="large" />
+                  <Text type="secondary">
+                    {productionReadiness.message ||
+                      'Виробничі етапи ще формуються.'}
+                  </Text>
+                </Flex>
+              ) : productionReadiness?.readiness_status === 'failed' ? (
+                <Alert
+                  type="error"
+                  showIcon
+                  message={
+                    productionReadiness.message ||
+                    'Не вдалося сформувати виробничі етапи.'
+                  }
+                />
               ) : (
                 <Flex vertical gap={16}>
                   {(productionReadiness?.steps || []).map((step) => (

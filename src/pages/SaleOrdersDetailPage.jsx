@@ -35,6 +35,14 @@ import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
+const PRODUCTION_STEP_STATUS_LABELS = {
+  draft: 'Чернетка',
+  confirmed: 'Підтверджено',
+  in_progress: 'В роботі',
+  completed: 'Виконано',
+  cancelled: 'Скасовано',
+};
+
 const getStatusTagColor = (status) => {
   switch (status) {
     case 'draft':
@@ -65,6 +73,10 @@ function SaleOrdersDetailPage() {
   const [confirmationStatusLoading, setConfirmationStatusLoading] =
     useState(false);
 
+  const [productionReadiness, setProductionReadiness] = useState(null);
+  const [productionReadinessLoading, setProductionReadinessLoading] =
+    useState(false);
+
   const [confirmingOrder, setConfirmingOrder] = useState(false);
   const [cancellingOrder, setCancellingOrder] = useState(false);
 
@@ -83,6 +95,23 @@ function SaleOrdersDetailPage() {
   const [editingResponsiblePerson, setEditingResponsiblePerson] =
     useState(null);
   const [savingResponsiblePerson, setSavingResponsiblePerson] = useState(false);
+
+  const loadProductionReadiness = async () => {
+    try {
+      setProductionReadinessLoading(true);
+
+      const response = await api.get(
+        `sales-orders/${id}/production-readiness/`,
+      );
+
+      setProductionReadiness(response.data || null);
+    } catch (err) {
+      console.error('Failed to load production readiness:', err);
+      setProductionReadiness(null);
+    } finally {
+      setProductionReadinessLoading(false);
+    }
+  };
 
   const loadConfirmationStatus = async () => {
     try {
@@ -109,6 +138,10 @@ function SaleOrdersDetailPage() {
 
       if (response.data?.status === 'draft') {
         await loadConfirmationStatus();
+      }
+
+      if (response.data?.status === 'confirmed') {
+        await loadProductionReadiness();
       }
     } catch (err) {
       console.error('Failed to load sale order page:', err);
@@ -729,6 +762,74 @@ function SaleOrdersDetailPage() {
                   emptyText: 'Дефіцит товарів замовника відсутній.',
                 }}
               />
+            </Card>
+          )}
+          {isConfirmed && (
+            <Card title="Готовність виробництва">
+              {productionReadinessLoading ? (
+                <Skeleton active paragraph={{ rows: 6 }} />
+              ) : (
+                <Flex vertical gap={16}>
+                  {(productionReadiness?.steps || []).map((step) => (
+                    <Card
+                      key={step.production_order_step}
+                      size="small"
+                      title={
+                        <Flex
+                          justify="space-between"
+                          align="center"
+                          gap={12}
+                          wrap
+                        >
+                          <Flex align="center" gap={8} wrap>
+                            <span>
+                              Етап {step.sequence_number}: {step.name}
+                            </span>
+
+                            <Tag
+                              color={getStatusTagColor(step.status)}
+                              style={{ marginInlineEnd: 0 }}
+                            >
+                              {PRODUCTION_STEP_STATUS_LABELS[step.status] ||
+                                step.status ||
+                                '—'}
+                            </Tag>
+                          </Flex>
+
+                          <Tooltip
+                            title={
+                              step.can_be_confirmed
+                                ? ''
+                                : 'Етап не може бути підтверджений, поки не вирішені критичні проблеми з постачанням комплектуючих.'
+                            }
+                          >
+                            <div>
+                              <Popconfirm
+                                title="Підтвердити етап?"
+                                description="Після підтвердження етапу процедура буде незворотною."
+                                okText="Підтвердити"
+                                cancelText="Скасувати"
+                                disabled={!step.can_be_confirmed}
+                              >
+                                <Button
+                                  type="primary"
+                                  disabled={!step.can_be_confirmed}
+                                >
+                                  Підтвердити етап
+                                </Button>
+                              </Popconfirm>
+                            </div>
+                          </Tooltip>
+                        </Flex>
+                      }
+                    >
+                      <Text type="secondary">
+                        Дані етапу будуть додані пізніше.
+                      </Text>
+                    </Card>
+                  ))}
+                </Flex>
+              )}
             </Card>
           )}
         </Col>

@@ -812,6 +812,7 @@ function SaleOrdersDetailPage() {
                                 disabled={!step.can_be_confirmed}
                               >
                                 <Button
+                                  size="small"
                                   type="primary"
                                   disabled={!step.can_be_confirmed}
                                 >

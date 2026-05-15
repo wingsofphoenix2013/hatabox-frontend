@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   EditOutlined,
+  InboxOutlined,
   InfoCircleOutlined,
+  RobotOutlined,
   SaveOutlined,
   SettingOutlined,
+  ShoppingOutlined,
   StopOutlined,
+  ToolOutlined,
   WarningFilled,
 } from '@ant-design/icons';
 import {
@@ -23,6 +27,7 @@ import {
   Spin,
   Table,
   Tag,
+  Timeline,
   Tooltip,
   Typography,
   message,
@@ -32,7 +37,10 @@ import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
 import SaleOrderCustomerComponentsDrawer from '../components/SaleOrderCustomerComponentsDrawer';
 import { getApiErrorMessage } from '../utils/apiError';
-import { formatDateDisplay } from '../utils/orderFormatters';
+import {
+  formatDateDisplay,
+  formatDateTimeDisplay,
+} from '../utils/orderFormatters';
 import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
@@ -43,6 +51,36 @@ const PRODUCTION_STEP_STATUS_LABELS = {
   in_progress: 'В роботі',
   completed: 'Виконано',
   cancelled: 'Скасовано',
+};
+
+const getEventSourceIcon = (source) => {
+  switch (source) {
+    case 'sales':
+      return <ShoppingOutlined style={{ color: '#1677ff' }} />;
+    case 'production':
+      return <ToolOutlined style={{ color: '#722ed1' }} />;
+    case 'warehouse':
+      return <InboxOutlined style={{ color: '#13c2c2' }} />;
+    case 'system':
+      return <RobotOutlined style={{ color: '#8c8c8c' }} />;
+    default:
+      return <InfoCircleOutlined style={{ color: '#8c8c8c' }} />;
+  }
+};
+
+const getEventSourceTagColor = (source) => {
+  switch (source) {
+    case 'sales':
+      return 'processing';
+    case 'production':
+      return 'purple';
+    case 'warehouse':
+      return 'cyan';
+    case 'system':
+      return 'default';
+    default:
+      return 'default';
+  }
 };
 
 const getStatusTagColor = (status) => {
@@ -68,6 +106,8 @@ function SaleOrdersDetailPage() {
   const { id } = useParams();
 
   const [order, setOrder] = useState(null);
+  const [orderEvents, setOrderEvents] = useState([]);
+  const [orderEventsLoading, setOrderEventsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -104,6 +144,26 @@ function SaleOrdersDetailPage() {
     if (productionReadinessPollRef.current) {
       window.clearTimeout(productionReadinessPollRef.current);
       productionReadinessPollRef.current = null;
+    }
+  };
+
+  const loadOrderEvents = async () => {
+    try {
+      setOrderEventsLoading(true);
+
+      const response = await api.get(`sales-orders/${id}/events/`);
+
+      const results = Array.isArray(response.data?.results)
+        ? response.data.results
+        : [];
+
+      setOrderEvents(results.slice(0, 5));
+    } catch (err) {
+      console.error('Failed to load sale order events:', err);
+
+      setOrderEvents([]);
+    } finally {
+      setOrderEventsLoading(false);
     }
   };
 
@@ -161,6 +221,8 @@ function SaleOrdersDetailPage() {
       const response = await api.get(`sales-orders/${id}/`);
       setOrder(response.data);
 
+      await loadOrderEvents();
+
       if (response.data?.status === 'draft') {
         await loadConfirmationStatus();
       }
@@ -193,6 +255,7 @@ function SaleOrdersDetailPage() {
 
       setOrder(response.data);
       setIsEditingComment(false);
+      await loadOrderEvents();
       message.success('Коментар збережено.');
     } catch (err) {
       console.error('Failed to update sale order comment:', err);
@@ -254,6 +317,7 @@ function SaleOrdersDetailPage() {
 
       setOrder(response.data);
       setIsEditingResponsiblePerson(false);
+      await loadOrderEvents();
       message.success('Відповідального оновлено.');
     } catch (err) {
       console.error('Failed to update responsible person:', err);
@@ -287,6 +351,7 @@ function SaleOrdersDetailPage() {
 
       setOrder(response.data);
       setConfirmationStatus(null);
+      await loadOrderEvents();
       message.success('Замовлення підтверджено.');
     } catch (err) {
       console.error('Failed to confirm sale order:', err);
@@ -306,6 +371,7 @@ function SaleOrdersDetailPage() {
       const response = await api.post(`sales-orders/${id}/cancel/`, {});
 
       setOrder(response.data);
+      await loadOrderEvents();
       message.success('Замовлення відмінено.');
     } catch (err) {
       console.error('Failed to cancel sale order:', err);
@@ -327,7 +393,6 @@ function SaleOrdersDetailPage() {
     () => () => {
       clearProductionReadinessPoll();
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
@@ -578,7 +643,44 @@ function SaleOrdersDetailPage() {
           </Card>
 
           <Card title="Історія замовлення">
-            <Text type="secondary">Дані з’являться пізніше.</Text>
+            {orderEventsLoading ? (
+              <Skeleton active paragraph={{ rows: 4 }} />
+            ) : orderEvents.length > 0 ? (
+              <Flex vertical gap={12}>
+                <Timeline
+                  items={orderEvents.map((event) => ({
+                    dot: getEventSourceIcon(event.source),
+                    children: (
+                      <Flex vertical gap={4}>
+                        <Flex align="center" gap={6} wrap={false}>
+                          <Tag
+                            color={getEventSourceTagColor(event.source)}
+                            style={{ marginInlineEnd: 0 }}
+                          >
+                            {event.source_display || event.source || '—'}
+                          </Tag>
+
+                          <Text strong style={{ fontSize: 13 }}>
+                            {event.title || '—'}
+                          </Text>
+                        </Flex>
+
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          {formatDateTimeDisplay(event.created_at)} ·{' '}
+                          {event.created_by_username || 'Створено автоматично'}
+                        </Text>
+                      </Flex>
+                    ),
+                  }))}
+                />
+
+                <Button type="link" style={{ padding: 0 }} disabled>
+                  Показати всю історію
+                </Button>
+              </Flex>
+            ) : (
+              <Text type="secondary">Дані з’являться пізніше.</Text>
+            )}
           </Card>
         </Col>
 

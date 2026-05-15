@@ -54,17 +54,25 @@ const PRODUCTION_STEP_STATUS_LABELS = {
 };
 
 const getEventSourceIcon = (source) => {
+  const commonStyle = {
+    background: '#ffffff',
+    padding: 2,
+    borderRadius: '50%',
+  };
+
   switch (source) {
     case 'sales':
-      return <ShoppingOutlined style={{ color: '#1677ff' }} />;
+      return <ShoppingOutlined style={{ ...commonStyle, color: '#1677ff' }} />;
     case 'production':
-      return <ToolOutlined style={{ color: '#722ed1' }} />;
+      return <ToolOutlined style={{ ...commonStyle, color: '#722ed1' }} />;
     case 'warehouse':
-      return <InboxOutlined style={{ color: '#13c2c2' }} />;
+      return <InboxOutlined style={{ ...commonStyle, color: '#13c2c2' }} />;
     case 'system':
-      return <RobotOutlined style={{ color: '#8c8c8c' }} />;
+      return <RobotOutlined style={{ ...commonStyle, color: '#8c8c8c' }} />;
     default:
-      return <InfoCircleOutlined style={{ color: '#8c8c8c' }} />;
+      return (
+        <InfoCircleOutlined style={{ ...commonStyle, color: '#8c8c8c' }} />
+      );
   }
 };
 
@@ -674,9 +682,11 @@ function SaleOrdersDetailPage() {
                   }))}
                 />
 
-                <Button type="link" style={{ padding: 0 }} disabled>
-                  Показати всю історію
-                </Button>
+                <Flex justify="flex-end">
+                  <Button type="link" style={{ padding: 0 }} disabled>
+                    Показати всю історію
+                  </Button>
+                </Flex>
               </Flex>
             ) : (
               <Text type="secondary">Дані з’являться пізніше.</Text>

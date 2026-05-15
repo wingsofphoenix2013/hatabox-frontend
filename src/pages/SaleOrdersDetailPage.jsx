@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   EditOutlined,
+  FileTextOutlined,
   InboxOutlined,
   InfoCircleOutlined,
   RobotOutlined,
@@ -36,6 +37,7 @@ import { Link, useParams } from 'react-router-dom';
 
 import api from '../api/client';
 import SaleOrderCustomerComponentsDrawer from '../components/SaleOrderCustomerComponentsDrawer';
+import SaleOrderDiaryDrawer from '../components/SaleOrderDiaryDrawer';
 import { getApiErrorMessage } from '../utils/apiError';
 import {
   formatDateDisplay,
@@ -134,6 +136,8 @@ function SaleOrdersDetailPage() {
 
   const [isCustomerComponentsDrawerOpen, setIsCustomerComponentsDrawerOpen] =
     useState(false);
+
+  const [isDiaryDrawerOpen, setIsDiaryDrawerOpen] = useState(false);
 
   const [isEditingComment, setIsEditingComment] = useState(false);
   const [editingComment, setEditingComment] = useState('');
@@ -619,9 +623,21 @@ function SaleOrdersDetailPage() {
                 </>
               )}
 
-              <Divider dashed style={{ margin: '4px 0 8px 0' }} />
+              {!isDraft && (
+                <Button
+                  block
+                  icon={<FileTextOutlined style={{ color: '#1677ff' }} />}
+                  onClick={() => setIsDiaryDrawerOpen(true)}
+                >
+                  Щоденник виробництва
+                </Button>
+              )}
 
-              {canCancel ? (
+              {canCancel && (
+                <Divider dashed style={{ margin: '4px 0 8px 0' }} />
+              )}
+
+              {canCancel && (
                 <Popconfirm
                   title="Відмінити замовлення?"
                   description="Ця дія є незворотною. Після відміни замовлення буде переведене у статус «Скасовано»."
@@ -638,14 +654,6 @@ function SaleOrdersDetailPage() {
                     Відміна замовлення
                   </Button>
                 </Popconfirm>
-              ) : (
-                <Tooltip title="Замовлення в поточному статусі не можна відмінити.">
-                  <div>
-                    <Button block disabled icon={<StopOutlined />}>
-                      Відміна замовлення
-                    </Button>
-                  </div>
-                </Tooltip>
               )}
             </Flex>
           </Card>
@@ -1098,12 +1106,16 @@ function SaleOrdersDetailPage() {
           )}
         </Col>
       </Row>
-
       <SaleOrderCustomerComponentsDrawer
         open={isCustomerComponentsDrawerOpen}
         onClose={() => setIsCustomerComponentsDrawerOpen(false)}
         orderId={order.id}
         onSaved={loadOrderPage}
+      />
+
+      <SaleOrderDiaryDrawer
+        open={isDiaryDrawerOpen}
+        onClose={() => setIsDiaryDrawerOpen(false)}
       />
     </div>
   );

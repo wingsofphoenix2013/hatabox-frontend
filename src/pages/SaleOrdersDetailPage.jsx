@@ -565,7 +565,7 @@ function SaleOrdersDetailPage() {
 
       <Row gutter={20} align="top">
         <Col xs={24} lg={6}>
-          <Card title="Актуальне фото" style={{ marginBottom: 20 }}>
+          <Card title="Серійний номер" style={{ marginBottom: 20 }}>
             <div
               style={{
                 width: '100%',
@@ -577,10 +577,26 @@ function SaleOrdersDetailPage() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
-                padding: 12,
+                padding: 20,
+                textAlign: 'center',
               }}
             >
-              <Text type="secondary">Дані з’являться пізніше.</Text>
+              {order.status === 'in_progress' ? (
+                <Flex align="center" gap={8}>
+                  <Text>Визначити серійний номер</Text>
+
+                  <EditOutlined
+                    style={{
+                      color: '#8c8c8c',
+                      cursor: 'pointer',
+                    }}
+                  />
+                </Flex>
+              ) : (
+                <Text type="secondary">
+                  Серійний номер призначається на етапі виробництва
+                </Text>
+              )}
             </div>
           </Card>
 

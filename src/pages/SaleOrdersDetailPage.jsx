@@ -138,6 +138,7 @@ function SaleOrdersDetailPage() {
     useState(false);
 
   const [isDiaryDrawerOpen, setIsDiaryDrawerOpen] = useState(false);
+  const [diaryEntriesCount, setDiaryEntriesCount] = useState(0);
 
   const [isEditingComment, setIsEditingComment] = useState(false);
   const [editingComment, setEditingComment] = useState('');
@@ -156,6 +157,19 @@ function SaleOrdersDetailPage() {
     if (productionReadinessPollRef.current) {
       window.clearTimeout(productionReadinessPollRef.current);
       productionReadinessPollRef.current = null;
+    }
+  };
+
+  const loadDiaryEntriesCount = async () => {
+    try {
+      const response = await api.get(
+        `production-diary-entries/?sales_order=${id}`,
+      );
+
+      setDiaryEntriesCount(Number(response.data?.count) || 0);
+    } catch (err) {
+      console.error('Failed to load production diary entries count:', err);
+      setDiaryEntriesCount(0);
     }
   };
 
@@ -234,6 +248,7 @@ function SaleOrdersDetailPage() {
       setOrder(response.data);
 
       await loadOrderEvents();
+      await loadDiaryEntriesCount();
 
       if (response.data?.status === 'draft') {
         await loadConfirmationStatus();
@@ -438,7 +453,9 @@ function SaleOrdersDetailPage() {
 
   const isDraft = order.status === 'draft';
   const isConfirmed = order.status === 'confirmed';
+  const isCancelled = order.status === 'cancelled';
   const canCancel = isDraft || isConfirmed;
+  const shouldShowNavigationCard = !isCancelled || diaryEntriesCount > 0;
   const canEditDetails = !['completed', 'cancelled'].includes(order.status);
   const canConfirmOrder = Boolean(confirmationStatus?.can_confirm);
 
@@ -567,100 +584,102 @@ function SaleOrdersDetailPage() {
             </div>
           </Card>
 
-          <Card title="Навігація" style={{ marginBottom: 20 }}>
-            <Flex vertical gap={8}>
-              {isDraft && (
-                <>
-                  <Flex vertical gap={6}>
-                    <Tooltip
-                      title={
-                        !confirmationStatusLoading && !canConfirmOrder
-                          ? 'Товар замовника ще не доступний для цього замовлення'
-                          : ''
-                      }
-                    >
-                      <div>
-                        <Popconfirm
-                          title="Підтвердити замовлення?"
-                          description="Після підтвердження customer stock буде зарезервовано backend’ом."
-                          okText="Підтвердити"
-                          cancelText="Скасувати"
-                          onConfirm={handleConfirmOrder}
-                          disabled={!canConfirmOrder}
-                        >
-                          <Button
-                            block
-                            type="primary"
-                            loading={
-                              confirmingOrder || confirmationStatusLoading
-                            }
+          {shouldShowNavigationCard && (
+            <Card title="Навігація" style={{ marginBottom: 20 }}>
+              <Flex vertical gap={8}>
+                {isDraft && (
+                  <>
+                    <Flex vertical gap={6}>
+                      <Tooltip
+                        title={
+                          !confirmationStatusLoading && !canConfirmOrder
+                            ? 'Товар замовника ще не доступний для цього замовлення'
+                            : ''
+                        }
+                      >
+                        <div>
+                          <Popconfirm
+                            title="Підтвердити замовлення?"
+                            description="Після підтвердження customer stock буде зарезервовано backend’ом."
+                            okText="Підтвердити"
+                            cancelText="Скасувати"
+                            onConfirm={handleConfirmOrder}
                             disabled={!canConfirmOrder}
                           >
-                            Підтвердити замовлення
-                          </Button>
-                        </Popconfirm>
+                            <Button
+                              block
+                              type="primary"
+                              loading={
+                                confirmingOrder || confirmationStatusLoading
+                              }
+                              disabled={!canConfirmOrder}
+                            >
+                              Підтвердити замовлення
+                            </Button>
+                          </Popconfirm>
+                        </div>
+                      </Tooltip>
+                    </Flex>
+
+                    <Divider dashed style={{ margin: '4px 0 8px 0' }} />
+
+                    <Button
+                      block
+                      icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                      onClick={() => setIsCustomerComponentsDrawerOpen(true)}
+                    >
+                      Налаштування товарів замовника
+                    </Button>
+                  </>
+                )}
+
+                {isConfirmed && (
+                  <>
+                    <Tooltip title="Функціонал передачі ще не реалізовано">
+                      <div>
+                        <Button block type="primary" disabled>
+                          Передати в виробництво
+                        </Button>
                       </div>
                     </Tooltip>
-                  </Flex>
+                  </>
+                )}
 
+                {!isDraft && (
+                  <Button
+                    block
+                    icon={<FileTextOutlined style={{ color: '#1677ff' }} />}
+                    onClick={() => setIsDiaryDrawerOpen(true)}
+                  >
+                    Щоденник виробництва
+                  </Button>
+                )}
+
+                {canCancel && (
                   <Divider dashed style={{ margin: '4px 0 8px 0' }} />
+                )}
 
-                  <Button
-                    block
-                    icon={<SettingOutlined style={{ color: '#1677ff' }} />}
-                    onClick={() => setIsCustomerComponentsDrawerOpen(true)}
+                {canCancel && (
+                  <Popconfirm
+                    title="Відмінити замовлення?"
+                    description="Ця дія є незворотною. Після відміни замовлення буде переведене у статус «Скасовано»."
+                    okText="Так"
+                    cancelText="Ні"
+                    onConfirm={handleCancelOrder}
                   >
-                    Налаштування товарів замовника
-                  </Button>
-                </>
-              )}
-
-              {isConfirmed && (
-                <>
-                  <Tooltip title="Функціонал передачі ще не реалізовано">
-                    <div>
-                      <Button block type="primary" disabled>
-                        Передати в виробництво
-                      </Button>
-                    </div>
-                  </Tooltip>
-                </>
-              )}
-
-              {!isDraft && (
-                <Button
-                  block
-                  icon={<FileTextOutlined style={{ color: '#1677ff' }} />}
-                  onClick={() => setIsDiaryDrawerOpen(true)}
-                >
-                  Щоденник виробництва
-                </Button>
-              )}
-
-              {canCancel && (
-                <Divider dashed style={{ margin: '4px 0 8px 0' }} />
-              )}
-
-              {canCancel && (
-                <Popconfirm
-                  title="Відмінити замовлення?"
-                  description="Ця дія є незворотною. Після відміни замовлення буде переведене у статус «Скасовано»."
-                  okText="Так"
-                  cancelText="Ні"
-                  onConfirm={handleCancelOrder}
-                >
-                  <Button
-                    block
-                    danger
-                    loading={cancellingOrder}
-                    icon={<StopOutlined />}
-                  >
-                    Відміна замовлення
-                  </Button>
-                </Popconfirm>
-              )}
-            </Flex>
-          </Card>
+                    <Button
+                      block
+                      danger
+                      loading={cancellingOrder}
+                      icon={<StopOutlined />}
+                    >
+                      Відміна замовлення
+                    </Button>
+                  </Popconfirm>
+                )}
+              </Flex>
+            </Card>
+          )}
 
           <Card title="Історія замовлення">
             {orderEventsLoading ? (

@@ -568,15 +568,12 @@ function SaleOrdersDetailPage() {
           <Card title="Серійний номер" style={{ marginBottom: 20 }}>
             <div
               style={{
-                width: '100%',
-                aspectRatio: '1 / 1',
                 border: '1px solid #f0f0f0',
                 borderRadius: 12,
                 background: '#ffffff',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                overflow: 'hidden',
                 padding: 20,
                 textAlign: 'center',
               }}

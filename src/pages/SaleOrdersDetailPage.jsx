@@ -363,7 +363,11 @@ function SaleOrdersDetailPage() {
 
       setOrder(response.data);
       setConfirmationStatus(null);
+      setProductionReadiness(null);
+
+      await loadProductionReadiness();
       await loadOrderEvents();
+
       message.success('Замовлення підтверджено.');
     } catch (err) {
       console.error('Failed to confirm sale order:', err);

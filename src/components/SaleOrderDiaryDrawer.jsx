@@ -326,18 +326,22 @@ function SaleOrderDiaryDrawer({
                 <Card key={entry.id} size="small">
                   <Flex vertical gap={10}>
                     <Flex justify="space-between" align="flex-start" gap={12}>
-                      <Flex vertical gap={4}>
-                        <Flex align="center" gap={6} wrap>
-                          <Tag color="purple" style={{ marginInlineEnd: 0 }}>
-                            {entry.production_order_step_name ||
-                              'Загальний запис'}
-                          </Tag>
+                      <Tag color="purple" style={{ marginInlineEnd: 0 }}>
+                        {entry.production_order_step_name || 'Загальний запис'}
+                      </Tag>
 
-                          <Text strong>{entry.author_username || '—'}</Text>
-                        </Flex>
+                      <Flex
+                        vertical
+                        align="flex-end"
+                        gap={2}
+                        style={{ textAlign: 'right' }}
+                      >
+                        <Text strong>
+                          {formatDateTimeDisplay(entry.created_at)}
+                        </Text>
 
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                          {formatDateTimeDisplay(entry.created_at)}
+                          {entry.author_username || 'Створено автоматично'}
                         </Text>
                       </Flex>
                     </Flex>

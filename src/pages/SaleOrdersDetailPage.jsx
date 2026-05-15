@@ -56,7 +56,7 @@ const PRODUCTION_STEP_STATUS_LABELS = {
 const getEventSourceIcon = (source) => {
   const commonStyle = {
     background: '#ffffff',
-    padding: 2,
+    padding: 3,
     borderRadius: '50%',
   };
 

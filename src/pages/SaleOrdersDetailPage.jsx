@@ -1139,6 +1139,12 @@ function SaleOrdersDetailPage() {
       <SaleOrderDiaryDrawer
         open={isDiaryDrawerOpen}
         onClose={() => setIsDiaryDrawerOpen(false)}
+        salesOrderId={order.id}
+        productionReadiness={productionReadiness}
+        onSaved={async () => {
+          await loadOrderEvents();
+          await loadProductionReadiness({ silent: true });
+        }}
       />
     </div>
   );

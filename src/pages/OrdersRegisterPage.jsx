@@ -261,7 +261,7 @@ function OrdersRegisterPage() {
         params.append('receipt_range', range);
       });
 
-      const response = await api.get(`orders/?${params.toString()}`);
+      const response = await api.get(`orders-register/?${params.toString()}`);
 
       setItems(
         Array.isArray(response.data.results) ? response.data.results : [],

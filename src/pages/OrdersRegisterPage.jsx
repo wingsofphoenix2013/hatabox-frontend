@@ -59,19 +59,15 @@ function OrdersRegisterPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [items, setItems] = useState([]);
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   const [searchText, setSearchText] = useState(
     searchParams.get('search') || '',
   );
+  const [debouncedSearchText, setDebouncedSearchText] = useState(
+    searchParams.get('search') || '',
+  );
   const [selectedStatuses, setSelectedStatuses] = useState(
     searchParams.getAll('status'),
-  );
-  const [selectedPaymentRanges, setSelectedPaymentRanges] = useState(
-    searchParams.getAll('payment_range'),
-  );
-  const [selectedReceiptRanges, setSelectedReceiptRanges] = useState(
-    searchParams.getAll('receipt_range'),
   );
   const [currentPage, setCurrentPage] = useState(
     Number(searchParams.get('page')) || 1,
@@ -111,16 +107,19 @@ function OrdersRegisterPage() {
   const [form] = Form.useForm();
 
   useEffect(() => {
+    const timerId = window.setTimeout(() => {
+      setDebouncedSearchText(searchText);
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [searchText]);
+
+  useEffect(() => {
     loadOrders(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    currentPage,
-    searchText,
-    selectedStatuses,
-    selectedPaymentRanges,
-    selectedReceiptRanges,
-    ordering,
-  ]);
+  }, [currentPage, debouncedSearchText, selectedStatuses, ordering]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -129,16 +128,8 @@ function OrdersRegisterPage() {
       params.append('status', status);
     });
 
-    selectedPaymentRanges.forEach((range) => {
-      params.append('payment_range', range);
-    });
-
-    selectedReceiptRanges.forEach((range) => {
-      params.append('receipt_range', range);
-    });
-
-    if (searchText) {
-      params.set('search', searchText);
+    if (debouncedSearchText) {
+      params.set('search', debouncedSearchText);
     }
 
     if (ordering) {
@@ -152,9 +143,7 @@ function OrdersRegisterPage() {
     setSearchParams(params);
   }, [
     selectedStatuses,
-    selectedPaymentRanges,
-    selectedReceiptRanges,
-    searchText,
+    debouncedSearchText,
     ordering,
     currentPage,
     setSearchParams,
@@ -241,8 +230,8 @@ function OrdersRegisterPage() {
       const params = new URLSearchParams();
       params.append('page', String(page));
 
-      if (searchText) {
-        params.append('search', searchText);
+      if (debouncedSearchText) {
+        params.append('search', debouncedSearchText);
       }
 
       if (ordering) {
@@ -253,27 +242,17 @@ function OrdersRegisterPage() {
         params.append('status', status);
       });
 
-      selectedPaymentRanges.forEach((range) => {
-        params.append('payment_range', range);
-      });
-
-      selectedReceiptRanges.forEach((range) => {
-        params.append('receipt_range', range);
-      });
-
       const response = await api.get(`orders-register/?${params.toString()}`);
 
       setItems(
         Array.isArray(response.data.results) ? response.data.results : [],
       );
       setTotal(response.data.count || 0);
-      setSelectedRowKeys([]);
     } catch (err) {
       console.error('Failed to load orders:', err);
       setError('Не вдалося завантажити реєстр замовлень.');
       setItems([]);
       setTotal(0);
-      setSelectedRowKeys([]);
     } finally {
       setLoading(false);
     }
@@ -899,19 +878,6 @@ function OrdersRegisterPage() {
 
         <Card size="small">
           <Flex align="center" wrap gap={16}>
-            <Text>
-              Обрано: <strong>{selectedRowKeys.length}</strong>
-            </Text>
-
-            <Select
-              placeholder="Дії"
-              style={{ width: 180 }}
-              disabled={selectedRowKeys.length === 0}
-              options={[{ value: 'placeholder', label: 'Дії' }]}
-            />
-
-            <Divider type="vertical" style={{ height: 28 }} />
-
             <Input
               placeholder="Пошук по постачальнику"
               allowClear
@@ -944,47 +910,6 @@ function OrdersRegisterPage() {
                 { value: 'cancelled', label: 'Скасовано' },
               ]}
             />
-
-            <Divider type="vertical" style={{ height: 28 }} />
-
-            <Select
-              mode="multiple"
-              allowClear
-              placeholder="Сплачено"
-              style={{ minWidth: 180 }}
-              value={selectedPaymentRanges}
-              onChange={(values) => {
-                setSelectedPaymentRanges(values);
-                setCurrentPage(1);
-              }}
-              options={[
-                { value: '0', label: '0%' },
-                { value: '1-49', label: '1–49%' },
-                { value: '50-99', label: '50–99%' },
-                { value: '100', label: '100%' },
-              ]}
-            />
-
-            <Divider type="vertical" style={{ height: 28 }} />
-
-            <Select
-              mode="multiple"
-              allowClear
-              placeholder="Отримання"
-              style={{ minWidth: 200 }}
-              value={selectedReceiptRanges}
-              onChange={(values) => {
-                setSelectedReceiptRanges(values);
-                setCurrentPage(1);
-              }}
-              options={[
-                { value: 'overdue', label: 'Прострочені' },
-                { value: '0', label: '0%' },
-                { value: '1-49', label: '1–49%' },
-                { value: '50-99', label: '50–99%' },
-                { value: '100', label: '100%' },
-              ]}
-            />
           </Flex>
         </Card>
 
@@ -996,10 +921,6 @@ function OrdersRegisterPage() {
             loading={loading}
             columns={columns}
             dataSource={items}
-            rowSelection={{
-              selectedRowKeys,
-              onChange: setSelectedRowKeys,
-            }}
             size="small"
             onChange={handleTableChange}
             pagination={{

@@ -578,6 +578,14 @@ function OrdersRegisterPage() {
       render: (_, __, index) => (currentPage - 1) * 50 + index + 1,
     },
     {
+      title: 'Дата',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      width: 120,
+      align: 'center',
+      render: (value) => formatDateDisplay(value),
+    },
+    {
       title: 'Номер замовлення',
       dataIndex: 'order_no',
       key: 'order_no',

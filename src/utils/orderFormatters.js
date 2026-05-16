@@ -50,7 +50,7 @@ export const formatDateTimeDisplay = (value) => {
 };
 
 export const formatMoney = (value) =>
-  new Intl.NumberFormat('uk-UA', {
+  `${new Intl.NumberFormat('uk-UA', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(Number(value) || 0);
+  }).format(Number(value) || 0)} ₴`;

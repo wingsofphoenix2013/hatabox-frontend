@@ -2,13 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import dayjs from 'dayjs';
 import {
   AppstoreAddOutlined,
-  BankOutlined,
   CopyOutlined,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
   PlusOutlined,
   SearchOutlined,
-  UploadOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import {
@@ -37,49 +35,18 @@ import OrderReceiptDrawer from '../components/OrderReceiptDrawer';
 import {
   getAvailablePaymentStatusOptions,
   getPaymentStatusTagColor,
+  getProgressStrokeColor,
+  getStatusTagColor,
   PAYMENT_STATUS_LABELS,
 } from '../constants/orderStatus';
 import {
   extractFileFromUploadEvent,
   validateFileType,
 } from '../utils/fileHelpers';
-import { formatDateDisplay } from '../utils/orderFormatters';
+import { formatDateDisplay, formatMoney } from '../utils/orderFormatters';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
-
-const formatMoney = (value) =>
-  new Intl.NumberFormat('uk-UA', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(value) || 0);
-
-const getStatusTagColor = (status) => {
-  switch (status) {
-    case 'draft':
-      return 'default';
-    case 'in_progress':
-      return 'processing';
-    case 'completed':
-      return 'success';
-    case 'cancelled':
-      return 'error';
-    default:
-      return 'default';
-  }
-};
-
-const getProgressStrokeColor = (percent, isOverdue = false) => {
-  if (isOverdue) return '#ff4d4f';
-
-  if (percent === 0) return '#bfbfbf';
-  if (percent <= 24) return '#d9f7be';
-  if (percent <= 49) return '#b7eb8f';
-  if (percent <= 74) return '#95de64';
-  if (percent <= 99) return '#73d13d';
-
-  return '#52c41a';
-};
 
 const getSorterOrder = (ordering, field) => {
   if (ordering === field) return 'ascend';

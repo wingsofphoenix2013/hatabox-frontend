@@ -7,10 +7,6 @@ export const getApiErrorMessage = (responseData, fieldNames = []) => {
     return responseData[0];
   }
 
-  if (Array.isArray(responseData) && responseData.length > 0) {
-    return responseData[0];
-  }
-
   if (responseData.detail) {
     return responseData.detail;
   }

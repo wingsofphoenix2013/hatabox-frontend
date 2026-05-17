@@ -32,6 +32,7 @@ import {
   Skeleton,
   Table,
   Tag,
+  Timeline,
   Tooltip,
   Typography,
   Upload,
@@ -74,6 +75,7 @@ function OrderDetailPage() {
 
   const [order, setOrder] = useState(null);
   const [receiptDocuments, setReceiptDocuments] = useState([]);
+  const [orderEvents, setOrderEvents] = useState([]);
   const [vendorWebsite, setVendorWebsite] = useState('');
 
   const [isEditingOrderComment, setIsEditingOrderComment] = useState(false);
@@ -217,6 +219,21 @@ function OrderDetailPage() {
     }
   };
 
+  const loadOrderEvents = async (orderId) => {
+    try {
+      const response = await api.get(
+        `order-events/?order=${orderId}&page_size=5`,
+      );
+
+      setOrderEvents(
+        Array.isArray(response.data?.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load order events:', err);
+      setOrderEvents([]);
+    }
+  };
+
   const loadVendorWebsite = async (vendorId) => {
     if (!vendorId) {
       setVendorWebsite('');
@@ -242,8 +259,12 @@ function OrderDetailPage() {
 
       const response = await api.get(`orders/${id}/`);
       setOrder(response.data);
-      await loadReceiptDocuments(response.data.id);
-      await loadVendorWebsite(response.data.vendor);
+
+      await Promise.all([
+        loadReceiptDocuments(response.data.id),
+        loadVendorWebsite(response.data.vendor),
+        loadOrderEvents(response.data.id),
+      ]);
     } catch (err) {
       console.error('Failed to load order page:', err);
       setError('Не вдалося завантажити дані замовлення.');
@@ -852,6 +873,44 @@ function OrderDetailPage() {
     },
   ];
 
+  const getEventIcon = (source) => {
+    switch (source) {
+      case 'procurement':
+        return <SettingOutlined style={{ marginTop: 3 }} />;
+
+      case 'finance':
+        return <BankOutlined style={{ marginTop: 3 }} />;
+
+      case 'logistics':
+        return <DownloadOutlined style={{ marginTop: 3 }} />;
+
+      case 'system':
+        return <InfoCircleOutlined style={{ marginTop: 3 }} />;
+
+      default:
+        return <InfoCircleOutlined style={{ marginTop: 3 }} />;
+    }
+  };
+
+  const getEventTagColor = (source) => {
+    switch (source) {
+      case 'procurement':
+        return 'blue';
+
+      case 'finance':
+        return 'green';
+
+      case 'logistics':
+        return 'cyan';
+
+      case 'system':
+        return 'default';
+
+      default:
+        return 'default';
+    }
+  };
+
   const orderItemsColumns = [
     {
       title: 'Товар',
@@ -1240,8 +1299,38 @@ function OrderDetailPage() {
             </Card>
           )}
 
-          <Card title="Статистика">
-            <Text type="secondary">Дані з’являться пізніше</Text>
+          <Card title="Історія замовлення">
+            <Timeline
+              items={orderEvents.map((event) => ({
+                dot: getEventIcon(event.source),
+                children: (
+                  <Flex vertical gap={4}>
+                    <Flex align="center" gap={8} wrap>
+                      <Tag
+                        color={getEventTagColor(event.source)}
+                        style={{ marginInlineEnd: 0 }}
+                      >
+                        {event.source_name}
+                      </Tag>
+
+                      <Text>{event.title}</Text>
+                    </Flex>
+
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {formatDateDisplay(event.created_at)}{' '}
+                      {dayjs(event.created_at).format('HH:mm')} ·{' '}
+                      {event.created_by_username || 'system'}
+                    </Text>
+                  </Flex>
+                ),
+              }))}
+            />
+
+            <Flex justify="flex-end" style={{ marginTop: 8 }}>
+              <Button type="link" size="small">
+                Показати всю історію
+              </Button>
+            </Flex>
           </Card>
         </Col>
 

@@ -880,21 +880,33 @@ function OrderDetailPage() {
   ];
 
   const getEventIcon = (source) => {
+    const commonStyle = {
+      background: '#ffffff',
+      padding: 3,
+      borderRadius: '50%',
+    };
+
     switch (source) {
       case 'procurement':
-        return <SettingOutlined style={{ marginTop: 3 }} />;
+        return <SettingOutlined style={{ ...commonStyle, color: '#1677ff' }} />;
 
       case 'finance':
-        return <BankOutlined style={{ marginTop: 3 }} />;
+        return <BankOutlined style={{ ...commonStyle, color: '#52c41a' }} />;
 
       case 'logistics':
-        return <DownloadOutlined style={{ marginTop: 3 }} />;
+        return (
+          <DownloadOutlined style={{ ...commonStyle, color: '#13c2c2' }} />
+        );
 
       case 'system':
-        return <InfoCircleOutlined style={{ marginTop: 3 }} />;
+        return (
+          <InfoCircleOutlined style={{ ...commonStyle, color: '#8c8c8c' }} />
+        );
 
       default:
-        return <InfoCircleOutlined style={{ marginTop: 3 }} />;
+        return (
+          <InfoCircleOutlined style={{ ...commonStyle, color: '#8c8c8c' }} />
+        );
     }
   };
 

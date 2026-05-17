@@ -50,12 +50,6 @@ const TOLLING_STATUS_OPTIONS = [
   { value: 'completed', label: 'Завершено' },
 ];
 
-const ORGANIZATION_TYPE_LABELS = {
-  military: 'Військова частина',
-  commercial: 'Комерційна організація',
-  charity: 'Благодійна організація',
-};
-
 const ORGANIZATION_TYPE_OPTIONS = [
   { value: 'military', label: 'Військова частина' },
   { value: 'commercial', label: 'Комерційна організація' },
@@ -67,9 +61,11 @@ function OrdersTollingRegisterPage() {
 
   const [items, setItems] = useState([]);
   const [organizations, setOrganizations] = useState([]);
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   const [searchText, setSearchText] = useState(
+    searchParams.get('search') || '',
+  );
+  const [debouncedSearchText, setDebouncedSearchText] = useState(
     searchParams.get('search') || '',
   );
   const [selectedOrganizationType, setSelectedOrganizationType] = useState(
@@ -103,11 +99,21 @@ function OrdersTollingRegisterPage() {
   }, []);
 
   useEffect(() => {
+    const timerId = window.setTimeout(() => {
+      setDebouncedSearchText(searchText);
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [searchText]);
+
+  useEffect(() => {
     loadOrders(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     currentPage,
-    searchText,
+    debouncedSearchText,
     selectedOrganizationType,
     selectedStatuses,
     createdAtFrom,
@@ -117,8 +123,8 @@ function OrdersTollingRegisterPage() {
   useEffect(() => {
     const params = new URLSearchParams();
 
-    if (searchText) {
-      params.set('search', searchText);
+    if (debouncedSearchText) {
+      params.set('search', debouncedSearchText);
     }
 
     if (selectedOrganizationType) {
@@ -143,7 +149,7 @@ function OrdersTollingRegisterPage() {
 
     setSearchParams(params);
   }, [
-    searchText,
+    debouncedSearchText,
     selectedOrganizationType,
     selectedStatuses,
     createdAtFrom,
@@ -184,8 +190,8 @@ function OrdersTollingRegisterPage() {
       const params = new URLSearchParams();
       params.append('page', String(page));
 
-      if (searchText) {
-        params.append('search', searchText);
+      if (debouncedSearchText) {
+        params.append('search', debouncedSearchText);
       }
 
       if (selectedOrganizationType) {
@@ -204,19 +210,19 @@ function OrdersTollingRegisterPage() {
         params.append('created_at_to', createdAtTo.format('YYYY-MM-DD'));
       }
 
-      const response = await api.get(`tolling-orders/?${params.toString()}`);
+      const response = await api.get(
+        `tolling-orders-register/?${params.toString()}`,
+      );
 
       setItems(
         Array.isArray(response.data?.results) ? response.data.results : [],
       );
       setTotal(Number(response.data?.count) || 0);
-      setSelectedRowKeys([]);
     } catch (err) {
       console.error('Failed to load tolling orders:', err);
 
       setItems([]);
       setTotal(0);
-      setSelectedRowKeys([]);
 
       const backendMessage = getApiErrorMessage(err?.response?.data);
       setError(
@@ -225,14 +231,6 @@ function OrdersTollingRegisterPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getOrganizationTypeById = (organizationId) => {
-    const matchedOrganization = organizations.find(
-      (item) => item.value === organizationId,
-    );
-
-    return matchedOrganization?.type || null;
   };
 
   const columns = [
@@ -276,22 +274,15 @@ function OrdersTollingRegisterPage() {
       dataIndex: 'organization_name',
       key: 'organization_name',
       width: 420,
-      render: (value, record) => {
-        const organizationType = getOrganizationTypeById(record.organization);
-        const organizationTypeLabel = organizationType
-          ? ORGANIZATION_TYPE_LABELS[organizationType]
-          : null;
+      render: (value, record) => (
+        <Flex align="center" gap={8} wrap>
+          <span>{value || '—'}</span>
 
-        return (
-          <Flex align="center" gap={8} wrap>
-            <span>{value || '—'}</span>
-
-            {organizationTypeLabel && (
-              <Tag color="default">{organizationTypeLabel}</Tag>
-            )}
-          </Flex>
-        );
-      },
+          {record.organization_type_name && (
+            <Tag color="default">{record.organization_type_name}</Tag>
+          )}
+        </Flex>
+      ),
     },
     {
       title: 'Статус',
@@ -373,19 +364,6 @@ function OrdersTollingRegisterPage() {
 
         <Card size="small">
           <Flex align="center" wrap gap={16}>
-            <Text>
-              Обрано: <strong>{selectedRowKeys.length}</strong>
-            </Text>
-
-            <Select
-              placeholder="Дії"
-              style={{ width: 180 }}
-              disabled={selectedRowKeys.length === 0}
-              options={[{ value: 'placeholder', label: 'Дії' }]}
-            />
-
-            <Divider type="vertical" style={{ height: 28 }} />
-
             <Input
               placeholder="Пошук (номер / організація)"
               allowClear
@@ -461,10 +439,6 @@ function OrdersTollingRegisterPage() {
             loading={loading}
             columns={columns}
             dataSource={items}
-            rowSelection={{
-              selectedRowKeys,
-              onChange: setSelectedRowKeys,
-            }}
             size="small"
             onChange={handleTableChange}
             pagination={{

@@ -929,7 +929,10 @@ function WarehouseStockDetailPage() {
             )}
 
             {incomingRows.length > 0 && (
-              <Card title="Закупівля та очікування">
+              <Card
+                title="Закупівля та очікування"
+                style={{ marginBottom: 20 }}
+              >
                 <Table
                   rowKey={(record) =>
                     `${record.source_type}-${record.order_item_id}`
@@ -942,6 +945,10 @@ function WarehouseStockDetailPage() {
                 />
               </Card>
             )}
+
+            <Card title="Історія отримання товару">
+              <Text type="secondary">Дані з’являться пізніше.</Text>
+            </Card>
           </Col>
         </Row>
       </Flex>

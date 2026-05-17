@@ -258,36 +258,19 @@ function OrdersRegisterPage() {
     }
   };
 
-  const openCreateDrawer = () => {
+  const openCreateDrawer = async () => {
     setIsCreateDrawerOpen(true);
     form.resetFields();
-    setVendorOptions([]);
     setSelectedVendor(null);
     setSuggestedOrderNo('');
     setSelectedVendorVat(null);
+
+    await loadVendors();
   };
 
-  const closeCreateDrawer = () => {
-    setIsCreateDrawerOpen(false);
-    form.resetFields();
-    setVendorOptions([]);
-    setSelectedVendor(null);
-    setSuggestedOrderNo('');
-    setSelectedVendorVat(null);
-  };
-
-  const handleSearchVendors = async (searchValue) => {
-    const query = searchValue?.trim();
-
-    if (!query || query.length < 2) {
-      setVendorOptions([]);
-      return;
-    }
-
+  const loadVendors = async () => {
     try {
-      const response = await api.get(
-        `vendors/?search=${encodeURIComponent(query)}`,
-      );
+      const response = await api.get('vendors/');
 
       const results = Array.isArray(response.data.results)
         ? response.data.results
@@ -301,9 +284,18 @@ function OrdersRegisterPage() {
         })),
       );
     } catch (err) {
-      console.error('Failed to search vendors:', err);
+      console.error('Failed to load vendors:', err);
       setVendorOptions([]);
     }
+  };
+
+  const closeCreateDrawer = () => {
+    setIsCreateDrawerOpen(false);
+    form.resetFields();
+    setVendorOptions([]);
+    setSelectedVendor(null);
+    setSuggestedOrderNo('');
+    setSelectedVendorVat(null);
   };
 
   const buildSuggestedOrderNo = async (vendor) => {
@@ -970,9 +962,8 @@ function OrdersRegisterPage() {
           >
             <Select
               showSearch
-              filterOption={false}
+              optionFilterProp="label"
               placeholder="Почніть вводити назву постачальника"
-              onSearch={handleSearchVendors}
               onChange={handleSelectVendor}
               options={vendorOptions}
             />

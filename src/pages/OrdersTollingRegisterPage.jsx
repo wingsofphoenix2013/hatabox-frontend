@@ -50,6 +50,12 @@ const TOLLING_STATUS_OPTIONS = [
   { value: 'completed', label: 'Завершено' },
 ];
 
+const ORGANIZATION_TYPE_LABELS = {
+  military: 'Військова частина',
+  commercial: 'Комерційна організація',
+  charity: 'Благодійна організація',
+};
+
 const ORGANIZATION_TYPE_OPTIONS = [
   { value: 'military', label: 'Військова частина' },
   { value: 'commercial', label: 'Комерційна організація' },
@@ -235,6 +241,13 @@ function OrdersTollingRegisterPage() {
 
   const columns = [
     {
+      title: '№',
+      key: 'index',
+      width: 70,
+      align: 'center',
+      render: (_, __, index) => (currentPage - 1) * 50 + index + 1,
+    },
+    {
       title: 'Номер документа',
       dataIndex: 'order_no',
       key: 'order_no',
@@ -278,8 +291,11 @@ function OrdersTollingRegisterPage() {
         <Flex align="center" gap={8} wrap>
           <span>{value || '—'}</span>
 
-          {record.organization_type_name && (
-            <Tag color="default">{record.organization_type_name}</Tag>
+          {record.organization_type && (
+            <Tag color="default">
+              {ORGANIZATION_TYPE_LABELS[record.organization_type] ||
+                record.organization_type}
+            </Tag>
           )}
         </Flex>
       ),

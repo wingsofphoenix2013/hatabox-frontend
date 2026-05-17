@@ -47,6 +47,7 @@ function WarehouseStockDetailPage() {
 
   const [data, setData] = useState(null);
   const [shortageData, setShortageData] = useState(null);
+  const [intakeHistoryRows, setIntakeHistoryRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMovementDrawerOpen, setIsMovementDrawerOpen] = useState(false);
@@ -61,18 +62,28 @@ function WarehouseStockDetailPage() {
       setLoading(true);
       setError('');
 
-      const [stockResponse, shortageResponse] = await Promise.all([
-        api.get(`warehouse-stock-detail/${id}/`),
-        api.get(`warehouse-shortage-detail/${id}/`),
-      ]);
+      const [stockResponse, shortageResponse, intakeHistoryResponse] =
+        await Promise.all([
+          api.get(`warehouse-stock-detail/${id}/`),
+          api.get(`warehouse-shortage-detail/${id}/`),
+          api.get('inventory-intake-history/', {
+            params: { inv_item: id },
+          }),
+        ]);
 
       setData(stockResponse.data || null);
       setShortageData(shortageResponse.data || null);
+      setIntakeHistoryRows(
+        Array.isArray(intakeHistoryResponse.data)
+          ? intakeHistoryResponse.data
+          : [],
+      );
     } catch (err) {
       console.error('Failed to load warehouse stock detail page:', err);
       setError('Не вдалося завантажити дані складського залишку.');
       setData(null);
       setShortageData(null);
+      setIntakeHistoryRows([]);
     } finally {
       setLoading(false);
     }
@@ -692,6 +703,119 @@ function WarehouseStockDetailPage() {
     },
   ];
 
+  const intakeHistoryColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Джерело',
+      key: 'source_type',
+      width: 150,
+      align: 'center',
+      render: (_, record) => {
+        if (record.source_type === 'external') {
+          return (
+            <Tag color="processing" style={{ marginInlineEnd: 0 }}>
+              Закупівля
+            </Tag>
+          );
+        }
+
+        if (record.source_type === 'tolling') {
+          return (
+            <Tag color="default" style={{ marginInlineEnd: 0 }}>
+              Давальницьке
+            </Tag>
+          );
+        }
+
+        return <Text type="secondary">—</Text>;
+      },
+    },
+    {
+      title: 'Постачальник',
+      key: 'supplier',
+      render: (_, record) => (
+        <Text
+          style={{
+            display: 'block',
+            minWidth: 0,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+          title={record.supplier_name || '—'}
+        >
+          {record.supplier_name || '—'}
+        </Text>
+      ),
+    },
+    {
+      title: 'Замовлення',
+      key: 'order',
+      width: 220,
+      render: (_, record) => {
+        const orderUrl =
+          record.source_type === 'tolling'
+            ? `/orders/tolling/${record.order_id}`
+            : `/orders/${record.order_id}`;
+
+        if (!record.order_id) {
+          return <Text type="secondary">—</Text>;
+        }
+
+        return (
+          <Link to={orderUrl} target="_blank" rel="noreferrer">
+            №{record.order_no || record.order_id} від{' '}
+            {formatDateDisplay(record.order_created_at)}
+          </Link>
+        );
+      },
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 140,
+      align: 'center',
+      render: (_, record) => (
+        <Flex align="center" justify="center" gap={6}>
+          <Text strong>
+            {formatQuantity(record.quantity)} {record.unit_symbol || ''}
+          </Text>
+
+          {record.requires_unit_conversion ? (
+            <Tooltip title="Потребує конвертації одиниць">
+              <InfoCircleFilled style={{ color: '#faad14' }} />
+            </Tooltip>
+          ) : null}
+        </Flex>
+      ),
+    },
+    {
+      title: 'Ціна',
+      key: 'agreed_price',
+      width: 120,
+      align: 'center',
+      render: (_, record) =>
+        record.agreed_price ? (
+          <Text>{formatQuantity(record.agreed_price)}</Text>
+        ) : (
+          <Text type="secondary">—</Text>
+        ),
+    },
+    {
+      title: 'Дата отримання',
+      key: 'actual_delivery_date',
+      width: 150,
+      align: 'center',
+      render: (_, record) => formatDateDisplay(record.actual_delivery_date),
+    },
+  ];
+
   return (
     <div style={{ padding: 20 }}>
       <Flex vertical gap={20}>
@@ -947,7 +1071,20 @@ function WarehouseStockDetailPage() {
             )}
 
             <Card title="Історія отримання товару">
-              <Text type="secondary">Дані з’являться пізніше.</Text>
+              {intakeHistoryRows.length > 0 ? (
+                <Table
+                  rowKey={(record) =>
+                    `${record.source_type}-${record.order_item_id}`
+                  }
+                  columns={intakeHistoryColumns}
+                  dataSource={intakeHistoryRows}
+                  pagination={false}
+                  size="small"
+                  tableLayout="fixed"
+                />
+              ) : (
+                <Text type="secondary">Дані відсутні.</Text>
+              )}
             </Card>
           </Col>
         </Row>

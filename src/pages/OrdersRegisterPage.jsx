@@ -391,7 +391,7 @@ function OrdersRegisterPage() {
 
       message.success('Замовлення створено.');
       closeCreateDrawer();
-      navigate(`/orders/${createdOrder.id}/edit`);
+      navigate(`/orders/${createdOrder.id}`);
     } catch (err) {
       console.error('Failed to create order:', err);
 

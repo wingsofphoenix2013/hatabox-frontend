@@ -50,6 +50,7 @@ import PdfPreview from '../components/PdfPreview';
 import { formatQuantity } from '../utils/formatNumber';
 import {
   formatDateDisplay,
+  formatDateTimeDisplay,
   formatDateUa,
   formatMoney,
 } from '../utils/orderFormatters';
@@ -76,6 +77,7 @@ function OrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [receiptDocuments, setReceiptDocuments] = useState([]);
   const [orderEvents, setOrderEvents] = useState([]);
+  const [orderEventsLoading, setOrderEventsLoading] = useState(false);
   const [vendorWebsite, setVendorWebsite] = useState('');
 
   const [isEditingOrderComment, setIsEditingOrderComment] = useState(false);
@@ -221,6 +223,8 @@ function OrderDetailPage() {
 
   const loadOrderEvents = async (orderId) => {
     try {
+      setOrderEventsLoading(true);
+
       const response = await api.get(
         `order-events/?order=${orderId}&page_size=5`,
       );
@@ -231,6 +235,8 @@ function OrderDetailPage() {
     } catch (err) {
       console.error('Failed to load order events:', err);
       setOrderEvents([]);
+    } finally {
+      setOrderEventsLoading(false);
     }
   };
 
@@ -1300,37 +1306,46 @@ function OrderDetailPage() {
           )}
 
           <Card title="Історія замовлення">
-            <Timeline
-              items={orderEvents.map((event) => ({
-                dot: getEventIcon(event.source),
-                children: (
-                  <Flex vertical gap={4}>
-                    <Flex align="center" gap={8} wrap>
-                      <Tag
-                        color={getEventTagColor(event.source)}
-                        style={{ marginInlineEnd: 0 }}
-                      >
-                        {event.source_name}
-                      </Tag>
+            {orderEventsLoading ? (
+              <Skeleton active paragraph={{ rows: 4 }} />
+            ) : orderEvents.length > 0 ? (
+              <Flex vertical gap={12}>
+                <Timeline
+                  items={orderEvents.map((event) => ({
+                    dot: getEventIcon(event.source),
+                    children: (
+                      <Flex vertical gap={4}>
+                        <Flex align="center" gap={6} wrap={false}>
+                          <Tag
+                            color={getEventTagColor(event.source)}
+                            style={{ marginInlineEnd: 0 }}
+                          >
+                            {event.source_name || event.source || '—'}
+                          </Tag>
 
-                      <Text>{event.title}</Text>
-                    </Flex>
+                          <Text strong style={{ fontSize: 13 }}>
+                            {event.title || '—'}
+                          </Text>
+                        </Flex>
 
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {formatDateDisplay(event.created_at)}{' '}
-                      {dayjs(event.created_at).format('HH:mm')} ·{' '}
-                      {event.created_by_username || 'system'}
-                    </Text>
-                  </Flex>
-                ),
-              }))}
-            />
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          {formatDateTimeDisplay(event.created_at)} ·{' '}
+                          {event.created_by_username || 'Створено автоматично'}
+                        </Text>
+                      </Flex>
+                    ),
+                  }))}
+                />
 
-            <Flex justify="flex-end" style={{ marginTop: 8 }}>
-              <Button type="link" size="small">
-                Показати всю історію
-              </Button>
-            </Flex>
+                <Flex justify="flex-end">
+                  <Button type="link" style={{ padding: 0 }} disabled>
+                    Показати всю історію
+                  </Button>
+                </Flex>
+              </Flex>
+            ) : (
+              <Text type="secondary">Дані з’являться пізніше.</Text>
+            )}
           </Card>
         </Col>
 

@@ -26,7 +26,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
-import { formatDateDisplay } from '../utils/orderFormatters';
+import { formatDateDisplay, formatMoney } from '../utils/orderFormatters';
 import {
   getLocationTagStyle,
   renderStoragePlaceChain,
@@ -712,6 +712,61 @@ function WarehouseStockDetailPage() {
       render: (_, __, index) => index + 1,
     },
     {
+      title: 'Замовлення',
+      key: 'order',
+      width: 260,
+      render: (_, record) => {
+        const orderUrl =
+          record.source_type === 'tolling'
+            ? `/orders/tolling/${record.order_id}`
+            : `/orders/${record.order_id}`;
+
+        if (!record.order_id) {
+          return <Text type="secondary">—</Text>;
+        }
+
+        return (
+          <Link to={orderUrl} target="_blank" rel="noreferrer">
+            №{record.order_no || record.order_id} від{' '}
+            {formatDateDisplay(record.order_created_at)}
+          </Link>
+        );
+      },
+    },
+    {
+      title: 'Постачальник',
+      key: 'supplier',
+      render: (_, record) => {
+        const supplierUrl =
+          record.source_type === 'tolling'
+            ? `/organizations/${record.supplier_id}`
+            : `/orders/vendors/${record.supplier_id}`;
+
+        return (
+          <Flex align="center" gap={6} wrap={false}>
+            <Text
+              style={{
+                display: 'block',
+                minWidth: 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              title={record.supplier_name || '—'}
+            >
+              {record.supplier_name || '—'}
+            </Text>
+
+            {record.supplier_id ? (
+              <Link to={supplierUrl} target="_blank" rel="noreferrer">
+                <InfoCircleOutlined style={{ color: '#1677ff' }} />
+              </Link>
+            ) : null}
+          </Flex>
+        );
+      },
+    },
+    {
       title: 'Джерело',
       key: 'source_type',
       width: 150,
@@ -737,63 +792,20 @@ function WarehouseStockDetailPage() {
       },
     },
     {
-      title: 'Постачальник',
-      key: 'supplier',
-      render: (_, record) => (
-        <Text
-          style={{
-            display: 'block',
-            minWidth: 0,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-          title={record.supplier_name || '—'}
-        >
-          {record.supplier_name || '—'}
-        </Text>
-      ),
-    },
-    {
-      title: 'Замовлення',
-      key: 'order',
-      width: 220,
-      render: (_, record) => {
-        const orderUrl =
-          record.source_type === 'tolling'
-            ? `/orders/tolling/${record.order_id}`
-            : `/orders/${record.order_id}`;
-
-        if (!record.order_id) {
-          return <Text type="secondary">—</Text>;
-        }
-
-        return (
-          <Link to={orderUrl} target="_blank" rel="noreferrer">
-            №{record.order_no || record.order_id} від{' '}
-            {formatDateDisplay(record.order_created_at)}
-          </Link>
-        );
-      },
-    },
-    {
       title: 'К-сть',
       key: 'quantity',
       width: 140,
       align: 'center',
-      render: (_, record) => (
-        <Flex align="center" justify="center" gap={6}>
+      render: (_, record) =>
+        record.requires_unit_conversion ? (
+          <Text strong type="danger">
+            ???
+          </Text>
+        ) : (
           <Text strong>
             {formatQuantity(record.quantity)} {record.unit_symbol || ''}
           </Text>
-
-          {record.requires_unit_conversion ? (
-            <Tooltip title="Потребує конвертації одиниць">
-              <InfoCircleFilled style={{ color: '#faad14' }} />
-            </Tooltip>
-          ) : null}
-        </Flex>
-      ),
+        ),
     },
     {
       title: 'Ціна',
@@ -802,7 +814,7 @@ function WarehouseStockDetailPage() {
       align: 'center',
       render: (_, record) =>
         record.agreed_price ? (
-          <Text>{formatQuantity(record.agreed_price)}</Text>
+          <Text>{formatMoney(record.agreed_price)}</Text>
         ) : (
           <Text type="secondary">—</Text>
         ),

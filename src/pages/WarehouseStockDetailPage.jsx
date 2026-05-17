@@ -796,16 +796,22 @@ function WarehouseStockDetailPage() {
       key: 'quantity',
       width: 140,
       align: 'center',
-      render: (_, record) =>
-        record.requires_unit_conversion ? (
-          <Text strong type="danger">
-            ???
-          </Text>
-        ) : (
+      render: (_, record) => (
+        <Flex align="center" justify="center" gap={6}>
           <Text strong>
-            {formatQuantity(record.quantity)} {record.unit_symbol || ''}
+            {record.requires_unit_conversion
+              ? '???'
+              : formatQuantity(record.quantity)}{' '}
+            {record.unit_symbol || ''}
           </Text>
-        ),
+
+          {record.requires_unit_conversion ? (
+            <Tooltip title="Потребує конвертації одиниць">
+              <InfoCircleFilled style={{ color: '#faad14' }} />
+            </Tooltip>
+          ) : null}
+        </Flex>
+      ),
     },
     {
       title: 'Ціна',

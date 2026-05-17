@@ -743,7 +743,7 @@ function OrderDetailPage() {
       key: 'payment_amount',
       width: 140,
       align: 'center',
-      render: (value) => (value ? `${value} ₴` : '—'),
+      render: (value) => formatMoney(value),
     },
   ];
 
@@ -881,8 +881,7 @@ function OrderDetailPage() {
       key: 'agreed_price',
       width: 110,
       align: 'center',
-      render: (_, record) =>
-        record.agreed_price ? `${record.agreed_price} ₴` : '—',
+      render: (_, record) => formatMoney(record.agreed_price),
     },
     {
       title: 'Поставка',
@@ -1402,7 +1401,7 @@ function OrderDetailPage() {
                             : undefined,
                       }}
                     >
-                      {formatMoney(order.remaining_amount)} ₴
+                      {formatMoney(order.remaining_amount)}
                     </strong>
                   </Text>
                 </Flex>

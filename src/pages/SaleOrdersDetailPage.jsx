@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  CheckCircleFilled,
   EditOutlined,
   FileTextOutlined,
   InboxOutlined,
@@ -132,6 +133,8 @@ function SaleOrdersDetailPage() {
   const productionReadinessPollRef = useRef(null);
 
   const [confirmingOrder, setConfirmingOrder] = useState(false);
+  const [confirmingProductionStepId, setConfirmingProductionStepId] =
+    useState(null);
   const [cancellingOrder, setCancellingOrder] = useState(false);
 
   const [isCustomerComponentsDrawerOpen, setIsCustomerComponentsDrawerOpen] =
@@ -392,6 +395,29 @@ function SaleOrdersDetailPage() {
       message.error(backendMessage || 'Не вдалося підтвердити замовлення.');
     } finally {
       setConfirmingOrder(false);
+    }
+  };
+
+  const handleConfirmProductionStep = async (stepId) => {
+    try {
+      setConfirmingProductionStepId(stepId);
+
+      await api.post(`production-order-steps/${stepId}/confirm/`, {});
+
+      message.success('Етап підтверджено.');
+
+      await loadProductionReadiness();
+      await loadOrderEvents();
+    } catch (err) {
+      console.error('Failed to confirm production step:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(
+        backendMessage || 'Не вдалося підтвердити етап виробництва.',
+      );
+    } finally {
+      setConfirmingProductionStepId(null);
     }
   };
 
@@ -1027,7 +1053,14 @@ function SaleOrdersDetailPage() {
                                 disabled={
                                   !step.can_be_confirmed ||
                                   productionReadiness?.summary?.next_step !==
-                                    step.production_order_step
+                                    step.production_order_step ||
+                                  !productionReadiness?.summary
+                                    ?.can_confirm_next_step
+                                }
+                                onConfirm={() =>
+                                  handleConfirmProductionStep(
+                                    step.production_order_step,
+                                  )
                                 }
                               >
                                 <Button
@@ -1035,15 +1068,23 @@ function SaleOrdersDetailPage() {
                                   type={
                                     step.can_be_confirmed &&
                                     productionReadiness?.summary?.next_step ===
-                                      step.production_order_step
+                                      step.production_order_step &&
+                                    productionReadiness?.summary
+                                      ?.can_confirm_next_step
                                       ? 'primary'
                                       : 'default'
+                                  }
+                                  loading={
+                                    confirmingProductionStepId ===
+                                    step.production_order_step
                                   }
                                   disabled={!step.can_be_confirmed}
                                   onClick={
                                     step.can_be_confirmed &&
-                                    productionReadiness?.summary?.next_step !==
-                                      step.production_order_step
+                                    (productionReadiness?.summary?.next_step !==
+                                      step.production_order_step ||
+                                      !productionReadiness?.summary
+                                        ?.can_confirm_next_step)
                                       ? (event) => event.preventDefault()
                                       : undefined
                                   }
@@ -1127,12 +1168,32 @@ function SaleOrdersDetailPage() {
                             },
                           ]}
                         />
-                      ) : (
+                      ) : step.status === 'confirmed' ? (
                         <Alert
                           type="success"
                           showIcon
-                          message="Проблем для підтвердження етапу не виявлено."
+                          message="Етап підтверджено. Компоненти зарезервовано під виробництво."
                         />
+                      ) : (
+                        <Flex
+                          align="center"
+                          gap={8}
+                          style={{
+                            padding: '8px 12px',
+                            border: '1px solid #d9d9d9',
+                            borderRadius: 8,
+                            background: '#fafafa',
+                          }}
+                        >
+                          <CheckCircleFilled
+                            style={{
+                              color: '#52c41a',
+                              fontSize: 16,
+                            }}
+                          />
+
+                          <Text>Етап готовий до підтвердження.</Text>
+                        </Flex>
                       )}
                     </Card>
                   ))}

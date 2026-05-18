@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-  AppstoreAddOutlined,
   CheckCircleFilled,
   CloseCircleFilled,
   DeleteOutlined,
@@ -24,13 +23,17 @@ import {
   Skeleton,
   Table,
   Tag,
+  Timeline,
   Typography,
   message,
 } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { formatDateUa } from '../utils/orderFormatters';
+import {
+  formatDateDisplay,
+  formatDateTimeDisplay,
+  formatDateUa,
+} from '../utils/orderFormatters';
 import { formatQuantity } from '../utils/formatNumber';
-import { formatDateDisplay } from '../utils/orderFormatters';
 import { getApiErrorMessage } from '../utils/apiError';
 
 import api from '../api/client';
@@ -63,6 +66,8 @@ function OrderTollingDetailsPage() {
   const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
+  const [orderEvents, setOrderEvents] = useState([]);
+  const [orderEventsLoading, setOrderEventsLoading] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -83,6 +88,25 @@ function OrderTollingDetailsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const loadOrderEvents = async (orderId) => {
+    try {
+      setOrderEventsLoading(true);
+
+      const response = await api.get(
+        `tolling-order-events/?order=${orderId}&page_size=5`,
+      );
+
+      setOrderEvents(
+        Array.isArray(response.data?.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load tolling order events:', err);
+      setOrderEvents([]);
+    } finally {
+      setOrderEventsLoading(false);
+    }
+  };
+
   const loadOrderPage = async ({ silent = false } = {}) => {
     try {
       if (!silent) {
@@ -93,6 +117,7 @@ function OrderTollingDetailsPage() {
 
       const response = await api.get(`tolling-orders/${id}/`);
       setOrder(response.data);
+      await loadOrderEvents(response.data.id);
     } catch (err) {
       console.error('Failed to load tolling order page:', err);
       setError('Не вдалося завантажити дані передачі.');
@@ -170,6 +195,8 @@ function OrderTollingDetailsPage() {
       });
 
       setOrder(response.data);
+      await loadOrderEvents(response.data.id);
+
       message.success('Коментар збережено.');
       setIsEditingOrderComment(false);
     } catch (err) {
@@ -207,6 +234,50 @@ function OrderTollingDetailsPage() {
       </div>
     );
   }
+
+  const getEventIcon = (source) => {
+    const commonStyle = {
+      background: '#ffffff',
+      padding: 3,
+      borderRadius: '50%',
+    };
+
+    switch (source) {
+      case 'tolling':
+        return <SettingOutlined style={{ ...commonStyle, color: '#1677ff' }} />;
+
+      case 'logistics':
+        return (
+          <DownloadOutlined style={{ ...commonStyle, color: '#13c2c2' }} />
+        );
+
+      case 'system':
+        return (
+          <InfoCircleOutlined style={{ ...commonStyle, color: '#8c8c8c' }} />
+        );
+
+      default:
+        return (
+          <InfoCircleOutlined style={{ ...commonStyle, color: '#8c8c8c' }} />
+        );
+    }
+  };
+
+  const getEventTagColor = (source) => {
+    switch (source) {
+      case 'tolling':
+        return 'blue';
+
+      case 'logistics':
+        return 'cyan';
+
+      case 'system':
+        return 'default';
+
+      default:
+        return 'default';
+    }
+  };
 
   const itemsColumns = [
     {
@@ -462,8 +533,47 @@ function OrderTollingDetailsPage() {
             </Card>
           )}
 
-          <Card title="Статистика">
-            <Text type="secondary">Дані з’являться пізніше.</Text>
+          <Card title="Історія передачі">
+            {orderEventsLoading ? (
+              <Skeleton active paragraph={{ rows: 4 }} />
+            ) : orderEvents.length > 0 ? (
+              <Flex vertical gap={12}>
+                <Timeline
+                  items={orderEvents.map((event) => ({
+                    dot: getEventIcon(event.source),
+                    children: (
+                      <Flex vertical gap={4}>
+                        <Flex align="center" gap={6} wrap={false}>
+                          <Tag
+                            color={getEventTagColor(event.source)}
+                            style={{ marginInlineEnd: 0 }}
+                          >
+                            {event.source_name || event.source || '—'}
+                          </Tag>
+
+                          <Text strong style={{ fontSize: 13 }}>
+                            {event.title || '—'}
+                          </Text>
+                        </Flex>
+
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          {formatDateTimeDisplay(event.created_at)} ·{' '}
+                          {event.created_by_username || 'Створено автоматично'}
+                        </Text>
+                      </Flex>
+                    ),
+                  }))}
+                />
+
+                <Flex justify="flex-end">
+                  <Button type="link" style={{ padding: 0 }} disabled>
+                    Показати всю історію
+                  </Button>
+                </Flex>
+              </Flex>
+            ) : (
+              <Text type="secondary">Дані з’являться пізніше.</Text>
+            )}
           </Card>
         </Col>
 

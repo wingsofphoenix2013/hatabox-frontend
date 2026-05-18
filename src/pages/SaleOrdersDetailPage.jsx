@@ -1034,66 +1034,70 @@ function SaleOrdersDetailPage() {
                             </Tag>
                           </Flex>
 
-                          <Tooltip
-                            title={
-                              !step.can_be_confirmed
-                                ? 'Етап не може бути підтверджений, поки не вирішені критичні проблеми.'
-                                : productionReadiness?.summary?.next_step !==
-                                    step.production_order_step
-                                  ? 'Спочатку потрібно підтвердити попередній етап.'
-                                  : ''
-                            }
-                          >
-                            <div>
-                              <Popconfirm
-                                title="Підтвердити етап?"
-                                description="Після підтвердження етапу процедура буде незворотною."
-                                okText="Підтвердити"
-                                cancelText="Скасувати"
-                                disabled={
-                                  !step.can_be_confirmed ||
-                                  productionReadiness?.summary?.next_step !==
-                                    step.production_order_step ||
-                                  !productionReadiness?.summary
-                                    ?.can_confirm_next_step
-                                }
-                                onConfirm={() =>
-                                  handleConfirmProductionStep(
-                                    step.production_order_step,
-                                  )
-                                }
-                              >
-                                <Button
-                                  size="small"
-                                  type={
-                                    step.can_be_confirmed &&
-                                    productionReadiness?.summary?.next_step ===
-                                      step.production_order_step &&
-                                    productionReadiness?.summary
-                                      ?.can_confirm_next_step
-                                      ? 'primary'
-                                      : 'default'
-                                  }
-                                  loading={
-                                    confirmingProductionStepId ===
-                                    step.production_order_step
-                                  }
-                                  disabled={!step.can_be_confirmed}
-                                  onClick={
-                                    step.can_be_confirmed &&
-                                    (productionReadiness?.summary?.next_step !==
+                          {step.status === 'draft' && (
+                            <Tooltip
+                              title={
+                                !step.can_be_confirmed
+                                  ? 'Етап не може бути підтверджений, поки не вирішені критичні проблеми.'
+                                  : productionReadiness?.summary?.next_step !==
+                                      step.production_order_step
+                                    ? 'Спочатку потрібно підтвердити попередній етап.'
+                                    : ''
+                              }
+                            >
+                              <div>
+                                <Popconfirm
+                                  title="Підтвердити етап?"
+                                  description="Після підтвердження етапу процедура буде незворотною."
+                                  okText="Підтвердити"
+                                  cancelText="Скасувати"
+                                  disabled={
+                                    !step.can_be_confirmed ||
+                                    productionReadiness?.summary?.next_step !==
                                       step.production_order_step ||
-                                      !productionReadiness?.summary
-                                        ?.can_confirm_next_step)
-                                      ? (event) => event.preventDefault()
-                                      : undefined
+                                    !productionReadiness?.summary
+                                      ?.can_confirm_next_step
+                                  }
+                                  onConfirm={() =>
+                                    handleConfirmProductionStep(
+                                      step.production_order_step,
+                                    )
                                   }
                                 >
-                                  Підтвердити етап
-                                </Button>
-                              </Popconfirm>
-                            </div>
-                          </Tooltip>
+                                  <Button
+                                    size="small"
+                                    type={
+                                      step.can_be_confirmed &&
+                                      productionReadiness?.summary
+                                        ?.next_step ===
+                                        step.production_order_step &&
+                                      productionReadiness?.summary
+                                        ?.can_confirm_next_step
+                                        ? 'primary'
+                                        : 'default'
+                                    }
+                                    loading={
+                                      confirmingProductionStepId ===
+                                      step.production_order_step
+                                    }
+                                    disabled={!step.can_be_confirmed}
+                                    onClick={
+                                      step.can_be_confirmed &&
+                                      (productionReadiness?.summary
+                                        ?.next_step !==
+                                        step.production_order_step ||
+                                        !productionReadiness?.summary
+                                          ?.can_confirm_next_step)
+                                        ? (event) => event.preventDefault()
+                                        : undefined
+                                    }
+                                  >
+                                    Підтвердити етап
+                                  </Button>
+                                </Popconfirm>
+                              </div>
+                            </Tooltip>
+                          )}
                         </Flex>
                       }
                     >

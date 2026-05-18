@@ -51,6 +51,9 @@ function WarehouseStockRegisterPage() {
   const [searchText, setSearchText] = useState(
     searchParams.get('search') || '',
   );
+  const [debouncedSearchText, setDebouncedSearchText] = useState(
+    searchParams.get('search') || '',
+  );
   const [selectedCategoryIds, setSelectedCategoryIds] = useState(
     searchParams.getAll('category'),
   );
@@ -84,11 +87,19 @@ function WarehouseStockRegisterPage() {
   }, []);
 
   useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearchText(searchText);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchText]);
+
+  useEffect(() => {
     loadStockOverview(currentPage);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     currentPage,
-    searchText,
+    debouncedSearchText,
     selectedCategoryIds,
     selectedLocationIds,
     selectedStoragePlaceIds,
@@ -98,7 +109,7 @@ function WarehouseStockRegisterPage() {
   useEffect(() => {
     const params = new URLSearchParams();
 
-    const normalizedSearch = searchText.trim();
+    const normalizedSearch = debouncedSearchText.trim();
     if (normalizedSearch) {
       params.set('search', normalizedSearch);
     }
@@ -125,7 +136,7 @@ function WarehouseStockRegisterPage() {
 
     setSearchParams(params);
   }, [
-    searchText,
+    debouncedSearchText,
     selectedCategoryIds,
     selectedLocationIds,
     selectedStoragePlaceIds,
@@ -222,7 +233,7 @@ function WarehouseStockRegisterPage() {
       params.append('page', String(page));
       params.append('has_any_activity', 'true');
 
-      const normalizedSearch = searchText.trim();
+      const normalizedSearch = debouncedSearchText.trim();
       if (normalizedSearch) {
         params.append('search', normalizedSearch);
       }

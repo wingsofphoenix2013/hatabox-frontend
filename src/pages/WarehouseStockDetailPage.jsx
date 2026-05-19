@@ -119,8 +119,11 @@ function WarehouseStockDetailPage() {
   const pendingIntakeRows = data.pending_intake_rows || [];
   const incomingRows = data.incoming_rows || [];
   const shortageRows = shortageData?.rows || [];
+  const shortageAllocations = shortageData?.allocations || [];
   const shortageSummary = shortageData?.summary || {};
   const shouldShowShortageCard = Number(shortageSummary.missing_quantity) > 0;
+  const shouldShowAllocationsCard =
+    Number(shortageSummary.reserved_quantity) > 0;
   const imageUrl = header.image || '';
   const unitSymbol = header.inventory_item_unit_symbol || '';
   const hasAvailableStock = stockRows.some((row) => Number(row.quantity) > 0);
@@ -534,6 +537,103 @@ function WarehouseStockDetailPage() {
       render: (_, record) => (
         <Text strong>
           {formatQuantity(record.required_quantity)} {unitSymbol}
+        </Text>
+      ),
+    },
+  ];
+
+  const shortageAllocationColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 56,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Замовлення',
+      key: 'sales_order',
+      width: 320,
+      render: (_, record) => (
+        <Flex vertical gap={2} style={{ minWidth: 0 }}>
+          <Text strong>№{record.serial_number || '—'}</Text>
+
+          <Flex align="center" gap={6} style={{ minWidth: 0 }}>
+            <Text
+              type="secondary"
+              style={{
+                fontSize: 12,
+                lineHeight: 1.2,
+                minWidth: 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              title={record.organization_name || '—'}
+            >
+              {record.organization_name || '—'}
+            </Text>
+
+            {record.organization ? (
+              <Link
+                to={`/organizations/${record.organization}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
+              </Link>
+            ) : null}
+          </Flex>
+        </Flex>
+      ),
+    },
+    {
+      title: 'Виріб',
+      key: 'product',
+      render: (_, record) => (
+        <Flex vertical gap={2} style={{ minWidth: 0 }}>
+          <Text
+            strong
+            style={{
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={record.product_name || '—'}
+          >
+            {record.product_name || '—'}
+          </Text>
+
+          <Text
+            type="secondary"
+            style={{
+              fontSize: 12,
+              lineHeight: 1.2,
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={`${record.product_code || '—'} | Етап ${
+              record.production_order_step || '—'
+            }. ${record.production_order_step_name || '—'}`}
+          >
+            {record.product_code || '—'} | Етап{' '}
+            {record.production_order_step || '—'}.{' '}
+            {record.production_order_step_name || '—'}
+          </Text>
+        </Flex>
+      ),
+    },
+    {
+      title: 'К-сть',
+      key: 'quantity',
+      width: 140,
+      align: 'center',
+      render: (_, record) => (
+        <Text strong>
+          {formatQuantity(record.quantity)} {unitSymbol}
         </Text>
       ),
     },
@@ -1014,6 +1114,66 @@ function WarehouseStockDetailPage() {
                     }
                     columns={shortageColumns}
                     dataSource={shortageRows}
+                    pagination={false}
+                    size="small"
+                    tableLayout="fixed"
+                  />
+                </Flex>
+              </Card>
+            )}
+
+            {shouldShowAllocationsCard && (
+              <Card
+                title="Зарезервовано у виробництві"
+                style={{ marginBottom: 20 }}
+              >
+                <Flex vertical gap={16}>
+                  <Descriptions
+                    size="small"
+                    column={2}
+                    bordered
+                    items={[
+                      {
+                        key: 'reserved_sales_orders_count',
+                        label: 'Замовлень',
+                        children: (
+                          <Text
+                            strong
+                            style={{ display: 'block', textAlign: 'center' }}
+                          >
+                            {Number(
+                              shortageSummary.reserved_sales_orders_count,
+                            ) || 0}
+                          </Text>
+                        ),
+                      },
+                      {
+                        key: 'reserved_quantity',
+                        label: 'Зарезервовано',
+                        children: (
+                          <Tag
+                            color="success"
+                            style={{
+                              display: 'block',
+                              width: 'fit-content',
+                              margin: '0 auto',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {formatQuantity(shortageSummary.reserved_quantity)}{' '}
+                            {unitSymbol}
+                          </Tag>
+                        ),
+                      },
+                    ]}
+                  />
+
+                  <Table
+                    rowKey={(record) =>
+                      `${record.reservation}-${record.warehouse_unit}`
+                    }
+                    columns={shortageAllocationColumns}
+                    dataSource={shortageAllocations}
                     pagination={false}
                     size="small"
                     tableLayout="fixed"

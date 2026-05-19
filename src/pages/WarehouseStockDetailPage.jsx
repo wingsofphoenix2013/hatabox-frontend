@@ -1170,7 +1170,12 @@ function WarehouseStockDetailPage() {
 
                   <Table
                     rowKey={(record) =>
-                      `${record.reservation}-${record.warehouse_unit}`
+                      [
+                        record.sales_order,
+                        record.production_order,
+                        record.production_order_step,
+                        record.reservation_status,
+                      ].join('-')
                     }
                     columns={shortageAllocationColumns}
                     dataSource={shortageAllocations}

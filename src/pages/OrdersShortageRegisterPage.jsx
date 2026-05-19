@@ -160,6 +160,21 @@ function OrdersShortageRegisterPage() {
         },
       },
       {
+        title: 'Зарезервовано',
+        key: 'reserved_quantity',
+        width: 150,
+        align: 'center',
+        render: (_, record) => {
+          const unit = record.inventory_item_unit_symbol || '';
+
+          return (
+            <Text strong>
+              {formatQuantity(record.reserved_quantity)} {unit}
+            </Text>
+          );
+        },
+      },
+      {
         title: 'Доступно',
         key: 'available_quantity',
         width: 150,
@@ -366,7 +381,7 @@ function OrdersShortageRegisterPage() {
             locale={{
               emptyText: 'Немає позицій дефіциту для відображення.',
             }}
-            scroll={{ x: 1180 }}
+            scroll={{ x: 1320 }}
           />
         </Card>
       </Flex>

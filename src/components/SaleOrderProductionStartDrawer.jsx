@@ -121,11 +121,11 @@ function SaleOrderProductionStartDrawer({
               />
             </Flex>
 
-            <Flex vertical gap={8}>
-              <Text>Очікувана дата закінчення виробництва</Text>
+            <Flex justify="space-between" align="center" gap={12}>
+              <Text>Очікувана дата закінчення</Text>
+
               <DatePicker
-                showTime
-                style={{ width: '100%' }}
+                style={{ width: 220 }}
                 value={expectedReadyAt}
                 disabled={starting}
                 onChange={setExpectedReadyAt}

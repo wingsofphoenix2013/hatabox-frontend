@@ -52,6 +52,7 @@ import SaleOrdersRegisterPage from './pages/SaleOrdersRegisterPage';
 import SaleOrdersDetailPage from './pages/SaleOrdersDetailPage';
 
 import ProductionOrderRegisterPage from './pages/ProductionOrderRegisterPage';
+import ProductionOrderDetailPage from './pages/ProductionOrderDetailPage';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -149,7 +150,10 @@ function App() {
               path="/production/orders"
               element={<ProductionOrderRegisterPage />}
             />
-
+            <Route
+              path="/production/orders/:id"
+              element={<ProductionOrderDetailPage />}
+            />
             <Route
               path="/production/products"
               element={<ProductionProductPage />}

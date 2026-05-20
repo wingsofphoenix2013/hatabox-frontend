@@ -143,6 +143,20 @@ export const breadcrumbConfig = [
     ],
   },
   {
+    match: (pathname) => pathname.startsWith('/production/orders/'),
+    build: ({ pathname, state }) => {
+      const currentId = getCurrentId(pathname);
+      const productionOrderLabel = state?.productionOrderLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Виробництво'),
+        makeLinkItem('/production/orders', 'Карти виробництва'),
+        makeTextItem(productionOrderLabel || `Карта ID ${currentId}`),
+      ];
+    },
+  },
+  {
     match: (pathname) => pathname === '/production/products',
     build: () => [
       makeHomeItem(),

@@ -1215,35 +1215,42 @@ function SaleOrdersDetailPage() {
                           type="success"
                           showIcon
                           message={
-                            <Flex align="center" gap={6} wrap>
+                            <Flex
+                              align="center"
+                              justify="space-between"
+                              gap={12}
+                              wrap
+                            >
                               <Text>
                                 Етап підтверджено. Компоненти зарезервовано.
                                 Видаткова сформована.
                               </Text>
 
-                              {step.production_movement_components_transferred ? (
-                                <>
-                                  <CheckCircleFilled
-                                    style={{
-                                      color: '#52c41a',
-                                      fontSize: 16,
-                                    }}
-                                  />
+                              <Flex align="center" gap={6}>
+                                {step.production_movement_components_transferred ? (
+                                  <>
+                                    <CheckCircleFilled
+                                      style={{
+                                        color: '#52c41a',
+                                        fontSize: 16,
+                                      }}
+                                    />
 
-                                  <Text strong>Компоненти ВИДАНО.</Text>
-                                </>
-                              ) : (
-                                <>
-                                  <CloseCircleFilled
-                                    style={{
-                                      color: '#ff4d4f',
-                                      fontSize: 16,
-                                    }}
-                                  />
+                                    <Text strong>Компоненти ВИДАНО.</Text>
+                                  </>
+                                ) : (
+                                  <>
+                                    <CloseCircleFilled
+                                      style={{
+                                        color: '#ff4d4f',
+                                        fontSize: 16,
+                                      }}
+                                    />
 
-                                  <Text strong>Компоненти НЕ ВИДАНО.</Text>
-                                </>
-                              )}
+                                    <Text strong>Компоненти НЕ ВИДАНО.</Text>
+                                  </>
+                                )}
+                              </Flex>
                             </Flex>
                           }
                         />

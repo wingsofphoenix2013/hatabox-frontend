@@ -262,7 +262,7 @@ function SaleOrdersDetailPage() {
         await loadConfirmationStatus();
       }
 
-      if (response.data?.status === 'confirmed') {
+      if (['confirmed', 'in_progress'].includes(response.data?.status)) {
         await loadProductionReadiness();
       }
     } catch (err) {
@@ -484,6 +484,7 @@ function SaleOrdersDetailPage() {
 
   const isDraft = order.status === 'draft';
   const isConfirmed = order.status === 'confirmed';
+  const isInProgress = order.status === 'in_progress';
   const isCancelled = order.status === 'cancelled';
   const canCancel = isDraft || isConfirmed;
   const shouldShowNavigationCard = !isCancelled || diaryEntriesCount > 0;
@@ -998,7 +999,7 @@ function SaleOrdersDetailPage() {
               />
             </Card>
           )}
-          {isConfirmed && (
+          {(isConfirmed || isInProgress) && (
             <Card title="Готовність виробництва">
               {productionReadinessLoading ? (
                 <Skeleton active paragraph={{ rows: 6 }} />

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   CheckCircleFilled,
+  CloseCircleFilled,
   EditOutlined,
   FileTextOutlined,
   InboxOutlined,
@@ -1213,7 +1214,38 @@ function SaleOrdersDetailPage() {
                         <Alert
                           type="success"
                           showIcon
-                          message="Етап підтверджено. Компоненти зарезервовано під виробництво."
+                          message={
+                            <Flex align="center" gap={6} wrap>
+                              <Text>
+                                Етап підтверджено. Компоненти зарезервовано.
+                                Видаткова сформована.
+                              </Text>
+
+                              {step.production_movement_components_transferred ? (
+                                <>
+                                  <CheckCircleFilled
+                                    style={{
+                                      color: '#52c41a',
+                                      fontSize: 16,
+                                    }}
+                                  />
+
+                                  <Text strong>Компоненти ВИДАНО.</Text>
+                                </>
+                              ) : (
+                                <>
+                                  <CloseCircleFilled
+                                    style={{
+                                      color: '#ff4d4f',
+                                      fontSize: 16,
+                                    }}
+                                  />
+
+                                  <Text strong>Компоненти НЕ ВИДАНО.</Text>
+                                </>
+                              )}
+                            </Flex>
+                          }
                         />
                       ) : (
                         <Flex

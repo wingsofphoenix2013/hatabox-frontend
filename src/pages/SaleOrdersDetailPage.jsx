@@ -34,11 +34,12 @@ import {
   Typography,
   message,
 } from 'antd';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import api from '../api/client';
 import SaleOrderCustomerComponentsDrawer from '../components/SaleOrderCustomerComponentsDrawer';
 import SaleOrderDiaryDrawer from '../components/SaleOrderDiaryDrawer';
+import SaleOrderProductionStartDrawer from '../components/SaleOrderProductionStartDrawer';
 import { getApiErrorMessage } from '../utils/apiError';
 import {
   formatDateDisplay,
@@ -115,6 +116,7 @@ const getStatusTagColor = (status) => {
 
 function SaleOrdersDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
   const [orderEvents, setOrderEvents] = useState([]);
@@ -142,6 +144,9 @@ function SaleOrdersDetailPage() {
 
   const [isDiaryDrawerOpen, setIsDiaryDrawerOpen] = useState(false);
   const [diaryEntriesCount, setDiaryEntriesCount] = useState(0);
+
+  const [isProductionStartDrawerOpen, setIsProductionStartDrawerOpen] =
+    useState(false);
 
   const [isEditingComment, setIsEditingComment] = useState(false);
   const [editingComment, setEditingComment] = useState('');
@@ -689,6 +694,7 @@ function SaleOrdersDetailPage() {
                             !productionReadiness?.summary
                               ?.production_order_can_start
                           }
+                          onClick={() => setIsProductionStartDrawerOpen(true)}
                         >
                           Передати в виробництво
                         </Button>
@@ -1235,6 +1241,15 @@ function SaleOrdersDetailPage() {
         onSaved={async () => {
           await loadOrderEvents();
           await loadProductionReadiness({ silent: true });
+        }}
+      />
+
+      <SaleOrderProductionStartDrawer
+        open={isProductionStartDrawerOpen}
+        onClose={() => setIsProductionStartDrawerOpen(false)}
+        productionOrderId={productionReadiness?.production_order}
+        onStarted={(data) => {
+          navigate(`/production/orders/${data.production_order}`);
         }}
       />
     </div>

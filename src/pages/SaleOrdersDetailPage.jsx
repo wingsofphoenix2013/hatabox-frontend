@@ -610,20 +610,21 @@ function SaleOrdersDetailPage() {
                 textAlign: 'center',
               }}
             >
-              {order.status === 'in_progress' ? (
-                <Flex align="center" gap={8}>
-                  <Text>Визначити серійний номер</Text>
-
-                  <EditOutlined
-                    style={{
-                      color: '#8c8c8c',
-                      cursor: 'pointer',
-                    }}
-                  />
-                </Flex>
+              {['in_progress', 'ready', 'completed'].includes(order.status) ? (
+                <Text
+                  strong
+                  style={{
+                    fontSize: 34,
+                    lineHeight: '42px',
+                    textAlign: 'center',
+                    wordBreak: 'break-word',
+                  }}
+                >
+                  № {order.serial_number || '—'}
+                </Text>
               ) : (
                 <Text type="secondary">
-                  Серійний номер призначається на етапі виробництва
+                  Серійний номер призначається на етапі запуску виробництва
                 </Text>
               )}
             </div>

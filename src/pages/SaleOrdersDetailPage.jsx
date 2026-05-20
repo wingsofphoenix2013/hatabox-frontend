@@ -920,8 +920,24 @@ function SaleOrdersDetailPage() {
                   },
                   {
                     key: 'updated_at',
-                    label: 'Оновлено',
-                    children: formatDateDisplay(order.updated_at),
+                    label: [
+                      'confirmed',
+                      'in_progress',
+                      'ready',
+                      'completed',
+                    ].includes(order.status)
+                      ? 'Очікується'
+                      : 'Оновлено',
+                    children: [
+                      'confirmed',
+                      'in_progress',
+                      'ready',
+                      'completed',
+                    ].includes(order.status)
+                      ? order.expected_ready_at
+                        ? formatDateDisplay(order.expected_ready_at)
+                        : '—'
+                      : formatDateDisplay(order.updated_at),
                   },
                   {
                     key: 'completed_at',

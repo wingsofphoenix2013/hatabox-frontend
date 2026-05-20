@@ -674,9 +674,22 @@ function SaleOrdersDetailPage() {
 
                 {isConfirmed && (
                   <>
-                    <Tooltip title="Функціонал передачі ще не реалізовано">
+                    <Tooltip
+                      title={
+                        productionReadiness?.summary?.production_order_can_start
+                          ? ''
+                          : 'Виробництво ще не готове до запуску.'
+                      }
+                    >
                       <div>
-                        <Button block type="primary" disabled>
+                        <Button
+                          block
+                          type="primary"
+                          disabled={
+                            !productionReadiness?.summary
+                              ?.production_order_can_start
+                          }
+                        >
                           Передати в виробництво
                         </Button>
                       </div>

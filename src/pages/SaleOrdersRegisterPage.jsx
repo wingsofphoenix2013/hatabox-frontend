@@ -49,7 +49,7 @@ const getStatusTagColor = (status) => {
     case 'confirmed':
       return 'processing';
     case 'in_progress':
-      return 'warning';
+      return 'purple';
     case 'ready':
       return 'cyan';
     case 'completed':

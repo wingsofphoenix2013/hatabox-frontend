@@ -3,6 +3,7 @@ import {
   CheckCircleFilled,
   CloseCircleFilled,
   EditOutlined,
+  FilePdfOutlined,
   FileTextOutlined,
   InboxOutlined,
   InfoCircleOutlined,
@@ -10,6 +11,7 @@ import {
   SaveOutlined,
   SettingOutlined,
   ShoppingOutlined,
+  SwapOutlined,
   StopOutlined,
   ToolOutlined,
   WarningFilled,
@@ -138,6 +140,10 @@ function SaleOrdersDetailPage() {
   const [confirmingOrder, setConfirmingOrder] = useState(false);
   const [confirmingProductionStepId, setConfirmingProductionStepId] =
     useState(null);
+  const [
+    transferringProductionMovementId,
+    setTransferringProductionMovementId,
+  ] = useState(null);
   const [cancellingOrder, setCancellingOrder] = useState(false);
 
   const [isCustomerComponentsDrawerOpen, setIsCustomerComponentsDrawerOpen] =
@@ -424,6 +430,32 @@ function SaleOrdersDetailPage() {
       );
     } finally {
       setConfirmingProductionStepId(null);
+    }
+  };
+
+  const handleExecuteProductionMovement = async (movementId) => {
+    if (!movementId) return;
+
+    try {
+      setTransferringProductionMovementId(movementId);
+
+      await api.post(
+        `warehouse-production-movements/${movementId}/execute/`,
+        {},
+      );
+
+      message.success('Компоненти передано у виробництво.');
+
+      await loadProductionReadiness();
+      await loadOrderEvents();
+    } catch (err) {
+      console.error('Failed to execute production movement:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(backendMessage || 'Не вдалося передати компоненти.');
+    } finally {
+      setTransferringProductionMovementId(null);
     }
   };
 
@@ -1071,7 +1103,6 @@ function SaleOrdersDetailPage() {
                                 '—'}
                             </Tag>
                           </Flex>
-
                           {step.status === 'draft' && (
                             <Tooltip
                               title={
@@ -1135,6 +1166,80 @@ function SaleOrdersDetailPage() {
                                 </Popconfirm>
                               </div>
                             </Tooltip>
+                          )}
+
+                          {step.status === 'confirmed' && (
+                            <Flex align="center" gap={8} wrap>
+                              <Button
+                                size="small"
+                                icon={<FilePdfOutlined />}
+                                disabled={
+                                  !step.production_movement_invoice_file
+                                }
+                                onClick={() =>
+                                  window.open(
+                                    step.production_movement_invoice_file,
+                                    '_blank',
+                                    'noopener,noreferrer',
+                                  )
+                                }
+                              >
+                                Видаткова
+                              </Button>
+
+                              <Popconfirm
+                                title="Передати компоненти?"
+                                description="Після виконання переміщення компоненти будуть списані зі складу і передані у виробництво."
+                                okText="Передати"
+                                cancelText="Скасувати"
+                                disabled={
+                                  !step.production_movement ||
+                                  step.production_movement_components_transferred
+                                }
+                                onConfirm={() =>
+                                  handleExecuteProductionMovement(
+                                    step.production_movement,
+                                  )
+                                }
+                              >
+                                <Button
+                                  size="small"
+                                  icon={<SwapOutlined />}
+                                  loading={
+                                    transferringProductionMovementId ===
+                                    step.production_movement
+                                  }
+                                  disabled={
+                                    !step.production_movement ||
+                                    step.production_movement_components_transferred
+                                  }
+                                >
+                                  Передати компоненти
+                                </Button>
+                              </Popconfirm>
+
+                              <Tooltip
+                                title={
+                                  step.production_step_can_start
+                                    ? ''
+                                    : 'Спочатку потрібно передати компоненти у виробництво.'
+                                }
+                              >
+                                <div>
+                                  <Button
+                                    size="small"
+                                    type={
+                                      step.production_step_can_start
+                                        ? 'primary'
+                                        : 'default'
+                                    }
+                                    disabled={!step.production_step_can_start}
+                                  >
+                                    Розпочати виробництво
+                                  </Button>
+                                </div>
+                              </Tooltip>
+                            </Flex>
                           )}
                         </Flex>
                       }

@@ -362,21 +362,31 @@ function SaleOrdersRegisterPage() {
                       : 'Не вистачає товару замовника для підтвердження замовлення.'
                   }
                 >
-                  <Tag color={record.can_confirm_now ? 'success' : 'error'}>
-                    Проблем:{' '}
-                    {criticalIssues === 0 ? (
-                      '—'
-                    ) : (
-                      <span
-                        style={{
-                          color: '#cf1322',
-                          fontWeight: 700,
-                        }}
-                      >
-                        {criticalIssues}
-                      </span>
-                    )}
-                  </Tag>
+                  {record.can_confirm_now ? (
+                    <Tag color="success">Можливе підтвердження</Tag>
+                  ) : (
+                    <Tag color="error">
+                      Проблем:{' '}
+                      {criticalIssues === 0 ? (
+                        '—'
+                      ) : (
+                        <span
+                          style={{
+                            color: '#cf1322',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {criticalIssues}
+                        </span>
+                      )}
+                    </Tag>
+                  )}
+                </Tooltip>
+              )}
+
+              {value === 'confirmed' && record.production_order_can_start && (
+                <Tooltip title="Виробництво можна запускати.">
+                  <Tag color="success">Можливий запуск</Tag>
                 </Tooltip>
               )}
             </Flex>

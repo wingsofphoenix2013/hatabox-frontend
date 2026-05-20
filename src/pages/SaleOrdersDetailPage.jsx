@@ -620,7 +620,7 @@ function SaleOrdersDetailPage() {
                     wordBreak: 'break-word',
                   }}
                 >
-                  № {order.serial_number || '—'}
+                  № {order.production_order_serial_number || '—'}
                 </Text>
               ) : (
                 <Text type="secondary">

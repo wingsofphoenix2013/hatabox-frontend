@@ -614,7 +614,7 @@ function SaleOrdersDetailPage() {
                 <Text
                   strong
                   style={{
-                    fontSize: 90,
+                    fontSize: 72,
                     lineHeight: '42px',
                     textAlign: 'center',
                     wordBreak: 'break-word',

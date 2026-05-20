@@ -50,7 +50,12 @@ const moduleConfig = {
   },
 
   '/production': {
-    pages: [],
+    pages: [
+      {
+        label: 'Карти виробництва',
+        path: '/production/orders',
+      },
+    ],
     actions: [],
     dictionaries: [
       {

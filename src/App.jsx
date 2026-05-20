@@ -51,6 +51,8 @@ import OrganizationContactsRegisterPage from './pages/OrganizationContactsRegist
 import SaleOrdersRegisterPage from './pages/SaleOrdersRegisterPage';
 import SaleOrdersDetailPage from './pages/SaleOrdersDetailPage';
 
+import ProductionOrderRegisterPage from './pages/ProductionOrderRegisterPage';
+
 function App() {
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
@@ -141,6 +143,11 @@ function App() {
             <Route
               path="/orders/shortage"
               element={<OrdersShortageRegisterPage />}
+            />
+
+            <Route
+              path="/production/orders"
+              element={<ProductionOrderRegisterPage />}
             />
 
             <Route

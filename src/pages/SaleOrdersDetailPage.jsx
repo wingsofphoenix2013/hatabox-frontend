@@ -1410,8 +1410,8 @@ function SaleOrdersDetailPage() {
         open={isProductionStartDrawerOpen}
         onClose={() => setIsProductionStartDrawerOpen(false)}
         productionOrderId={productionReadiness?.production_order}
-        onStarted={(data) => {
-          navigate(`/production/orders/${data.production_order}`);
+        onStarted={async () => {
+          await loadOrderPage();
         }}
       />
     </div>

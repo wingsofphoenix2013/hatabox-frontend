@@ -138,8 +138,7 @@ function WarehouseStockDetailPage() {
   const shortageAllocations = productionReservationRows;
   const shortageSummary = shortageData?.summary || {};
   const shouldShowShortageCard = Number(shortageSummary.missing_quantity) > 0;
-  const shouldShowAllocationsCard =
-    Number(shortageSummary.reserved_quantity) > 0;
+  const shouldShowAllocationsCard = productionReservationRows.length > 0;
   const imageUrl = header.image || '';
   const unitSymbol = header.inventory_item_unit_symbol || '';
   const hasAvailableStock = stockRows.some((row) => Number(row.quantity) > 0);

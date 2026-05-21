@@ -246,7 +246,8 @@ function WarehouseProductionMovementRegisterPage() {
                 whiteSpace: 'nowrap',
               }}
             >
-              {orderLabel}
+              {record.product_family_name || '—'}{' '}
+              <strong>№{record.production_order_serial_number || '—'}</strong>
             </div>
 
             {record.sales_order ? (

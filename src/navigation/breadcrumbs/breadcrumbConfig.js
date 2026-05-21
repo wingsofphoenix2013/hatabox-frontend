@@ -320,6 +320,14 @@ export const breadcrumbConfig = [
     },
   },
   {
+    match: (pathname) => pathname === '/inventory/production-movements',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Склад'),
+      makeTextItem('Видача на виробництво'),
+    ],
+  },
+  {
     match: (pathname) => pathname === '/inventory/movements',
     build: () => [
       makeHomeItem(),

@@ -20,6 +20,7 @@ import WarehouseStockRegisterPage from './pages/WarehouseStockRegisterPage';
 import WarehouseMovementRegisterPage from './pages/WarehouseMovementRegisterPage';
 import WarehouseMovementDetailPage from './pages/WarehouseMovementDetailPage';
 import WarehouseStockDetailPage from './pages/WarehouseStockDetailPage';
+import WarehouseProductionMovementRegisterPage from './pages/WarehouseProductionMovementRegisterPage';
 
 import OrderDetailPage from './pages/OrderDetailPage';
 import OrdersRegisterPage from './pages/OrdersRegisterPage';
@@ -211,6 +212,10 @@ function App() {
             <Route
               path="/inventory/movements/:id"
               element={<WarehouseMovementDetailPage />}
+            />
+            <Route
+              path="/inventory/production-movements"
+              element={<WarehouseProductionMovementRegisterPage />}
             />
 
             <Route

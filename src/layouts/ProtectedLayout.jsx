@@ -80,6 +80,10 @@ const moduleConfig = {
         path: '/inventory/movements',
       },
       {
+        label: 'Видача на виробництво',
+        path: '/inventory/production-movements',
+      },
+      {
         label: 'Первинне отримання',
         path: '/inventory/pending-intake',
       },
@@ -163,6 +167,8 @@ function ProtectedLayout() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [pendingIntakeCount, setPendingIntakeCount] = useState(0);
   const [tollingPendingIntakeCount, setTollingPendingIntakeCount] = useState(0);
+  const [productionMovementCreatedCount, setProductionMovementCreatedCount] =
+    useState(0);
 
   const sidebar1TopItems = [
     {
@@ -246,17 +252,23 @@ function ProtectedLayout() {
 
   const fetchWarehouseIntakeStatuses = async () => {
     try {
-      const [pendingResponse, tollingResponse] = await Promise.all([
-        api.get('warehouse-pending-intake-items/status/'),
-        api.get('warehouse-tolling-pending-intake-items/status/'),
-      ]);
+      const [pendingResponse, tollingResponse, productionMovementResponse] =
+        await Promise.all([
+          api.get('warehouse-pending-intake-items/status/'),
+          api.get('warehouse-tolling-pending-intake-items/status/'),
+          api.get('warehouse-production-movements/'),
+        ]);
 
       setPendingIntakeCount(Number(pendingResponse.data?.count) || 0);
       setTollingPendingIntakeCount(Number(tollingResponse.data?.count) || 0);
+      setProductionMovementCreatedCount(
+        Number(productionMovementResponse.data?.summary?.created_count) || 0,
+      );
     } catch (error) {
       console.error('Failed to fetch warehouse intake statuses:', error);
       setPendingIntakeCount(0);
       setTollingPendingIntakeCount(0);
+      setProductionMovementCreatedCount(0);
     }
   };
 
@@ -348,7 +360,9 @@ function ProtectedLayout() {
   };
 
   const inventoryTotalBadgeCount =
-    pendingIntakeCount + tollingPendingIntakeCount;
+    pendingIntakeCount +
+    tollingPendingIntakeCount +
+    productionMovementCreatedCount;
 
   const inventoryBadgeText =
     inventoryTotalBadgeCount > 9
@@ -473,7 +487,9 @@ function ProtectedLayout() {
     const showDot =
       (item.path === '/inventory/pending-intake' && pendingIntakeCount > 0) ||
       (item.path === '/inventory/tolling-pending-intake' &&
-        tollingPendingIntakeCount > 0);
+        tollingPendingIntakeCount > 0) ||
+      (item.path === '/inventory/production-movements' &&
+        productionMovementCreatedCount > 0);
 
     if (!showDot) {
       return item.label;

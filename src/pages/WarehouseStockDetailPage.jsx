@@ -47,6 +47,9 @@ function WarehouseStockDetailPage() {
 
   const [data, setData] = useState(null);
   const [shortageData, setShortageData] = useState(null);
+  const [productionReservationRows, setProductionReservationRows] = useState(
+    [],
+  );
   const [intakeHistoryRows, setIntakeHistoryRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -62,17 +65,29 @@ function WarehouseStockDetailPage() {
       setLoading(true);
       setError('');
 
-      const [stockResponse, shortageResponse, intakeHistoryResponse] =
-        await Promise.all([
-          api.get(`warehouse-stock-detail/${id}/`),
-          api.get(`warehouse-shortage-detail/${id}/`),
-          api.get('inventory-intake-history/', {
-            params: { inv_item: id },
-          }),
-        ]);
+      const [
+        stockResponse,
+        shortageResponse,
+        productionReservationsResponse,
+        intakeHistoryResponse,
+      ] = await Promise.all([
+        api.get(`warehouse-stock-detail/${id}/`),
+        api.get(`warehouse-shortage-detail/${id}/`),
+        api.get('warehouse-production-reservations/', {
+          params: { inv_item: id },
+        }),
+        api.get('inventory-intake-history/', {
+          params: { inv_item: id },
+        }),
+      ]);
 
       setData(stockResponse.data || null);
       setShortageData(shortageResponse.data || null);
+      setProductionReservationRows(
+        Array.isArray(productionReservationsResponse.data)
+          ? productionReservationsResponse.data
+          : [],
+      );
       setIntakeHistoryRows(
         Array.isArray(intakeHistoryResponse.data)
           ? intakeHistoryResponse.data
@@ -83,6 +98,7 @@ function WarehouseStockDetailPage() {
       setError('Не вдалося завантажити дані складського залишку.');
       setData(null);
       setShortageData(null);
+      setProductionReservationRows([]);
       setIntakeHistoryRows([]);
     } finally {
       setLoading(false);
@@ -119,7 +135,7 @@ function WarehouseStockDetailPage() {
   const pendingIntakeRows = data.pending_intake_rows || [];
   const incomingRows = data.incoming_rows || [];
   const shortageRows = shortageData?.rows || [];
-  const shortageAllocations = shortageData?.allocations || [];
+  const shortageAllocations = productionReservationRows;
   const shortageSummary = shortageData?.summary || {};
   const shouldShowShortageCard = Number(shortageSummary.missing_quantity) > 0;
   const shouldShowAllocationsCard =
@@ -616,12 +632,12 @@ function WarehouseStockDetailPage() {
               textOverflow: 'ellipsis',
             }}
             title={`${record.product_code || '—'} | Етап ${
-              record.production_order_step || '—'
-            }. ${record.production_order_step_name || '—'}`}
+              record.source_product_step || '—'
+            }. ${record.source_product_step_name || '—'}`}
           >
             {record.product_code || '—'} | Етап{' '}
-            {record.production_order_step || '—'}.{' '}
-            {record.production_order_step_name || '—'}
+            {record.source_product_step || '—'}.{' '}
+            {record.source_product_step_name || '—'}
           </Text>
         </Flex>
       ),

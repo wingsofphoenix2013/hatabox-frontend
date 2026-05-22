@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  ApiOutlined,
-  AppstoreAddOutlined,
   CheckCircleFilled,
   CloseCircleFilled,
   EditOutlined,
@@ -1133,42 +1131,6 @@ function SaleOrdersDetailPage() {
                                     Підтвердити етап
                                   </Button>
                                 </Popconfirm>
-                              </div>
-                            </Tooltip>
-                          )}
-
-                          {step.status === 'confirmed' && (
-                            <Tooltip
-                              title={
-                                step.production_step_can_start
-                                  ? ''
-                                  : 'Спочатку потрібно передати компоненти у виробництво.'
-                              }
-                            >
-                              <div>
-                                <Button
-                                  size="small"
-                                  disabled={!step.production_step_can_start}
-                                  icon={
-                                    <ApiOutlined
-                                      style={{
-                                        color: step.production_step_can_start
-                                          ? '#722ed1'
-                                          : '#bfbfbf',
-                                      }}
-                                    />
-                                  }
-                                  style={{
-                                    color: step.production_step_can_start
-                                      ? '#722ed1'
-                                      : undefined,
-                                    borderColor: step.production_step_can_start
-                                      ? '#722ed1'
-                                      : undefined,
-                                  }}
-                                >
-                                  Розпочати виробництво
-                                </Button>
                               </div>
                             </Tooltip>
                           )}

@@ -231,7 +231,7 @@ function ProductionOrderRegisterPage() {
           <Link
             to={`/production/orders/${record.production_order}`}
             style={{
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: 600,
               minWidth: 0,
               whiteSpace: 'nowrap',
@@ -276,7 +276,7 @@ function ProductionOrderRegisterPage() {
             <Text
               strong
               style={{
-                fontSize: 16,
+                fontSize: 14,
                 minWidth: 0,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',

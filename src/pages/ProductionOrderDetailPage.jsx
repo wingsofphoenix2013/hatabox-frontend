@@ -235,29 +235,31 @@ function ProductionOrderDetailPage() {
               ) : (
                 <Text type="secondary">Дані зʼявляться пізніше</Text>
               )}
-              <Flex justify="flex-end" style={{ marginTop: 12 }}>
-                {canConfigureSchedule ? (
-                  <Button
-                    type="link"
-                    icon={<SettingOutlined />}
-                    style={{ padding: 0 }}
-                    onClick={() => setIsScheduleDrawerOpen(true)}
-                  >
-                    Налаштувати графік
-                  </Button>
-                ) : (
-                  <Tooltip title="Налаштування графіка вже неможливо">
+              {summary.production_order_status === 'in_progress' && (
+                <Flex justify="flex-end" style={{ marginTop: 12 }}>
+                  {canConfigureSchedule ? (
                     <Button
                       type="link"
                       icon={<SettingOutlined />}
-                      disabled
                       style={{ padding: 0 }}
+                      onClick={() => setIsScheduleDrawerOpen(true)}
                     >
                       Налаштувати графік
                     </Button>
-                  </Tooltip>
-                )}
-              </Flex>
+                  ) : (
+                    <Tooltip title="Налаштування графіка вже неможливо">
+                      <Button
+                        type="link"
+                        icon={<SettingOutlined />}
+                        disabled
+                        style={{ padding: 0 }}
+                      >
+                        Налаштувати графік
+                      </Button>
+                    </Tooltip>
+                  )}
+                </Flex>
+              )}
             </Card>
 
             <Card title="Історія замовлення">

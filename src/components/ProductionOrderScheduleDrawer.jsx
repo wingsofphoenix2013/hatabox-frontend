@@ -1,4 +1,15 @@
-import { Button, Card, Drawer, Flex, Tag, Typography } from 'antd';
+import {
+  Alert,
+  Button,
+  Card,
+  Descriptions,
+  Drawer,
+  Flex,
+  Tag,
+  Typography,
+} from 'antd';
+
+import { formatDateDisplay } from '../utils/orderFormatters';
 
 const { Text } = Typography;
 
@@ -48,7 +59,28 @@ function ProductionOrderScheduleDrawer({ open, onClose, steps = [] }) {
               </Flex>
             }
           >
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            {['draft', 'cancelled'].includes(step.status) ? (
+              <Alert
+                type="warning"
+                showIcon
+                message="Налаштування дати закінчення етапу можливе лише для підтверджених етапів!"
+              />
+            ) : (
+              <Descriptions
+                bordered
+                size="small"
+                column={1}
+                items={[
+                  {
+                    key: 'expected_finished_at',
+                    label: 'Дата закінчення етапу',
+                    children: step.expected_finished_at
+                      ? formatDateDisplay(step.expected_finished_at)
+                      : '—',
+                  },
+                ]}
+              />
+            )}
           </Card>
         ))}
 

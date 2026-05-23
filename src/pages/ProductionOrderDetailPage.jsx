@@ -225,7 +225,14 @@ function ProductionOrderDetailPage() {
                                 Number(step.current_days_left) || 0,
                               )} днів`}
                             >
-                              <Tag color="error" style={{ marginInlineEnd: 0 }}>
+                              <Tag
+                                color="error"
+                                style={{
+                                  marginInlineEnd: 0,
+                                  fontSize: 14,
+                                  lineHeight: '22px',
+                                }}
+                              >
                                 {dateText}
                               </Tag>
                             </Tooltip>

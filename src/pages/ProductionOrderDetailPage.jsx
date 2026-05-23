@@ -109,6 +109,9 @@ function ProductionOrderDetailPage() {
 
   const summary = data?.summary || {};
   const steps = Array.isArray(data?.steps) ? data.steps : [];
+  const currentInProgressStep = steps.find(
+    (step) => step.status === 'in_progress',
+  );
   const canConfigureSchedule = steps.some((step) => !step.expected_finished_at);
 
   return (
@@ -292,7 +295,27 @@ function ProductionOrderDetailPage() {
               <Text type="secondary">Дані зʼявляться пізніше</Text>
             </Card>
 
-            <Card title="Поточний етап">
+            <Card title="Поточний етап" style={{ marginBottom: 20 }}>
+              {currentInProgressStep ? (
+                <Text type="secondary">Дані зʼявляться пізніше</Text>
+              ) : (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message='Немає жодного етапу виробництва позначеного "В роботі"!'
+                />
+              )}
+            </Card>
+
+            <Card title="Щоденник виробництва" style={{ marginBottom: 20 }}>
+              <Text type="secondary">Дані зʼявляться пізніше</Text>
+            </Card>
+
+            <Card title="Заплановані етапи" style={{ marginBottom: 20 }}>
+              <Text type="secondary">Дані зʼявляться пізніше</Text>
+            </Card>
+
+            <Card title="Завершені етапи">
               <Text type="secondary">Дані зʼявляться пізніше</Text>
             </Card>
           </Col>

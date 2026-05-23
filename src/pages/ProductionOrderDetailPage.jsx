@@ -20,10 +20,13 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
+
 import { useParams } from 'react-router-dom';
 
 import api from '../api/client';
 import { formatDateDisplay } from '../utils/orderFormatters';
+
+import ProductionOrderScheduleDrawer from '../components/ProductionOrderScheduleDrawer';
 
 const { Title, Text } = Typography;
 
@@ -63,6 +66,8 @@ function ProductionOrderDetailPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState(false);
 
   const loadPage = async () => {
     try {
@@ -236,6 +241,7 @@ function ProductionOrderDetailPage() {
                     type="link"
                     icon={<SettingOutlined />}
                     style={{ padding: 0 }}
+                    onClick={() => setIsScheduleDrawerOpen(true)}
                   >
                     Налаштувати графік
                   </Button>
@@ -270,6 +276,11 @@ function ProductionOrderDetailPage() {
           </Col>
         </Row>
       </Flex>
+      <ProductionOrderScheduleDrawer
+        open={isScheduleDrawerOpen}
+        onClose={() => setIsScheduleDrawerOpen(false)}
+        steps={steps}
+      />
     </div>
   );
 }

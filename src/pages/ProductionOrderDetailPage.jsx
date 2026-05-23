@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  ApiOutlined,
   CheckCircleOutlined,
   FileAddOutlined,
   FileDoneOutlined,
@@ -12,6 +13,7 @@ import {
   Alert,
   Button,
   Card,
+  Popconfirm,
   Col,
   Flex,
   Row,
@@ -19,11 +21,13 @@ import {
   Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
 
 import { useParams } from 'react-router-dom';
 
 import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
 
 import ProductionOrderScheduleDrawer from '../components/ProductionOrderScheduleDrawer';
@@ -83,6 +87,7 @@ function ProductionOrderDetailPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [startingStepId, setStartingStepId] = useState(null);
 
   const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState(false);
 
@@ -100,6 +105,28 @@ function ProductionOrderDetailPage() {
       setData(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStartProductionStep = async (stepId) => {
+    if (!stepId) return;
+
+    try {
+      setStartingStepId(stepId);
+
+      await api.post(`production-order-steps/${stepId}/start/`, {});
+
+      message.success('Етап передано в роботу.');
+
+      await loadPage();
+    } catch (err) {
+      console.error('Failed to start production step:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(backendMessage || 'Не вдалося передати етап в роботу.');
+    } finally {
+      setStartingStepId(null);
     }
   };
 
@@ -314,7 +341,30 @@ function ProductionOrderDetailPage() {
 
             <Card title="Поточний етап" style={{ marginBottom: 20 }}>
               {currentInProgressStep ? (
-                <Text type="secondary">Дані зʼявляться пізніше</Text>
+                <Card
+                  size="small"
+                  title={
+                    <Flex align="center" gap={12} wrap>
+                      <span>
+                        Етап {currentInProgressStep.source_product_step || '—'}.{' '}
+                        {currentInProgressStep.name || '—'}
+                      </span>
+
+                      <Tag
+                        color={getStepStatusTagColor(
+                          currentInProgressStep.status,
+                        )}
+                        style={{ marginInlineEnd: 0 }}
+                      >
+                        {currentInProgressStep.status_display ||
+                          currentInProgressStep.status ||
+                          '—'}
+                      </Tag>
+                    </Flex>
+                  }
+                >
+                  <Text type="secondary">Дані зʼявляться пізніше</Text>
+                </Card>
               ) : (
                 <Alert
                   type="warning"
@@ -339,12 +389,7 @@ function ProductionOrderDetailPage() {
                       key={step.production_order_step}
                       size="small"
                       title={
-                        <Flex
-                          justify="space-between"
-                          align="center"
-                          gap={12}
-                          wrap
-                        >
+                        <Flex align="center" gap={12} wrap>
                           <span>
                             Етап {step.source_product_step || '—'}.{' '}
                             {step.name || '—'}
@@ -356,6 +401,36 @@ function ProductionOrderDetailPage() {
                           >
                             {step.status_display || step.status || '—'}
                           </Tag>
+
+                          {step.can_start && (
+                            <Popconfirm
+                              title="Розпочати виробництво?"
+                              description="Після запуску етап буде передано в роботу. Цю дію неможливо скасувати."
+                              okText="Розпочати"
+                              cancelText="Скасувати"
+                              onConfirm={() =>
+                                handleStartProductionStep(
+                                  step.production_order_step,
+                                )
+                              }
+                            >
+                              <Button
+                                size="small"
+                                icon={
+                                  <ApiOutlined style={{ color: '#722ed1' }} />
+                                }
+                                loading={
+                                  startingStepId === step.production_order_step
+                                }
+                                style={{
+                                  color: '#722ed1',
+                                  borderColor: '#722ed1',
+                                }}
+                              >
+                                Розпочати виробництво
+                              </Button>
+                            </Popconfirm>
+                          )}
                         </Flex>
                       }
                     >

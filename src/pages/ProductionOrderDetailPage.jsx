@@ -282,6 +282,7 @@ function ProductionOrderDetailPage() {
         open={isScheduleDrawerOpen}
         onClose={() => setIsScheduleDrawerOpen(false)}
         steps={steps}
+        productionStartedAt={summary.started_at}
       />
     </div>
   );

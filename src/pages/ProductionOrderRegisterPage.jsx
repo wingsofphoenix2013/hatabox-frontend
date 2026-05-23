@@ -351,7 +351,13 @@ function ProductionOrderRegisterPage() {
                 Number(record.current_step_days_left) || 0,
               )}`}
             >
-              <Tag color="error" style={{ marginInlineEnd: 0 }}>
+              <Tag
+                color="error"
+                style={{
+                  marginInlineEnd: 0,
+                  fontSize: 14,
+                }}
+              >
                 {dateText}
               </Tag>
             </Tooltip>
@@ -364,7 +370,7 @@ function ProductionOrderRegisterPage() {
               record.current_step_days_left ?? '—'
             }`}
           >
-            <span>{dateText}</span>
+            <span style={{ fontSize: 14 }}>{dateText}</span>
           </Tooltip>
         );
       },

@@ -1,19 +1,121 @@
-import { Card, Col, Flex, Row, Tag, Typography } from 'antd';
+import { useEffect, useState } from 'react';
+import {
+  CheckCircleOutlined,
+  FileAddOutlined,
+  FileDoneOutlined,
+  StopOutlined,
+  SyncOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
+import {
+  Alert,
+  Card,
+  Col,
+  Flex,
+  Row,
+  Skeleton,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import { useParams } from 'react-router-dom';
+
+import api from '../api/client';
+import { formatDateDisplay } from '../utils/orderFormatters';
 
 const { Title, Text } = Typography;
 
+const getProductionOrderStatusTagColor = (status) => {
+  switch (status) {
+    case 'in_progress':
+      return 'purple';
+    case 'ready':
+      return 'success';
+    case 'cancelled':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
+const getStepStatusIcon = (status) => {
+  switch (status) {
+    case 'draft':
+      return <FileAddOutlined style={{ color: '#8c8c8c' }} />;
+    case 'confirmed':
+      return <FileDoneOutlined style={{ color: '#1677ff' }} />;
+    case 'in_progress':
+      return <SyncOutlined spin style={{ color: '#722ed1' }} />;
+    case 'finished':
+      return <CheckCircleOutlined style={{ color: '#52c41a' }} />;
+    case 'cancelled':
+      return <StopOutlined style={{ color: '#ff4d4f' }} />;
+    default:
+      return <FileAddOutlined style={{ color: '#8c8c8c' }} />;
+  }
+};
+
 function ProductionOrderDetailPage() {
+  const { id } = useParams();
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const loadPage = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await api.get(`production-orders/${id}/detail/`);
+
+      setData(response.data || null);
+    } catch (err) {
+      console.error('Failed to load production order detail page:', err);
+      setError('Не вдалося завантажити дані карти виробництва.');
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div style={{ padding: 20 }}>
+        <Skeleton active paragraph={{ rows: 10 }} />
+      </div>
+    );
+  }
+
+  if (error && !data) {
+    return (
+      <div style={{ padding: 20 }}>
+        <Alert type="error" description={error} showIcon />
+      </div>
+    );
+  }
+
+  const summary = data?.summary || {};
+  const steps = Array.isArray(data?.steps) ? data.steps : [];
+
   return (
     <div style={{ padding: 20 }}>
       <Flex vertical gap={20}>
         <Flex justify="space-between" align="flex-start" gap={16}>
           <Flex align="center" gap={12} wrap>
             <Title level={2} style={{ margin: 0 }}>
-              Виріб №serial_number
+              Виріб №{summary.serial_number || '—'}
             </Title>
 
             <Tag
-              color="purple"
+              color={getProductionOrderStatusTagColor(
+                summary.production_order_status,
+              )}
               style={{
                 fontSize: 20,
                 lineHeight: '32px',
@@ -23,7 +125,9 @@ function ProductionOrderDetailPage() {
                 marginInlineEnd: 0,
               }}
             >
-              production_order_status_display
+              {summary.production_order_status_display ||
+                summary.production_order_status ||
+                '—'}
             </Tag>
           </Flex>
         </Flex>
@@ -35,7 +139,98 @@ function ProductionOrderDetailPage() {
             </Card>
 
             <Card title="Графік виробництва" style={{ marginBottom: 20 }}>
-              <Text type="secondary">Дані зʼявляться пізніше</Text>
+              {steps.length > 0 ? (
+                <Flex vertical gap={10}>
+                  {steps.map((step) => {
+                    const isFinished = Boolean(step.finished_at);
+                    const dateValue = isFinished
+                      ? step.finished_at
+                      : step.expected_finished_at;
+                    const dateText = dateValue
+                      ? formatDateDisplay(dateValue)
+                      : '—';
+
+                    return (
+                      <Flex
+                        key={step.production_order_step}
+                        align="flex-end"
+                        gap={8}
+                        style={{ minWidth: 0 }}
+                      >
+                        <Flex
+                          align="center"
+                          justify="center"
+                          style={{ width: 22, flex: '0 0 auto' }}
+                        >
+                          {getStepStatusIcon(step.status)}
+                        </Flex>
+
+                        <Text
+                          style={{
+                            minWidth: 0,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {step.source_product_step || '—'}. {step.name || '—'}
+                        </Text>
+
+                        <div
+                          style={{
+                            flex: 1,
+                            borderBottom: '1px dotted #d9d9d9',
+                            transform: 'translateY(-4px)',
+                          }}
+                        />
+
+                        <Flex
+                          align="center"
+                          gap={4}
+                          style={{ flex: '0 0 auto' }}
+                        >
+                          {isFinished && step.final_is_overdue ? (
+                            <Tooltip
+                              title={`Затримка: ${
+                                step.final_overdue_days ?? '—'
+                              } днів`}
+                            >
+                              <WarningOutlined
+                                style={{
+                                  color: '#ff4d4f',
+                                  fontSize: 15,
+                                }}
+                              />
+                            </Tooltip>
+                          ) : null}
+
+                          {!isFinished && step.current_is_overdue ? (
+                            <Tooltip
+                              title={`Затримка: ${Math.abs(
+                                Number(step.current_days_left) || 0,
+                              )} днів`}
+                            >
+                              <Tag color="error" style={{ marginInlineEnd: 0 }}>
+                                {dateText}
+                              </Tag>
+                            </Tooltip>
+                          ) : !isFinished ? (
+                            <Tooltip
+                              title={`До закінчення етапу: ${
+                                step.current_days_left ?? '—'
+                              } днів`}
+                            >
+                              <Text>{dateText}</Text>
+                            </Tooltip>
+                          ) : (
+                            <Text>{dateText}</Text>
+                          )}
+                        </Flex>
+                      </Flex>
+                    );
+                  })}
+                </Flex>
+              ) : (
+                <Text type="secondary">Дані зʼявляться пізніше</Text>
+              )}
             </Card>
 
             <Card title="Історія замовлення">

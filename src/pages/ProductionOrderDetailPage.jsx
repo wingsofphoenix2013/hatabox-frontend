@@ -276,7 +276,7 @@ function ProductionOrderDetailPage() {
                                 color="error"
                                 style={{
                                   marginInlineEnd: 0,
-                                  fontSize: 14,
+                                  fontSize: 12,
                                   lineHeight: '22px',
                                 }}
                               >
@@ -416,7 +416,7 @@ function ProductionOrderDetailPage() {
                               color={getStepStatusTagColor(step.status)}
                               style={{
                                 marginInlineEnd: 0,
-                                fontSize: 14,
+                                fontSize: 12,
                               }}
                             >
                               {step.status_display || step.status || '—'}

@@ -43,6 +43,23 @@ const getProductionOrderStatusTagColor = (status) => {
   }
 };
 
+const getStepStatusTagColor = (status) => {
+  switch (status) {
+    case 'draft':
+      return 'default';
+    case 'confirmed':
+      return 'processing';
+    case 'in_progress':
+      return 'purple';
+    case 'finished':
+      return 'success';
+    case 'cancelled':
+      return 'error';
+    default:
+      return 'default';
+  }
+};
+
 const getStepStatusIcon = (status) => {
   switch (status) {
     case 'draft':
@@ -312,7 +329,40 @@ function ProductionOrderDetailPage() {
             </Card>
 
             <Card title="Заплановані етапи" style={{ marginBottom: 20 }}>
-              <Text type="secondary">Дані зʼявляться пізніше</Text>
+              <Flex vertical gap={16}>
+                {steps
+                  .filter((step) =>
+                    ['draft', 'confirmed'].includes(step.status),
+                  )
+                  .map((step) => (
+                    <Card
+                      key={step.production_order_step}
+                      size="small"
+                      title={
+                        <Flex
+                          justify="space-between"
+                          align="center"
+                          gap={12}
+                          wrap
+                        >
+                          <span>
+                            Етап {step.source_product_step || '—'}.{' '}
+                            {step.name || '—'}
+                          </span>
+
+                          <Tag
+                            color={getStepStatusTagColor(step.status)}
+                            style={{ marginInlineEnd: 0 }}
+                          >
+                            {step.status_display || step.status || '—'}
+                          </Tag>
+                        </Flex>
+                      }
+                    >
+                      <Text type="secondary">Дані зʼявляться пізніше</Text>
+                    </Card>
+                  ))}
+              </Flex>
             </Card>
 
             <Card title="Завершені етапи">

@@ -4,12 +4,17 @@ import { BrowserRouter } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import ukUA from 'antd/locale/uk_UA';
 import dayjs from 'dayjs';
+import updateLocale from 'dayjs/plugin/updateLocale';
 import 'dayjs/locale/uk';
 
 import App from './App';
 import 'antd/dist/reset.css';
 
+dayjs.extend(updateLocale);
 dayjs.locale('uk');
+dayjs.updateLocale('uk', {
+  weekStart: 1,
+});
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <ConfigProvider locale={ukUA}>

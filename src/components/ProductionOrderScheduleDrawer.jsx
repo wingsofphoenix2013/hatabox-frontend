@@ -14,8 +14,6 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 
-import { formatDateDisplay } from '../utils/orderFormatters';
-
 const { Text } = Typography;
 
 const getStepStatusTagColor = (status) => {
@@ -125,46 +123,31 @@ function ProductionOrderScheduleDrawer({
                     {
                       key: 'expected_finished_at',
                       label: 'Дата закінчення етапу',
-                      children: (
-                        <Flex align="center" gap={8}>
-                          <span>
-                            {scheduleValues[step.production_order_step]
-                              ? formatDateDisplay(
-                                  scheduleValues[step.production_order_step],
-                                )
-                              : '—'}
-                          </span>
-
-                          {canEditDate ? (
-                            <DatePicker
-                              value={
-                                scheduleValues[step.production_order_step] ||
-                                null
-                              }
-                              disabledDate={disabledDate}
-                              suffixIcon={
-                                <CalendarOutlined
-                                  style={{ color: '#1677ff' }}
-                                />
-                              }
-                              onChange={(value) => {
-                                setScheduleValues((prev) => ({
-                                  ...prev,
-                                  [step.production_order_step]: value,
-                                }));
-                              }}
-                            />
-                          ) : (
-                            <Tooltip title="Спочатку потрібно вказати дату закінчення попереднього етапу.">
-                              <CalendarOutlined
-                                style={{
-                                  color: '#bfbfbf',
-                                  cursor: 'not-allowed',
-                                }}
-                              />
-                            </Tooltip>
-                          )}
-                        </Flex>
+                      children: canEditDate ? (
+                        <DatePicker
+                          value={
+                            scheduleValues[step.production_order_step] || null
+                          }
+                          disabledDate={disabledDate}
+                          suffixIcon={
+                            <CalendarOutlined style={{ color: '#1677ff' }} />
+                          }
+                          onChange={(value) => {
+                            setScheduleValues((prev) => ({
+                              ...prev,
+                              [step.production_order_step]: value,
+                            }));
+                          }}
+                        />
+                      ) : (
+                        <Tooltip title="Спочатку потрібно вказати дату закінчення попереднього етапу.">
+                          <CalendarOutlined
+                            style={{
+                              color: '#bfbfbf',
+                              cursor: 'not-allowed',
+                            }}
+                          />
+                        </Tooltip>
                       ),
                     },
                   ]}

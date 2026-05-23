@@ -175,7 +175,20 @@ function ProductionOrderDetailPage() {
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          {step.source_product_step || '—'}. {step.name || '—'}
+                          {(() => {
+                            const stepName = step.name || '—';
+                            const shortStepName =
+                              stepName.length > 20
+                                ? `${stepName.slice(0, 20)}...`
+                                : stepName;
+                            const content = `${step.source_product_step || '—'}. ${shortStepName}`;
+
+                            return stepName.length > 20 ? (
+                              <Tooltip title={stepName}>{content}</Tooltip>
+                            ) : (
+                              content
+                            );
+                          })()}
                         </Text>
 
                         <div

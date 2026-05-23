@@ -82,7 +82,7 @@ function ProductionOrderScheduleDrawer({
             if (!currentDate) return false;
 
             if (index === 0 && productionStartedAt) {
-              return !currentDate.isAfter(dayjs(productionStartedAt), 'day');
+              return currentDate.isBefore(dayjs(productionStartedAt), 'day');
             }
 
             if (previousStepDate) {

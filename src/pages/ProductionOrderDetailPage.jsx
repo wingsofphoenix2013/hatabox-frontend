@@ -283,6 +283,11 @@ function ProductionOrderDetailPage() {
         onClose={() => setIsScheduleDrawerOpen(false)}
         steps={steps}
         productionStartedAt={summary.sales_order_created_at}
+        productionOrderId={summary.production_order}
+        onSaved={(detailData) => {
+          setData(detailData);
+          setIsScheduleDrawerOpen(false);
+        }}
       />
     </div>
   );

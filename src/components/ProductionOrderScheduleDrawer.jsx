@@ -11,8 +11,11 @@ import {
   Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
 import dayjs from 'dayjs';
+import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const { Text } = Typography;
 
@@ -38,8 +41,11 @@ function ProductionOrderScheduleDrawer({
   onClose,
   steps = [],
   productionStartedAt,
+  productionOrderId,
+  onSaved,
 }) {
   const [scheduleValues, setScheduleValues] = useState({});
+  const [saving, setSaving] = useState(false);
 
   const initializeScheduleValues = () => {
     const initialValues = {};
@@ -52,6 +58,54 @@ function ProductionOrderScheduleDrawer({
 
     setScheduleValues(initialValues);
   };
+
+  const handleSave = async () => {
+    if (!productionOrderId) return;
+
+    try {
+      setSaving(true);
+
+      const payloadSteps = steps
+        .filter((step) => step.status === 'confirmed')
+        .filter((step) => scheduleValues[step.production_order_step])
+        .map((step) => ({
+          production_order_step: step.production_order_step,
+          expected_finished_at: scheduleValues[step.production_order_step]
+            .hour(23)
+            .minute(59)
+            .second(0)
+            .millisecond(0)
+            .format('YYYY-MM-DDTHH:mm:ssZ'),
+        }));
+
+      const response = await api.post(
+        `production-orders/${productionOrderId}/update-steps-schedule/`,
+        {
+          steps: payloadSteps,
+        },
+      );
+
+      message.success('Графік виробництва збережено.');
+
+      onClose();
+
+      if (onSaved) {
+        await onSaved(response.data?.detail);
+      }
+    } catch (err) {
+      console.error('Failed to update production order schedule:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'steps',
+        'expected_finished_at',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося зберегти графік.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Drawer
       title="Налаштування графіку виробництва"
@@ -159,9 +213,13 @@ function ProductionOrderScheduleDrawer({
         })}
 
         <Flex justify="space-between" gap={8}>
-          <Button onClick={onClose}>Закрити</Button>
+          <Button onClick={onClose} disabled={saving}>
+            Закрити
+          </Button>
 
-          <Button type="primary">Зберегти зміни</Button>
+          <Button type="primary" loading={saving} onClick={handleSave}>
+            Зберегти зміни
+          </Button>
         </Flex>
       </Flex>
     </Drawer>

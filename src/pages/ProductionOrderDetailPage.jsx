@@ -3,12 +3,14 @@ import {
   CheckCircleOutlined,
   FileAddOutlined,
   FileDoneOutlined,
+  SettingOutlined,
   StopOutlined,
   SyncOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
+  Button,
   Card,
   Col,
   Flex,
@@ -102,6 +104,7 @@ function ProductionOrderDetailPage() {
 
   const summary = data?.summary || {};
   const steps = Array.isArray(data?.steps) ? data.steps : [];
+  const canConfigureSchedule = steps.some((step) => !step.expected_finished_at);
 
   return (
     <div style={{ padding: 20 }}>
@@ -134,10 +137,6 @@ function ProductionOrderDetailPage() {
 
         <Row gutter={20} align="top">
           <Col xs={24} lg={6}>
-            <Card title="Серійний номер" style={{ marginBottom: 20 }}>
-              <Text type="secondary">Дані зʼявляться пізніше</Text>
-            </Card>
-
             <Card title="Графік виробництва" style={{ marginBottom: 20 }}>
               {steps.length > 0 ? (
                 <Flex vertical gap={10}>
@@ -231,6 +230,28 @@ function ProductionOrderDetailPage() {
               ) : (
                 <Text type="secondary">Дані зʼявляться пізніше</Text>
               )}
+              <Flex justify="flex-end" style={{ marginTop: 12 }}>
+                {canConfigureSchedule ? (
+                  <Button
+                    type="link"
+                    icon={<SettingOutlined />}
+                    style={{ padding: 0 }}
+                  >
+                    Налаштувати графік
+                  </Button>
+                ) : (
+                  <Tooltip title="Налаштування графіка вже неможливо">
+                    <Button
+                      type="link"
+                      icon={<SettingOutlined />}
+                      disabled
+                      style={{ padding: 0 }}
+                    >
+                      Налаштувати графік
+                    </Button>
+                  </Tooltip>
+                )}
+              </Flex>
             </Card>
 
             <Card title="Історія замовлення">

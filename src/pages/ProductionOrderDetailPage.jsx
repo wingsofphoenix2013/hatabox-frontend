@@ -389,18 +389,41 @@ function ProductionOrderDetailPage() {
                       key={step.production_order_step}
                       size="small"
                       title={
-                        <Flex align="center" gap={12} wrap>
-                          <span>
-                            Етап {step.source_product_step || '—'}.{' '}
-                            {step.name || '—'}
-                          </span>
-
-                          <Tag
-                            color={getStepStatusTagColor(step.status)}
-                            style={{ marginInlineEnd: 0 }}
+                        <Flex
+                          align="center"
+                          gap={12}
+                          wrap={false}
+                          style={{ width: '100%' }}
+                        >
+                          <Flex
+                            align="center"
+                            gap={12}
+                            wrap
+                            style={{ minWidth: 0 }}
                           >
-                            {step.status_display || step.status || '—'}
-                          </Tag>
+                            <Text
+                              strong
+                              style={{
+                                fontSize: 14,
+                                margin: 0,
+                              }}
+                            >
+                              Етап {step.source_product_step || '—'}.{' '}
+                              {step.name || '—'}
+                            </Text>
+
+                            <Tag
+                              color={getStepStatusTagColor(step.status)}
+                              style={{
+                                marginInlineEnd: 0,
+                                fontSize: 14,
+                              }}
+                            >
+                              {step.status_display || step.status || '—'}
+                            </Tag>
+                          </Flex>
+
+                          <div style={{ marginLeft: 'auto' }} />
 
                           {step.can_start && (
                             <Popconfirm

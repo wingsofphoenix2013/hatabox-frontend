@@ -125,6 +125,7 @@ function ProductionOrderScheduleDrawer({
                       label: 'Дата закінчення етапу',
                       children: canEditDate ? (
                         <DatePicker
+                          inputReadOnly
                           value={
                             scheduleValues[step.production_order_step] || null
                           }

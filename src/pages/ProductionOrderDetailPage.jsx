@@ -349,25 +349,18 @@ function ProductionOrderDetailPage() {
               extra={
                 currentInProgressStep ? (
                   currentInProgressStep.can_finish ? (
-                    <Popconfirm
-                      title="Завершити етап?"
-                      description="Після завершення етап буде закрито. Цю дію неможливо скасувати."
-                      okText="Завершити"
-                      cancelText="Скасувати"
-                      onConfirm={() => setIsFinishStepDrawerOpen(true)}
+                    <Button
+                      icon={
+                        <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                      }
+                      style={{
+                        color: '#52c41a',
+                        borderColor: '#52c41a',
+                      }}
+                      onClick={() => setIsFinishStepDrawerOpen(true)}
                     >
-                      <Button
-                        icon={
-                          <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                        }
-                        style={{
-                          color: '#52c41a',
-                          borderColor: '#52c41a',
-                        }}
-                      >
-                        Завершити етап
-                      </Button>
-                    </Popconfirm>
+                      Завершити етап
+                    </Button>
                   ) : (
                     <Tooltip title="Не виконані всі роботи для завершення етапу">
                       <Button disabled icon={<CheckCircleOutlined />}>

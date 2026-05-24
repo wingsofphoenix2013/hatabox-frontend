@@ -1252,6 +1252,12 @@ function SaleOrdersDetailPage() {
                             </Flex>
                           }
                         />
+                      ) : step.status === 'in_progress' ? (
+                        <Alert
+                          type="success"
+                          showIcon
+                          message="Етап розпочато."
+                        />
                       ) : (
                         <Flex
                           align="center"

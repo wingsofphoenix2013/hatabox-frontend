@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ApiOutlined,
+  AppstoreAddOutlined,
   CheckCircleOutlined,
   FileAddOutlined,
   FileDoneOutlined,
@@ -31,6 +32,7 @@ import { getApiErrorMessage } from '../utils/apiError';
 import { formatDateDisplay } from '../utils/orderFormatters';
 
 import ProductionOrderScheduleDrawer from '../components/ProductionOrderScheduleDrawer';
+import ProductionOrderStepFinishedDrawer from '../components/ProductionOrderStepFinishedDrawer';
 
 const { Title, Text } = Typography;
 
@@ -88,6 +90,8 @@ function ProductionOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [startingStepId, setStartingStepId] = useState(null);
+
+  const [isFinishStepDrawerOpen, setIsFinishStepDrawerOpen] = useState(false);
 
   const [isScheduleDrawerOpen, setIsScheduleDrawerOpen] = useState(false);
 
@@ -339,7 +343,41 @@ function ProductionOrderDetailPage() {
               <Text type="secondary">Дані зʼявляться пізніше</Text>
             </Card>
 
-            <Card title="Поточний етап" style={{ marginBottom: 20 }}>
+            <Card
+              title="Поточний етап"
+              style={{ marginBottom: 20 }}
+              extra={
+                currentInProgressStep ? (
+                  currentInProgressStep.can_finish ? (
+                    <Popconfirm
+                      title="Завершити етап?"
+                      description="Після завершення етап буде закрито. Цю дію неможливо скасувати."
+                      okText="Завершити"
+                      cancelText="Скасувати"
+                      onConfirm={() => setIsFinishStepDrawerOpen(true)}
+                    >
+                      <Button
+                        icon={
+                          <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                        }
+                        style={{
+                          color: '#52c41a',
+                          borderColor: '#52c41a',
+                        }}
+                      >
+                        Завершити етап
+                      </Button>
+                    </Popconfirm>
+                  ) : (
+                    <Tooltip title="Не виконані всі роботи для завершення етапу">
+                      <Button disabled icon={<CheckCircleOutlined />}>
+                        Завершити етап
+                      </Button>
+                    </Tooltip>
+                  )
+                ) : null
+              }
+            >
               {currentInProgressStep ? (
                 <Card
                   size="small"
@@ -479,6 +517,10 @@ function ProductionOrderDetailPage() {
           setData(detailData);
           setIsScheduleDrawerOpen(false);
         }}
+      />
+      <ProductionOrderStepFinishedDrawer
+        open={isFinishStepDrawerOpen}
+        onClose={() => setIsFinishStepDrawerOpen(false)}
       />
     </div>
   );

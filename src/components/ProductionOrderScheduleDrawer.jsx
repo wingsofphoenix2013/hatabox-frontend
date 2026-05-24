@@ -183,9 +183,10 @@ function ProductionOrderScheduleDrawer({
                       label: 'Дата закінчення етапу',
                       children: (
                         <Flex align="center" gap={8}>
-                          {canEditDate ? (
+                          {canEditDate || isOverdueInProgress ? (
                             <DatePicker
                               inputReadOnly
+                              disabled={isOverdueInProgress}
                               value={
                                 scheduleValues[step.production_order_step] ||
                                 null
@@ -193,7 +194,9 @@ function ProductionOrderScheduleDrawer({
                               disabledDate={disabledDate}
                               suffixIcon={
                                 <CalendarOutlined
-                                  style={{ color: '#1677ff' }}
+                                  style={{
+                                    color: canEditDate ? '#1677ff' : '#bfbfbf',
+                                  }}
                                 />
                               }
                               onChange={(value) => {
@@ -212,13 +215,7 @@ function ProductionOrderScheduleDrawer({
                               }}
                             />
                           ) : (
-                            <Tooltip
-                              title={
-                                isOverdueInProgress
-                                  ? 'Дата закінчення простроченого етапу вже не змінюється.'
-                                  : 'Спочатку потрібно вказати дату закінчення попереднього етапу.'
-                              }
-                            >
+                            <Tooltip title="Спочатку потрібно вказати дату закінчення попереднього етапу.">
                               <CalendarOutlined
                                 style={{
                                   color: '#bfbfbf',

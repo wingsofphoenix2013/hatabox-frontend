@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarOutlined } from '@ant-design/icons';
+import { CalendarOutlined, WarningFilled } from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -126,8 +126,12 @@ function ProductionOrderScheduleDrawer({
           const previousStepDate = previousStep
             ? scheduleValues[previousStep.production_order_step]
             : null;
+          const isOverdueInProgress =
+            step.status === 'in_progress' && step.current_is_overdue;
+
           const canEditDate =
             !['draft', 'cancelled'].includes(step.status) &&
+            !isOverdueInProgress &&
             (index === 0 || Boolean(previousStepDate));
 
           const disabledDate = (currentDate) => {
@@ -177,32 +181,68 @@ function ProductionOrderScheduleDrawer({
                     {
                       key: 'expected_finished_at',
                       label: 'Дата закінчення етапу',
-                      children: canEditDate ? (
-                        <DatePicker
-                          inputReadOnly
-                          value={
-                            scheduleValues[step.production_order_step] || null
-                          }
-                          disabledDate={disabledDate}
-                          suffixIcon={
-                            <CalendarOutlined style={{ color: '#1677ff' }} />
-                          }
-                          onChange={(value) => {
-                            setScheduleValues((prev) => ({
-                              ...prev,
-                              [step.production_order_step]: value,
-                            }));
-                          }}
-                        />
-                      ) : (
-                        <Tooltip title="Спочатку потрібно вказати дату закінчення попереднього етапу.">
-                          <CalendarOutlined
-                            style={{
-                              color: '#bfbfbf',
-                              cursor: 'not-allowed',
-                            }}
-                          />
-                        </Tooltip>
+                      children: (
+                        <Flex align="center" gap={8}>
+                          {canEditDate ? (
+                            <DatePicker
+                              inputReadOnly
+                              value={
+                                scheduleValues[step.production_order_step] ||
+                                null
+                              }
+                              disabledDate={disabledDate}
+                              suffixIcon={
+                                <CalendarOutlined
+                                  style={{ color: '#1677ff' }}
+                                />
+                              }
+                              onChange={(value) => {
+                                setScheduleValues((prev) => {
+                                  const next = {
+                                    ...prev,
+                                    [step.production_order_step]: value,
+                                  };
+
+                                  steps.slice(index + 1).forEach((nextStep) => {
+                                    next[nextStep.production_order_step] = null;
+                                  });
+
+                                  return next;
+                                });
+                              }}
+                            />
+                          ) : (
+                            <Tooltip
+                              title={
+                                isOverdueInProgress
+                                  ? 'Дата закінчення простроченого етапу вже не змінюється.'
+                                  : 'Спочатку потрібно вказати дату закінчення попереднього етапу.'
+                              }
+                            >
+                              <CalendarOutlined
+                                style={{
+                                  color: '#bfbfbf',
+                                  cursor: 'not-allowed',
+                                }}
+                              />
+                            </Tooltip>
+                          )}
+
+                          {isOverdueInProgress && (
+                            <Tooltip
+                              title={`Етап просрочено на: ${Math.abs(
+                                Number(step.current_days_left) || 0,
+                              )} днів`}
+                            >
+                              <WarningFilled
+                                style={{
+                                  color: '#ff4d4f',
+                                  fontSize: 16,
+                                }}
+                              />
+                            </Tooltip>
+                          )}
+                        </Flex>
                       ),
                     },
                   ]}

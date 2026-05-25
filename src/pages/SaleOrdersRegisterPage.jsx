@@ -345,7 +345,14 @@ function SaleOrdersRegisterPage() {
         key: 'production_order_serial_number',
         width: 110,
         align: 'center',
-        render: (value) => <Text strong>{value || '—'}</Text>,
+        render: (value) =>
+          value ? (
+            <Text strong>№{value}</Text>
+          ) : (
+            <Tooltip title="Серійний номер призначається на етапі виробництва">
+              <Text strong>—</Text>
+            </Tooltip>
+          ),
       },
       {
         title: 'Статус',

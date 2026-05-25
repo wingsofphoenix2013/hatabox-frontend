@@ -495,7 +495,36 @@ function ProductionOrderDetailPage() {
             </Card>
 
             <Card title="Завершені етапи">
-              <Text type="secondary">Дані зʼявляться пізніше</Text>
+              <Flex vertical gap={16}>
+                {steps
+                  .filter((step) => step.status === 'finished')
+                  .map((step) => (
+                    <Card
+                      key={step.production_order_step}
+                      size="small"
+                      title={
+                        <Flex align="center" gap={12} wrap>
+                          <Text strong style={{ fontSize: 14 }}>
+                            Етап {step.source_product_step || '—'}.{' '}
+                            {step.name || '—'}
+                          </Text>
+
+                          <Tag
+                            color={getStepStatusTagColor(step.status)}
+                            style={{
+                              marginInlineEnd: 0,
+                              fontSize: 12,
+                            }}
+                          >
+                            {step.status_display || step.status || '—'}
+                          </Tag>
+                        </Flex>
+                      }
+                    >
+                      <Text type="secondary">Дані зʼявляться пізніше</Text>
+                    </Card>
+                  ))}
+              </Flex>
             </Card>
           </Col>
         </Row>

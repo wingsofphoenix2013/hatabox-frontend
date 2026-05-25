@@ -55,6 +55,7 @@ const PRODUCTION_STEP_STATUS_LABELS = {
   confirmed: 'Підтверджено',
   in_progress: 'В роботі',
   completed: 'Виконано',
+  finished: 'Завершено',
   cancelled: 'Скасовано',
 };
 
@@ -107,6 +108,7 @@ const getStatusTagColor = (status) => {
     case 'ready':
       return 'cyan';
     case 'completed':
+    case 'finished':
       return 'success';
     case 'cancelled':
       return 'error';
@@ -1257,6 +1259,12 @@ function SaleOrdersDetailPage() {
                           type="success"
                           showIcon
                           message="Етап розпочато."
+                        />
+                      ) : step.status === 'finished' ? (
+                        <Alert
+                          type="success"
+                          showIcon
+                          message="Етап завершено."
                         />
                       ) : (
                         <Flex

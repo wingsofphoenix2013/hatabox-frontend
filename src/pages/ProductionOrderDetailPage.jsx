@@ -514,6 +514,13 @@ function ProductionOrderDetailPage() {
       <ProductionOrderStepFinishedDrawer
         open={isFinishStepDrawerOpen}
         onClose={() => setIsFinishStepDrawerOpen(false)}
+        step={currentInProgressStep}
+        serialNumber={summary.serial_number}
+        isLastStep={
+          steps[steps.length - 1]?.production_order_step ===
+          currentInProgressStep?.production_order_step
+        }
+        onFinished={loadPage}
       />
     </div>
   );

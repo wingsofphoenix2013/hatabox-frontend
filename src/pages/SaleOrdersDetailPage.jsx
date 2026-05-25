@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   CheckCircleFilled,
   CloseCircleFilled,
+  CloseOutlined,
   EditOutlined,
   FileTextOutlined,
   InboxOutlined,
@@ -162,6 +163,12 @@ function SaleOrdersDetailPage() {
   const [editingResponsiblePerson, setEditingResponsiblePerson] =
     useState(null);
   const [savingResponsiblePerson, setSavingResponsiblePerson] = useState(false);
+
+  const [isEditingProduct, setIsEditingProduct] = useState(false);
+  const [productOptions, setProductOptions] = useState([]);
+  const [productOptionsLoading, setProductOptionsLoading] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [savingProduct, setSavingProduct] = useState(false);
 
   const clearProductionReadinessPoll = () => {
     if (productionReadinessPollRef.current) {
@@ -366,6 +373,67 @@ function SaleOrdersDetailPage() {
       message.error(backendMessage || 'Не вдалося оновити відповідального.');
     } finally {
       setSavingResponsiblePerson(false);
+    }
+  };
+
+  const loadProductOptions = async () => {
+    if (!order?.product_family) return;
+
+    try {
+      setProductOptionsLoading(true);
+
+      const response = await api.get(
+        `product-options/?product_family=${order.product_family}`,
+      );
+
+      setProductOptions(Array.isArray(response.data) ? response.data : []);
+    } catch (err) {
+      console.error('Failed to load product options:', err);
+      message.error('Не вдалося завантажити версії виробу.');
+      setProductOptions([]);
+    } finally {
+      setProductOptionsLoading(false);
+    }
+  };
+
+  const handleStartEditProduct = async () => {
+    setEditingProduct(order?.product || null);
+    setIsEditingProduct(true);
+    await loadProductOptions();
+  };
+
+  const handleCancelEditProduct = () => {
+    setEditingProduct(null);
+    setIsEditingProduct(false);
+  };
+
+  const handleSaveProduct = async () => {
+    if (!editingProduct || editingProduct === order?.product) {
+      setIsEditingProduct(false);
+      return;
+    }
+
+    try {
+      setSavingProduct(true);
+
+      await api.post(`sales-orders/${id}/change-product/`, {
+        product: editingProduct,
+      });
+
+      message.success('Версію виробу змінено.');
+
+      setIsEditingProduct(false);
+      await loadOrderPage();
+    } catch (err) {
+      console.error('Failed to change sale order product:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'product',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося змінити версію виробу.');
+    } finally {
+      setSavingProduct(false);
     }
   };
 
@@ -793,10 +861,58 @@ function SaleOrdersDetailPage() {
               <Flex justify="space-between" align="center" gap={12}>
                 <span>Основна інформація</span>
 
-                <Text strong>
-                  {order.product_code || '—'} |{' '}
-                  {order.product_family_name || '—'}
-                </Text>
+                <Flex align="center" gap={8}>
+                  {isEditingProduct ? (
+                    <>
+                      <Select
+                        style={{ width: 320 }}
+                        value={editingProduct}
+                        options={productOptions}
+                        loading={productOptionsLoading}
+                        disabled={savingProduct}
+                        onChange={setEditingProduct}
+                      />
+
+                      <SaveOutlined
+                        style={{
+                          color: savingProduct ? '#bfbfbf' : '#8c8c8c',
+                          fontSize: 16,
+                          cursor: savingProduct ? 'not-allowed' : 'pointer',
+                        }}
+                        onClick={savingProduct ? undefined : handleSaveProduct}
+                      />
+
+                      <CloseOutlined
+                        style={{
+                          color: savingProduct ? '#bfbfbf' : '#8c8c8c',
+                          fontSize: 16,
+                          cursor: savingProduct ? 'not-allowed' : 'pointer',
+                        }}
+                        onClick={
+                          savingProduct ? undefined : handleCancelEditProduct
+                        }
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Text strong>
+                        {order.product_code || '—'} |{' '}
+                        {order.product_family_name || '—'}
+                      </Text>
+
+                      {isDraft && (
+                        <EditOutlined
+                          style={{
+                            color: '#8c8c8c',
+                            fontSize: 16,
+                            cursor: 'pointer',
+                          }}
+                          onClick={handleStartEditProduct}
+                        />
+                      )}
+                    </>
+                  )}
+                </Flex>
               </Flex>
             }
             style={{ marginBottom: 20 }}

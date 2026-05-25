@@ -340,6 +340,14 @@ function SaleOrdersRegisterPage() {
         },
       },
       {
+        title: 'Сер. №',
+        dataIndex: 'production_order_serial_number',
+        key: 'production_order_serial_number',
+        width: 110,
+        align: 'center',
+        render: (value) => <Text strong>{value || '—'}</Text>,
+      },
+      {
         title: 'Статус',
         dataIndex: 'status',
         key: 'status',
@@ -502,7 +510,7 @@ function SaleOrdersRegisterPage() {
             <Divider type="vertical" style={{ height: 28 }} />
 
             <Input
-              placeholder="Пошук по виробу або замовнику"
+              placeholder="Пошук по виробу, замовнику або серійному номеру"
               allowClear
               prefix={<SearchOutlined />}
               style={{ width: 320 }}

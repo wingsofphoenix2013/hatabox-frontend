@@ -44,79 +44,81 @@ function ProductionOrderStepFinishedDrawer({
             step?.name || '—'
           }`}
         >
-          <Descriptions
-            bordered
-            size="small"
-            column={1}
-            items={[
-              {
-                key: 'started_at',
-                label: 'Етап розпочато',
-                children: step?.started_at
-                  ? formatDateDisplay(step.started_at)
-                  : '—',
-              },
-              {
-                key: 'expected_finished_at',
-                label: 'Запланована дата закінчення',
-                children: step?.expected_finished_at
-                  ? formatDateDisplay(step.expected_finished_at)
-                  : '—',
-              },
-              {
-                key: 'finished_at',
-                label: 'Фактична дата закінчення',
-                children: formatDateDisplay(now),
-              },
-              {
-                key: 'plan_execution',
-                label: 'Виконання плану',
-                children: step?.current_is_overdue ? (
-                  <Tooltip
-                    title={`Затримка: ${Math.abs(
-                      Number(step.current_days_left) || 0,
-                    )} днів`}
-                  >
+          <Flex vertical gap={16}>
+            <Descriptions
+              bordered
+              size="small"
+              column={1}
+              items={[
+                {
+                  key: 'started_at',
+                  label: 'Етап розпочато',
+                  children: step?.started_at
+                    ? formatDateDisplay(step.started_at)
+                    : '—',
+                },
+                {
+                  key: 'expected_finished_at',
+                  label: 'Запланована дата закінчення',
+                  children: step?.expected_finished_at
+                    ? formatDateDisplay(step.expected_finished_at)
+                    : '—',
+                },
+                {
+                  key: 'finished_at',
+                  label: 'Фактична дата закінчення',
+                  children: formatDateDisplay(now),
+                },
+                {
+                  key: 'plan_execution',
+                  label: 'Виконання плану',
+                  children: step?.current_is_overdue ? (
+                    <Tooltip
+                      title={`Затримка: ${Math.abs(
+                        Number(step.current_days_left) || 0,
+                      )} днів`}
+                    >
+                      <Flex align="center" gap={6}>
+                        <WarningFilled style={{ color: '#ff4d4f' }} />
+                        <Text strong>Затримка</Text>
+                      </Flex>
+                    </Tooltip>
+                  ) : (
                     <Flex align="center" gap={6}>
-                      <WarningFilled style={{ color: '#ff4d4f' }} />
-                      <Text strong>Затримка</Text>
+                      <CheckCircleFilled style={{ color: '#52c41a' }} />
+                      <Text strong>Без запізнення</Text>
                     </Flex>
-                  </Tooltip>
-                ) : (
-                  <Flex align="center" gap={6}>
-                    <CheckCircleFilled style={{ color: '#52c41a' }} />
-                    <Text strong>Без запізнення</Text>
-                  </Flex>
-                ),
-              },
-            ]}
-          />
+                  ),
+                },
+              ]}
+            />
+
+            <Alert
+              type="success"
+              showIcon
+              message={
+                <Flex vertical gap={4}>
+                  <Text>Етап буде завершено з поточною датою виконання</Text>
+                  <Text>Всі компоненти етапу будуть списані</Text>
+                  {isLastStep && (
+                    <Text>
+                      Виробництво замовлення №{serialNumber || '—'} буде
+                      позначене виконаним
+                    </Text>
+                  )}
+                </Flex>
+              }
+            />
+
+            {step?.current_is_overdue && (
+              <Alert
+                type="warning"
+                showIcon
+                message="З причини завершення етапу з затримкою подальшій графік виконання робіт потрібно сформувати наново!"
+              />
+            )}
+          </Flex>
         </Card>
-
-        <Alert
-          type="success"
-          showIcon
-          message={
-            <Flex vertical gap={4}>
-              <Text>Етап буде завершено з поточною датою виконання</Text>
-              <Text>Всі компоненти етапу будуть списані</Text>
-              {isLastStep && (
-                <Text>
-                  Виробництво замовлення №{serialNumber || '—'} буде позначене
-                  виконаним
-                </Text>
-              )}
-            </Flex>
-          }
-        />
-
-        {step?.current_is_overdue && (
-          <Alert
-            type="warning"
-            showIcon
-            message="З причини завершення етапу з затримкою подальшій графік виконання робіт потрібно сформувати наново!"
-          />
-        )}
 
         <Flex justify="space-between" gap={8}>
           <Button onClick={onClose} disabled={finishing}>

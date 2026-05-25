@@ -377,16 +377,23 @@ function SaleOrdersDetailPage() {
   };
 
   const loadProductOptions = async () => {
-    if (!order?.product_family) return;
+    if (!order?.product_family_id) return;
 
     try {
       setProductOptionsLoading(true);
 
       const response = await api.get(
-        `product-options/?product_family=${order.product_family}`,
+        `product-options/?product_family=${order.product_family_id}`,
       );
 
-      setProductOptions(Array.isArray(response.data) ? response.data : []);
+      setProductOptions(
+        Array.isArray(response.data)
+          ? response.data.map((item) => ({
+              value: item.id,
+              label: `${item.code || '—'} | ${item.product_family_name || '—'}`,
+            }))
+          : [],
+      );
     } catch (err) {
       console.error('Failed to load product options:', err);
       message.error('Не вдалося завантажити версії виробу.');

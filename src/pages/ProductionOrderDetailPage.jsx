@@ -456,7 +456,7 @@ function ProductionOrderDetailPage() {
 
                           <div style={{ marginLeft: 'auto' }} />
 
-                          {step.can_start && (
+                          {step.can_start ? (
                             <Popconfirm
                               title="Розпочати виробництво?"
                               description="Після запуску етап буде передано в роботу. Цю дію неможливо скасувати."
@@ -484,6 +484,29 @@ function ProductionOrderDetailPage() {
                                 Розпочати виробництво
                               </Button>
                             </Popconfirm>
+                          ) : (
+                            <Tooltip
+                              title={
+                                Array.isArray(step.can_start_reasons) &&
+                                step.can_start_reasons.length > 0 ? (
+                                  <Flex vertical gap={4}>
+                                    {step.can_start_reasons.map((reason) => (
+                                      <span key={reason}>{reason}</span>
+                                    ))}
+                                  </Flex>
+                                ) : (
+                                  'Етап поки не можна передати в роботу.'
+                                )
+                              }
+                            >
+                              <Button
+                                size="small"
+                                disabled
+                                icon={<ApiOutlined />}
+                              >
+                                Розпочати виробництво
+                              </Button>
+                            </Tooltip>
                           )}
                         </Flex>
                       }

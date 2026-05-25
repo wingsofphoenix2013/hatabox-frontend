@@ -50,13 +50,11 @@ function ProductionOrderScheduleDrawer({
   const initializeScheduleValues = () => {
     const initialValues = {};
 
-    steps
-      .filter((step) => step.status !== 'finished')
-      .forEach((step) => {
-        initialValues[step.production_order_step] = step.expected_finished_at
-          ? dayjs(step.expected_finished_at)
-          : null;
-      });
+    steps.forEach((step) => {
+      initialValues[step.production_order_step] = step.expected_finished_at
+        ? dayjs(step.expected_finished_at)
+        : null;
+    });
 
     setScheduleValues(initialValues);
   };
@@ -125,10 +123,19 @@ function ProductionOrderScheduleDrawer({
       <Flex vertical gap={16}>
         {steps
           .filter((step) => step.status !== 'finished')
-          .map((step, index) => {
-            const previousStep = steps[index - 1];
+          .map((step) => {
+            const stepIndex = steps.findIndex(
+              (item) =>
+                item.production_order_step === step.production_order_step,
+            );
+            const previousStep = steps[stepIndex - 1];
             const previousStepDate = previousStep
-              ? scheduleValues[previousStep.production_order_step]
+              ? scheduleValues[previousStep.production_order_step] ||
+                (previousStep.finished_at
+                  ? dayjs(previousStep.finished_at)
+                  : previousStep.expected_finished_at
+                    ? dayjs(previousStep.expected_finished_at)
+                    : null)
               : null;
             const isOverdueInProgress =
               step.status === 'in_progress' && step.current_is_overdue;
@@ -136,12 +143,12 @@ function ProductionOrderScheduleDrawer({
             const canEditDate =
               !['draft', 'cancelled'].includes(step.status) &&
               !isOverdueInProgress &&
-              (index === 0 || Boolean(previousStepDate));
+              (stepIndex === 0 || Boolean(previousStepDate));
 
             const disabledDate = (currentDate) => {
               if (!currentDate) return false;
 
-              if (index === 0 && productionStartedAt) {
+              if (stepIndex === 0 && productionStartedAt) {
                 return currentDate.isBefore(dayjs(productionStartedAt), 'day');
               }
 
@@ -213,10 +220,12 @@ function ProductionOrderScheduleDrawer({
                                     };
 
                                     steps
-                                      .slice(index + 1)
+                                      .slice(stepIndex + 1)
                                       .forEach((nextStep) => {
-                                        next[nextStep.production_order_step] =
-                                          null;
+                                        if (nextStep.status !== 'finished') {
+                                          next[nextStep.production_order_step] =
+                                            null;
+                                        }
                                       });
 
                                     return next;

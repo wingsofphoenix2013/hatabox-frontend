@@ -24,7 +24,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
-import { formatDateUa } from '../utils/orderFormatters';
+import { formatDateTimeDisplay, formatDateUa } from '../utils/orderFormatters';
 
 const { Title, Text } = Typography;
 
@@ -306,12 +306,18 @@ function WarehouseProductionMovementRegisterPage() {
           </Tag>
 
           {record.issue_requested ? (
-            <BellFilled
-              style={{
-                color: '#ff4d4f',
-                fontSize: 15,
-              }}
-            />
+            <Tooltip
+              title={`Видачу запрошено: ${formatDateTimeDisplay(
+                record.issue_requested_at,
+              )}`}
+            >
+              <BellFilled
+                style={{
+                  color: '#ff4d4f',
+                  fontSize: 15,
+                }}
+              />
+            </Tooltip>
           ) : null}
         </Flex>
       ),

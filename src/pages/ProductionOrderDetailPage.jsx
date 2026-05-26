@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import {
   ApiOutlined,
   AppstoreAddOutlined,
+  BellOutlined,
+  CheckCircleFilled,
   CheckCircleOutlined,
+  FilePdfOutlined,
   FileAddOutlined,
   FileDoneOutlined,
   SettingOutlined,
@@ -511,7 +514,60 @@ function ProductionOrderDetailPage() {
                         </Flex>
                       }
                     >
-                      <Text type="secondary">Дані зʼявляться пізніше</Text>
+                      <Descriptions
+                        bordered
+                        size="small"
+                        column={2}
+                        items={[
+                          {
+                            key: 'production_movement',
+                            label: 'Накладна на видачу',
+                            children: step.production_movement ? (
+                              <Flex align="center" gap={6}>
+                                <Text strong>№{step.production_movement}</Text>
+
+                                {step.production_movement_invoice_file ? (
+                                  <a
+                                    href={step.production_movement_invoice_file}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    <FilePdfOutlined
+                                      style={{ color: '#1677ff' }}
+                                    />
+                                  </a>
+                                ) : null}
+                              </Flex>
+                            ) : (
+                              '—'
+                            ),
+                          },
+                          {
+                            key: 'components_transferred',
+                            label: 'Компоненти видано',
+                            children: step.components_transferred ? (
+                              <CheckCircleFilled
+                                style={{
+                                  color: '#52c41a',
+                                  fontSize: 17,
+                                }}
+                              />
+                            ) : step.production_movement ? (
+                              <Flex align="center" gap={6}>
+                                <BellOutlined
+                                  style={{
+                                    color: '#1677ff',
+                                    fontSize: 16,
+                                  }}
+                                />
+                                <Text>Запросити видачу</Text>
+                              </Flex>
+                            ) : (
+                              '—'
+                            ),
+                          },
+                        ]}
+                      />
                     </Card>
                   ))}
               </Flex>

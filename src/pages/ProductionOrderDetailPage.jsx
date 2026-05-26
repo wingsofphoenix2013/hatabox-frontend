@@ -554,15 +554,18 @@ function ProductionOrderDetailPage() {
                                 }}
                               />
                             ) : step.production_movement ? (
-                              <Flex align="center" gap={6}>
-                                <BellOutlined
-                                  style={{
-                                    color: '#1677ff',
-                                    fontSize: 16,
-                                  }}
-                                />
-                                <Text>Запросити видачу</Text>
-                              </Flex>
+                              <Button
+                                size="small"
+                                icon={
+                                  <BellOutlined style={{ color: '#1677ff' }} />
+                                }
+                                style={{
+                                  color: '#1677ff',
+                                  borderColor: '#1677ff',
+                                }}
+                              >
+                                Запросити видачу
+                              </Button>
                             ) : (
                               '—'
                             ),

@@ -300,7 +300,7 @@ function WarehouseProductionMovementRegisterPage() {
       key: 'status',
       width: 140,
       render: (value, record) => (
-        <Flex align="center" justify="center" gap={6}>
+        <Flex align="center" gap={6}>
           <Tag color={getStatusTagColor(value)} style={{ marginInlineEnd: 0 }}>
             {STATUS_LABELS[value] || value || '—'}
           </Tag>

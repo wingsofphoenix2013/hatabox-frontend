@@ -167,8 +167,10 @@ function ProtectedLayout() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [pendingIntakeCount, setPendingIntakeCount] = useState(0);
   const [tollingPendingIntakeCount, setTollingPendingIntakeCount] = useState(0);
-  const [productionMovementCreatedCount, setProductionMovementCreatedCount] =
-    useState(0);
+  const [
+    productionMovementIssueRequestedCount,
+    setProductionMovementIssueRequestedCount,
+  ] = useState(0);
 
   const sidebar1TopItems = [
     {
@@ -259,16 +261,19 @@ function ProtectedLayout() {
           api.get('warehouse-production-movements/'),
         ]);
 
+      const issueRequestedCount =
+        productionMovementResponse.data?.results?.filter(
+          (movement) => movement.issue_requested === true,
+        ).length || 0;
+
       setPendingIntakeCount(Number(pendingResponse.data?.count) || 0);
       setTollingPendingIntakeCount(Number(tollingResponse.data?.count) || 0);
-      setProductionMovementCreatedCount(
-        Number(productionMovementResponse.data?.summary?.created_count) || 0,
-      );
+      setProductionMovementIssueRequestedCount(issueRequestedCount);
     } catch (error) {
       console.error('Failed to fetch warehouse intake statuses:', error);
       setPendingIntakeCount(0);
       setTollingPendingIntakeCount(0);
-      setProductionMovementCreatedCount(0);
+      setProductionMovementIssueRequestedCount(0);
     }
   };
 
@@ -362,7 +367,7 @@ function ProtectedLayout() {
   const inventoryTotalBadgeCount =
     pendingIntakeCount +
     tollingPendingIntakeCount +
-    productionMovementCreatedCount;
+    productionMovementIssueRequestedCount;
 
   const inventoryBadgeText =
     inventoryTotalBadgeCount > 9
@@ -483,13 +488,12 @@ function ProtectedLayout() {
     );
   };
 
-  const renderSidebar2Label = (item) => {
-    const showDot =
-      (item.path === '/inventory/pending-intake' && pendingIntakeCount > 0) ||
-      (item.path === '/inventory/tolling-pending-intake' &&
-        tollingPendingIntakeCount > 0) ||
-      (item.path === '/inventory/production-movements' &&
-        productionMovementCreatedCount > 0);
+  const showDot =
+  (item.path === '/inventory/pending-intake' && pendingIntakeCount > 0) ||
+  (item.path === '/inventory/tolling-pending-intake' &&
+    tollingPendingIntakeCount > 0) ||
+  (item.path === '/inventory/production-movements' &&
+    productionMovementIssueRequestedCount > 0);
 
     if (!showDot) {
       return item.label;

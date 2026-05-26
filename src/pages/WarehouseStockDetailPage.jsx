@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import {
   AppstoreAddOutlined,
   InfoCircleOutlined,
+  CheckCircleFilled,
+  CloseCircleFilled,
   InfoCircleFilled,
   WarningFilled,
   SwapOutlined,
@@ -135,7 +137,9 @@ function WarehouseStockDetailPage() {
   const pendingIntakeRows = data.pending_intake_rows || [];
   const incomingRows = data.incoming_rows || [];
   const shortageRows = shortageData?.rows || [];
-  const shortageAllocations = productionReservationRows;
+  const shortageAllocations = productionReservationRows.filter(
+    (row) => row.production_order_step_status !== 'finished',
+  );
   const shortageSummary = shortageData?.summary || {};
   const shouldShowShortageCard = Number(shortageSummary.missing_quantity) > 0;
   const shouldShowAllocationsCard = productionReservationRows.length > 0;
@@ -632,11 +636,14 @@ function WarehouseStockDetailPage() {
             }}
             title={`${record.product_code || '—'} | Етап ${
               record.source_product_step || '—'
-            }. ${record.source_product_step_name || '—'}`}
+            }. ${record.source_product_step_name || '—'} | ${
+              record.production_order_step_status_display || '—'
+            }`}
           >
             {record.product_code || '—'} | Етап{' '}
             {record.source_product_step || '—'}.{' '}
-            {record.source_product_step_name || '—'}
+            {record.source_product_step_name || '—'} |{' '}
+            {record.production_order_step_status_display || '—'}
           </Text>
         </Flex>
       ),
@@ -651,6 +658,28 @@ function WarehouseStockDetailPage() {
           {formatQuantity(record.quantity)} {unitSymbol}
         </Text>
       ),
+    },
+    {
+      title: 'Видано',
+      key: 'reservation_status',
+      width: 90,
+      align: 'center',
+      render: (_, record) =>
+        record.reservation_status === 'transferred' ? (
+          <CheckCircleFilled
+            style={{
+              color: '#52c41a',
+              fontSize: 17,
+            }}
+          />
+        ) : (
+          <CloseCircleFilled
+            style={{
+              color: '#ff4d4f',
+              fontSize: 17,
+            }}
+          />
+        ),
     },
   ];
 
@@ -1182,6 +1211,8 @@ function WarehouseStockDetailPage() {
                       },
                     ]}
                   />
+
+                  <Text strong>Поточне виробництво</Text>
 
                   <Table
                     rowKey={(record) =>

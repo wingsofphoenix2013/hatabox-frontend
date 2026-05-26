@@ -94,6 +94,8 @@ function ProductionOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [startingStepId, setStartingStepId] = useState(null);
+  const [requestingIssueMovementId, setRequestingIssueMovementId] =
+    useState(null);
 
   const [isFinishStepDrawerOpen, setIsFinishStepDrawerOpen] = useState(false);
 
@@ -135,6 +137,31 @@ function ProductionOrderDetailPage() {
       message.error(backendMessage || 'Не вдалося передати етап в роботу.');
     } finally {
       setStartingStepId(null);
+    }
+  };
+
+  const handleRequestProductionMovementIssue = async (movementId) => {
+    if (!movementId) return;
+
+    try {
+      setRequestingIssueMovementId(movementId);
+
+      await api.post(
+        `warehouse-production-movements/${movementId}/request-issue/`,
+        {},
+      );
+
+      message.success('Запит на видачу комплекту відправлено.');
+
+      await loadPage();
+    } catch (err) {
+      console.error('Failed to request production movement issue:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(backendMessage || 'Не вдалося відправити запит на видачу.');
+    } finally {
+      setRequestingIssueMovementId(null);
     }
   };
 
@@ -553,19 +580,48 @@ function ProductionOrderDetailPage() {
                                   fontSize: 17,
                                 }}
                               />
+                            ) : step.production_movement &&
+                              step.components_issue_requested ? (
+                              <Flex align="center" gap={6}>
+                                <CheckCircleOutlined
+                                  style={{
+                                    color: '#52c41a',
+                                    fontSize: 16,
+                                  }}
+                                />
+                                <Text>Запит на видачу відправлено</Text>
+                              </Flex>
                             ) : step.production_movement ? (
-                              <Button
-                                size="small"
-                                icon={
-                                  <BellOutlined style={{ color: '#1677ff' }} />
+                              <Popconfirm
+                                title="Запросити видачу комплекту?"
+                                description="Склад отримає повідомлення про необхідність видати комплект у виробництво."
+                                okText="Запросити"
+                                cancelText="Скасувати"
+                                onConfirm={() =>
+                                  handleRequestProductionMovementIssue(
+                                    step.production_movement,
+                                  )
                                 }
-                                style={{
-                                  color: '#1677ff',
-                                  borderColor: '#1677ff',
-                                }}
                               >
-                                Запросити видачу
-                              </Button>
+                                <Button
+                                  size="small"
+                                  loading={
+                                    requestingIssueMovementId ===
+                                    step.production_movement
+                                  }
+                                  icon={
+                                    <BellOutlined
+                                      style={{ color: '#1677ff' }}
+                                    />
+                                  }
+                                  style={{
+                                    color: '#1677ff',
+                                    borderColor: '#1677ff',
+                                  }}
+                                >
+                                  Запросити видачу
+                                </Button>
+                              </Popconfirm>
                             ) : (
                               '—'
                             ),

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   AppstoreAddOutlined,
+  BellFilled,
   FilePdfOutlined,
   InfoCircleOutlined,
   SearchOutlined,
@@ -298,10 +299,21 @@ function WarehouseProductionMovementRegisterPage() {
       dataIndex: 'status',
       key: 'status',
       width: 140,
-      render: (value) => (
-        <Tag color={getStatusTagColor(value)}>
-          {STATUS_LABELS[value] || value || '—'}
-        </Tag>
+      render: (value, record) => (
+        <Flex align="center" justify="center" gap={6}>
+          <Tag color={getStatusTagColor(value)} style={{ marginInlineEnd: 0 }}>
+            {STATUS_LABELS[value] || value || '—'}
+          </Tag>
+
+          {record.issue_requested ? (
+            <BellFilled
+              style={{
+                color: '#ff4d4f',
+                fontSize: 15,
+              }}
+            />
+          ) : null}
+        </Flex>
       ),
     },
     {

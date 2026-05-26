@@ -488,12 +488,13 @@ function ProtectedLayout() {
     );
   };
 
-  const showDot =
-  (item.path === '/inventory/pending-intake' && pendingIntakeCount > 0) ||
-  (item.path === '/inventory/tolling-pending-intake' &&
-    tollingPendingIntakeCount > 0) ||
-  (item.path === '/inventory/production-movements' &&
-    productionMovementIssueRequestedCount > 0);
+  const renderSidebar2Label = (item) => {
+    const showDot =
+      (item.path === '/inventory/pending-intake' && pendingIntakeCount > 0) ||
+      (item.path === '/inventory/tolling-pending-intake' &&
+        tollingPendingIntakeCount > 0) ||
+      (item.path === '/inventory/production-movements' &&
+        productionMovementIssueRequestedCount > 0);
 
     if (!showDot) {
       return item.label;

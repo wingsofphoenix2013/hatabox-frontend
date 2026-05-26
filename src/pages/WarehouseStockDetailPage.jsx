@@ -52,6 +52,8 @@ function WarehouseStockDetailPage() {
   const [productionReservationRows, setProductionReservationRows] = useState(
     [],
   );
+  const [productionReservationSummary, setProductionReservationSummary] =
+    useState(null);
   const [intakeHistoryRows, setIntakeHistoryRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -71,11 +73,15 @@ function WarehouseStockDetailPage() {
         stockResponse,
         shortageResponse,
         productionReservationsResponse,
+        productionReservationSummaryResponse,
         intakeHistoryResponse,
       ] = await Promise.all([
         api.get(`warehouse-stock-detail/${id}/`),
         api.get(`warehouse-shortage-detail/${id}/`),
         api.get('warehouse-production-reservations/', {
+          params: { inv_item: id },
+        }),
+        api.get('warehouse-production-reservations/summary/', {
           params: { inv_item: id },
         }),
         api.get('inventory-intake-history/', {
@@ -90,6 +96,9 @@ function WarehouseStockDetailPage() {
           ? productionReservationsResponse.data
           : [],
       );
+      setProductionReservationSummary(
+        productionReservationSummaryResponse.data || null,
+      );
       setIntakeHistoryRows(
         Array.isArray(intakeHistoryResponse.data)
           ? intakeHistoryResponse.data
@@ -101,6 +110,7 @@ function WarehouseStockDetailPage() {
       setData(null);
       setShortageData(null);
       setProductionReservationRows([]);
+      setProductionReservationSummary(null);
       setIntakeHistoryRows([]);
     } finally {
       setLoading(false);
@@ -140,6 +150,14 @@ function WarehouseStockDetailPage() {
   const shortageAllocations = productionReservationRows.filter(
     (row) => row.production_order_step_status !== 'finished',
   );
+  const getProductionReservationStepQuantity = (status) => {
+    const item =
+      productionReservationSummary?.by_production_order_step_status?.find(
+        (row) => row.status === status,
+      );
+
+    return item?.quantity || 0;
+  };
   const shortageSummary = shortageData?.summary || {};
   const shouldShowShortageCard = Number(shortageSummary.missing_quantity) > 0;
   const shouldShowAllocationsCard = productionReservationRows.length > 0;
@@ -1168,32 +1186,75 @@ function WarehouseStockDetailPage() {
 
             {shouldShowAllocationsCard && (
               <Card
-                title="Зарезервовано у виробництві"
+                title="Використання у виробництві"
                 style={{ marginBottom: 20 }}
               >
                 <Flex vertical gap={16}>
                   <Descriptions
                     size="small"
-                    column={2}
+                    column={4}
                     bordered
                     items={[
                       {
-                        key: 'reserved_sales_orders_count',
-                        label: 'Замовлень',
+                        key: 'total_quantity',
+                        label: 'Всього',
                         children: (
                           <Text
                             strong
                             style={{ display: 'block', textAlign: 'center' }}
                           >
-                            {Number(
-                              shortageSummary.reserved_sales_orders_count,
-                            ) || 0}
+                            {formatQuantity(
+                              productionReservationSummary?.total_quantity,
+                            )}{' '}
+                            {unitSymbol}
                           </Text>
                         ),
                       },
                       {
-                        key: 'reserved_quantity',
-                        label: 'Зарезервовано',
+                        key: 'confirmed_quantity',
+                        label: 'Підтверджено',
+                        children: (
+                          <Tag
+                            color="processing"
+                            style={{
+                              display: 'block',
+                              width: 'fit-content',
+                              margin: '0 auto',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {formatQuantity(
+                              getProductionReservationStepQuantity('confirmed'),
+                            )}{' '}
+                            {unitSymbol}
+                          </Tag>
+                        ),
+                      },
+                      {
+                        key: 'in_progress_quantity',
+                        label: 'Поточне',
+                        children: (
+                          <Tag
+                            color="purple"
+                            style={{
+                              display: 'block',
+                              width: 'fit-content',
+                              margin: '0 auto',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {formatQuantity(
+                              getProductionReservationStepQuantity(
+                                'in_progress',
+                              ),
+                            )}{' '}
+                            {unitSymbol}
+                          </Tag>
+                        ),
+                      },
+                      {
+                        key: 'finished_quantity',
+                        label: 'Спожито',
                         children: (
                           <Tag
                             color="success"
@@ -1204,7 +1265,9 @@ function WarehouseStockDetailPage() {
                               fontWeight: 600,
                             }}
                           >
-                            {formatQuantity(shortageSummary.reserved_quantity)}{' '}
+                            {formatQuantity(
+                              getProductionReservationStepQuantity('finished'),
+                            )}{' '}
                             {unitSymbol}
                           </Tag>
                         ),

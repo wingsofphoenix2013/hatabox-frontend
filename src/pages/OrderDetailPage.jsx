@@ -813,6 +813,7 @@ function OrderDetailPage() {
               inventory_item_code: item.inventory_item_code,
               inventory_item_name: item.inventory_item_name,
               quantity: item.quantity,
+              reclamation_id: document.id,
               reason_name: document.reason_name,
               status: document.status,
               status_name: document.status_name,
@@ -852,7 +853,17 @@ function OrderDetailPage() {
       key: 'reason_name',
       width: 220,
       align: 'center',
-      render: (value) => value || '—',
+      render: (value, record) => (
+        <Link
+          to={`/orders/${order.id}/reclamation`}
+          state={{
+            orderLabel: `№ ${order.order_no} від ${formatDateUa(order.created_at)}`,
+            reclamationId: record.reclamation_id,
+          }}
+        >
+          {value || '—'}
+        </Link>
+      ),
     },
     {
       title: 'Статус',

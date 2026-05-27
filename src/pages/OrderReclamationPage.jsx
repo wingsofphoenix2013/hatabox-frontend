@@ -267,35 +267,45 @@ function OrderReclamationPage() {
 
   return (
     <div style={{ padding: 20 }}>
-      <Title level={2} style={{ marginTop: 0, marginBottom: 20 }}>
-        {`Повернення №${reclamation.return_no || '—'} від ${formatDateUa(
-          reclamation.return_date,
-        )}`}{' '}
-        <Tag
-          color={
-            reclamation.status === 'draft'
-              ? undefined
-              : getStatusTagColor(reclamation.status)
-          }
-          style={{
-            fontSize: 20,
-            lineHeight: '32px',
-            paddingInline: 14,
-            paddingBlock: 6,
-            borderRadius: 10,
-            marginInlineEnd: 0,
-            ...(reclamation.status === 'draft'
-              ? {
-                  border: '1px solid #d9d9d9',
-                  background: '#fafafa',
-                  color: '#595959',
-                }
-              : {}),
-          }}
-        >
-          {reclamation.status_name || '—'}
-        </Tag>
-      </Title>
+      <Flex
+        justify="space-between"
+        align="flex-start"
+        gap={16}
+        style={{ marginBottom: 20 }}
+      >
+        <Flex align="center" gap={12} wrap>
+          <Title level={2} style={{ margin: 0 }}>
+            {`Повернення №${reclamation.return_no || '—'} від ${formatDateUa(
+              reclamation.return_date,
+            )}`}
+          </Title>
+
+          <Tag
+            color={
+              reclamation.status === 'draft'
+                ? undefined
+                : getStatusTagColor(reclamation.status)
+            }
+            style={{
+              fontSize: 20,
+              lineHeight: '32px',
+              paddingInline: 14,
+              paddingBlock: 6,
+              borderRadius: 10,
+              marginInlineEnd: 0,
+              ...(reclamation.status === 'draft'
+                ? {
+                    border: '1px solid #d9d9d9',
+                    background: '#fafafa',
+                    color: '#595959',
+                  }
+                : {}),
+            }}
+          >
+            {reclamation.status_name || '—'}
+          </Tag>
+        </Flex>
+      </Flex>
 
       <Row gutter={20} align="top">
         <Col xs={24} lg={6}>

@@ -14,10 +14,12 @@ import {
   Divider,
   Empty,
   Image,
+  Popconfirm,
   Row,
   Skeleton,
   Tag,
   Typography,
+  message,
 } from 'antd';
 import { getStatusTagColor } from '../constants/orderStatus';
 import { useLocation } from 'react-router-dom';
@@ -35,6 +37,7 @@ function OrderReclamationPage() {
   const [loading, setLoading] = useState(Boolean(reclamationId));
   const [error, setError] = useState('');
   const [isPhotoDrawerOpen, setIsPhotoDrawerOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const loadReclamation = async () => {
     if (!reclamationId) {
@@ -65,6 +68,27 @@ function OrderReclamationPage() {
     loadReclamation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reclamationId]);
+
+  const handleCancelReclamation = async () => {
+    if (!reclamation?.id) {
+      message.error('Документ повернення не знайдено.');
+      return;
+    }
+
+    try {
+      setCancelling(true);
+
+      await api.post(`reclamation-return-documents/${reclamation.id}/cancel/`);
+
+      message.success('Повернення скасовано.');
+      await loadReclamation();
+    } catch (err) {
+      console.error('Failed to cancel reclamation return:', err);
+      message.error('Не вдалося скасувати повернення.');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -144,9 +168,23 @@ function OrderReclamationPage() {
                 <>
                   <Divider dashed style={{ margin: '12px 0' }} />
 
-                  <Button block danger icon={<StopOutlined />}>
-                    Відміна повернення
-                  </Button>
+                  <Popconfirm
+                    title="Увага!"
+                    description="Ця операція незворотна! Ви впевнені?"
+                    okText="Так"
+                    cancelText="Ні"
+                    onConfirm={handleCancelReclamation}
+                    disabled={cancelling}
+                  >
+                    <Button
+                      block
+                      danger
+                      icon={<StopOutlined />}
+                      loading={cancelling}
+                    >
+                      Відміна повернення
+                    </Button>
+                  </Popconfirm>
                 </>
               )}
             </>

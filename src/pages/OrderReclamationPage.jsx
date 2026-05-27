@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Card, Col, Row, Skeleton, Tag, Typography } from 'antd';
+import { getStatusTagColor } from '../constants/orderStatus';
 import { useLocation } from 'react-router-dom';
 import api from '../api/client';
 import { formatDateUa } from '../utils/orderFormatters';
@@ -78,7 +79,16 @@ function OrderReclamationPage() {
         {`Повернення №${reclamation.return_no || '—'} від ${formatDateUa(
           reclamation.return_date,
         )}`}{' '}
-        <Tag style={{ fontSize: 16, lineHeight: '24px' }}>
+        <Tag
+          color={getStatusTagColor(reclamation.status)}
+          style={{
+            fontSize: 16,
+            lineHeight: '24px',
+            paddingInline: 12,
+            borderRadius: 8,
+            marginInlineEnd: 0,
+          }}
+        >
           {reclamation.status_name || '—'}
         </Tag>
       </Title>

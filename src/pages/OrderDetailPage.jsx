@@ -12,6 +12,7 @@ import {
   StopOutlined,
   UploadOutlined,
   WarningOutlined,
+  WarningFilled,
   CheckCircleFilled,
   CloseCircleFilled,
   AppstoreAddOutlined,
@@ -138,6 +139,7 @@ function OrderDetailPage() {
   const hasOrderItems = Array.isArray(order?.items) && order.items.length > 0;
   const hasReceiptDocuments =
     Array.isArray(receiptDocuments) && receiptDocuments.length > 0;
+  const hasReclamation = Boolean(order?.has_reclamation);
   const canSendToWork = isDraft && hasOrderItems;
 
   const selectedPaymentDocument = useMemo(() => {
@@ -616,6 +618,19 @@ function OrderDetailPage() {
     }
   };
 
+  const getReclamationStatusTagColor = (status) => {
+    switch (status) {
+      case 'draft':
+        return 'default';
+      case 'completed':
+        return 'success';
+      case 'cancelled':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
   const summaryColumns = [
     {
       title: 'Статус',
@@ -652,7 +667,7 @@ function OrderDetailPage() {
       dataIndex: 'receipt_percent',
       key: 'receipt_percent',
       align: 'center',
-      width: '36%',
+      width: hasReclamation ? '28%' : '36%',
       render: (value, record) => {
         const percent = Number(value) || 0;
         const isOverdue = Boolean(record.is_receipt_overdue);
@@ -718,6 +733,19 @@ function OrderDetailPage() {
         );
       },
     },
+    ...(hasReclamation
+      ? [
+          {
+            title: <span style={{ color: '#ff4d4f' }}>Рекламація</span>,
+            key: 'reclamation',
+            align: 'center',
+            width: '16%',
+            render: () => (
+              <WarningFilled style={{ color: '#ff4d4f', fontSize: 16 }} />
+            ),
+          },
+        ]
+      : []),
   ];
 
   const paymentColumns = [
@@ -773,6 +801,70 @@ function OrderDetailPage() {
       width: 140,
       align: 'center',
       render: (value) => formatMoney(value),
+    },
+  ];
+
+  const reclamationRows = Array.isArray(order?.reclamation_returns)
+    ? order.reclamation_returns.flatMap((document) =>
+        Array.isArray(document.items)
+          ? document.items.map((item, index) => ({
+              key: `${document.id}-${index}`,
+              return_date: document.return_date,
+              inventory_item_code: item.inventory_item_code,
+              inventory_item_name: item.inventory_item_name,
+              quantity: item.quantity,
+              reason_name: document.reason_name,
+              status: document.status,
+              status_name: document.status_name,
+            }))
+          : [],
+      )
+    : [];
+
+  const reclamationColumns = [
+    {
+      title: 'Дата',
+      dataIndex: 'return_date',
+      key: 'return_date',
+      width: 130,
+      align: 'center',
+      render: (value) => formatDateDisplay(value),
+    },
+    {
+      title: 'Товар',
+      key: 'item',
+      render: (_, record) =>
+        `${record.inventory_item_code || '—'} — ${
+          record.inventory_item_name || '—'
+        }`,
+    },
+    {
+      title: 'К-сть',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (value) => formatQuantity(value),
+    },
+    {
+      title: 'Причина',
+      dataIndex: 'reason_name',
+      key: 'reason_name',
+      width: 220,
+      align: 'center',
+      render: (value) => value || '—',
+    },
+    {
+      title: 'Статус',
+      dataIndex: 'status_name',
+      key: 'status_name',
+      width: 140,
+      align: 'center',
+      render: (value, record) => (
+        <Tag color={getReclamationStatusTagColor(record.status)}>
+          {value || '—'}
+        </Tag>
+      ),
     },
   ];
 
@@ -1504,6 +1596,19 @@ function OrderDetailPage() {
               tableLayout="fixed"
             />
           </Card>
+
+          {hasReclamation && (
+            <Card title="Рекламація" style={{ marginBottom: 20 }}>
+              <Table
+                rowKey="key"
+                columns={reclamationColumns}
+                dataSource={reclamationRows}
+                pagination={false}
+                size="small"
+                tableLayout="fixed"
+              />
+            </Card>
+          )}
 
           {!isDraft && hasReceiptDocuments && (
             <Card title="Отримання" style={{ marginBottom: 20 }}>

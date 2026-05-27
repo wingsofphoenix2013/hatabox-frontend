@@ -1,5 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Alert, Card, Col, Row, Skeleton, Tag, Typography } from 'antd';
+import {
+  CheckCircleOutlined,
+  FileImageOutlined,
+  StopOutlined,
+} from '@ant-design/icons';
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Divider,
+  Row,
+  Skeleton,
+  Tag,
+  Typography,
+} from 'antd';
 import { getStatusTagColor } from '../constants/orderStatus';
 import { useLocation } from 'react-router-dom';
 import api from '../api/client';
@@ -96,7 +111,34 @@ function OrderReclamationPage() {
       <Row gutter={20} align="top">
         <Col xs={24} lg={6}>
           <Card title="Навігація" style={{ marginBottom: 20 }}>
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            <>
+              {reclamation.status !== 'completed' && (
+                <>
+                  <Button block type="primary" icon={<CheckCircleOutlined />}>
+                    Повернення виконане
+                  </Button>
+
+                  <Divider dashed style={{ margin: '12px 0' }} />
+                </>
+              )}
+
+              <Button
+                block
+                icon={<FileImageOutlined style={{ color: '#1677ff' }} />}
+              >
+                Фотофіксація
+              </Button>
+
+              {reclamation.status !== 'completed' && (
+                <>
+                  <Divider dashed style={{ margin: '12px 0' }} />
+
+                  <Button block danger icon={<StopOutlined />}>
+                    Відміна повернення
+                  </Button>
+                </>
+              )}
+            </>
           </Card>
         </Col>
 

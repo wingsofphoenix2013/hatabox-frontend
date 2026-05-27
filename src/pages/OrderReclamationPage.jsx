@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   CheckCircleOutlined,
   DeleteOutlined,
+  EditOutlined,
   FileImageOutlined,
   PlayCircleOutlined,
   StopOutlined,
@@ -11,6 +12,7 @@ import OrderReclamationPhotoDrawer from '../components/OrderReclamationPhotoDraw
 import {
   Alert,
   Button,
+  Input,
   Card,
   Col,
   Divider,
@@ -42,6 +44,9 @@ function OrderReclamationPage() {
   const [isPhotoDrawerOpen, setIsPhotoDrawerOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState(null);
+  const [isEditingComment, setIsEditingComment] = useState(false);
+  const [editingComment, setEditingComment] = useState('');
+  const [savingComment, setSavingComment] = useState(false);
 
   const loadReclamation = async () => {
     if (!reclamationId) {
@@ -72,6 +77,43 @@ function OrderReclamationPage() {
     loadReclamation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reclamationId]);
+
+  const handleStartEditComment = () => {
+    setEditingComment(reclamation?.comment || '');
+    setIsEditingComment(true);
+  };
+
+  const handleCancelEditComment = () => {
+    setIsEditingComment(false);
+    setEditingComment('');
+  };
+
+  const handleSaveComment = async () => {
+    if (!reclamation?.id) {
+      message.error('Документ повернення не знайдено.');
+      return;
+    }
+
+    try {
+      setSavingComment(true);
+
+      const response = await api.patch(
+        `reclamation-return-documents/${reclamation.id}/`,
+        {
+          comment: editingComment || '',
+        },
+      );
+
+      setReclamation(response.data);
+      message.success('Коментар збережено.');
+      setIsEditingComment(false);
+    } catch (err) {
+      console.error('Failed to update reclamation comment:', err);
+      message.error('Не вдалося зберегти коментар.');
+    } finally {
+      setSavingComment(false);
+    }
+  };
 
   const handleDeletePhotoFixationItem = async (itemId) => {
     try {
@@ -225,7 +267,60 @@ function OrderReclamationPage() {
 
         <Col xs={24} lg={18}>
           <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            <Alert
+              type="warning"
+              showIcon
+              message={
+                <Flex vertical gap={12}>
+                  <Flex justify="space-between" align="center">
+                    <Text strong>Коментар до повернення</Text>
+
+                    {!isEditingComment && (
+                      <EditOutlined
+                        style={{
+                          color: '#8c8c8c',
+                          cursor: 'pointer',
+                          fontSize: 16,
+                        }}
+                        onClick={handleStartEditComment}
+                      />
+                    )}
+                  </Flex>
+
+                  {!isEditingComment ? (
+                    <Text style={{ whiteSpace: 'pre-wrap' }}>
+                      {reclamation.comment
+                        ? reclamation.comment
+                        : 'Додати коментар'}
+                    </Text>
+                  ) : (
+                    <Flex vertical gap={8}>
+                      <Input.TextArea
+                        value={editingComment}
+                        onChange={(e) => setEditingComment(e.target.value)}
+                        rows={3}
+                        autoFocus
+                      />
+
+                      <Flex gap={8}>
+                        <Button
+                          type="primary"
+                          size="small"
+                          loading={savingComment}
+                          onClick={handleSaveComment}
+                        >
+                          Зберегти
+                        </Button>
+
+                        <Button size="small" onClick={handleCancelEditComment}>
+                          Скасувати
+                        </Button>
+                      </Flex>
+                    </Flex>
+                  )}
+                </Flex>
+              }
+            />
           </Card>
 
           <Card title="Рекламація" style={{ marginBottom: 20 }}>

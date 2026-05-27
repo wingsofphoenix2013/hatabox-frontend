@@ -1244,7 +1244,7 @@ function OrderDetailPage() {
             )}
           </Card>
 
-          {order?.status !== 'completed' && (
+          {(isDraft || isInProgress || isCompleted) && (
             <Card title="Навігація" style={{ marginBottom: 20 }}>
               <Flex vertical gap={8}>
                 {isDraft && (
@@ -1302,17 +1302,25 @@ function OrderDetailPage() {
 
                 <Divider style={{ margin: '4px 0 8px 0' }} />
 
-                <Popconfirm
-                  title="Увага!"
-                  description="Ця операція незворотна! Ви впевнені?"
-                  okText="Так"
-                  cancelText="Ні"
-                  onConfirm={() => {}}
-                >
-                  <Button block danger icon={<StopOutlined />}>
-                    Відміна замовлення
+                {(isInProgress || isCompleted) && (
+                  <Button block danger icon={<WarningOutlined />}>
+                    Рекламація
                   </Button>
-                </Popconfirm>
+                )}
+
+                {!isCompleted && (
+                  <Popconfirm
+                    title="Увага!"
+                    description="Ця операція незворотна! Ви впевнені?"
+                    okText="Так"
+                    cancelText="Ні"
+                    onConfirm={() => {}}
+                  >
+                    <Button block danger icon={<StopOutlined />}>
+                      Відміна замовлення
+                    </Button>
+                  </Popconfirm>
+                )}
               </Flex>
             </Card>
           )}

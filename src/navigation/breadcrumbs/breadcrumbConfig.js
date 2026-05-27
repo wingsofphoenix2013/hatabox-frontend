@@ -275,6 +275,7 @@ export const breadcrumbConfig = [
         makeLinkItem(
           `/orders/${orderId}`,
           orderLabel || `Замовлення ID ${orderId}`,
+          { orderLabel },
         ),
         makeTextItem('Повернення товару'),
       ];

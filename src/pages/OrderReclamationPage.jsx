@@ -4,6 +4,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   FileImageOutlined,
+  InfoCircleOutlined,
   PlayCircleOutlined,
   StopOutlined,
 } from '@ant-design/icons';
@@ -21,6 +22,7 @@ import {
   Popconfirm,
   Row,
   Skeleton,
+  Table,
   Tag,
   Typography,
   message,
@@ -29,6 +31,7 @@ import { getStatusTagColor } from '../constants/orderStatus';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { formatDateUa } from '../utils/orderFormatters';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
@@ -172,6 +175,82 @@ function OrderReclamationPage() {
   const photoFixationItems = Array.isArray(reclamation?.library?.items)
     ? reclamation.library.items
     : [];
+
+  const reclamationItems = Array.isArray(reclamation?.items)
+    ? reclamation.items
+    : [];
+
+  const reclamationColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 70,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Товар',
+      key: 'item',
+      render: (_, record) => (
+        <Flex vertical gap={2}>
+          <Text strong>{record.vendor_item_name || '—'}</Text>
+
+          <Flex align="center" gap={6} wrap={false}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {record.inventory_item_name || '—'}
+            </Text>
+
+            {record.inventory_item_id && (
+              <InfoCircleOutlined
+                style={{
+                  color: '#1677ff',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+                onClick={() =>
+                  window.open(
+                    `/inventory/stock/${record.inventory_item_id}`,
+                    '_blank',
+                  )
+                }
+              />
+            )}
+          </Flex>
+        </Flex>
+      ),
+    },
+    {
+      title: 'Знаходження',
+      key: 'source',
+      render: (_, record) => {
+        const hasStoragePlace = Boolean(record.source_storage_place);
+
+        return (
+          <Flex vertical gap={2}>
+            <Text strong>
+              {hasStoragePlace
+                ? record.source_storage_place_display_name || '—'
+                : record.source_location_code || '—'}
+            </Text>
+
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {hasStoragePlace
+                ? record.source_storage_place_full_display || '—'
+                : record.source_location_name || '—'}
+            </Text>
+          </Flex>
+        );
+      },
+    },
+    {
+      title: 'К-сть.',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (value) => formatQuantity(value),
+    },
+  ];
 
   if (!reclamation) {
     return (
@@ -324,7 +403,15 @@ function OrderReclamationPage() {
           </Card>
 
           <Card title="Рекламація" style={{ marginBottom: 20 }}>
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            <Table
+              rowKey={(record, index) =>
+                `${record.order_item_id}-${record.inventory_item_id}-${index}`
+              }
+              columns={reclamationColumns}
+              dataSource={reclamationItems}
+              pagination={false}
+              size="small"
+            />
           </Card>
 
           <Card title="Фотофіксація">

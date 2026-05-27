@@ -220,7 +220,7 @@ function OrderReclamationPage() {
           <Text strong>
             {record.vendor_item_name || '—'}
 
-            {record.reason_name ? ` | ${record.reason_name}` : ''}
+            {reclamation.reason_name ? ` | ${reclamation.reason_name}` : ''}
           </Text>
 
           <Flex align="center" gap={6} wrap={false}>
@@ -337,63 +337,63 @@ function OrderReclamationPage() {
       <Row gutter={20} align="top">
         <Col xs={24} lg={6}>
           <Card title="Навігація" style={{ marginBottom: 20 }}>
-            <>
-              {reclamation.status !== 'completed' && (
-                <>
-                  <Popconfirm
-                    title="Увага!"
-                    description="Після виконання повернення товар буде списано зі складу. Ви впевнені?"
-                    okText="Так"
-                    cancelText="Ні"
-                    onConfirm={handleExecuteReclamation}
-                    disabled={executing}
+            {reclamation.status === 'completed' ? (
+              <Alert
+                type="info"
+                showIcon
+                message="Дії з завершеними поверненнями недоступні."
+              />
+            ) : (
+              <>
+                <Popconfirm
+                  title="Увага!"
+                  description="Після виконання повернення товар буде списано зі складу. Ви впевнені?"
+                  okText="Так"
+                  cancelText="Ні"
+                  onConfirm={handleExecuteReclamation}
+                  disabled={executing}
+                >
+                  <Button
+                    block
+                    type="primary"
+                    icon={<CheckCircleOutlined />}
+                    loading={executing}
                   >
-                    <Button
-                      block
-                      type="primary"
-                      icon={<CheckCircleOutlined />}
-                      loading={executing}
-                    >
-                      Виконати повернення
-                    </Button>
-                  </Popconfirm>
+                    Виконати повернення
+                  </Button>
+                </Popconfirm>
 
-                  <Divider dashed style={{ margin: '12px 0' }} />
-                </>
-              )}
+                <Divider dashed style={{ margin: '12px 0' }} />
 
-              <Button
-                block
-                icon={<FileImageOutlined style={{ color: '#1677ff' }} />}
-                onClick={() => setIsPhotoDrawerOpen(true)}
-              >
-                Фотофіксація
-              </Button>
+                <Button
+                  block
+                  icon={<FileImageOutlined style={{ color: '#1677ff' }} />}
+                  onClick={() => setIsPhotoDrawerOpen(true)}
+                >
+                  Фотофіксація
+                </Button>
 
-              {reclamation.status !== 'completed' && (
-                <>
-                  <Divider dashed style={{ margin: '12px 0' }} />
+                <Divider dashed style={{ margin: '12px 0' }} />
 
-                  <Popconfirm
-                    title="Увага!"
-                    description="Ця операція незворотна! Ви впевнені?"
-                    okText="Так"
-                    cancelText="Ні"
-                    onConfirm={handleCancelReclamation}
-                    disabled={cancelling}
+                <Popconfirm
+                  title="Увага!"
+                  description="Ця операція незворотна! Ви впевнені?"
+                  okText="Так"
+                  cancelText="Ні"
+                  onConfirm={handleCancelReclamation}
+                  disabled={cancelling}
+                >
+                  <Button
+                    block
+                    danger
+                    icon={<StopOutlined />}
+                    loading={cancelling}
                   >
-                    <Button
-                      block
-                      danger
-                      icon={<StopOutlined />}
-                      loading={cancelling}
-                    >
-                      Відміна повернення
-                    </Button>
-                  </Popconfirm>
-                </>
-              )}
-            </>
+                    Відміна повернення
+                  </Button>
+                </Popconfirm>
+              </>
+            )}
           </Card>
         </Col>
 

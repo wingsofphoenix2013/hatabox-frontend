@@ -46,6 +46,7 @@ function OrderReclamationPage() {
   const [loading, setLoading] = useState(Boolean(reclamationId));
   const [error, setError] = useState('');
   const [isPhotoDrawerOpen, setIsPhotoDrawerOpen] = useState(false);
+  const [executing, setExecuting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState(null);
   const [isEditingComment, setIsEditingComment] = useState(false);
@@ -135,6 +136,28 @@ function OrderReclamationPage() {
     }
   };
 
+  const handleExecuteReclamation = async () => {
+    if (!reclamation?.id) {
+      message.error('Документ повернення не знайдено.');
+      return;
+    }
+
+    try {
+      setExecuting(true);
+
+      await api.post(`reclamation-return-documents/${reclamation.id}/execute/`);
+
+      message.success('Повернення виконано.');
+
+      navigate(`/orders/${reclamation.order}`);
+    } catch (err) {
+      console.error('Failed to execute reclamation return:', err);
+      message.error('Не вдалося виконати повернення.');
+    } finally {
+      setExecuting(false);
+    }
+  };
+
   const handleCancelReclamation = async () => {
     if (!reclamation?.id) {
       message.error('Документ повернення не знайдено.');
@@ -194,7 +217,11 @@ function OrderReclamationPage() {
       key: 'item',
       render: (_, record) => (
         <Flex vertical gap={2}>
-          <Text strong>{record.vendor_item_name || '—'}</Text>
+          <Text strong>
+            {record.vendor_item_name || '—'}
+
+            {record.reason_name ? ` | ${record.reason_name}` : ''}
+          </Text>
 
           <Flex align="center" gap={6} wrap={false}>
             <Text type="secondary" style={{ fontSize: 12 }}>
@@ -313,9 +340,23 @@ function OrderReclamationPage() {
             <>
               {reclamation.status !== 'completed' && (
                 <>
-                  <Button block type="primary" icon={<CheckCircleOutlined />}>
-                    Повернення виконане
-                  </Button>
+                  <Popconfirm
+                    title="Увага!"
+                    description="Після виконання повернення товар буде списано зі складу. Ви впевнені?"
+                    okText="Так"
+                    cancelText="Ні"
+                    onConfirm={handleExecuteReclamation}
+                    disabled={executing}
+                  >
+                    <Button
+                      block
+                      type="primary"
+                      icon={<CheckCircleOutlined />}
+                      loading={executing}
+                    >
+                      Виконати повернення
+                    </Button>
+                  </Popconfirm>
 
                   <Divider dashed style={{ margin: '12px 0' }} />
                 </>

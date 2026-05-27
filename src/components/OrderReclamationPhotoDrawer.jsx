@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Button, Card, Drawer, Flex, Upload, message } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
+
+const { Dragger } = Upload;
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
 
@@ -98,15 +100,23 @@ function OrderReclamationPhotoDrawer({ open, onClose, reclamation, onSaved }) {
     >
       <Flex vertical gap={16}>
         <Card title="Додати фотографії або відео">
-          <Upload
+          <Dragger
             multiple
             beforeUpload={() => false}
             fileList={fileList}
             onChange={({ fileList: nextFileList }) => setFileList(nextFileList)}
             accept="image/*,video/*"
           >
-            <Button icon={<UploadOutlined />}>Додати файл</Button>
-          </Upload>
+            <p className="ant-upload-drag-icon">
+              <UploadOutlined />
+            </p>
+            <p className="ant-upload-text">
+              Перетягніть файли сюди або натисніть для вибору
+            </p>
+            <p className="ant-upload-hint">
+              Можна додати фотографії або відео.
+            </p>
+          </Dragger>
         </Card>
 
         <Flex justify="space-between" gap={8}>

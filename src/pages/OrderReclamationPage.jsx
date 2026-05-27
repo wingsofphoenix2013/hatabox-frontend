@@ -231,8 +231,8 @@ function OrderReclamationPage() {
                     <div
                       style={{
                         position: 'relative',
-                        width: 72,
-                        height: 72,
+                        width: 96,
+                        height: 96,
                       }}
                     >
                       {item.attachment_type === 'video' ? (

@@ -4,12 +4,16 @@ import {
   FileImageOutlined,
   StopOutlined,
 } from '@ant-design/icons';
+
+import OrderReclamationPhotoDrawer from '../components/OrderReclamationPhotoDrawer';
 import {
   Alert,
   Button,
   Card,
   Col,
   Divider,
+  Empty,
+  Image,
   Row,
   Skeleton,
   Tag,
@@ -30,34 +34,36 @@ function OrderReclamationPage() {
   const [reclamation, setReclamation] = useState(null);
   const [loading, setLoading] = useState(Boolean(reclamationId));
   const [error, setError] = useState('');
+  const [isPhotoDrawerOpen, setIsPhotoDrawerOpen] = useState(false);
+
+  const loadReclamation = async () => {
+    if (!reclamationId) {
+      setError('Не передано ID документа повернення.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await api.get(
+        `reclamation-return-documents/${reclamationId}/`,
+      );
+
+      setReclamation(response.data);
+    } catch (err) {
+      console.error('Failed to load reclamation return document:', err);
+      setError('Не вдалося завантажити документ повернення.');
+      setReclamation(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadReclamation = async () => {
-      if (!reclamationId) {
-        setError('Не передано ID документа повернення.');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError('');
-
-        const response = await api.get(
-          `reclamation-return-documents/${reclamationId}/`,
-        );
-
-        setReclamation(response.data);
-      } catch (err) {
-        console.error('Failed to load reclamation return document:', err);
-        setError('Не вдалося завантажити документ повернення.');
-        setReclamation(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadReclamation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reclamationId]);
 
   if (loading) {
@@ -75,6 +81,10 @@ function OrderReclamationPage() {
       </div>
     );
   }
+
+  const photoFixationItems = Array.isArray(reclamation?.library?.items)
+    ? reclamation.library.items
+    : [];
 
   if (!reclamation) {
     return (
@@ -125,6 +135,7 @@ function OrderReclamationPage() {
               <Button
                 block
                 icon={<FileImageOutlined style={{ color: '#1677ff' }} />}
+                onClick={() => setIsPhotoDrawerOpen(true)}
               >
                 Фотофіксація
               </Button>
@@ -152,10 +163,47 @@ function OrderReclamationPage() {
           </Card>
 
           <Card title="Фотофіксація">
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            {photoFixationItems.length === 0 ? (
+              <Empty description="Фото або відео ще не додано." />
+            ) : (
+              <Row gutter={[12, 12]}>
+                {photoFixationItems.map((item) => (
+                  <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
+                    {item.attachment_type === 'video' ? (
+                      <video
+                        src={item.file}
+                        controls
+                        style={{
+                          width: '100%',
+                          borderRadius: 8,
+                          background: '#000',
+                        }}
+                      />
+                    ) : (
+                      <Image
+                        src={item.file}
+                        alt={item.attachment_type_name || 'Фотофіксація'}
+                        style={{
+                          width: '100%',
+                          borderRadius: 8,
+                          objectFit: 'cover',
+                        }}
+                      />
+                    )}
+                  </Col>
+                ))}
+              </Row>
+            )}
           </Card>
         </Col>
       </Row>
+
+      <OrderReclamationPhotoDrawer
+        open={isPhotoDrawerOpen}
+        onClose={() => setIsPhotoDrawerOpen(false)}
+        reclamation={reclamation}
+        onSaved={loadReclamation}
+      />
     </div>
   );
 }

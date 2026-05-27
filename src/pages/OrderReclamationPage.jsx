@@ -22,7 +22,7 @@ import {
   message,
 } from 'antd';
 import { getStatusTagColor } from '../constants/orderStatus';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import { formatDateUa } from '../utils/orderFormatters';
 
@@ -30,6 +30,7 @@ const { Title, Text } = Typography;
 
 function OrderReclamationPage() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const reclamationId = location.state?.reclamationId || null;
 
@@ -81,7 +82,8 @@ function OrderReclamationPage() {
       await api.post(`reclamation-return-documents/${reclamation.id}/cancel/`);
 
       message.success('Повернення скасовано.');
-      await loadReclamation();
+
+      navigate(`/orders/${reclamation.order}`);
     } catch (err) {
       console.error('Failed to cancel reclamation return:', err);
       message.error('Не вдалося скасувати повернення.');

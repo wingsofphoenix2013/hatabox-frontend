@@ -139,7 +139,10 @@ function OrderDetailPage() {
   const hasOrderItems = Array.isArray(order?.items) && order.items.length > 0;
   const hasReceiptDocuments =
     Array.isArray(receiptDocuments) && receiptDocuments.length > 0;
-  const hasReclamation = Boolean(order?.has_reclamation);
+  const activeReclamationReturns = Array.isArray(order?.reclamation_returns)
+    ? order.reclamation_returns.filter((item) => item.status !== 'cancelled')
+    : [];
+  const hasReclamation = activeReclamationReturns.length > 0;
   const canSendToWork = isDraft && hasOrderItems;
 
   const selectedPaymentDocument = useMemo(() => {
@@ -804,23 +807,21 @@ function OrderDetailPage() {
     },
   ];
 
-  const reclamationRows = Array.isArray(order?.reclamation_returns)
-    ? order.reclamation_returns.flatMap((document) =>
-        Array.isArray(document.items)
-          ? document.items.map((item, index) => ({
-              key: `${document.id}-${index}`,
-              return_date: document.return_date,
-              inventory_item_code: item.inventory_item_code,
-              inventory_item_name: item.inventory_item_name,
-              quantity: item.quantity,
-              reclamation_id: document.id,
-              reason_name: document.reason_name,
-              status: document.status,
-              status_name: document.status_name,
-            }))
-          : [],
-      )
-    : [];
+  const reclamationRows = activeReclamationReturns.flatMap((document) =>
+    Array.isArray(document.items)
+      ? document.items.map((item, index) => ({
+          key: `${document.id}-${index}`,
+          return_date: document.return_date,
+          inventory_item_code: item.inventory_item_code,
+          inventory_item_name: item.inventory_item_name,
+          quantity: item.quantity,
+          reclamation_id: document.id,
+          reason_name: document.reason_name,
+          status: document.status,
+          status_name: document.status_name,
+        }))
+      : [],
+  );
 
   const reclamationColumns = [
     {

@@ -278,10 +278,11 @@ function OrderReclamationPage() {
               : getStatusTagColor(reclamation.status)
           }
           style={{
-            fontSize: 16,
-            lineHeight: '24px',
-            paddingInline: 12,
-            borderRadius: 8,
+            fontSize: 20,
+            lineHeight: '32px',
+            paddingInline: 14,
+            paddingBlock: 6,
+            borderRadius: 10,
             marginInlineEnd: 0,
             ...(reclamation.status === 'draft'
               ? {

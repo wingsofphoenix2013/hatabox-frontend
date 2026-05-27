@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import {
   CheckCircleOutlined,
+  DeleteOutlined,
   FileImageOutlined,
+  PlayCircleOutlined,
   StopOutlined,
 } from '@ant-design/icons';
 
@@ -39,6 +41,7 @@ function OrderReclamationPage() {
   const [error, setError] = useState('');
   const [isPhotoDrawerOpen, setIsPhotoDrawerOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [deletingPhotoId, setDeletingPhotoId] = useState(null);
 
   const loadReclamation = async () => {
     if (!reclamationId) {
@@ -69,6 +72,22 @@ function OrderReclamationPage() {
     loadReclamation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reclamationId]);
+
+  const handleDeletePhotoFixationItem = async (itemId) => {
+    try {
+      setDeletingPhotoId(itemId);
+
+      await api.delete(`reclamation-return-library-items/${itemId}/`);
+
+      message.success('Файл видалено.');
+      await loadReclamation();
+    } catch (err) {
+      console.error('Failed to delete reclamation file:', err);
+      message.error('Не вдалося видалити файл.');
+    } finally {
+      setDeletingPhotoId(null);
+    }
+  };
 
   const handleCancelReclamation = async () => {
     if (!reclamation?.id) {
@@ -208,28 +227,78 @@ function OrderReclamationPage() {
             ) : (
               <Row gutter={[12, 12]}>
                 {photoFixationItems.map((item) => (
-                  <Col xs={24} sm={12} md={8} lg={6} key={item.id}>
-                    {item.attachment_type === 'video' ? (
-                      <video
-                        src={item.file}
-                        controls
-                        style={{
-                          width: '100%',
-                          borderRadius: 8,
-                          background: '#000',
-                        }}
-                      />
-                    ) : (
-                      <Image
-                        src={item.file}
-                        alt={item.attachment_type_name || 'Фотофіксація'}
-                        style={{
-                          width: '100%',
-                          borderRadius: 8,
-                          objectFit: 'cover',
-                        }}
-                      />
-                    )}
+                  <Col key={item.id}>
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: 72,
+                        height: 72,
+                      }}
+                    >
+                      {item.attachment_type === 'video' ? (
+                        <a
+                          href={item.file}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ textDecoration: 'none' }}
+                        >
+                          <Flex
+                            vertical
+                            align="center"
+                            justify="center"
+                            gap={4}
+                            style={{
+                              width: 72,
+                              height: 72,
+                              borderRadius: 8,
+                              border: '1px solid #f0f0f0',
+                              color: '#595959',
+                              background: '#fafafa',
+                            }}
+                          >
+                            <PlayCircleOutlined />
+                            <Text style={{ fontSize: 11 }}>Відео</Text>
+                          </Flex>
+                        </a>
+                      ) : (
+                        <Image
+                          src={item.file}
+                          alt={item.attachment_type_name || 'Фотофіксація'}
+                          width={72}
+                          height={72}
+                          style={{
+                            objectFit: 'cover',
+                            borderRadius: 8,
+                            border: '1px solid #f0f0f0',
+                          }}
+                        />
+                      )}
+
+                      <Popconfirm
+                        title="Видалити файл?"
+                        description="Ви впевнені, що хочете видалити цей файл?"
+                        okText="Так"
+                        cancelText="Ні"
+                        onConfirm={() => handleDeletePhotoFixationItem(item.id)}
+                        disabled={deletingPhotoId === item.id}
+                      >
+                        <DeleteOutlined
+                          style={{
+                            position: 'absolute',
+                            top: -6,
+                            right: -6,
+                            color: '#ff4d4f',
+                            background: '#ffffff',
+                            borderRadius: '50%',
+                            padding: 4,
+                            cursor:
+                              deletingPhotoId === item.id
+                                ? 'default'
+                                : 'pointer',
+                          }}
+                        />
+                      </Popconfirm>
+                    </div>
                   </Col>
                 ))}
               </Row>

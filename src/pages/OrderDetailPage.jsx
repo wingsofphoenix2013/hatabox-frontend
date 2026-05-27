@@ -1598,7 +1598,14 @@ function OrderDetailPage() {
           </Card>
 
           {hasReclamation && (
-            <Card title="Рекламація" style={{ marginBottom: 20 }}>
+            <Card
+              title="Рекламація"
+              style={{
+                marginBottom: 20,
+                background: '#fff2f0',
+                borderColor: '#ffccc7',
+              }}
+            >
               <Table
                 rowKey="key"
                 columns={reclamationColumns}

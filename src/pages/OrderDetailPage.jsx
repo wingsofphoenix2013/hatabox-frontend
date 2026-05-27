@@ -1292,13 +1292,15 @@ function OrderDetailPage() {
                   </Button>
                 )}
 
-                <Button
-                  block
-                  icon={<SettingOutlined style={{ color: '#1677ff' }} />}
-                  onClick={() => setIsOrderItemsDrawerOpen(true)}
-                >
-                  Комплектація замовлення
-                </Button>
+                {!isCompleted && (
+                  <Button
+                    block
+                    icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                    onClick={() => setIsOrderItemsDrawerOpen(true)}
+                  >
+                    Комплектація замовлення
+                  </Button>
+                )}
 
                 <Divider style={{ margin: '4px 0 8px 0' }} />
 

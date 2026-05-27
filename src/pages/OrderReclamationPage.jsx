@@ -150,13 +150,24 @@ function OrderReclamationPage() {
           reclamation.return_date,
         )}`}{' '}
         <Tag
-          color={getStatusTagColor(reclamation.status)}
+          color={
+            reclamation.status === 'draft'
+              ? undefined
+              : getStatusTagColor(reclamation.status)
+          }
           style={{
             fontSize: 16,
             lineHeight: '24px',
             paddingInline: 12,
             borderRadius: 8,
             marginInlineEnd: 0,
+            ...(reclamation.status === 'draft'
+              ? {
+                  border: '1px solid #d9d9d9',
+                  background: '#fafafa',
+                  color: '#595959',
+                }
+              : {}),
           }}
         >
           {reclamation.status_name || '—'}

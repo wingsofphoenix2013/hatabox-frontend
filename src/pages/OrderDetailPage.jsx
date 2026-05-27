@@ -44,6 +44,7 @@ import api from '../api/client';
 import OrderReceiptDrawer from '../components/OrderReceiptDrawer';
 import OrderPaymentsDrawer from '../components/OrderPaymentsDrawer';
 import OrderItemsDrawer from '../components/OrderItemsDrawer';
+import OrderReclamationDrawer from '../components/OrderReclamationDrawer';
 
 import PdfPreview from '../components/PdfPreview';
 
@@ -96,6 +97,7 @@ function OrderDetailPage() {
   const [isPaymentsDrawerOpen, setIsPaymentsDrawerOpen] = useState(false);
   const [isReceiptDrawerOpen, setIsReceiptDrawerOpen] = useState(false);
   const [isOrderItemsDrawerOpen, setIsOrderItemsDrawerOpen] = useState(false);
+  const [isReclamationDrawerOpen, setIsReclamationDrawerOpen] = useState(false);
   const [selectedReceiptDocumentId, setSelectedReceiptDocumentId] =
     useState(null);
 
@@ -1305,7 +1307,12 @@ function OrderDetailPage() {
                 <Divider style={{ margin: '4px 0 8px 0' }} />
 
                 {(isInProgress || isCompleted) && (
-                  <Button block danger icon={<WarningOutlined />}>
+                  <Button
+                    block
+                    danger
+                    icon={<WarningOutlined />}
+                    onClick={() => setIsReclamationDrawerOpen(true)}
+                  >
                     Рекламація
                   </Button>
                 )}
@@ -1608,6 +1615,13 @@ function OrderDetailPage() {
       <OrderItemsDrawer
         open={isOrderItemsDrawerOpen}
         onClose={() => setIsOrderItemsDrawerOpen(false)}
+        order={order}
+        onOrderUpdated={() => loadOrderPage({ silent: true })}
+      />
+
+      <OrderReclamationDrawer
+        open={isReclamationDrawerOpen}
+        onClose={() => setIsReclamationDrawerOpen(false)}
         order={order}
         onOrderUpdated={() => loadOrderPage({ silent: true })}
       />

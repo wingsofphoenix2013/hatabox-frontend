@@ -29,6 +29,15 @@ export const breadcrumbConfig = [
     },
   },
   {
+    match: (pathname) => pathname === '/production/components/new',
+    build: () => [
+      makeHomeItem(),
+      makeTextItem('Виробництво'),
+      makeLinkItem('/production/components', 'Каталог компонентів'),
+      makeTextItem('Новий компонент'),
+    ],
+  },
+  {
     match: (pathname) => pathname.startsWith('/production/components/'),
     build: ({ pathname, search }) => {
       const currentId = getCurrentId(pathname);
@@ -250,6 +259,26 @@ export const breadcrumbConfig = [
       makeTextItem('Закупівлі'),
       makeTextItem('Реєстр дефіциту'),
     ],
+  },
+  {
+    match: (pathname) =>
+      pathname.startsWith('/orders/') && pathname.endsWith('/reclamation'),
+    build: ({ pathname, state }) => {
+      const pathParts = pathname.split('/');
+      const orderId = pathParts[pathParts.length - 2];
+      const orderLabel = state?.orderLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Закупівлі'),
+        makeLinkItem('/orders/register', 'Реєстр замовлень'),
+        makeLinkItem(
+          `/orders/${orderId}`,
+          orderLabel || `Замовлення ID ${orderId}`,
+        ),
+        makeTextItem('Повернення товару'),
+      ];
+    },
   },
   {
     match: (pathname) =>

@@ -29,6 +29,7 @@ import OrderTollingDetailsPage from './pages/OrderTollingDetailsPage';
 import OrderCreatePage from './pages/OrderCreatePage';
 import OrderEditPage from './pages/OrderEditPage';
 import OrdersShortageRegisterPage from './pages/OrdersShortageRegisterPage';
+import OrderReclamationPage from './pages/OrderReclamationPage';
 
 import VendorsPage from './pages/VendorsPage';
 import VendorDetailPage from './pages/VendorDetailPage';
@@ -139,13 +140,18 @@ function App() {
               element={<VendorEditPage />}
             />
 
-            <Route path="/orders/:id" element={<OrderDetailPage />} />
-            <Route path="/orders/:id/edit" element={<OrderEditPage />} />
-
             <Route
               path="/orders/shortage"
               element={<OrdersShortageRegisterPage />}
             />
+
+            <Route
+              path="/orders/:id/reclamation"
+              element={<OrderReclamationPage />}
+            />
+
+            <Route path="/orders/:id/edit" element={<OrderEditPage />} />
+            <Route path="/orders/:id" element={<OrderDetailPage />} />
 
             <Route
               path="/production/orders"
@@ -241,13 +247,13 @@ function App() {
             />
 
             <Route
-              path="/organizations/:id"
-              element={<OrganizationDetailsPage />}
+              path="/organizations/contacts"
+              element={<OrganizationContactsRegisterPage />}
             />
 
             <Route
-              path="/organizations/contacts"
-              element={<OrganizationContactsRegisterPage />}
+              path="/organizations/:id"
+              element={<OrganizationDetailsPage />}
             />
 
             <Route path="/user" element={<div>Користувач</div>} />

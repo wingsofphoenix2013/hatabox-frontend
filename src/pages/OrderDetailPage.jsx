@@ -1410,7 +1410,7 @@ function OrderDetailPage() {
 
                 <Divider style={{ margin: '4px 0 8px 0' }} />
 
-                {(isInProgress || isCompleted) && (
+                {order?.can_start_reclamation_flow && (
                   <Button
                     block
                     danger

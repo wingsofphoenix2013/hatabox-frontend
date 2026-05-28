@@ -1532,72 +1532,79 @@ function OrderDetailPage() {
             }
             style={{ marginBottom: 20 }}
           >
-            <Alert
-              type="warning"
-              showIcon
-              style={{ marginBottom: 16 }}
-              message={
-                <Flex vertical gap={12}>
-                  {/* Верхняя строка: заголовок + кнопка редактирования */}
-                  <Flex justify="space-between" align="center">
-                    <Text strong>Коментар до замовлення</Text>
+            {(!isCompleted || order.comment) && (
+              <Alert
+                type="warning"
+                showIcon
+                style={{ marginBottom: 16 }}
+                message={
+                  <Flex vertical gap={12}>
+                    {/* Верхняя строка: заголовок + кнопка редактирования */}
+                    <Flex justify="space-between" align="center">
+                      <Text strong>Коментар до замовлення</Text>
 
-                    {!isEditingOrderComment && (
-                      <Tooltip
-                        title={
-                          isCompleted
-                            ? 'Редагування недоступне для виконаного замовлення'
-                            : 'Редагувати коментар'
-                        }
-                      >
-                        <EditOutlined
-                          style={{
-                            color: isCompleted ? '#bfbfbf' : '#8c8c8c',
-                            cursor: isCompleted ? 'not-allowed' : 'pointer',
-                            fontSize: 16,
-                          }}
-                          onClick={() => {
-                            if (isCompleted) return;
-                            handleStartEditComment();
-                          }}
+                      {!isEditingOrderComment && (
+                        <Tooltip
+                          title={
+                            isCompleted
+                              ? 'Редагування недоступне для виконаного замовлення'
+                              : 'Редагувати коментар'
+                          }
+                        >
+                          <EditOutlined
+                            style={{
+                              color: isCompleted ? '#bfbfbf' : '#8c8c8c',
+                              cursor: isCompleted ? 'not-allowed' : 'pointer',
+                              fontSize: 16,
+                            }}
+                            onClick={() => {
+                              if (isCompleted) return;
+                              handleStartEditComment();
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </Flex>
+
+                    {/* Контент */}
+                    {!isEditingOrderComment ? (
+                      <Text style={{ whiteSpace: 'pre-wrap' }}>
+                        {order.comment ? order.comment : 'Додати коментар'}
+                      </Text>
+                    ) : (
+                      <Flex vertical gap={8}>
+                        <Input.TextArea
+                          value={editingOrderComment}
+                          onChange={(e) =>
+                            setEditingOrderComment(e.target.value)
+                          }
+                          rows={3}
+                          autoFocus
                         />
-                      </Tooltip>
+
+                        <Flex gap={8}>
+                          <Button
+                            type="primary"
+                            size="small"
+                            loading={savingOrderComment}
+                            onClick={handleSaveComment}
+                          >
+                            Зберегти
+                          </Button>
+
+                          <Button
+                            size="small"
+                            onClick={handleCancelEditComment}
+                          >
+                            Скасувати
+                          </Button>
+                        </Flex>
+                      </Flex>
                     )}
                   </Flex>
-
-                  {/* Контент */}
-                  {!isEditingOrderComment ? (
-                    <Text style={{ whiteSpace: 'pre-wrap' }}>
-                      {order.comment ? order.comment : 'Додати коментар'}
-                    </Text>
-                  ) : (
-                    <Flex vertical gap={8}>
-                      <Input.TextArea
-                        value={editingOrderComment}
-                        onChange={(e) => setEditingOrderComment(e.target.value)}
-                        rows={3}
-                        autoFocus
-                      />
-
-                      <Flex gap={8}>
-                        <Button
-                          type="primary"
-                          size="small"
-                          loading={savingOrderComment}
-                          onClick={handleSaveComment}
-                        >
-                          Зберегти
-                        </Button>
-
-                        <Button size="small" onClick={handleCancelEditComment}>
-                          Скасувати
-                        </Button>
-                      </Flex>
-                    </Flex>
-                  )}
-                </Flex>
-              }
-            />
+                }
+              />
+            )}
 
             <Table
               columns={summaryColumns}

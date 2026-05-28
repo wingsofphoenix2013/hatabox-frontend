@@ -7,6 +7,7 @@ import {
   InfoCircleOutlined,
   PlusOutlined,
   SearchOutlined,
+  WarningFilled,
   WarningOutlined,
 } from '@ant-design/icons';
 import {
@@ -638,14 +639,14 @@ function OrdersRegisterPage() {
       dataIndex: 'status_name',
       key: 'status_name',
       width: 150,
-      align: 'center',
+      align: 'left',
       render: (value, record) => {
         const hasComment = Boolean(record.comment);
         const isCompleted = record.status === 'completed';
         const showCommentIcon = hasComment && !isCompleted;
 
         return (
-          <Flex align="center" justify="center" gap={6}>
+          <Flex align="center" justify="flex-start" gap={6}>
             <div
               style={{
                 width: 14,
@@ -673,6 +674,12 @@ function OrdersRegisterPage() {
             </div>
 
             <Tag color={getStatusTagColor(record.status)}>{value}</Tag>
+
+            {record.has_reclamation && (
+              <Tooltip title="За цим замовленням є рекламація">
+                <WarningFilled style={{ color: '#ff4d4f', fontSize: 14 }} />
+              </Tooltip>
+            )}
           </Flex>
         );
       },

@@ -44,7 +44,11 @@ import {
   extractFileFromUploadEvent,
   validateFileType,
 } from '../utils/fileHelpers';
-import { formatDateDisplay, formatMoney } from '../utils/orderFormatters';
+import {
+  formatDateDisplay,
+  formatDateUa,
+  formatMoney,
+} from '../utils/orderFormatters';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -586,7 +590,11 @@ function OrdersRegisterPage() {
       render: (value, record) => (
         <Link
           to={`/orders/${record.id}`}
-          state={{ orderLabel: record.order_no }}
+          state={{
+            orderLabel: `№ ${record.order_no} від ${formatDateUa(
+              record.created_at,
+            )}`,
+          }}
         >
           {value}
         </Link>

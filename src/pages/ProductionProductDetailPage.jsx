@@ -1,5 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Alert, Card, Col, Flex, Row, Skeleton, Tag, Typography } from 'antd';
+import {
+  CheckCircleOutlined,
+  FileImageOutlined,
+  FileTextOutlined,
+  PrinterOutlined,
+  SettingOutlined,
+  StopOutlined,
+} from '@ant-design/icons';
+import {
+  Alert,
+  Card,
+  Col,
+  Flex,
+  Row,
+  Popconfirm,
+  Skeleton,
+  Tag,
+  Typography,
+} from 'antd';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 
@@ -135,7 +153,73 @@ function ProductionProductDetailPage() {
             </Card>
 
             <Card title="Навігація" style={{ marginBottom: 20 }}>
-              <Text type="secondary">Дані зʼявляться пізніше</Text>
+              <Flex vertical gap={8}>
+                {product.development_status === 'in_development' && (
+                  <Button block type="primary" icon={<CheckCircleOutlined />}>
+                    Завершити розробку
+                  </Button>
+                )}
+
+                {product.development_status === 'finished' &&
+                  !product.is_base_modification && (
+                    <Button block type="primary" icon={<CheckCircleOutlined />}>
+                      Зробити базовою версією
+                    </Button>
+                  )}
+
+                {!(
+                  product.development_status === 'finished' &&
+                  product.is_base_modification
+                ) && <Divider dashed style={{ margin: '8px 0' }} />}
+
+                {product.development_status === 'in_development' && (
+                  <Button
+                    block
+                    icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                  >
+                    Додати етап
+                  </Button>
+                )}
+
+                <Button
+                  block
+                  icon={<FileTextOutlined style={{ color: '#1677ff' }} />}
+                >
+                  Загальна комплектація
+                </Button>
+
+                <Button
+                  block
+                  icon={<FileImageOutlined style={{ color: '#1677ff' }} />}
+                >
+                  Галерея продукту
+                </Button>
+
+                <Button
+                  block
+                  icon={<PrinterOutlined style={{ color: '#1677ff' }} />}
+                >
+                  Роздрукувати комплектацію
+                </Button>
+
+                {product.development_status === 'in_development' && (
+                  <>
+                    <Divider dashed style={{ margin: '8px 0' }} />
+
+                    <Popconfirm
+                      title="Видалити версію продукту?"
+                      description="Цю дію неможливо скасувати. Версія продукту буде видалена без можливості відновлення."
+                      okText="Так, видалити"
+                      cancelText="Скасувати"
+                      okButtonProps={{ danger: true }}
+                    >
+                      <Button block danger icon={<StopOutlined />}>
+                        Видалити версію
+                      </Button>
+                    </Popconfirm>
+                  </>
+                )}
+              </Flex>
             </Card>
 
             <Card title="Історія">

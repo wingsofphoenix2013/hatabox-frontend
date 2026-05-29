@@ -262,6 +262,7 @@ function ProductionProductPage() {
       <ProductionProductCreateDrawer
         open={isCreateDrawerOpen}
         onClose={() => setIsCreateDrawerOpen(false)}
+        onCompleted={loadProducts}
       />
     </div>
   );

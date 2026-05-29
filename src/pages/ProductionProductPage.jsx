@@ -20,6 +20,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 import api from '../api/client';
+import ProductionProductCreateDrawer from '../components/ProductionProductCreateDrawer';
 
 const { Title, Text } = Typography;
 

@@ -70,24 +70,48 @@ function ProductionProductDetailPage() {
   return (
     <div style={{ padding: 20 }}>
       <Flex vertical gap={20}>
-        <Flex vertical gap={4}>
-          <Flex align="center" gap={8} wrap>
-            <Title level={2} style={{ margin: 0 }}>
-              {product.product_family_code || '—'} v.{product.version || '—'}
-            </Title>
+        <>
+          <Flex
+            justify="space-between"
+            align="flex-start"
+            gap={16}
+            style={{ marginBottom: 4 }}
+          >
+            <Flex align="center" gap={12} wrap>
+              <Title level={2} style={{ margin: 0 }}>
+                {`${product.product_family_code || '—'} v.${
+                  product.version || '—'
+                }`}
+              </Title>
 
-            <Tag
-              color={getDevelopmentStatusTagColor(product.development_status)}
-              style={{ marginInlineEnd: 0, fontWeight: 600 }}
-            >
-              {product.development_status_display ||
-                product.development_status ||
-                '—'}
-            </Tag>
+              <Tag
+                color={getDevelopmentStatusTagColor(product.development_status)}
+                style={{
+                  fontSize: 20,
+                  lineHeight: '32px',
+                  paddingInline: 14,
+                  paddingBlock: 6,
+                  borderRadius: 10,
+                  marginInlineEnd: 0,
+                }}
+              >
+                {product.development_status_display ||
+                  product.development_status ||
+                  '—'}
+              </Tag>
+            </Flex>
           </Flex>
 
-          <Text type="secondary">{product.product_family_name || '—'}</Text>
-        </Flex>
+          <Text
+            type="secondary"
+            style={{
+              display: 'block',
+              marginBottom: 20,
+            }}
+          >
+            {product.product_family_name || '—'}
+          </Text>
+        </>
 
         <Row gutter={20} align="top">
           <Col xs={24} lg={6}>

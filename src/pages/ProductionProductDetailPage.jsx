@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   CheckCircleOutlined,
+  CopyOutlined,
   FileImageOutlined,
   FileTextOutlined,
   PrinterOutlined,
@@ -194,6 +195,19 @@ function ProductionProductDetailPage() {
               >
                 Роздрукувати комплектацію
               </Button>
+              {product.development_status === 'finished' &&
+                product.is_base_modification && (
+                  <>
+                    <Divider dashed style={{ margin: '8px 0' }} />
+
+                    <Button
+                      block
+                      icon={<CopyOutlined style={{ color: '#1677ff' }} />}
+                    >
+                      Зробити дублікат
+                    </Button>
+                  </>
+                )}
 
               {product.development_status === 'in_development' && (
                 <>

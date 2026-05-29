@@ -41,13 +41,11 @@ function ProductionProductDetailPage() {
   const { id } = useParams();
 
   const [product, setProduct] = useState(null);
-  const [steps, setSteps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadProduct();
-    loadSteps();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -67,26 +65,13 @@ function ProductionProductDetailPage() {
     }
   };
 
-  const loadSteps = async () => {
-    try {
-      const response = await api.get(`product-steps/?product=${id}`);
-
-      setSteps(
-        Array.isArray(response.data?.results) ? response.data.results : [],
-      );
-    } catch (err) {
-      console.error('Failed to load product steps:', err);
-      setSteps([]);
-    }
-  };
-
   const handleFinishDevelopment = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const response = await api.post(`products/${id}/finish-development/`);
-      setProduct(response.data || null);
+      await api.post(`products/${id}/finish-development/`);
+      await loadProduct();
     } catch (err) {
       console.error('Failed to finish product development:', err);
       setError('Не вдалося завершити розробку продукту.');
@@ -118,6 +103,8 @@ function ProductionProductDetailPage() {
       </div>
     );
   }
+
+  const steps = Array.isArray(product.steps) ? product.steps : [];
 
   return (
     <div style={{ padding: 20 }}>

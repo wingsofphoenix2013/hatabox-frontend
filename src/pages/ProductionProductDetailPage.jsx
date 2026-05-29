@@ -1,112 +1,47 @@
 import { useEffect, useState } from 'react';
-import {
-  Alert,
-  Button,
-  Card,
-  Col,
-  Divider,
-  Flex,
-  Row,
-  Skeleton,
-  Table,
-  Typography,
-} from 'antd';
-import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Alert, Card, Col, Flex, Row, Skeleton, Tag, Typography } from 'antd';
+import { useParams } from 'react-router-dom';
 import api from '../api/client';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
+
+const getDevelopmentStatusTagColor = (status) => {
+  switch (status) {
+    case 'in_development':
+      return 'processing';
+    case 'finished':
+      return 'success';
+    default:
+      return 'default';
+  }
+};
 
 function ProductionProductDetailPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   const [product, setProduct] = useState(null);
-  const [steps, setSteps] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    loadProductPage();
+    loadProduct();
   }, [id]);
 
-  const loadProductPage = async () => {
+  const loadProduct = async () => {
     try {
       setLoading(true);
       setError('');
 
-      const [productResponse, stepsResponse] = await Promise.all([
-        api.get(`products/${id}/`),
-        api.get(`product-steps/?product=${id}`),
-      ]);
-
-      setProduct(productResponse.data);
-      setSteps(
-        Array.isArray(stepsResponse.data.results)
-          ? stepsResponse.data.results
-          : [],
-      );
+      const response = await api.get(`products/${id}/`);
+      setProduct(response.data || null);
     } catch (err) {
       console.error('Failed to load product detail page:', err);
       setError('Не вдалося завантажити дані продукту.');
       setProduct(null);
-      setSteps([]);
     } finally {
       setLoading(false);
     }
   };
-
-  const renderField = (label, content) => (
-    <div style={{ marginBottom: 20 }}>
-      <Text
-        type="secondary"
-        style={{ display: 'block', marginBottom: 6, fontSize: 12 }}
-      >
-        {label}
-      </Text>
-      {content}
-    </div>
-  );
-
-  const truncateText = (value, maxLength = 180) => {
-    if (!value) return '—';
-    if (value.length <= maxLength) return value;
-    return `${value.slice(0, maxLength)}...`;
-  };
-
-  const additionalInfoColumns = [
-    {
-      title: 'База',
-      key: 'is_base_modification',
-      align: 'center',
-      render: () =>
-        product?.is_base_modification ? (
-          <Flex align="center" justify="center" gap={6}>
-            <CheckCircleFilled style={{ color: '#52c41a' }} />
-            <span>Так</span>
-          </Flex>
-        ) : (
-          <Flex align="center" justify="center" gap={6}>
-            <CloseCircleFilled style={{ color: '#ff4d4f' }} />
-            <span>Ні</span>
-          </Flex>
-        ),
-    },
-    {
-      title: 'Розробка з',
-      key: 'development_started_at',
-      align: 'center',
-      render: () => product?.development_started_at || '—',
-    },
-    {
-      title: 'Розробка по',
-      key: 'development_finished_at',
-      align: 'center',
-      render: () => product?.development_finished_at || '—',
-    },
-  ];
 
   if (loading) {
     return (
@@ -116,7 +51,7 @@ function ProductionProductDetailPage() {
     );
   }
 
-  if (error) {
+  if (error && !product) {
     return (
       <div style={{ padding: 20 }}>
         <Alert type="error" description={error} showIcon />
@@ -132,201 +67,69 @@ function ProductionProductDetailPage() {
     );
   }
 
-  const productDisplayName = `${product.product_family_name} ${product.version}`;
-
   return (
     <div style={{ padding: 20 }}>
-      <Flex
-        justify="space-between"
-        align="flex-start"
-        gap={16}
-        style={{ marginBottom: 20 }}
-      >
-        <div>
-          <Title level={2} style={{ margin: 0, marginBottom: 4 }}>
-            {productDisplayName}
-          </Title>
-          <Text type="secondary">{product.code || '—'}</Text>
-        </div>
-      </Flex>
+      <Flex vertical gap={20}>
+        <Flex vertical gap={4}>
+          <Flex align="center" gap={8} wrap>
+            <Title level={2} style={{ margin: 0 }}>
+              {product.product_family_code || '—'} v.{product.version || '—'}
+            </Title>
 
-      <Row gutter={20} align="top">
-        {/* Ліва колонка */}
-        <Col xs={24} lg={6}>
-          <Card title="Зображення" style={{ marginBottom: 20 }}>
-            <div
-              style={{
-                width: '100%',
-                aspectRatio: '1 / 1',
-                border: '1px solid #f0f0f0',
-                borderRadius: 12,
-                background: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+            <Tag
+              color={getDevelopmentStatusTagColor(product.development_status)}
+              style={{ marginInlineEnd: 0, fontWeight: 600 }}
             >
-              <Text type="secondary">Блок буде реалізовано пізніше</Text>
-            </div>
-          </Card>
+              {product.development_status_display ||
+                product.development_status ||
+                '—'}
+            </Tag>
+          </Flex>
 
-          <Card title="Довідка" style={{ marginBottom: 20 }}>
-            <Flex vertical gap={12}>
-              <Button
-                block
-                onClick={() =>
-                  navigate(
-                    `/production/products/${product.id}/material-plan${location.search}`,
-                    {
-                      state: {
-                        productId: product.id,
-                        productLabel: product.code,
-                      },
-                    },
-                  )
-                }
+          <Text type="secondary">{product.product_family_name || '—'}</Text>
+        </Flex>
+
+        <Row gutter={20} align="top">
+          <Col xs={24} lg={6}>
+            <Card style={{ marginBottom: 20 }}>
+              <div
+                style={{
+                  width: '100%',
+                  aspectRatio: '1 / 1',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: 12,
+                  background: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  padding: 12,
+                }}
               >
-                Загальна комплектація продукта
-              </Button>
-              <Button block>Довідка по персоналу</Button>
-            </Flex>
-          </Card>
+                <Text type="secondary">Дані зʼявляться пізніше</Text>
+              </div>
+            </Card>
 
-          <Card title="Статистика">
-            <Text type="secondary">Блок буде реалізовано пізніше</Text>
-          </Card>
-        </Col>
+            <Card title="Навігація" style={{ marginBottom: 20 }}>
+              <Text type="secondary">Дані зʼявляться пізніше</Text>
+            </Card>
 
-        {/* Центральна колонка */}
-        <Col xs={24} lg={12}>
-          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-            {renderField(
-              'Назва',
-              <Paragraph style={{ marginBottom: 0 }}>
-                {productDisplayName}
-              </Paragraph>,
-            )}
+            <Card title="Історія">
+              <Text type="secondary">Дані зʼявляться пізніше</Text>
+            </Card>
+          </Col>
 
-            {renderField(
-              'Опис',
-              <Paragraph style={{ marginBottom: 0, whiteSpace: 'pre-wrap' }}>
-                {product.description || '—'}
-              </Paragraph>,
-            )}
-          </Card>
+          <Col xs={24} lg={18}>
+            <Card title="Основна інформація" style={{ marginBottom: 20 }}>
+              <Text type="secondary">Дані зʼявляться пізніше</Text>
+            </Card>
 
-          <Card title="Додаткова інформація" style={{ marginBottom: 20 }}>
-            <Table
-              columns={additionalInfoColumns}
-              dataSource={[{ id: product.id }]}
-              rowKey="id"
-              pagination={false}
-              size="small"
-            />
-          </Card>
-
-          <Card
-            title="Етапи виробництва"
-            extra={
-              <Button
-                type="primary"
-                onClick={() =>
-                  navigate(
-                    `/production/products/${product.id}/new-step${location.search}`,
-                    {
-                      state: {
-                        productLabel: product.code,
-                      },
-                    },
-                  )
-                }
-              >
-                Додати етап
-              </Button>
-            }
-          >
-            {steps.length === 0 ? (
-              <Text type="secondary">Етапи поки відсутні</Text>
-            ) : (
-              steps.map((step, index) => (
-                <div key={step.id}>
-                  <Flex justify="space-between" align="flex-start" gap={16}>
-                    <div style={{ flex: 1 }}>
-                      <Title
-                        level={5}
-                        style={{ marginTop: 0, marginBottom: 8 }}
-                      >
-                        {step.sort_order}. {step.name}
-                      </Title>
-
-                      <div>
-                        <div
-                          style={{
-                            float: 'left',
-                            width: 120,
-                            height: 120,
-                            border: '1px solid #f0f0f0',
-                            borderRadius: 10,
-                            background: '#ffffff',
-                            marginRight: 16,
-                            marginBottom: 8,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Text
-                            type="secondary"
-                            style={{ fontSize: 12, textAlign: 'center' }}
-                          >
-                            Ілюстрація
-                          </Text>
-                        </div>
-
-                        <Paragraph
-                          style={{ marginBottom: 0, color: '#595959' }}
-                        >
-                          {truncateText(step.description, 260)}
-                        </Paragraph>
-
-                        <div style={{ clear: 'both' }} />
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={() =>
-                        navigate(
-                          `/production/product-steps/${step.id}${location.search}`,
-                          {
-                            state: {
-                              productId: product.id,
-                              productLabel: product.code,
-                              stepLabel: `${step.sort_order}. ${step.name}`,
-                            },
-                          },
-                        )
-                      }
-                    >
-                      Деталі
-                    </Button>
-                  </Flex>
-
-                  {index < steps.length - 1 && (
-                    <Divider style={{ margin: '16px 0' }} />
-                  )}
-                </div>
-              ))
-            )}
-          </Card>
-        </Col>
-
-        {/* Права колонка */}
-        <Col xs={24} lg={6}>
-          <Card title="Історія">
-            <Text type="secondary">Блок буде реалізовано пізніше</Text>
-          </Card>
-        </Col>
-      </Row>
+            <Card title="Етапи виробництва">
+              <Text type="secondary">Дані зʼявляться пізніше</Text>
+            </Card>
+          </Col>
+        </Row>
+      </Flex>
     </div>
   );
 }

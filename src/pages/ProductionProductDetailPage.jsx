@@ -46,6 +46,7 @@ function ProductionProductDetailPage() {
 
   useEffect(() => {
     loadProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadProduct = async () => {
@@ -59,6 +60,21 @@ function ProductionProductDetailPage() {
       console.error('Failed to load product detail page:', err);
       setError('Не вдалося завантажити дані продукту.');
       setProduct(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFinishDevelopment = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await api.post(`products/${id}/finish-development/`);
+      setProduct(response.data || null);
+    } catch (err) {
+      console.error('Failed to finish product development:', err);
+      setError('Не вдалося завершити розробку продукту.');
     } finally {
       setLoading(false);
     }
@@ -149,9 +165,17 @@ function ProductionProductDetailPage() {
           <Card title="Навігація" style={{ marginBottom: 20 }}>
             <Flex vertical gap={8}>
               {product.development_status === 'in_development' && (
-                <Button block type="primary" icon={<CheckCircleOutlined />}>
-                  Завершити розробку
-                </Button>
+                <Popconfirm
+                  title="Завершити розробку продукту?"
+                  description="Після завершення розробки буде заборонено змінювати продукт, етапи, комплектацію та бібліотеку продукту."
+                  okText="Так, завершити"
+                  cancelText="Скасувати"
+                  onConfirm={handleFinishDevelopment}
+                >
+                  <Button block type="primary" icon={<CheckCircleOutlined />}>
+                    Завершити розробку
+                  </Button>
+                </Popconfirm>
               )}
 
               {product.development_status === 'finished' &&

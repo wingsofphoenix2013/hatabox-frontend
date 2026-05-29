@@ -41,11 +41,13 @@ function ProductionProductDetailPage() {
   const { id } = useParams();
 
   const [product, setProduct] = useState(null);
+  const [steps, setSteps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadProduct();
+    loadSteps();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -62,6 +64,19 @@ function ProductionProductDetailPage() {
       setProduct(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSteps = async () => {
+    try {
+      const response = await api.get(`product-steps/?product=${id}`);
+
+      setSteps(
+        Array.isArray(response.data?.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load product steps:', err);
+      setSteps([]);
     }
   };
 
@@ -264,7 +279,17 @@ function ProductionProductDetailPage() {
           </Card>
 
           <Card title="Етапи виробництва">
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            {steps.length === 0 ? (
+              <Text type="secondary">Етапи поки відсутні</Text>
+            ) : (
+              <Flex vertical gap={8}>
+                {steps.map((step) => (
+                  <div key={step.id}>
+                    {step.sort_order}. {step.name}
+                  </div>
+                ))}
+              </Flex>
+            )}
           </Card>
         </Col>
       </Row>

@@ -9,12 +9,15 @@ import {
   Select,
   Divider,
   Flex,
+  Button,
+  Drawer,
 } from 'antd';
 import {
   AppstoreAddOutlined,
   SearchOutlined,
   CheckCircleFilled,
   CloseCircleFilled,
+  PlusOutlined,
 } from '@ant-design/icons';
 import api from '../api/client';
 
@@ -29,6 +32,7 @@ function ProductionProductPage() {
   const [error, setError] = useState('');
 
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   const [productFamilyCodeFilter, setProductFamilyCodeFilter] = useState(
     searchParams.get('product_family_code') || '',
@@ -174,9 +178,24 @@ function ProductionProductPage() {
 
   return (
     <div style={{ padding: 20 }}>
-      <Title level={2} style={{ marginBottom: 16 }}>
-        Каталог продукції
-      </Title>
+      <Flex
+        justify="space-between"
+        align="flex-start"
+        gap={16}
+        style={{ marginBottom: 16 }}
+      >
+        <Title level={2} style={{ margin: 0 }}>
+          Каталог продукції
+        </Title>
+
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => setIsCreateDrawerOpen(true)}
+        >
+          Створити новий продукт
+        </Button>
+      </Flex>
 
       <Card size="small" style={{ marginBottom: 16 }}>
         <Flex align="center" wrap gap={12}>
@@ -238,6 +257,10 @@ function ProductionProductPage() {
           selectedRowKeys,
           onChange: setSelectedRowKeys,
         }}
+      />
+      <ProductionProductCreateDrawer
+        open={isCreateDrawerOpen}
+        onClose={() => setIsCreateDrawerOpen(false)}
       />
     </div>
   );

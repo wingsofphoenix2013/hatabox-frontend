@@ -23,6 +23,7 @@ import {
 } from 'antd';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
+import ProductionProductStepWorkCreateDrawer from '../components/ProductionProductStepWorkCreateDrawer';
 
 const { Title, Text } = Typography;
 
@@ -43,6 +44,8 @@ function ProductionProductDetailPage() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isStepWorkCreateDrawerOpen, setIsStepWorkCreateDrawerOpen] =
+    useState(false);
 
   useEffect(() => {
     loadProduct();
@@ -196,6 +199,7 @@ function ProductionProductDetailPage() {
                 <Button
                   block
                   icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                  onClick={() => setIsStepWorkCreateDrawerOpen(true)}
                 >
                   Додати етап
                 </Button>
@@ -280,6 +284,12 @@ function ProductionProductDetailPage() {
           </Card>
         </Col>
       </Row>
+      <ProductionProductStepWorkCreateDrawer
+        open={isStepWorkCreateDrawerOpen}
+        onClose={() => setIsStepWorkCreateDrawerOpen(false)}
+        product={product}
+        onCompleted={loadProduct}
+      />
     </div>
   );
 }

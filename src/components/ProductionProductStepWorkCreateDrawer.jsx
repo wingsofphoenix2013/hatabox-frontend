@@ -92,11 +92,6 @@ function ProductionProductStepWorkCreateDrawer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const isSortOrderDuplicate =
-    sortOrder !== null &&
-    sortOrder !== undefined &&
-    usedSortOrders.has(Number(sortOrder));
-
   const canCreateStep =
     product?.id &&
     product?.development_status === 'in_development' &&
@@ -108,6 +103,12 @@ function ProductionProductStepWorkCreateDrawer({
 
   const isWorkTrackingMode = product?.work_tracking === true;
   const isStepCreatedWithWorks = Boolean(createdStep) && addWorksToStep;
+
+  const isSortOrderDuplicate =
+    !isStepCreatedWithWorks &&
+    sortOrder !== null &&
+    sortOrder !== undefined &&
+    usedSortOrders.has(Number(sortOrder));
 
   const currentWorks = Array.isArray(createdStep?.works)
     ? createdStep.works

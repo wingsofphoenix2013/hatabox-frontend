@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { UnorderedListOutlined } from '@ant-design/icons';
+import { DownOutlined, HolderOutlined, UpOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -36,6 +36,7 @@ function ProductionProductStepWorkCreateDrawer({
   const [name, setName] = useState('');
   const [saving, setSaving] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [reordering, setReordering] = useState(false);
   const [description, setDescription] = useState('');
 
   const resetForm = () => {
@@ -119,6 +120,48 @@ function ProductionProductStepWorkCreateDrawer({
     }
   };
 
+  const handleReorderSteps = async (nextSteps) => {
+    try {
+      setReordering(true);
+      resetForm();
+
+      await api.post('product-steps/reorder/', {
+        steps: nextSteps.map((step) => step.id),
+      });
+
+      message.success('Порядок етапів оновлено.');
+
+      if (onCompleted) {
+        await onCompleted();
+      }
+    } catch (err) {
+      console.error('Failed to reorder product steps:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, ['steps']);
+      message.error(backendMessage || 'Не вдалося змінити порядок етапів.');
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const moveStep = (stepId, direction) => {
+    if (reordering) return;
+
+    const currentIndex = steps.findIndex((step) => step.id === stepId);
+
+    if (currentIndex === -1) return;
+
+    const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    if (nextIndex < 0 || nextIndex >= steps.length) return;
+
+    const nextSteps = [...steps];
+    const [movedStep] = nextSteps.splice(currentIndex, 1);
+    nextSteps.splice(nextIndex, 0, movedStep);
+
+    void handleReorderSteps(nextSteps);
+  };
+
   const stepColumns = [
     {
       title: '№',
@@ -149,11 +192,43 @@ function ProductionProductStepWorkCreateDrawer({
       ),
     },
     {
-      title: <UnorderedListOutlined />,
-      key: 'drag',
-      width: 64,
+      title: <HolderOutlined />,
+      key: 'reorder',
+      width: 96,
       align: 'center',
-      render: () => <UnorderedListOutlined style={{ color: '#bfbfbf' }} />,
+      render: (_, record, index) => (
+        <Flex justify="center" gap={10}>
+          <UpOutlined
+            style={{
+              color: index === 0 || reordering ? '#d9d9d9' : '#1677ff',
+              cursor: index === 0 || reordering ? 'not-allowed' : 'pointer',
+            }}
+            onClick={() => {
+              if (index > 0 && !reordering) {
+                moveStep(record.id, 'up');
+              }
+            }}
+          />
+
+          <DownOutlined
+            style={{
+              color:
+                index === steps.length - 1 || reordering
+                  ? '#d9d9d9'
+                  : '#1677ff',
+              cursor:
+                index === steps.length - 1 || reordering
+                  ? 'not-allowed'
+                  : 'pointer',
+            }}
+            onClick={() => {
+              if (index < steps.length - 1 && !reordering) {
+                moveStep(record.id, 'down');
+              }
+            }}
+          />
+        </Flex>
+      ),
     },
   ];
 
@@ -172,6 +247,7 @@ function ProductionProductStepWorkCreateDrawer({
             rowKey="id"
             columns={stepColumns}
             dataSource={steps}
+            loading={reordering}
             pagination={false}
             size="small"
             tableLayout="fixed"

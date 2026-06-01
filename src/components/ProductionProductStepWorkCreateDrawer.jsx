@@ -11,6 +11,7 @@ import {
   Table,
   Typography,
   message,
+  Switch,
 } from 'antd';
 
 import api from '../api/client';
@@ -38,6 +39,13 @@ function ProductionProductStepWorkCreateDrawer({
   const [submitError, setSubmitError] = useState('');
   const [reordering, setReordering] = useState(false);
   const [description, setDescription] = useState('');
+
+  const [addWorksToStep, setAddWorksToStep] = useState(false);
+  const [createdStep, setCreatedStep] = useState(null);
+
+  const [workSortOrder, setWorkSortOrder] = useState(null);
+  const [workName, setWorkName] = useState('');
+  const [workDescription, setWorkDescription] = useState('');
 
   const steps = useMemo(() => {
     return Array.isArray(product?.steps)
@@ -70,6 +78,11 @@ function ProductionProductStepWorkCreateDrawer({
     setDescription('');
     setSaving(false);
     setSubmitError('');
+    setAddWorksToStep(false);
+    setCreatedStep(null);
+    setWorkSortOrder(null);
+    setWorkName('');
+    setWorkDescription('');
   };
 
   useEffect(() => {
@@ -93,6 +106,13 @@ function ProductionProductStepWorkCreateDrawer({
     !isSortOrderDuplicate &&
     !saving;
 
+  const isWorkTrackingMode = product?.work_tracking === true;
+  const isStepCreatedWithWorks = Boolean(createdStep) && addWorksToStep;
+
+  const currentWorks = Array.isArray(createdStep?.works)
+    ? createdStep.works
+    : [];
+
   const handleCreateStep = async () => {
     if (!canCreateStep) {
       return;
@@ -102,17 +122,24 @@ function ProductionProductStepWorkCreateDrawer({
       setSaving(true);
       setSubmitError('');
 
-      await api.post('product-steps/', {
+      const response = await api.post('product-steps/', {
         product: product.id,
         name: name.trim(),
         sort_order: sortOrder,
         description: description.trim(),
       });
 
+      const nextCreatedStep = response.data || null;
+
       message.success('Етап створено.');
 
       if (onCompleted) {
         await onCompleted();
+      }
+
+      if (isWorkTrackingMode && addWorksToStep) {
+        setCreatedStep(nextCreatedStep);
+        return;
       }
 
       resetForm();
@@ -245,6 +272,30 @@ function ProductionProductStepWorkCreateDrawer({
     },
   ];
 
+  const workColumns = [
+    {
+      title: '№',
+      dataIndex: 'sort_order',
+      key: 'sort_order',
+      width: 80,
+      align: 'center',
+      render: (value) => value ?? '—',
+    },
+    {
+      title: 'Назва',
+      dataIndex: 'name',
+      key: 'name',
+      render: (value) => value || '—',
+    },
+    {
+      title: <HolderOutlined />,
+      key: 'reorder',
+      width: 96,
+      align: 'center',
+      render: () => <HolderOutlined style={{ color: '#bfbfbf' }} />,
+    },
+  ];
+
   return (
     <Drawer
       title="Додати етап"
@@ -287,6 +338,7 @@ function ProductionProductStepWorkCreateDrawer({
                 value={sortOrder}
                 status={isSortOrderDuplicate ? 'error' : undefined}
                 onChange={setSortOrder}
+                disabled={isStepCreatedWithWorks}
               />
 
               {isSortOrderDuplicate && (
@@ -306,6 +358,7 @@ function ProductionProductStepWorkCreateDrawer({
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Вкажіть назву етапу"
+                disabled={isStepCreatedWithWorks}
               />
             </div>
 
@@ -317,13 +370,81 @@ function ProductionProductStepWorkCreateDrawer({
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="Опис етапу"
+                disabled={isStepCreatedWithWorks}
               />
             </div>
+            {isWorkTrackingMode && (
+              <Flex justify="space-between" align="center" gap={12}>
+                <Text>Додати перелік робіт до етапу</Text>
+
+                <Switch
+                  checked={addWorksToStep}
+                  checkedChildren="Так"
+                  unCheckedChildren="Ні"
+                  disabled={Boolean(createdStep)}
+                  onChange={setAddWorksToStep}
+                />
+              </Flex>
+            )}
             {submitError && (
               <Alert type="error" showIcon message={submitError} />
             )}
           </Flex>
         </Card>
+        {isStepCreatedWithWorks && (
+          <>
+            <Card title="3. Поточний перелік робіт етапу">
+              <Table
+                rowKey="id"
+                columns={workColumns}
+                dataSource={currentWorks}
+                pagination={false}
+                size="small"
+                tableLayout="fixed"
+                locale={{
+                  emptyText: 'Роботи поки відсутні.',
+                }}
+              />
+            </Card>
+
+            <Card title="4. Створення робочого процесу">
+              <Flex vertical gap={14}>
+                <div>
+                  <Text style={compactLabelStyle}>Порядковий номер роботи</Text>
+
+                  <InputNumber
+                    min={1}
+                    precision={0}
+                    style={{ width: 180 }}
+                    value={workSortOrder}
+                    onChange={setWorkSortOrder}
+                  />
+                </div>
+
+                <div>
+                  <Text style={compactLabelStyle}>Назва роботи</Text>
+
+                  <Input
+                    value={workName}
+                    onChange={(event) => setWorkName(event.target.value)}
+                    placeholder="Вкажіть назву роботи"
+                  />
+                </div>
+
+                <div>
+                  <Text style={compactLabelStyle}>Опис роботи</Text>
+
+                  <TextArea
+                    rows={5}
+                    value={workDescription}
+                    onChange={(event) => setWorkDescription(event.target.value)}
+                    placeholder="Опис роботи"
+                  />
+                </div>
+              </Flex>
+            </Card>
+          </>
+        )}
 
         <Flex justify="space-between" align="center" gap={12} wrap>
           <Button
@@ -335,16 +456,22 @@ function ProductionProductStepWorkCreateDrawer({
             Закрити
           </Button>
 
-          <Button
-            type="primary"
-            loading={saving}
-            disabled={!canCreateStep}
-            onClick={() => {
-              void handleCreateStep();
-            }}
-          >
-            Створити етап
-          </Button>
+          {isStepCreatedWithWorks ? (
+            <Button type="primary" disabled>
+              Додати роботу
+            </Button>
+          ) : (
+            <Button
+              type="primary"
+              loading={saving}
+              disabled={!canCreateStep}
+              onClick={() => {
+                void handleCreateStep();
+              }}
+            >
+              Створити етап
+            </Button>
+          )}
         </Flex>
       </Flex>
     </Drawer>

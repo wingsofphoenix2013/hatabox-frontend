@@ -19,6 +19,7 @@ import {
   Row,
   Skeleton,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import { useParams } from 'react-router-dom';
@@ -194,9 +195,11 @@ function ProductionProductDetailPage() {
 
               {product.development_status === 'finished' &&
                 !product.is_base_modification && (
-                  <Button block type="primary" icon={<CheckCircleOutlined />}>
-                    Зробити базовою версією
-                  </Button>
+                  <Tooltip title="Функціонал перебуває в стадії розробки">
+                    <Button block type="primary" icon={<CheckCircleOutlined />}>
+                      Зробити базовою версією
+                    </Button>
+                  </Tooltip>
                 )}
 
               {!(
@@ -210,41 +213,49 @@ function ProductionProductDetailPage() {
                   icon={<SettingOutlined style={{ color: '#1677ff' }} />}
                   onClick={() => setIsStepWorkCreateDrawerOpen(true)}
                 >
-                  Додати етап
+                  Налаштування етапів
                 </Button>
               )}
 
-              <Button
-                block
-                icon={<FileTextOutlined style={{ color: '#1677ff' }} />}
-              >
-                Загальна комплектація
-              </Button>
+              <Tooltip title="Функціонал перебуває в стадії розробки">
+                <Button
+                  block
+                  icon={<FileTextOutlined style={{ color: '#1677ff' }} />}
+                >
+                  Загальна комплектація
+                </Button>
+              </Tooltip>
 
-              <Button
-                block
-                icon={<FileImageOutlined style={{ color: '#1677ff' }} />}
-              >
-                Галерея продукту
-              </Button>
+              <Tooltip title="Функціонал перебуває в стадії розробки">
+                <Button
+                  block
+                  icon={<FileImageOutlined style={{ color: '#1677ff' }} />}
+                >
+                  Галерея продукту
+                </Button>
+              </Tooltip>
 
-              <Button
-                block
-                icon={<PrinterOutlined style={{ color: '#1677ff' }} />}
-              >
-                Роздрукувати комплектацію
-              </Button>
+              <Tooltip title="Функціонал перебуває в стадії розробки">
+                <Button
+                  block
+                  icon={<PrinterOutlined style={{ color: '#1677ff' }} />}
+                >
+                  Роздрукувати комплектацію
+                </Button>
+              </Tooltip>
               {product.development_status === 'finished' &&
                 product.is_base_modification && (
                   <>
                     <Divider dashed style={{ margin: '8px 0' }} />
 
-                    <Button
-                      block
-                      icon={<CopyOutlined style={{ color: '#1677ff' }} />}
-                    >
-                      Зробити дублікат
-                    </Button>
+                    <Tooltip title="Функціонал перебуває в стадії розробки">
+                      <Button
+                        block
+                        icon={<CopyOutlined style={{ color: '#1677ff' }} />}
+                      >
+                        Зробити дублікат
+                      </Button>
+                    </Tooltip>
                   </>
                 )}
 

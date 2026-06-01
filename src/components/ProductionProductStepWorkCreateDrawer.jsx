@@ -54,6 +54,7 @@ function ProductionProductStepWorkCreateDrawer({
   const [workSortOrder, setWorkSortOrder] = useState(null);
   const [workName, setWorkName] = useState('');
   const [workDescription, setWorkDescription] = useState('');
+  const [editingWork, setEditingWork] = useState(null);
   const [savingWork, setSavingWork] = useState(false);
   const [workSubmitError, setWorkSubmitError] = useState('');
   const [reorderingWorks, setReorderingWorks] = useState(false);
@@ -95,6 +96,7 @@ function ProductionProductStepWorkCreateDrawer({
     setWorkSortOrder(null);
     setWorkName('');
     setWorkDescription('');
+    setEditingWork(null);
     setSavingWork(false);
     setWorkSubmitError('');
     setReorderingWorks(false);
@@ -171,6 +173,7 @@ function ProductionProductStepWorkCreateDrawer({
     setWorkSortOrder(null);
     setWorkName('');
     setWorkDescription('');
+    setEditingWork(null);
   };
 
   const handleSelectStepForEdit = (step) => {
@@ -185,6 +188,7 @@ function ProductionProductStepWorkCreateDrawer({
     setWorkSortOrder(null);
     setWorkName('');
     setWorkDescription('');
+    setEditingWork(null);
   };
 
   const handleUpdateStep = async () => {
@@ -348,6 +352,7 @@ function ProductionProductStepWorkCreateDrawer({
       );
       setWorkName('');
       setWorkDescription('');
+      setEditingWork(null);
       setWorkSubmitError('');
 
       setCreatedStep((prev) =>
@@ -378,6 +383,69 @@ function ProductionProductStepWorkCreateDrawer({
       ]);
 
       setWorkSubmitError(backendMessage || 'Не вдалося додати роботу.');
+    } finally {
+      setSavingWork(false);
+    }
+  };
+
+  const handleSelectWorkForEdit = (work) => {
+    setEditingWork(work);
+    setWorkSortOrder(work.sort_order ?? null);
+    setWorkName(work.name || '');
+    setWorkDescription(work.description || '');
+    setWorkSubmitError('');
+  };
+
+  const handleUpdateWork = async () => {
+    if (!editingWork?.id || !String(workName).trim() || savingWork) {
+      return;
+    }
+
+    try {
+      setSavingWork(true);
+      setWorkSubmitError('');
+
+      const response = await api.patch(`product-works/${editingWork.id}/`, {
+        name: workName.trim(),
+        description: workDescription.trim(),
+      });
+
+      const updatedWork = response.data || null;
+
+      if (updatedWork) {
+        setCreatedStep((prev) =>
+          prev
+            ? {
+                ...prev,
+                works: (Array.isArray(prev.works) ? prev.works : []).map(
+                  (work) => (work.id === updatedWork.id ? updatedWork : work),
+                ),
+              }
+            : prev,
+        );
+      }
+
+      message.success('Роботу оновлено.');
+
+      if (onCompleted) {
+        await onCompleted();
+      }
+
+      setEditingWork(null);
+      setWorkSortOrder(suggestedWorkSortOrder);
+      setWorkName('');
+      setWorkDescription('');
+      setEditingWork(null);
+      setWorkSubmitError('');
+    } catch (err) {
+      console.error('Failed to update product work:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'name',
+        'description',
+      ]);
+
+      setWorkSubmitError(backendMessage || 'Не вдалося оновити роботу.');
     } finally {
       setSavingWork(false);
     }
@@ -623,6 +691,24 @@ function ProductionProductStepWorkCreateDrawer({
         </Flex>
       ),
     },
+    {
+      title: '',
+      key: 'edit',
+      width: 48,
+      align: 'center',
+      render: (_, record) => (
+        <Tooltip title="Редагувати інформацію про роботу">
+          <EditOutlined
+            style={{
+              color: '#595959',
+              cursor: 'pointer',
+              fontSize: 16,
+            }}
+            onClick={() => handleSelectWorkForEdit(record)}
+          />
+        </Tooltip>
+      ),
+    },
   ];
 
   return (
@@ -755,7 +841,13 @@ function ProductionProductStepWorkCreateDrawer({
               />
             </Card>
 
-            <Card title="4. Створення робочого процесу">
+            <Card
+              title={
+                editingWork
+                  ? '4. Редагування робочого процесу'
+                  : '4. Створення робочого процесу'
+              }
+            >
               <Flex vertical gap={14}>
                 <div>
                   <Text style={compactLabelStyle}>Порядковий номер роботи</Text>
@@ -767,6 +859,7 @@ function ProductionProductStepWorkCreateDrawer({
                     value={workSortOrder}
                     status={isWorkSortOrderDuplicate ? 'error' : undefined}
                     onChange={setWorkSortOrder}
+                    disabled={Boolean(editingWork)}
                   />
 
                   {isWorkSortOrderDuplicate && (
@@ -833,12 +926,22 @@ function ProductionProductStepWorkCreateDrawer({
             <Button
               type="primary"
               loading={savingWork}
-              disabled={!canCreateWork}
+              disabled={
+                editingWork
+                  ? !editingWork?.id || !String(workName).trim() || savingWork
+                  : !canCreateWork
+              }
               onClick={() => {
+                if (editingWork) {
+                  void handleUpdateWork();
+
+                  return;
+                }
+
                 void handleCreateWork();
               }}
             >
-              Додати роботу
+              {editingWork ? 'Зберегти роботу' : 'Додати роботу'}
             </Button>
           ) : (
             <Button

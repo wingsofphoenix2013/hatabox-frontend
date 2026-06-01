@@ -130,6 +130,12 @@ function ProductionProductStepWorkCreateDrawer({
     ? Math.max(...currentWorks.map((work) => Number(work.sort_order) || 0)) + 1
     : 1;
 
+  useEffect(() => {
+    if (isStepCreatedWithWorks && workSortOrder === null) {
+      setWorkSortOrder(suggestedWorkSortOrder);
+    }
+  }, [isStepCreatedWithWorks, workSortOrder, suggestedWorkSortOrder]);
+
   const isWorkSortOrderDuplicate =
     workSortOrder !== null &&
     workSortOrder !== undefined &&
@@ -262,6 +268,15 @@ function ProductionProductStepWorkCreateDrawer({
 
       const nextWork = response.data || null;
 
+      setWorkSortOrder(
+        nextWork?.sort_order !== undefined && nextWork?.sort_order !== null
+          ? Number(nextWork.sort_order) + 1
+          : suggestedWorkSortOrder + 1,
+      );
+      setWorkName('');
+      setWorkDescription('');
+      setWorkSubmitError('');
+
       setCreatedStep((prev) =>
         prev
           ? {
@@ -279,11 +294,6 @@ function ProductionProductStepWorkCreateDrawer({
       if (onCompleted) {
         await onCompleted();
       }
-
-      setWorkName('');
-      setWorkDescription('');
-      setWorkSubmitError('');
-      setWorkSortOrder(suggestedWorkSortOrder + 1);
     } catch (err) {
       console.error('Failed to create product work:', err);
 

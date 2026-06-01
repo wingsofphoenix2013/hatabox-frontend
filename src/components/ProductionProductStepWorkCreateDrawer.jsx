@@ -112,6 +112,7 @@ function ProductionProductStepWorkCreateDrawer({
 
   const isSortOrderDuplicate =
     !isStepCreatedWithWorks &&
+    !isEditingStep &&
     sortOrder !== null &&
     sortOrder !== undefined &&
     usedSortOrders.has(Number(sortOrder));
@@ -446,7 +447,9 @@ function ProductionProductStepWorkCreateDrawer({
       render: (value) => (
         <Text
           type={
-            !isStepCreatedWithWorks && Number(value) === Number(sortOrder)
+            !isStepCreatedWithWorks &&
+            !isEditingStep &&
+            Number(value) === Number(sortOrder)
               ? 'danger'
               : undefined
           }
@@ -464,6 +467,7 @@ function ProductionProductStepWorkCreateDrawer({
           <Text
             type={
               !isStepCreatedWithWorks &&
+              !isEditingStep &&
               Number(record.sort_order) === Number(sortOrder)
                 ? 'danger'
                 : undefined
@@ -650,6 +654,7 @@ function ProductionProductStepWorkCreateDrawer({
 
               if (
                 !isStepCreatedWithWorks &&
+                !isEditingStep &&
                 Number(record.sort_order) === Number(sortOrder)
               ) {
                 return 'ant-table-row-selected';

@@ -149,6 +149,7 @@ function ProductionProductStepWorkCreateDrawer({
   }, [isStepCreatedWithWorks, workSortOrder, suggestedWorkSortOrder]);
 
   const isWorkSortOrderDuplicate =
+    !editingWork &&
     workSortOrder !== null &&
     workSortOrder !== undefined &&
     usedWorkSortOrders.has(Number(workSortOrder));
@@ -652,6 +653,24 @@ function ProductionProductStepWorkCreateDrawer({
       ),
     },
     {
+      title: '',
+      key: 'edit',
+      width: 48,
+      align: 'center',
+      render: (_, record) => (
+        <Tooltip title="Редагувати інформацію про роботу">
+          <EditOutlined
+            style={{
+              color: '#595959',
+              cursor: 'pointer',
+              fontSize: 16,
+            }}
+            onClick={() => handleSelectWorkForEdit(record)}
+          />
+        </Tooltip>
+      ),
+    },
+    {
       title: <HolderOutlined />,
       key: 'reorder',
       width: 96,
@@ -689,24 +708,6 @@ function ProductionProductStepWorkCreateDrawer({
             }}
           />
         </Flex>
-      ),
-    },
-    {
-      title: '',
-      key: 'edit',
-      width: 48,
-      align: 'center',
-      render: (_, record) => (
-        <Tooltip title="Редагувати інформацію про роботу">
-          <EditOutlined
-            style={{
-              color: '#595959',
-              cursor: 'pointer',
-              fontSize: 16,
-            }}
-            onClick={() => handleSelectWorkForEdit(record)}
-          />
-        </Tooltip>
       ),
     },
   ];
@@ -838,6 +839,11 @@ function ProductionProductStepWorkCreateDrawer({
                 locale={{
                   emptyText: 'Роботи поки відсутні.',
                 }}
+                rowClassName={(record) =>
+                  editingWork && record.id === editingWork.id
+                    ? 'ant-table-row-selected'
+                    : ''
+                }
               />
             </Card>
 

@@ -50,6 +50,8 @@ function ProductionProductDetailPage() {
   const [error, setError] = useState('');
   const [isStepWorkCreateDrawerOpen, setIsStepWorkCreateDrawerOpen] =
     useState(false);
+  const [expandedStepDescriptionId, setExpandedStepDescriptionId] =
+    useState(null);
 
   useEffect(() => {
     loadProduct();
@@ -122,14 +124,46 @@ function ProductionProductDetailPage() {
 
   const steps = Array.isArray(product.steps) ? product.steps : [];
 
+  const getStepDescriptionPreview = (value, maxLength = 220) => {
+    if (!value) return '—';
+
+    if (value.length <= maxLength) {
+      return value;
+    }
+
+    return `${value.slice(0, maxLength).trim()}...`;
+  };
+
   const stepDescriptionColumns = [
     {
       title: '',
       dataIndex: 'description',
       key: 'description',
-      render: (value) => (
-        <Text style={{ whiteSpace: 'pre-wrap' }}>{value || '—'}</Text>
-      ),
+      render: (value, record) => {
+        const isExpanded = expandedStepDescriptionId === record.id;
+        const hasLongDescription = value && value.length > 220;
+
+        return (
+          <Flex vertical gap={6}>
+            <Text style={{ whiteSpace: 'pre-wrap' }}>
+              {isExpanded ? value || '—' : getStepDescriptionPreview(value)}
+            </Text>
+
+            {hasLongDescription && (
+              <Button
+                type="link"
+                size="small"
+                style={{ paddingInline: 0, width: 'fit-content' }}
+                onClick={() =>
+                  setExpandedStepDescriptionId(isExpanded ? null : record.id)
+                }
+              >
+                {isExpanded ? 'Приховати повний опис' : 'Бачити повний опис'}
+              </Button>
+            )}
+          </Flex>
+        );
+      },
     },
   ];
 
@@ -336,6 +370,7 @@ function ProductionProductDetailPage() {
                                 color: '#595959',
                                 paddingInline: 0,
                               }}
+                              onClick={() => setExpandedStepDescriptionId(null)}
                             >
                               Інформація
                             </Button>
@@ -358,6 +393,7 @@ function ProductionProductDetailPage() {
                               color: '#595959',
                               paddingInline: 0,
                             }}
+                            onClick={() => setExpandedStepDescriptionId(null)}
                           >
                             Роботи етапу
                           </Button>
@@ -371,6 +407,7 @@ function ProductionProductDetailPage() {
                             color: '#595959',
                             paddingInline: 0,
                           }}
+                          onClick={() => setExpandedStepDescriptionId(null)}
                         >
                           Налаштування етапу
                         </Button>

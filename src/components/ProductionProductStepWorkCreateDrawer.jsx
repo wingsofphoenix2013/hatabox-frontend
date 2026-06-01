@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { DownOutlined, HolderOutlined, UpOutlined } from '@ant-design/icons';
+import {
+  DownOutlined,
+  HolderOutlined,
+  ToolOutlined,
+  UpOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -148,6 +153,19 @@ function ProductionProductStepWorkCreateDrawer({
     String(workName).trim() &&
     !isWorkSortOrderDuplicate &&
     !savingWork;
+
+  const handleSelectStepForWorks = (step) => {
+    setCreatedStep(step);
+    setAddWorksToStep(true);
+    setSortOrder(step.sort_order ?? null);
+    setName(step.name || '');
+    setDescription(step.description || '');
+    setSubmitError('');
+    setWorkSubmitError('');
+    setWorkSortOrder(null);
+    setWorkName('');
+    setWorkDescription('');
+  };
 
   const handleCreateStep = async () => {
     if (!canCreateStep) {
@@ -388,16 +406,37 @@ function ProductionProductStepWorkCreateDrawer({
       dataIndex: 'name',
       key: 'name',
       render: (value, record) => (
-        <Text
-          type={
-            !isStepCreatedWithWorks &&
-            Number(record.sort_order) === Number(sortOrder)
-              ? 'danger'
-              : undefined
-          }
-        >
-          {value || '—'}
-        </Text>
+        <Flex justify="space-between" align="center" gap={12}>
+          <Text
+            type={
+              !isStepCreatedWithWorks &&
+              Number(record.sort_order) === Number(sortOrder)
+                ? 'danger'
+                : undefined
+            }
+            style={{
+              minWidth: 0,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={value || '—'}
+          >
+            {value || '—'}
+          </Text>
+
+          {isWorkTrackingMode && (
+            <Button
+              size="small"
+              type="link"
+              icon={<ToolOutlined />}
+              onClick={() => handleSelectStepForWorks(record)}
+              style={{ paddingInline: 0, flex: '0 0 auto' }}
+            >
+              Роботи етапу
+            </Button>
+          )}
+        </Flex>
       ),
     },
     {
@@ -545,7 +584,13 @@ function ProductionProductStepWorkCreateDrawer({
           />
         </Card>
 
-        <Card title="2. Створення етапу">
+        <Card
+          title={
+            isStepCreatedWithWorks
+              ? '2. Інформація про етап'
+              : '2. Створення етапу'
+          }
+        >
           <Flex vertical gap={14}>
             <div>
               <Text style={compactLabelStyle}>Порядковий номер етапу</Text>

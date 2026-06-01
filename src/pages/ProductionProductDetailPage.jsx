@@ -68,6 +68,15 @@ function ProductionProductDetailPage() {
     }
   };
 
+  const refreshProduct = async () => {
+    try {
+      const response = await api.get(`products/${id}/`);
+      setProduct(response.data || null);
+    } catch (err) {
+      console.error('Failed to refresh product detail page:', err);
+    }
+  };
+
   const handleFinishDevelopment = async () => {
     try {
       setLoading(true);
@@ -288,7 +297,7 @@ function ProductionProductDetailPage() {
         open={isStepWorkCreateDrawerOpen}
         onClose={() => setIsStepWorkCreateDrawerOpen(false)}
         product={product}
-        onCompleted={loadProduct}
+        onCompleted={refreshProduct}
       />
     </div>
   );

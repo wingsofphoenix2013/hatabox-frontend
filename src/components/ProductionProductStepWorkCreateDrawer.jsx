@@ -46,6 +46,9 @@ function ProductionProductStepWorkCreateDrawer({
   const [workSortOrder, setWorkSortOrder] = useState(null);
   const [workName, setWorkName] = useState('');
   const [workDescription, setWorkDescription] = useState('');
+  const [savingWork, setSavingWork] = useState(false);
+  const [workSubmitError, setWorkSubmitError] = useState('');
+  const [reorderingWorks, setReorderingWorks] = useState(false);
 
   const steps = useMemo(() => {
     return Array.isArray(product?.steps)
@@ -83,6 +86,9 @@ function ProductionProductStepWorkCreateDrawer({
     setWorkSortOrder(null);
     setWorkName('');
     setWorkDescription('');
+    setSavingWork(false);
+    setWorkSubmitError('');
+    setReorderingWorks(false);
   };
 
   useEffect(() => {
@@ -111,8 +117,31 @@ function ProductionProductStepWorkCreateDrawer({
     !saving;
 
   const currentWorks = Array.isArray(createdStep?.works)
-    ? createdStep.works
+    ? [...createdStep.works].sort(
+        (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0),
+      )
     : [];
+
+  const usedWorkSortOrders = new Set(
+    currentWorks.map((work) => Number(work.sort_order)),
+  );
+
+  const suggestedWorkSortOrder = currentWorks.length
+    ? Math.max(...currentWorks.map((work) => Number(work.sort_order) || 0)) + 1
+    : 1;
+
+  const isWorkSortOrderDuplicate =
+    workSortOrder !== null &&
+    workSortOrder !== undefined &&
+    usedWorkSortOrders.has(Number(workSortOrder));
+
+  const canCreateWork =
+    createdStep?.id &&
+    workSortOrder !== null &&
+    workSortOrder !== undefined &&
+    String(workName).trim() &&
+    !isWorkSortOrderDuplicate &&
+    !savingWork;
 
   const handleCreateStep = async () => {
     if (!canCreateStep) {
@@ -208,6 +237,123 @@ function ProductionProductStepWorkCreateDrawer({
     void handleReorderSteps(nextSteps);
   };
 
+  const resetWorkForm = () => {
+    setWorkSortOrder(suggestedWorkSortOrder);
+    setWorkName('');
+    setWorkDescription('');
+    setWorkSubmitError('');
+  };
+
+  const handleCreateWork = async () => {
+    if (!canCreateWork) {
+      return;
+    }
+
+    try {
+      setSavingWork(true);
+      setWorkSubmitError('');
+
+      const response = await api.post('product-works/', {
+        product_step: createdStep.id,
+        name: workName.trim(),
+        sort_order: workSortOrder,
+        description: workDescription.trim(),
+      });
+
+      const nextWork = response.data || null;
+
+      setCreatedStep((prev) =>
+        prev
+          ? {
+              ...prev,
+              works: [
+                ...(Array.isArray(prev.works) ? prev.works : []),
+                nextWork,
+              ],
+            }
+          : prev,
+      );
+
+      message.success('Роботу додано.');
+
+      if (onCompleted) {
+        await onCompleted();
+      }
+
+      setWorkName('');
+      setWorkDescription('');
+      setWorkSubmitError('');
+      setWorkSortOrder(suggestedWorkSortOrder + 1);
+    } catch (err) {
+      console.error('Failed to create product work:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'product_step',
+        'name',
+        'sort_order',
+        'description',
+      ]);
+
+      setWorkSubmitError(backendMessage || 'Не вдалося додати роботу.');
+    } finally {
+      setSavingWork(false);
+    }
+  };
+
+  const handleReorderWorks = async (nextWorks) => {
+    try {
+      setReorderingWorks(true);
+      resetWorkForm();
+
+      await api.post('product-works/reorder/', {
+        works: nextWorks.map((work) => work.id),
+      });
+
+      setCreatedStep((prev) =>
+        prev
+          ? {
+              ...prev,
+              works: nextWorks.map((work, index) => ({
+                ...work,
+                sort_order: (index + 1) * 10,
+              })),
+            }
+          : prev,
+      );
+
+      message.success('Порядок робіт оновлено.');
+
+      if (onCompleted) {
+        await onCompleted();
+      }
+    } catch (err) {
+      console.error('Failed to reorder product works:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, ['works']);
+      message.error(backendMessage || 'Не вдалося змінити порядок робіт.');
+    } finally {
+      setReorderingWorks(false);
+    }
+  };
+
+  const moveWork = (workId, direction) => {
+    if (reorderingWorks) return;
+
+    const currentIndex = currentWorks.findIndex((work) => work.id === workId);
+
+    if (currentIndex === -1) return;
+
+    const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    if (nextIndex < 0 || nextIndex >= currentWorks.length) return;
+
+    const nextWorks = [...currentWorks];
+    const [movedWork] = nextWorks.splice(currentIndex, 1);
+    nextWorks.splice(nextIndex, 0, movedWork);
+
+    void handleReorderWorks(nextWorks);
+  };
+
   const stepColumns = [
     {
       title: '№',
@@ -292,20 +438,69 @@ function ProductionProductStepWorkCreateDrawer({
       key: 'sort_order',
       width: 80,
       align: 'center',
-      render: (value) => value ?? '—',
+      render: (value) => (
+        <Text
+          type={Number(value) === Number(workSortOrder) ? 'danger' : undefined}
+        >
+          {value ?? '—'}
+        </Text>
+      ),
     },
     {
       title: 'Назва',
       dataIndex: 'name',
       key: 'name',
-      render: (value) => value || '—',
+      render: (value, record) => (
+        <Text
+          type={
+            Number(record.sort_order) === Number(workSortOrder)
+              ? 'danger'
+              : undefined
+          }
+        >
+          {value || '—'}
+        </Text>
+      ),
     },
     {
       title: <HolderOutlined />,
       key: 'reorder',
       width: 96,
       align: 'center',
-      render: () => <HolderOutlined style={{ color: '#bfbfbf' }} />,
+      render: (_, record, index) => (
+        <Flex justify="center" gap={10}>
+          <UpOutlined
+            style={{
+              color: index === 0 || reorderingWorks ? '#d9d9d9' : '#1677ff',
+              cursor:
+                index === 0 || reorderingWorks ? 'not-allowed' : 'pointer',
+            }}
+            onClick={() => {
+              if (index > 0 && !reorderingWorks) {
+                moveWork(record.id, 'up');
+              }
+            }}
+          />
+
+          <DownOutlined
+            style={{
+              color:
+                index === currentWorks.length - 1 || reorderingWorks
+                  ? '#d9d9d9'
+                  : '#1677ff',
+              cursor:
+                index === currentWorks.length - 1 || reorderingWorks
+                  ? 'not-allowed'
+                  : 'pointer',
+            }}
+            onClick={() => {
+              if (index < currentWorks.length - 1 && !reorderingWorks) {
+                moveWork(record.id, 'down');
+              }
+            }}
+          />
+        </Flex>
+      ),
     },
   ];
 
@@ -412,6 +607,7 @@ function ProductionProductStepWorkCreateDrawer({
                 rowKey="id"
                 columns={workColumns}
                 dataSource={currentWorks}
+                loading={reorderingWorks}
                 pagination={false}
                 size="small"
                 tableLayout="fixed"
@@ -431,8 +627,18 @@ function ProductionProductStepWorkCreateDrawer({
                     precision={0}
                     style={{ width: 180 }}
                     value={workSortOrder}
+                    status={isWorkSortOrderDuplicate ? 'error' : undefined}
                     onChange={setWorkSortOrder}
                   />
+
+                  {isWorkSortOrderDuplicate && (
+                    <Alert
+                      type="error"
+                      showIcon
+                      message="Такий номер роботи вже використовується."
+                      style={{ marginTop: 10 }}
+                    />
+                  )}
                 </div>
 
                 <div>
@@ -455,6 +661,10 @@ function ProductionProductStepWorkCreateDrawer({
                     placeholder="Опис роботи"
                   />
                 </div>
+
+                {workSubmitError && (
+                  <Alert type="error" showIcon message={workSubmitError} />
+                )}
               </Flex>
             </Card>
           </>
@@ -471,7 +681,14 @@ function ProductionProductStepWorkCreateDrawer({
           </Button>
 
           {isStepCreatedWithWorks ? (
-            <Button type="primary" disabled>
+            <Button
+              type="primary"
+              loading={savingWork}
+              disabled={!canCreateWork}
+              onClick={() => {
+                void handleCreateWork();
+              }}
+            >
               Додати роботу
             </Button>
           ) : (

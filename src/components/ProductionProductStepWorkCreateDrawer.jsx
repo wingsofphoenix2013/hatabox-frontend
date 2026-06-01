@@ -90,7 +90,7 @@ function ProductionProductStepWorkCreateDrawer({
       resetForm();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, suggestedSortOrder]);
+  }, [open]);
 
   const isSortOrderDuplicate =
     sortOrder !== null &&
@@ -133,17 +133,22 @@ function ProductionProductStepWorkCreateDrawer({
 
       message.success('Етап створено.');
 
-      if (onCompleted) {
-        await onCompleted();
-      }
-
       if (isWorkTrackingMode && addWorksToStep) {
         setCreatedStep(nextCreatedStep);
+
+        if (onCompleted) {
+          await onCompleted();
+        }
+
         return;
       }
 
       resetForm();
       onClose();
+
+      if (onCompleted) {
+        await onCompleted();
+      }
     } catch (err) {
       console.error('Failed to create product step:', err);
 
@@ -341,7 +346,7 @@ function ProductionProductStepWorkCreateDrawer({
                 disabled={isStepCreatedWithWorks}
               />
 
-              {isSortOrderDuplicate && (
+              {isSortOrderDuplicate && !isStepCreatedWithWorks && (
                 <Alert
                   type="error"
                   showIcon

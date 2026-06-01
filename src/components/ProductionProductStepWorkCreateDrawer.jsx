@@ -40,7 +40,7 @@ function ProductionProductStepWorkCreateDrawer({
   const [description, setDescription] = useState('');
 
   const resetForm = () => {
-    setSortOrder(null);
+    setSortOrder(suggestedSortOrder);
     setName('');
     setDescription('');
     setSaving(false);
@@ -49,9 +49,13 @@ function ProductionProductStepWorkCreateDrawer({
 
   useEffect(() => {
     if (open) {
-      resetForm();
+      setSortOrder(suggestedSortOrder);
+      setName('');
+      setDescription('');
+      setSaving(false);
+      setSubmitError('');
     }
-  }, [open]);
+  }, [open, suggestedSortOrder]);
 
   const steps = useMemo(() => {
     return Array.isArray(product?.steps)
@@ -65,6 +69,18 @@ function ProductionProductStepWorkCreateDrawer({
     () => new Set(steps.map((step) => Number(step.sort_order))),
     [steps],
   );
+
+  const suggestedSortOrder = useMemo(() => {
+    if (steps.length === 0) {
+      return 1;
+    }
+
+    const maxSortOrder = Math.max(
+      ...steps.map((step) => Number(step.sort_order) || 0),
+    );
+
+    return maxSortOrder + 1;
+  }, [steps]);
 
   const isSortOrderDuplicate =
     sortOrder !== null &&

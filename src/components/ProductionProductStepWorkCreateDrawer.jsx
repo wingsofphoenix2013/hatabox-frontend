@@ -216,7 +216,13 @@ function ProductionProductStepWorkCreateDrawer({
       width: 80,
       align: 'center',
       render: (value) => (
-        <Text type={Number(value) === Number(sortOrder) ? 'danger' : undefined}>
+        <Text
+          type={
+            !isStepCreatedWithWorks && Number(value) === Number(sortOrder)
+              ? 'danger'
+              : undefined
+          }
+        >
           {value ?? '—'}
         </Text>
       ),
@@ -228,6 +234,7 @@ function ProductionProductStepWorkCreateDrawer({
       render: (value, record) => (
         <Text
           type={
+            !isStepCreatedWithWorks &&
             Number(record.sort_order) === Number(sortOrder)
               ? 'danger'
               : undefined
@@ -325,6 +332,7 @@ function ProductionProductStepWorkCreateDrawer({
               emptyText: 'Етапи поки відсутні.',
             }}
             rowClassName={(record) =>
+              !isStepCreatedWithWorks &&
               Number(record.sort_order) === Number(sortOrder)
                 ? 'ant-table-row-selected'
                 : ''

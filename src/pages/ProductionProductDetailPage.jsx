@@ -4,9 +4,11 @@ import {
   CopyOutlined,
   FileImageOutlined,
   FileTextOutlined,
+  InfoCircleOutlined,
   PrinterOutlined,
   SettingOutlined,
   StopOutlined,
+  ToolOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -18,6 +20,7 @@ import {
   Popconfirm,
   Row,
   Skeleton,
+  Table,
   Tag,
   Tooltip,
   Typography,
@@ -118,6 +121,17 @@ function ProductionProductDetailPage() {
   }
 
   const steps = Array.isArray(product.steps) ? product.steps : [];
+
+  const stepDescriptionColumns = [
+    {
+      title: '',
+      dataIndex: 'description',
+      key: 'description',
+      render: (value) => (
+        <Text style={{ whiteSpace: 'pre-wrap' }}>{value || '—'}</Text>
+      ),
+    },
+  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -293,12 +307,77 @@ function ProductionProductDetailPage() {
             {steps.length === 0 ? (
               <Text type="secondary">Етапи поки відсутні</Text>
             ) : (
-              <Flex vertical gap={8}>
-                {steps.map((step) => (
-                  <div key={step.id}>
-                    {step.sort_order}. {step.name}
-                  </div>
-                ))}
+              <Flex vertical gap={16}>
+                {steps.map((step) => {
+                  const works = Array.isArray(step.works) ? step.works : [];
+
+                  return (
+                    <div key={step.id}>
+                      <Table
+                        rowKey={() => `step-${step.id}`}
+                        columns={stepDescriptionColumns}
+                        dataSource={[
+                          { id: step.id, description: step.description },
+                        ]}
+                        pagination={false}
+                        size="small"
+                        showHeader={false}
+                        title={() => (
+                          <Flex justify="space-between" align="center" gap={12}>
+                            <Text strong>
+                              Етап №{step.sort_order}. {step.name || '—'}
+                            </Text>
+
+                            <Button
+                              type="text"
+                              size="small"
+                              icon={<InfoCircleOutlined />}
+                              style={{
+                                color: '#595959',
+                                paddingInline: 0,
+                              }}
+                            >
+                              Інформація
+                            </Button>
+                          </Flex>
+                        )}
+                      />
+
+                      <Flex
+                        justify="flex-end"
+                        align="center"
+                        gap={14}
+                        style={{ marginTop: 6 }}
+                      >
+                        {works.length > 0 && (
+                          <Button
+                            type="text"
+                            size="small"
+                            icon={<ToolOutlined />}
+                            style={{
+                              color: '#595959',
+                              paddingInline: 0,
+                            }}
+                          >
+                            Роботи етапу
+                          </Button>
+                        )}
+
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<SettingOutlined />}
+                          style={{
+                            color: '#595959',
+                            paddingInline: 0,
+                          }}
+                        >
+                          Налаштування етапу
+                        </Button>
+                      </Flex>
+                    </div>
+                  );
+                })}
               </Flex>
             )}
           </Card>

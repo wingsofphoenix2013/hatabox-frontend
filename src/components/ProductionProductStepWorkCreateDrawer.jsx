@@ -630,7 +630,11 @@ function ProductionProductStepWorkCreateDrawer({
       align: 'center',
       render: (value) => (
         <Text
-          type={Number(value) === Number(workSortOrder) ? 'danger' : undefined}
+          type={
+            !editingWork && Number(value) === Number(workSortOrder)
+              ? 'danger'
+              : undefined
+          }
         >
           {value ?? '—'}
         </Text>
@@ -643,7 +647,7 @@ function ProductionProductStepWorkCreateDrawer({
       render: (value, record) => (
         <Text
           type={
-            Number(record.sort_order) === Number(workSortOrder)
+            !editingWork && Number(record.sort_order) === Number(workSortOrder)
               ? 'danger'
               : undefined
           }

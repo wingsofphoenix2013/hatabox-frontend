@@ -215,6 +215,7 @@ function ProductionProductStepDetailPage() {
     {
       title: '№',
       width: 70,
+      align: 'center',
       render: (_, record, index) => {
         if (record.isNew) {
           return (
@@ -277,6 +278,7 @@ function ProductionProductStepDetailPage() {
       title: 'К-сть.',
       key: 'quantity',
       width: 160,
+      align: 'center',
       render: (_, record) => {
         if (record.isNew) {
           return (

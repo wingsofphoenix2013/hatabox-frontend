@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
-import { RollbackOutlined } from '@ant-design/icons';
+import {
+  CloseOutlined,
+  EditOutlined,
+  RollbackOutlined,
+  SaveOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
   Card,
   Col,
   Flex,
+  Input,
   Row,
   Skeleton,
   Typography,
@@ -22,6 +28,9 @@ function ProductionProductStepDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [descriptionValue, setDescriptionValue] = useState('');
+
   useEffect(() => {
     loadStep();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -33,7 +42,9 @@ function ProductionProductStepDetailPage() {
       setError('');
 
       const response = await api.get(`product-steps/${id}/`);
+
       setStep(response.data || null);
+      setDescriptionValue(response.data?.description || '');
     } catch (err) {
       console.error('Failed to load product step detail page:', err);
       setError('Не вдалося завантажити дані етапу.');
@@ -104,8 +115,51 @@ function ProductionProductStepDetailPage() {
         </Col>
 
         <Col xs={24} lg={18}>
-          <Card title="Основна інформація">
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+          <Card
+            title="Основна інформація"
+            extra={
+              isEditingDescription ? (
+                <Flex gap={8}>
+                  <Button
+                    type="text"
+                    icon={<SaveOutlined style={{ color: '#595959' }} />}
+                  >
+                    Зберегти
+                  </Button>
+
+                  <Button
+                    type="text"
+                    icon={<CloseOutlined style={{ color: '#595959' }} />}
+                    onClick={() => {
+                      setDescriptionValue(step.description || '');
+                      setIsEditingDescription(false);
+                    }}
+                  >
+                    Скасувати
+                  </Button>
+                </Flex>
+              ) : (
+                <Button
+                  type="text"
+                  icon={<EditOutlined style={{ color: '#595959' }} />}
+                  onClick={() => setIsEditingDescription(true)}
+                >
+                  Редагувати опис етапу
+                </Button>
+              )
+            }
+          >
+            {isEditingDescription ? (
+              <Input.TextArea
+                value={descriptionValue}
+                onChange={(e) => setDescriptionValue(e.target.value)}
+                autoSize={{ minRows: 4 }}
+              />
+            ) : (
+              <Text style={{ whiteSpace: 'pre-wrap' }}>
+                {step.description || '—'}
+              </Text>
+            )}
           </Card>
         </Col>
       </Row>

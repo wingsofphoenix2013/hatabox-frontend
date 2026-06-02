@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   CloseOutlined,
+  DeleteOutlined,
   EditOutlined,
   RollbackOutlined,
   SaveOutlined,
@@ -12,13 +13,17 @@ import {
   Col,
   Flex,
   Input,
+  InputNumber,
   Row,
   Skeleton,
+  Table,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
@@ -32,6 +37,8 @@ function ProductionProductStepDetailPage() {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState('');
   const [savingDescription, setSavingDescription] = useState(false);
+  const [editingStepItemId, setEditingStepItemId] = useState(null);
+  const [stepItemQuantityValue, setStepItemQuantityValue] = useState(null);
 
   useEffect(() => {
     loadStep();
@@ -55,6 +62,77 @@ function ProductionProductStepDetailPage() {
       setLoading(false);
     }
   };
+
+  const isProductEditable =
+    step.product_development_status === 'in_development';
+
+  const stepItems = Array.isArray(step.step_items) ? step.step_items : [];
+
+  const stepItemColumns = [
+    {
+      title: '№',
+      width: 70,
+      render: (_, record, index) =>
+        editingStepItemId === record.id ? (
+          <DeleteOutlined style={{ color: '#ff4d4f' }} />
+        ) : (
+          index + 1
+        ),
+    },
+    {
+      title: 'Назва',
+      dataIndex: 'inv_item_name',
+      key: 'inv_item_name',
+      render: (value) => value || '—',
+    },
+    {
+      title: 'К-сть.',
+      key: 'quantity',
+      width: 160,
+      render: (_, record) =>
+        editingStepItemId === record.id ? (
+          <InputNumber
+            value={stepItemQuantityValue}
+            min={0}
+            style={{ width: '100%' }}
+            onChange={setStepItemQuantityValue}
+          />
+        ) : (
+          `${formatQuantity(record.quantity)} ${
+            record.inv_item_unit_symbol || ''
+          }`
+        ),
+    },
+    {
+      title: '',
+      key: 'actions',
+      width: 60,
+      align: 'center',
+      render: (_, record) => {
+        if (!isProductEditable) {
+          return (
+            <Tooltip title="Редагування компонентів неможливе у продуктах, які вже завершили розробку.">
+              <EditOutlined style={{ color: '#bfbfbf' }} />
+            </Tooltip>
+          );
+        }
+
+        if (editingStepItemId === record.id) {
+          return <SaveOutlined style={{ color: '#595959' }} />;
+        }
+
+        return (
+          <EditOutlined
+            style={{ color: '#595959', cursor: 'pointer' }}
+            onClick={() => {
+              setEditingStepItemId(record.id);
+              setStepItemQuantityValue(Number(record.quantity) || 0);
+            }}
+          />
+        );
+      },
+    },
+  ];
 
   const handleSaveDescription = async () => {
     try {
@@ -202,6 +280,17 @@ function ProductionProductStepDetailPage() {
               </Flex>
             </Flex>
           </Card>
+          {step.product_work_tracking === false && (
+            <Card title="Комплектація етапу">
+              <Table
+                rowKey="id"
+                columns={stepItemColumns}
+                dataSource={stepItems}
+                pagination={false}
+                size="small"
+              />
+            </Card>
+          )}
         </Col>
       </Row>
     </div>

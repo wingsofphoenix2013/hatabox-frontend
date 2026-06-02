@@ -1,6 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Alert, Card, Col, Flex, Row, Skeleton, Typography } from 'antd';
-import { useParams } from 'react-router-dom';
+import { RollbackOutlined } from '@ant-design/icons';
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Flex,
+  Row,
+  Skeleton,
+  Typography,
+} from 'antd';
+import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
 
 const { Title, Text } = Typography;
@@ -77,7 +87,19 @@ function ProductionProductStepDetailPage() {
       <Row gutter={20} align="top">
         <Col xs={24} lg={6}>
           <Card title="Навігація">
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            <Link
+              to={`/production/products/${step.product_id}`}
+              state={{
+                productCode: step.product_code,
+              }}
+            >
+              <Button
+                block
+                icon={<RollbackOutlined style={{ color: '#1677ff' }} />}
+              >
+                Повернутись до продукту
+              </Button>
+            </Link>
           </Card>
         </Col>
 

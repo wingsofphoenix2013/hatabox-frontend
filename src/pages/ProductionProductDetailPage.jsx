@@ -205,8 +205,8 @@ function ProductionProductDetailPage() {
               )}
             </Flex>
 
-            <Flex justify="flex-end" align="center" gap={8} wrap>
-              {works.length > 0 && (
+            {product.development_status === 'in_development' && (
+              <Flex justify="flex-end" align="center" gap={8} wrap>
                 <Tag
                   style={{
                     marginInlineEnd: 0,
@@ -216,32 +216,34 @@ function ProductionProductDetailPage() {
                   }}
                   onClick={() => {
                     setExpandedStepDescriptionId(null);
-                    setStepWorkDrawerMode('works');
+                    setStepWorkDrawerMode('edit');
                     setSelectedStepForDrawer(record);
                     setIsStepWorkCreateDrawerOpen(true);
                   }}
                 >
-                  <ToolOutlined /> Роботи етапу
+                  <SettingOutlined /> Налаштування етапу
                 </Tag>
-              )}
 
-              <Tag
-                style={{
-                  marginInlineEnd: 0,
-                  cursor: 'pointer',
-                  color: '#595959',
-                  fontSize: 12,
-                }}
-                onClick={() => {
-                  setExpandedStepDescriptionId(null);
-                  setStepWorkDrawerMode('edit');
-                  setSelectedStepForDrawer(record);
-                  setIsStepWorkCreateDrawerOpen(true);
-                }}
-              >
-                <SettingOutlined /> Налаштування етапу
-              </Tag>
-            </Flex>
+                {works.length > 0 && (
+                  <Tag
+                    style={{
+                      marginInlineEnd: 0,
+                      cursor: 'pointer',
+                      color: '#595959',
+                      fontSize: 12,
+                    }}
+                    onClick={() => {
+                      setExpandedStepDescriptionId(null);
+                      setStepWorkDrawerMode('works');
+                      setSelectedStepForDrawer(record);
+                      setIsStepWorkCreateDrawerOpen(true);
+                    }}
+                  >
+                    <ToolOutlined /> Налаштування робіт
+                  </Tag>
+                )}
+              </Flex>
+            )}
           </Flex>
         );
       },

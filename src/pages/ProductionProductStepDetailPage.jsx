@@ -931,6 +931,9 @@ function ProductionProductStepDetailPage() {
                   dataSource={stepItemTableData}
                   pagination={false}
                   size="small"
+                  locale={{
+                    emptyText: 'Компоненти відсутні',
+                  }}
                 />
 
                 {isProductEditable && !isAddingStepItem && (
@@ -1041,6 +1044,9 @@ function ProductionProductStepDetailPage() {
                       dataSource={getWorkItemTableData(work)}
                       pagination={false}
                       size="small"
+                      locale={{
+                        emptyText: 'Компоненти відсутні',
+                      }}
                     />
 
                     {isProductEditable && !addingWorkItemWorkId && (

@@ -151,25 +151,42 @@ function ProductionProductStepDetailPage() {
               )}
 
               <Flex justify="flex-end" gap={8} wrap>
-                {isEditingDescription ? (
-                  <>
-                    <Tag
-                      style={{
-                        marginInlineEnd: 0,
-                        cursor: savingDescription ? 'default' : 'pointer',
-                        color: '#595959',
-                        fontSize: 12,
-                        opacity: savingDescription ? 0.6 : 1,
-                      }}
-                      onClick={() => {
-                        if (!savingDescription) {
-                          handleSaveDescription();
-                        }
-                      }}
-                    >
-                      <SaveOutlined /> Зберегти
-                    </Tag>
+                {step.product_development_status === 'in_development' &&
+                  (isEditingDescription ? (
+                    <>
+                      <Tag
+                        style={{
+                          marginInlineEnd: 0,
+                          cursor: savingDescription ? 'default' : 'pointer',
+                          color: '#595959',
+                          fontSize: 12,
+                          opacity: savingDescription ? 0.6 : 1,
+                        }}
+                        onClick={() => {
+                          if (!savingDescription) {
+                            handleSaveDescription();
+                          }
+                        }}
+                      >
+                        <SaveOutlined /> Зберегти
+                      </Tag>
 
+                      <Tag
+                        style={{
+                          marginInlineEnd: 0,
+                          cursor: 'pointer',
+                          color: '#595959',
+                          fontSize: 12,
+                        }}
+                        onClick={() => {
+                          setDescriptionValue(step.description || '');
+                          setIsEditingDescription(false);
+                        }}
+                      >
+                        <CloseOutlined /> Скасувати
+                      </Tag>
+                    </>
+                  ) : (
                     <Tag
                       style={{
                         marginInlineEnd: 0,
@@ -177,27 +194,11 @@ function ProductionProductStepDetailPage() {
                         color: '#595959',
                         fontSize: 12,
                       }}
-                      onClick={() => {
-                        setDescriptionValue(step.description || '');
-                        setIsEditingDescription(false);
-                      }}
+                      onClick={() => setIsEditingDescription(true)}
                     >
-                      <CloseOutlined /> Скасувати
+                      <EditOutlined /> Редагувати опис етапу
                     </Tag>
-                  </>
-                ) : (
-                  <Tag
-                    style={{
-                      marginInlineEnd: 0,
-                      cursor: 'pointer',
-                      color: '#595959',
-                      fontSize: 12,
-                    }}
-                    onClick={() => setIsEditingDescription(true)}
-                  >
-                    <EditOutlined /> Редагувати опис етапу
-                  </Tag>
-                )}
+                  ))}
               </Flex>
             </Flex>
           </Card>

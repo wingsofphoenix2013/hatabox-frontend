@@ -14,6 +14,7 @@ import {
   Input,
   Row,
   Skeleton,
+  Tag,
   Typography,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
@@ -30,6 +31,7 @@ function ProductionProductStepDetailPage() {
 
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState('');
+  const [savingDescription, setSavingDescription] = useState(false);
 
   useEffect(() => {
     loadStep();
@@ -51,6 +53,25 @@ function ProductionProductStepDetailPage() {
       setStep(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveDescription = async () => {
+    try {
+      setSavingDescription(true);
+
+      const response = await api.patch(`product-steps/${id}/`, {
+        description: descriptionValue,
+      });
+
+      setStep(response.data || null);
+      setDescriptionValue(response.data?.description || '');
+      setIsEditingDescription(false);
+    } catch (err) {
+      console.error('Failed to update product step description:', err);
+      setError('Не вдалося оновити опис етапу.');
+    } finally {
+      setSavingDescription(false);
     }
   };
 
@@ -115,51 +136,70 @@ function ProductionProductStepDetailPage() {
         </Col>
 
         <Col xs={24} lg={18}>
-          <Card
-            title="Основна інформація"
-            extra={
-              isEditingDescription ? (
-                <Flex gap={8}>
-                  <Button
-                    type="text"
-                    icon={<SaveOutlined style={{ color: '#595959' }} />}
-                  >
-                    Зберегти
-                  </Button>
-
-                  <Button
-                    type="text"
-                    icon={<CloseOutlined style={{ color: '#595959' }} />}
-                    onClick={() => {
-                      setDescriptionValue(step.description || '');
-                      setIsEditingDescription(false);
-                    }}
-                  >
-                    Скасувати
-                  </Button>
-                </Flex>
+          <Card title="Основна інформація">
+            <Flex vertical gap={10}>
+              {isEditingDescription ? (
+                <Input.TextArea
+                  value={descriptionValue}
+                  onChange={(e) => setDescriptionValue(e.target.value)}
+                  autoSize={{ minRows: 4 }}
+                />
               ) : (
-                <Button
-                  type="text"
-                  icon={<EditOutlined style={{ color: '#595959' }} />}
-                  onClick={() => setIsEditingDescription(true)}
-                >
-                  Редагувати опис етапу
-                </Button>
-              )
-            }
-          >
-            {isEditingDescription ? (
-              <Input.TextArea
-                value={descriptionValue}
-                onChange={(e) => setDescriptionValue(e.target.value)}
-                autoSize={{ minRows: 4 }}
-              />
-            ) : (
-              <Text style={{ whiteSpace: 'pre-wrap' }}>
-                {step.description || '—'}
-              </Text>
-            )}
+                <Text style={{ whiteSpace: 'pre-wrap' }}>
+                  {step.description || '—'}
+                </Text>
+              )}
+
+              <Flex justify="flex-end" gap={8} wrap>
+                {isEditingDescription ? (
+                  <>
+                    <Tag
+                      style={{
+                        marginInlineEnd: 0,
+                        cursor: savingDescription ? 'default' : 'pointer',
+                        color: '#595959',
+                        fontSize: 12,
+                        opacity: savingDescription ? 0.6 : 1,
+                      }}
+                      onClick={() => {
+                        if (!savingDescription) {
+                          handleSaveDescription();
+                        }
+                      }}
+                    >
+                      <SaveOutlined /> Зберегти
+                    </Tag>
+
+                    <Tag
+                      style={{
+                        marginInlineEnd: 0,
+                        cursor: 'pointer',
+                        color: '#595959',
+                        fontSize: 12,
+                      }}
+                      onClick={() => {
+                        setDescriptionValue(step.description || '');
+                        setIsEditingDescription(false);
+                      }}
+                    >
+                      <CloseOutlined /> Скасувати
+                    </Tag>
+                  </>
+                ) : (
+                  <Tag
+                    style={{
+                      marginInlineEnd: 0,
+                      cursor: 'pointer',
+                      color: '#595959',
+                      fontSize: 12,
+                    }}
+                    onClick={() => setIsEditingDescription(true)}
+                  >
+                    <EditOutlined /> Редагувати опис етапу
+                  </Tag>
+                )}
+              </Flex>
+            </Flex>
           </Card>
         </Col>
       </Row>

@@ -79,16 +79,27 @@ function ProductionProductStepDetailPage() {
   };
 
   const handleCreateStepItem = async () => {
+    if (!newStepItemInvItemId) {
+      setError('Оберіть компонент.');
+      return;
+    }
+
+    if (!newStepItemQuantityValue || Number(newStepItemQuantityValue) <= 0) {
+      setError('Вкажіть кількість більше нуля.');
+      return;
+    }
+
     try {
       setSavingStepItem(true);
 
       const response = await api.post('product-step-items/', {
         product_step: step.id,
         inv_item: newStepItemInvItemId,
-        quantity: String(newStepItemQuantityValue || 0),
+        quantity: String(newStepItemQuantityValue),
       });
 
       addStepItemToState(response.data);
+      setError('');
 
       setIsAddingStepItem(false);
       setNewStepItemInvItemId(null);
@@ -105,14 +116,20 @@ function ProductionProductStepDetailPage() {
   };
 
   const handleUpdateStepItem = async (stepItemId) => {
+    if (!stepItemQuantityValue || Number(stepItemQuantityValue) <= 0) {
+      setError('Вкажіть кількість більше нуля.');
+      return;
+    }
+
     try {
       setSavingStepItem(true);
 
       const response = await api.patch(`product-step-items/${stepItemId}/`, {
-        quantity: String(stepItemQuantityValue || 0),
+        quantity: String(stepItemQuantityValue),
       });
 
       updateStepItemInState(response.data);
+      setError('');
 
       setEditingStepItemId(null);
       setStepItemQuantityValue(null);
@@ -133,6 +150,7 @@ function ProductionProductStepDetailPage() {
       await api.delete(`product-step-items/${stepItemId}/`);
 
       removeStepItemFromState(stepItemId);
+      setError('');
 
       setEditingStepItemId(null);
       setStepItemQuantityValue(null);
@@ -224,6 +242,7 @@ function ProductionProductStepDetailPage() {
               onClick={() => {
                 if (savingStepItem) return;
 
+                setError('');
                 setIsAddingStepItem(false);
                 setNewStepItemInvItemId(null);
                 setNewStepItemQuantityValue(null);
@@ -365,6 +384,7 @@ function ProductionProductStepDetailPage() {
           <EditOutlined
             style={{ color: '#595959', cursor: 'pointer' }}
             onClick={() => {
+              setError('');
               setEditingStepItemId(record.id);
               setStepItemQuantityValue(Number(record.quantity) || 0);
             }}
@@ -433,6 +453,15 @@ function ProductionProductStepDetailPage() {
           <Text type="secondary">{step.product_code || '—'}</Text>
         </Flex>
       </Flex>
+
+      {error && (
+        <Alert
+          type="error"
+          description={error}
+          showIcon
+          style={{ marginBottom: 20 }}
+        />
+      )}
 
       <Row gutter={20} align="top">
         <Col xs={24} lg={6}>
@@ -541,6 +570,7 @@ function ProductionProductStepDetailPage() {
                         fontSize: 12,
                       }}
                       onClick={() => {
+                        setError('');
                         setEditingStepItemId(null);
                         setStepItemQuantityValue(null);
                         setIsAddingStepItem(true);

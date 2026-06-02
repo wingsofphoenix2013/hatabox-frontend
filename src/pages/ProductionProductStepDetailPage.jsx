@@ -281,10 +281,15 @@ function ProductionProductStepDetailPage() {
             placeholder="Оберіть компонент"
             filterOption={false}
             loading={loadingInventoryItemOptions}
-            options={inventoryItemOptions.map((item) => ({
-              value: item.id,
-              label: `${item.internal_code || '—'} — ${item.name || '—'}`,
-            }))}
+            options={inventoryItemOptions
+              .filter(
+                (item) =>
+                  !stepItems.some((stepItem) => stepItem.inv_item === item.id),
+              )
+              .map((item) => ({
+                value: item.id,
+                label: `${item.internal_code || '—'} — ${item.name || '—'}`,
+              }))}
             style={{ width: '100%' }}
             onSearch={setInventoryItemSearch}
             onChange={setNewStepItemInvItemId}

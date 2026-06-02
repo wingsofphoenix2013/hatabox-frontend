@@ -184,6 +184,47 @@ function ProductionProductDetailPage() {
         );
       },
     },
+    {
+      title: '',
+      key: 'actions',
+      width: 260,
+      align: 'right',
+      render: (_, record) => {
+        const works = Array.isArray(record.works) ? record.works : [];
+
+        return (
+          <Flex justify="flex-end" align="center" gap={14}>
+            {works.length > 0 && (
+              <Button
+                type="text"
+                size="small"
+                icon={<ToolOutlined />}
+                style={{
+                  color: '#595959',
+                  paddingInline: 0,
+                }}
+                onClick={() => setExpandedStepDescriptionId(null)}
+              >
+                Роботи етапу
+              </Button>
+            )}
+
+            <Button
+              type="text"
+              size="small"
+              icon={<SettingOutlined />}
+              style={{
+                color: '#595959',
+                paddingInline: 0,
+              }}
+              onClick={() => setExpandedStepDescriptionId(null)}
+            >
+              Налаштування етапу
+            </Button>
+          </Flex>
+        );
+      },
+    },
   ];
 
   return (
@@ -361,57 +402,17 @@ function ProductionProductDetailPage() {
               <Text type="secondary">Етапи поки відсутні</Text>
             ) : (
               <Flex vertical gap={16}>
-                {steps.map((step) => {
-                  const works = Array.isArray(step.works) ? step.works : [];
-
-                  return (
-                    <div key={step.id}>
-                      <Table
-                        rowKey="id"
-                        columns={getStepColumns(step)}
-                        dataSource={[step]}
-                        pagination={false}
-                        size="small"
-                        tableLayout="fixed"
-                      />
-
-                      <Flex
-                        justify="flex-end"
-                        align="center"
-                        gap={14}
-                        style={{ marginTop: 6 }}
-                      >
-                        {works.length > 0 && (
-                          <Button
-                            type="text"
-                            size="small"
-                            icon={<ToolOutlined />}
-                            style={{
-                              color: '#595959',
-                              paddingInline: 0,
-                            }}
-                            onClick={() => setExpandedStepDescriptionId(null)}
-                          >
-                            Роботи етапу
-                          </Button>
-                        )}
-
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<SettingOutlined />}
-                          style={{
-                            color: '#595959',
-                            paddingInline: 0,
-                          }}
-                          onClick={() => setExpandedStepDescriptionId(null)}
-                        >
-                          Налаштування етапу
-                        </Button>
-                      </Flex>
-                    </div>
-                  );
-                })}
+                {steps.map((step) => (
+                  <Table
+                    key={step.id}
+                    rowKey="id"
+                    columns={getStepColumns(step)}
+                    dataSource={[step]}
+                    pagination={false}
+                    size="small"
+                    tableLayout="fixed"
+                  />
+                ))}
               </Flex>
             )}
           </Card>

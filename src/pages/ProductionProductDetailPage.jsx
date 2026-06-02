@@ -24,8 +24,9 @@ import {
   Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import ProductionProductStepWorkCreateDrawer from '../components/ProductionProductStepWorkCreateDrawer';
 
@@ -44,6 +45,7 @@ const getDevelopmentStatusTagColor = (status) => {
 
 function ProductionProductDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -95,6 +97,23 @@ function ProductionProductDetailPage() {
     } catch (err) {
       console.error('Failed to finish product development:', err);
       setError('Не вдалося завершити розробку продукту.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      await api.delete(`products/${id}/`);
+
+      message.success('Продукт видалено.');
+      navigate('/production/products');
+    } catch (err) {
+      console.error('Failed to delete product:', err);
+      setError('Не вдалося видалити продукт.');
     } finally {
       setLoading(false);
     }
@@ -387,11 +406,12 @@ function ProductionProductDetailPage() {
                   <Divider dashed style={{ margin: '8px 0' }} />
 
                   <Popconfirm
-                    title="Видалити версію продукту?"
-                    description="Цю дію неможливо скасувати. Версія продукту буде видалена без можливості відновлення."
+                    title="Видалити продукт?"
+                    description="Буде видалено всі етапи, роботи та компоненти продукту. Цю дію неможливо скасувати."
                     okText="Так, видалити"
                     cancelText="Скасувати"
                     okButtonProps={{ danger: true }}
+                    onConfirm={handleDeleteProduct}
                   >
                     <Button block danger icon={<StopOutlined />}>
                       Видалити версію

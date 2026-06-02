@@ -306,7 +306,12 @@ function ProductionProductDetailPage() {
               {product.development_status === 'finished' &&
                 !product.is_base_modification && (
                   <Tooltip title="Функціонал перебуває в стадії розробки">
-                    <Button block type="primary" icon={<CheckCircleOutlined />}>
+                    <Button
+                      block
+                      type="primary"
+                      icon={<CheckCircleOutlined />}
+                      disabled
+                    >
                       Зробити базовою версією
                     </Button>
                   </Tooltip>
@@ -334,6 +339,7 @@ function ProductionProductDetailPage() {
               <Tooltip title="Функціонал перебуває в стадії розробки">
                 <Button
                   block
+                  disabled
                   icon={<FileTextOutlined style={{ color: '#1677ff' }} />}
                 >
                   Загальна комплектація
@@ -343,6 +349,7 @@ function ProductionProductDetailPage() {
               <Tooltip title="Функціонал перебуває в стадії розробки">
                 <Button
                   block
+                  disabled
                   icon={<FileImageOutlined style={{ color: '#1677ff' }} />}
                 >
                   Галерея продукту
@@ -352,6 +359,7 @@ function ProductionProductDetailPage() {
               <Tooltip title="Функціонал перебуває в стадії розробки">
                 <Button
                   block
+                  disabled
                   icon={<PrinterOutlined style={{ color: '#1677ff' }} />}
                 >
                   Роздрукувати комплектацію
@@ -365,6 +373,7 @@ function ProductionProductDetailPage() {
                     <Tooltip title="Функціонал перебуває в стадії розробки">
                       <Button
                         block
+                        disabled
                         icon={<CopyOutlined style={{ color: '#1677ff' }} />}
                       >
                         Зробити дублікат

@@ -191,6 +191,7 @@ function ProductionProductStepDetailPage() {
     step?.product_development_status === 'in_development';
 
   const stepItems = Array.isArray(step?.step_items) ? step.step_items : [];
+  const works = Array.isArray(step?.works) ? step.works : [];
 
   const stepItemTableData = isAddingStepItem
     ? [
@@ -587,6 +588,37 @@ function ProductionProductStepDetailPage() {
                 )}
               </Flex>
             </Card>
+          )}
+          {step.product_work_tracking === true && (
+            <Flex vertical gap={20}>
+              {works.map((work) => (
+                <Card
+                  key={work.id}
+                  title={`Робочій процес №${work.sort_order || '—'}. ${
+                    work.name || '—'
+                  }`}
+                >
+                  <Flex vertical gap={10}>
+                    <Text style={{ whiteSpace: 'pre-wrap' }}>
+                      {work.description || '—'}
+                    </Text>
+
+                    <Flex justify="flex-end" gap={8} wrap>
+                      <Tag
+                        style={{
+                          marginInlineEnd: 0,
+                          cursor: 'pointer',
+                          color: '#595959',
+                          fontSize: 12,
+                        }}
+                      >
+                        <EditOutlined /> Редагувати опис роботи
+                      </Tag>
+                    </Flex>
+                  </Flex>
+                </Card>
+              ))}
+            </Flex>
           )}
         </Col>
       </Row>

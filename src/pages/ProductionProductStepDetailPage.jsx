@@ -15,6 +15,7 @@ import {
   Input,
   InputNumber,
   Row,
+  Select,
   Skeleton,
   Table,
   Tag,
@@ -23,6 +24,7 @@ import {
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
@@ -39,6 +41,110 @@ function ProductionProductStepDetailPage() {
   const [savingDescription, setSavingDescription] = useState(false);
   const [editingStepItemId, setEditingStepItemId] = useState(null);
   const [stepItemQuantityValue, setStepItemQuantityValue] = useState(null);
+
+  const [isAddingStepItem, setIsAddingStepItem] = useState(false);
+  const [newStepItemInvItemId, setNewStepItemInvItemId] = useState(null);
+  const [newStepItemQuantityValue, setNewStepItemQuantityValue] =
+    useState(null);
+  const [inventoryItemSearch, setInventoryItemSearch] = useState('');
+  const [inventoryItemOptions, setInventoryItemOptions] = useState([]);
+  const [loadingInventoryItemOptions, setLoadingInventoryItemOptions] =
+    useState(false);
+
+  const [savingStepItem, setSavingStepItem] = useState(false);
+
+  const updateStepItemInState = (updatedItem) => {
+    setStep((prev) => ({
+      ...prev,
+      step_items: (prev.step_items || []).map((item) =>
+        item.id === updatedItem.id ? updatedItem : item,
+      ),
+    }));
+  };
+
+  const removeStepItemFromState = (stepItemId) => {
+    setStep((prev) => ({
+      ...prev,
+      step_items: (prev.step_items || []).filter(
+        (item) => item.id !== stepItemId,
+      ),
+    }));
+  };
+
+  const addStepItemToState = (newItem) => {
+    setStep((prev) => ({
+      ...prev,
+      step_items: [...(prev.step_items || []), newItem],
+    }));
+  };
+
+  const handleCreateStepItem = async () => {
+    try {
+      setSavingStepItem(true);
+
+      const response = await api.post('product-step-items/', {
+        product_step: step.id,
+        inv_item: newStepItemInvItemId,
+        quantity: String(newStepItemQuantityValue || 0),
+      });
+
+      addStepItemToState(response.data);
+
+      setIsAddingStepItem(false);
+      setNewStepItemInvItemId(null);
+      setNewStepItemQuantityValue(null);
+      setInventoryItemSearch('');
+    } catch (err) {
+      setError(
+        getApiErrorMessage(err.response?.data) ||
+          'Не вдалося додати компонент.',
+      );
+    } finally {
+      setSavingStepItem(false);
+    }
+  };
+
+  const handleUpdateStepItem = async (stepItemId) => {
+    try {
+      setSavingStepItem(true);
+
+      const response = await api.patch(`product-step-items/${stepItemId}/`, {
+        quantity: String(stepItemQuantityValue || 0),
+      });
+
+      updateStepItemInState(response.data);
+
+      setEditingStepItemId(null);
+      setStepItemQuantityValue(null);
+    } catch (err) {
+      setError(
+        getApiErrorMessage(err.response?.data) ||
+          'Не вдалося оновити компонент.',
+      );
+    } finally {
+      setSavingStepItem(false);
+    }
+  };
+
+  const handleDeleteStepItem = async (stepItemId) => {
+    try {
+      setSavingStepItem(true);
+
+      await api.delete(`product-step-items/${stepItemId}/`);
+
+      removeStepItemFromState(stepItemId);
+
+      setEditingStepItemId(null);
+      setStepItemQuantityValue(null);
+    } catch (err) {
+      setError(
+        getApiErrorMessage(err.response?.data) ||
+          'Не вдалося видалити компонент.',
+      );
+    } finally {
+      setSavingStepItem(false);
+    }
+  };
 
   useEffect(() => {
     loadStep();
@@ -68,29 +174,122 @@ function ProductionProductStepDetailPage() {
 
   const stepItems = Array.isArray(step?.step_items) ? step.step_items : [];
 
+  const stepItemTableData = isAddingStepItem
+    ? [
+        ...stepItems,
+        {
+          id: 'new-step-item',
+          isNew: true,
+        },
+      ]
+    : stepItems;
+
+  useEffect(() => {
+    if (!isAddingStepItem) return;
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        setLoadingInventoryItemOptions(true);
+
+        const response = await api.get('inventory-item-options/', {
+          params: {
+            search: inventoryItemSearch,
+          },
+        });
+
+        setInventoryItemOptions(
+          Array.isArray(response.data) ? response.data : [],
+        );
+      } catch (err) {
+        console.error('Failed to load inventory item options:', err);
+        setInventoryItemOptions([]);
+      } finally {
+        setLoadingInventoryItemOptions(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+  }, [isAddingStepItem, inventoryItemSearch]);
+
   const stepItemColumns = [
     {
       title: '№',
       width: 70,
-      render: (_, record, index) =>
-        editingStepItemId === record.id ? (
-          <DeleteOutlined style={{ color: '#ff4d4f' }} />
+      render: (_, record, index) => {
+        if (record.isNew) {
+          return (
+            <CloseOutlined
+              style={{ color: '#595959', cursor: 'pointer' }}
+              onClick={() => {
+                if (savingStepItem) return;
+
+                setIsAddingStepItem(false);
+                setNewStepItemInvItemId(null);
+                setNewStepItemQuantityValue(null);
+                setInventoryItemSearch('');
+              }}
+            />
+          );
+        }
+
+        return editingStepItemId === record.id ? (
+          <DeleteOutlined
+            style={{
+              color: '#ff4d4f',
+              cursor: savingStepItem ? 'default' : 'pointer',
+            }}
+            onClick={() => {
+              if (!savingStepItem) {
+                handleDeleteStepItem(record.id);
+              }
+            }}
+          />
         ) : (
           index + 1
-        ),
+        );
+      },
     },
     {
       title: 'Назва',
       dataIndex: 'inv_item_name',
       key: 'inv_item_name',
-      render: (value) => value || '—',
+      render: (value, record) =>
+        record.isNew ? (
+          <Select
+            showSearch
+            value={newStepItemInvItemId}
+            placeholder="Оберіть компонент"
+            filterOption={false}
+            loading={loadingInventoryItemOptions}
+            options={inventoryItemOptions.map((item) => ({
+              value: item.id,
+              label: `${item.internal_code || '—'} — ${item.name || '—'}`,
+            }))}
+            style={{ width: '100%' }}
+            onSearch={setInventoryItemSearch}
+            onChange={setNewStepItemInvItemId}
+          />
+        ) : (
+          value || '—'
+        ),
     },
     {
       title: 'К-сть.',
       key: 'quantity',
       width: 160,
-      render: (_, record) =>
-        editingStepItemId === record.id ? (
+      render: (_, record) => {
+        if (record.isNew) {
+          return (
+            <InputNumber
+              value={newStepItemQuantityValue}
+              min={0}
+              style={{ width: '100%' }}
+              onChange={setNewStepItemQuantityValue}
+            />
+          );
+        }
+
+        return editingStepItemId === record.id ? (
           <InputNumber
             value={stepItemQuantityValue}
             min={0}
@@ -101,7 +300,8 @@ function ProductionProductStepDetailPage() {
           `${formatQuantity(record.quantity)} ${
             record.inv_item_unit_symbol || ''
           }`
-        ),
+        );
+      },
     },
     {
       title: '',
@@ -109,6 +309,31 @@ function ProductionProductStepDetailPage() {
       width: 60,
       align: 'center',
       render: (_, record) => {
+        if (record.isNew) {
+          return (
+            <SaveOutlined
+              style={{
+                color: '#595959',
+                cursor: savingStepItem ? 'default' : 'pointer',
+                opacity: savingStepItem ? 0.6 : 1,
+              }}
+              onClick={() => {
+                if (!savingStepItem) {
+                  handleCreateStepItem();
+                }
+              }}
+            />
+          );
+        }
+
+        if (isAddingStepItem) {
+          return (
+            <Tooltip title="Завершіть додавання компонента перед редагуванням інших рядків.">
+              <EditOutlined style={{ color: '#bfbfbf' }} />
+            </Tooltip>
+          );
+        }
+
         if (!isProductEditable) {
           return (
             <Tooltip title="Редагування компонентів неможливе у продуктах, які вже завершили розробку.">
@@ -118,7 +343,20 @@ function ProductionProductStepDetailPage() {
         }
 
         if (editingStepItemId === record.id) {
-          return <SaveOutlined style={{ color: '#595959' }} />;
+          return (
+            <SaveOutlined
+              style={{
+                color: '#595959',
+                cursor: savingStepItem ? 'default' : 'pointer',
+                opacity: savingStepItem ? 0.6 : 1,
+              }}
+              onClick={() => {
+                if (!savingStepItem) {
+                  handleUpdateStepItem(record.id);
+                }
+              }}
+            />
+          );
         }
 
         return (
@@ -214,7 +452,7 @@ function ProductionProductStepDetailPage() {
         </Col>
 
         <Col xs={24} lg={18}>
-          <Card title="Основна інформація">
+          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
             <Flex vertical gap={10}>
               {isEditingDescription ? (
                 <Input.TextArea
@@ -282,13 +520,35 @@ function ProductionProductStepDetailPage() {
           </Card>
           {step.product_work_tracking === false && (
             <Card title="Комплектація етапу">
-              <Table
-                rowKey="id"
-                columns={stepItemColumns}
-                dataSource={stepItems}
-                pagination={false}
-                size="small"
-              />
+              <Flex vertical gap={10}>
+                <Table
+                  rowKey="id"
+                  columns={stepItemColumns}
+                  dataSource={stepItemTableData}
+                  pagination={false}
+                  size="small"
+                />
+
+                {isProductEditable && !isAddingStepItem && (
+                  <Flex justify="flex-end">
+                    <Tag
+                      style={{
+                        marginInlineEnd: 0,
+                        cursor: 'pointer',
+                        color: '#595959',
+                        fontSize: 12,
+                      }}
+                      onClick={() => {
+                        setEditingStepItemId(null);
+                        setStepItemQuantityValue(null);
+                        setIsAddingStepItem(true);
+                      }}
+                    >
+                      Додати компонент
+                    </Tag>
+                  </Flex>
+                )}
+              </Flex>
             </Card>
           )}
         </Col>

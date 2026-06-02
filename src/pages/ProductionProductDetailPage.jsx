@@ -50,6 +50,8 @@ function ProductionProductDetailPage() {
   const [error, setError] = useState('');
   const [isStepWorkCreateDrawerOpen, setIsStepWorkCreateDrawerOpen] =
     useState(false);
+  const [stepWorkDrawerMode, setStepWorkDrawerMode] = useState('create');
+  const [selectedStepForDrawer, setSelectedStepForDrawer] = useState(null);
   const [expandedStepDescriptionId, setExpandedStepDescriptionId] =
     useState(null);
 
@@ -193,7 +195,12 @@ function ProductionProductDetailPage() {
                     color: '#595959',
                     fontSize: 12,
                   }}
-                  onClick={() => setExpandedStepDescriptionId(null)}
+                  onClick={() => {
+                    setExpandedStepDescriptionId(null);
+                    setStepWorkDrawerMode('works');
+                    setSelectedStepForDrawer(record);
+                    setIsStepWorkCreateDrawerOpen(true);
+                  }}
                 >
                   <ToolOutlined /> Роботи етапу
                 </Tag>
@@ -206,7 +213,12 @@ function ProductionProductDetailPage() {
                   color: '#595959',
                   fontSize: 12,
                 }}
-                onClick={() => setExpandedStepDescriptionId(null)}
+                onClick={() => {
+                  setExpandedStepDescriptionId(null);
+                  setStepWorkDrawerMode('edit');
+                  setSelectedStepForDrawer(record);
+                  setIsStepWorkCreateDrawerOpen(true);
+                }}
               >
                 <SettingOutlined /> Налаштування етапу
               </Tag>
@@ -309,7 +321,11 @@ function ProductionProductDetailPage() {
                 <Button
                   block
                   icon={<SettingOutlined style={{ color: '#1677ff' }} />}
-                  onClick={() => setIsStepWorkCreateDrawerOpen(true)}
+                  onClick={() => {
+                    setStepWorkDrawerMode('create');
+                    setSelectedStepForDrawer(null);
+                    setIsStepWorkCreateDrawerOpen(true);
+                  }}
                 >
                   Налаштування етапів
                 </Button>
@@ -412,6 +428,8 @@ function ProductionProductDetailPage() {
         open={isStepWorkCreateDrawerOpen}
         onClose={() => setIsStepWorkCreateDrawerOpen(false)}
         product={product}
+        initialMode={stepWorkDrawerMode}
+        initialStep={selectedStepForDrawer}
         onCompleted={refreshProduct}
       />
     </div>

@@ -38,6 +38,8 @@ function ProductionProductStepWorkCreateDrawer({
   open,
   onClose,
   product,
+  initialMode = 'create',
+  initialStep = null,
   onCompleted,
 }) {
   const [sortOrder, setSortOrder] = useState(null);
@@ -103,11 +105,22 @@ function ProductionProductStepWorkCreateDrawer({
   };
 
   useEffect(() => {
-    if (open) {
-      resetForm();
+    if (!open) {
+      return;
+    }
+
+    resetForm();
+
+    if (initialMode === 'works' && initialStep) {
+      handleSelectStepForWorks(initialStep);
+      return;
+    }
+
+    if (initialMode === 'edit' && initialStep) {
+      handleSelectStepForEdit(initialStep);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, initialMode, initialStep]);
 
   const isWorkTrackingMode = product?.work_tracking === true;
   const isStepCreatedWithWorks = Boolean(createdStep) && addWorksToStep;

@@ -53,6 +53,18 @@ function ProductionProductStepDetailPage() {
 
   const [savingStepItem, setSavingStepItem] = useState(false);
 
+  const [editingWorkId, setEditingWorkId] = useState(null);
+  const [workDescriptionValue, setWorkDescriptionValue] = useState('');
+  const [savingWork, setSavingWork] = useState(false);
+
+  const [editingWorkItemId, setEditingWorkItemId] = useState(null);
+  const [workItemQuantityValue, setWorkItemQuantityValue] = useState(null);
+  const [addingWorkItemWorkId, setAddingWorkItemWorkId] = useState(null);
+  const [newWorkItemInvItemId, setNewWorkItemInvItemId] = useState(null);
+  const [newWorkItemQuantityValue, setNewWorkItemQuantityValue] =
+    useState(null);
+  const [savingWorkItem, setSavingWorkItem] = useState(false);
+
   const updateStepItemInState = (updatedItem) => {
     setStep((prev) => ({
       ...prev,
@@ -193,6 +205,21 @@ function ProductionProductStepDetailPage() {
   const stepItems = Array.isArray(step?.step_items) ? step.step_items : [];
   const works = Array.isArray(step?.works) ? step.works : [];
 
+  const getWorkItemTableData = (work) => {
+    const workItems = Array.isArray(work.work_items) ? work.work_items : [];
+
+    return addingWorkItemWorkId === work.id
+      ? [
+          ...workItems,
+          {
+            id: 'new-work-item',
+            isNew: true,
+            product_work: work.id,
+          },
+        ]
+      : workItems;
+  };
+
   const stepItemTableData = isAddingStepItem
     ? [
         ...stepItems,
@@ -204,7 +231,7 @@ function ProductionProductStepDetailPage() {
     : stepItems;
 
   useEffect(() => {
-    if (!isAddingStepItem) return;
+    if (!isAddingStepItem && !addingWorkItemWorkId) return;
 
     const timeoutId = setTimeout(async () => {
       try {
@@ -228,7 +255,183 @@ function ProductionProductStepDetailPage() {
     }, 400);
 
     return () => clearTimeout(timeoutId);
-  }, [isAddingStepItem, inventoryItemSearch]);
+  }, [isAddingStepItem, addingWorkItemWorkId, inventoryItemSearch]);
+
+  const getWorkItemColumns = (work) => {
+    const workItems = Array.isArray(work.work_items) ? work.work_items : [];
+
+    return [
+      {
+        title: '№',
+        width: 70,
+        align: 'center',
+        render: (_, record, index) => {
+          if (record.isNew) {
+            return (
+              <CloseOutlined
+                style={{ color: '#595959', cursor: 'pointer' }}
+                onClick={() => {
+                  if (savingWorkItem) return;
+
+                  setError('');
+                  setAddingWorkItemWorkId(null);
+                  setNewWorkItemInvItemId(null);
+                  setNewWorkItemQuantityValue(null);
+                  setInventoryItemSearch('');
+                }}
+              />
+            );
+          }
+
+          return editingWorkItemId === record.id ? (
+            <DeleteOutlined
+              style={{
+                color: '#ff4d4f',
+                cursor: savingWorkItem ? 'default' : 'pointer',
+              }}
+              onClick={() => {
+                if (!savingWorkItem) {
+                  handleDeleteWorkItem(work.id, record.id);
+                }
+              }}
+            />
+          ) : (
+            index + 1
+          );
+        },
+      },
+      {
+        title: 'Назва',
+        dataIndex: 'inv_item_name',
+        key: 'inv_item_name',
+        render: (value, record) =>
+          record.isNew ? (
+            <Select
+              showSearch
+              value={newWorkItemInvItemId}
+              placeholder="Оберіть компонент"
+              filterOption={false}
+              loading={loadingInventoryItemOptions}
+              options={inventoryItemOptions
+                .filter(
+                  (item) =>
+                    !workItems.some(
+                      (workItem) => workItem.inv_item === item.id,
+                    ),
+                )
+                .map((item) => ({
+                  value: item.id,
+                  label: `${item.internal_code || '—'} — ${item.name || '—'}`,
+                }))}
+              style={{ width: '100%' }}
+              onSearch={setInventoryItemSearch}
+              onChange={setNewWorkItemInvItemId}
+            />
+          ) : (
+            value || '—'
+          ),
+      },
+      {
+        title: 'К-сть.',
+        key: 'quantity',
+        width: 160,
+        align: 'center',
+        render: (_, record) => {
+          if (record.isNew) {
+            return (
+              <InputNumber
+                value={newWorkItemQuantityValue}
+                min={0}
+                style={{ width: '100%' }}
+                onChange={setNewWorkItemQuantityValue}
+              />
+            );
+          }
+
+          return editingWorkItemId === record.id ? (
+            <InputNumber
+              value={workItemQuantityValue}
+              min={0}
+              style={{ width: '100%' }}
+              onChange={setWorkItemQuantityValue}
+            />
+          ) : (
+            `${formatQuantity(record.quantity)} ${
+              record.inv_item_unit_symbol || ''
+            }`
+          );
+        },
+      },
+      {
+        title: '',
+        key: 'actions',
+        width: 60,
+        align: 'center',
+        render: (_, record) => {
+          if (record.isNew) {
+            return (
+              <SaveOutlined
+                style={{
+                  color: '#595959',
+                  cursor: savingWorkItem ? 'default' : 'pointer',
+                  opacity: savingWorkItem ? 0.6 : 1,
+                }}
+                onClick={() => {
+                  if (!savingWorkItem) {
+                    handleCreateWorkItem(work.id);
+                  }
+                }}
+              />
+            );
+          }
+
+          if (addingWorkItemWorkId) {
+            return (
+              <Tooltip title="Завершіть додавання компонента перед редагуванням інших рядків.">
+                <EditOutlined style={{ color: '#bfbfbf' }} />
+              </Tooltip>
+            );
+          }
+
+          if (!isProductEditable) {
+            return (
+              <Tooltip title="Редагування компонентів неможливе у продуктах, які вже завершили розробку.">
+                <EditOutlined style={{ color: '#bfbfbf' }} />
+              </Tooltip>
+            );
+          }
+
+          if (editingWorkItemId === record.id) {
+            return (
+              <SaveOutlined
+                style={{
+                  color: '#595959',
+                  cursor: savingWorkItem ? 'default' : 'pointer',
+                  opacity: savingWorkItem ? 0.6 : 1,
+                }}
+                onClick={() => {
+                  if (!savingWorkItem) {
+                    handleUpdateWorkItem(record.id);
+                  }
+                }}
+              />
+            );
+          }
+
+          return (
+            <EditOutlined
+              style={{ color: '#595959', cursor: 'pointer' }}
+              onClick={() => {
+                setError('');
+                setEditingWorkItemId(record.id);
+                setWorkItemQuantityValue(Number(record.quantity) || 0);
+              }}
+            />
+          );
+        },
+      },
+    ];
+  };
 
   const stepItemColumns = [
     {
@@ -399,6 +602,170 @@ function ProductionProductStepDetailPage() {
       },
     },
   ];
+
+  const updateWorkItemInState = (updatedItem) => {
+    setStep((prev) => ({
+      ...prev,
+      works: (prev.works || []).map((work) =>
+        work.id === updatedItem.product_work
+          ? {
+              ...work,
+              work_items: (work.work_items || []).map((item) =>
+                item.id === updatedItem.id ? updatedItem : item,
+              ),
+            }
+          : work,
+      ),
+    }));
+  };
+
+  const removeWorkItemFromState = (workId, workItemId) => {
+    setStep((prev) => ({
+      ...prev,
+      works: (prev.works || []).map((work) =>
+        work.id === workId
+          ? {
+              ...work,
+              work_items: (work.work_items || []).filter(
+                (item) => item.id !== workItemId,
+              ),
+            }
+          : work,
+      ),
+    }));
+  };
+
+  const addWorkItemToState = (newItem) => {
+    setStep((prev) => ({
+      ...prev,
+      works: (prev.works || []).map((work) =>
+        work.id === newItem.product_work
+          ? {
+              ...work,
+              work_items: [...(work.work_items || []), newItem],
+            }
+          : work,
+      ),
+    }));
+  };
+
+  const handleCreateWorkItem = async (workId) => {
+    if (!newWorkItemInvItemId) {
+      setError('Оберіть компонент.');
+      return;
+    }
+
+    if (!newWorkItemQuantityValue || Number(newWorkItemQuantityValue) <= 0) {
+      setError('Вкажіть кількість більше нуля.');
+      return;
+    }
+
+    try {
+      setSavingWorkItem(true);
+
+      const response = await api.post('product-work-items/', {
+        product_work: workId,
+        inv_item: newWorkItemInvItemId,
+        quantity: String(newWorkItemQuantityValue),
+      });
+
+      addWorkItemToState(response.data);
+      setError('');
+
+      setAddingWorkItemWorkId(null);
+      setNewWorkItemInvItemId(null);
+      setNewWorkItemQuantityValue(null);
+      setInventoryItemSearch('');
+    } catch (err) {
+      setError(
+        getApiErrorMessage(err.response?.data) ||
+          'Не вдалося додати компонент.',
+      );
+    } finally {
+      setSavingWorkItem(false);
+    }
+  };
+
+  const handleUpdateWorkItem = async (workItemId) => {
+    if (!workItemQuantityValue || Number(workItemQuantityValue) <= 0) {
+      setError('Вкажіть кількість більше нуля.');
+      return;
+    }
+
+    try {
+      setSavingWorkItem(true);
+
+      const response = await api.patch(`product-work-items/${workItemId}/`, {
+        quantity: String(workItemQuantityValue),
+      });
+
+      updateWorkItemInState(response.data);
+      setError('');
+
+      setEditingWorkItemId(null);
+      setWorkItemQuantityValue(null);
+    } catch (err) {
+      setError(
+        getApiErrorMessage(err.response?.data) ||
+          'Не вдалося оновити компонент.',
+      );
+    } finally {
+      setSavingWorkItem(false);
+    }
+  };
+
+  const handleDeleteWorkItem = async (workId, workItemId) => {
+    try {
+      setSavingWorkItem(true);
+
+      await api.delete(`product-work-items/${workItemId}/`);
+
+      removeWorkItemFromState(workId, workItemId);
+      setError('');
+
+      setEditingWorkItemId(null);
+      setWorkItemQuantityValue(null);
+    } catch (err) {
+      setError(
+        getApiErrorMessage(err.response?.data) ||
+          'Не вдалося видалити компонент.',
+      );
+    } finally {
+      setSavingWorkItem(false);
+    }
+  };
+
+  const updateWorkInState = (updatedWork) => {
+    setStep((prev) => ({
+      ...prev,
+      works: (prev.works || []).map((work) =>
+        work.id === updatedWork.id ? updatedWork : work,
+      ),
+    }));
+  };
+
+  const handleSaveWorkDescription = async (workId) => {
+    try {
+      setSavingWork(true);
+
+      const response = await api.patch(`product-works/${workId}/`, {
+        description: workDescriptionValue,
+      });
+
+      updateWorkInState(response.data);
+
+      setError('');
+      setEditingWorkId(null);
+      setWorkDescriptionValue('');
+    } catch (err) {
+      setError(
+        getApiErrorMessage(err.response?.data) ||
+          'Не вдалося оновити опис роботи.',
+      );
+    } finally {
+      setSavingWork(false);
+    }
+  };
 
   const handleSaveDescription = async () => {
     try {
@@ -599,22 +966,103 @@ function ProductionProductStepDetailPage() {
                   }`}
                 >
                   <Flex vertical gap={10}>
-                    <Text style={{ whiteSpace: 'pre-wrap' }}>
-                      {work.description || '—'}
-                    </Text>
+                    {editingWorkId === work.id ? (
+                      <Input.TextArea
+                        value={workDescriptionValue}
+                        onChange={(e) =>
+                          setWorkDescriptionValue(e.target.value)
+                        }
+                        autoSize={{ minRows: 4 }}
+                      />
+                    ) : (
+                      <Text style={{ whiteSpace: 'pre-wrap' }}>
+                        {work.description || '—'}
+                      </Text>
+                    )}
 
                     <Flex justify="flex-end" gap={8} wrap>
-                      <Tag
-                        style={{
-                          marginInlineEnd: 0,
-                          cursor: 'pointer',
-                          color: '#595959',
-                          fontSize: 12,
-                        }}
-                      >
-                        <EditOutlined /> Редагувати опис роботи
-                      </Tag>
+                      {isProductEditable &&
+                        (editingWorkId === work.id ? (
+                          <>
+                            <Tag
+                              style={{
+                                marginInlineEnd: 0,
+                                cursor: savingWork ? 'default' : 'pointer',
+                                color: '#595959',
+                                fontSize: 12,
+                                opacity: savingWork ? 0.6 : 1,
+                              }}
+                              onClick={() => {
+                                if (!savingWork) {
+                                  handleSaveWorkDescription(work.id);
+                                }
+                              }}
+                            >
+                              <SaveOutlined /> Зберегти
+                            </Tag>
+
+                            <Tag
+                              style={{
+                                marginInlineEnd: 0,
+                                cursor: 'pointer',
+                                color: '#595959',
+                                fontSize: 12,
+                              }}
+                              onClick={() => {
+                                setEditingWorkId(null);
+                                setWorkDescriptionValue('');
+                              }}
+                            >
+                              <CloseOutlined /> Скасувати
+                            </Tag>
+                          </>
+                        ) : (
+                          <Tag
+                            style={{
+                              marginInlineEnd: 0,
+                              cursor: 'pointer',
+                              color: '#595959',
+                              fontSize: 12,
+                            }}
+                            onClick={() => {
+                              setError('');
+                              setEditingWorkId(work.id);
+                              setWorkDescriptionValue(work.description || '');
+                            }}
+                          >
+                            <EditOutlined /> Редагувати опис роботи
+                          </Tag>
+                        ))}
                     </Flex>
+
+                    <Table
+                      rowKey="id"
+                      columns={getWorkItemColumns(work)}
+                      dataSource={getWorkItemTableData(work)}
+                      pagination={false}
+                      size="small"
+                    />
+
+                    {isProductEditable && !addingWorkItemWorkId && (
+                      <Flex justify="flex-end">
+                        <Tag
+                          style={{
+                            marginInlineEnd: 0,
+                            cursor: 'pointer',
+                            color: '#595959',
+                            fontSize: 12,
+                          }}
+                          onClick={() => {
+                            setError('');
+                            setEditingWorkItemId(null);
+                            setWorkItemQuantityValue(null);
+                            setAddingWorkItemWorkId(work.id);
+                          }}
+                        >
+                          Додати компонент
+                        </Tag>
+                      </Flex>
+                    )}
                   </Flex>
                 </Card>
               ))}

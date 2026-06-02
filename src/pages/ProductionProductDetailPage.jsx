@@ -184,34 +184,32 @@ function ProductionProductDetailPage() {
               )}
             </Flex>
 
-            <Flex justify="flex-end" align="center" gap={14}>
+            <Flex justify="flex-end" align="center" gap={8} wrap>
               {works.length > 0 && (
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<ToolOutlined />}
+                <Tag
                   style={{
+                    marginInlineEnd: 0,
+                    cursor: 'pointer',
                     color: '#595959',
-                    paddingInline: 0,
+                    fontSize: 12,
                   }}
                   onClick={() => setExpandedStepDescriptionId(null)}
                 >
-                  Роботи етапу
-                </Button>
+                  <ToolOutlined /> Роботи етапу
+                </Tag>
               )}
 
-              <Button
-                type="text"
-                size="small"
-                icon={<SettingOutlined />}
+              <Tag
                 style={{
+                  marginInlineEnd: 0,
+                  cursor: 'pointer',
                   color: '#595959',
-                  paddingInline: 0,
+                  fontSize: 12,
                 }}
                 onClick={() => setExpandedStepDescriptionId(null)}
               >
-                Налаштування етапу
-              </Button>
+                <SettingOutlined /> Налаштування етапу
+              </Tag>
             </Flex>
           </Flex>
         );

@@ -159,68 +159,60 @@ function ProductionProductDetailPage() {
       dataIndex: 'description',
       key: 'description',
       render: (value, record) => {
+        const works = Array.isArray(record.works) ? record.works : [];
         const isExpanded = expandedStepDescriptionId === record.id;
         const hasLongDescription = value && value.length > 220;
 
         return (
-          <Flex vertical gap={6}>
-            <Text style={{ whiteSpace: 'pre-wrap' }}>
-              {isExpanded ? value || '—' : getStepDescriptionPreview(value)}
-            </Text>
+          <Flex vertical gap={10}>
+            <Flex vertical gap={6}>
+              <Text style={{ whiteSpace: 'pre-wrap' }}>
+                {isExpanded ? value || '—' : getStepDescriptionPreview(value)}
+              </Text>
 
-            {hasLongDescription && (
-              <Button
-                type="link"
-                size="small"
-                style={{ paddingInline: 0, width: 'fit-content' }}
-                onClick={() =>
-                  setExpandedStepDescriptionId(isExpanded ? null : record.id)
-                }
-              >
-                {isExpanded ? 'Приховати повний опис' : 'Бачити повний опис'}
-              </Button>
-            )}
-          </Flex>
-        );
-      },
-    },
-    {
-      title: '',
-      key: 'actions',
-      width: 260,
-      align: 'right',
-      render: (_, record) => {
-        const works = Array.isArray(record.works) ? record.works : [];
+              {hasLongDescription && (
+                <Button
+                  type="link"
+                  size="small"
+                  style={{ paddingInline: 0, width: 'fit-content' }}
+                  onClick={() =>
+                    setExpandedStepDescriptionId(isExpanded ? null : record.id)
+                  }
+                >
+                  {isExpanded ? 'Приховати повний опис' : 'Бачити повний опис'}
+                </Button>
+              )}
+            </Flex>
 
-        return (
-          <Flex justify="flex-end" align="center" gap={14}>
-            {works.length > 0 && (
+            <Flex justify="flex-end" align="center" gap={14}>
+              {works.length > 0 && (
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<ToolOutlined />}
+                  style={{
+                    color: '#595959',
+                    paddingInline: 0,
+                  }}
+                  onClick={() => setExpandedStepDescriptionId(null)}
+                >
+                  Роботи етапу
+                </Button>
+              )}
+
               <Button
                 type="text"
                 size="small"
-                icon={<ToolOutlined />}
+                icon={<SettingOutlined />}
                 style={{
                   color: '#595959',
                   paddingInline: 0,
                 }}
                 onClick={() => setExpandedStepDescriptionId(null)}
               >
-                Роботи етапу
+                Налаштування етапу
               </Button>
-            )}
-
-            <Button
-              type="text"
-              size="small"
-              icon={<SettingOutlined />}
-              style={{
-                color: '#595959',
-                paddingInline: 0,
-              }}
-              onClick={() => setExpandedStepDescriptionId(null)}
-            >
-              Налаштування етапу
-            </Button>
+            </Flex>
           </Flex>
         );
       },

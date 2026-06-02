@@ -64,9 +64,9 @@ function ProductionProductStepDetailPage() {
   };
 
   const isProductEditable =
-    step.product_development_status === 'in_development';
+    step?.product_development_status === 'in_development';
 
-  const stepItems = Array.isArray(step.step_items) ? step.step_items : [];
+  const stepItems = Array.isArray(step?.step_items) ? step.step_items : [];
 
   const stepItemColumns = [
     {

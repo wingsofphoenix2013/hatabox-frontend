@@ -26,7 +26,7 @@ import {
   Typography,
   message,
 } from 'antd';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 import ProductionProductStepWorkCreateDrawer from '../components/ProductionProductStepWorkCreateDrawer';
 
@@ -163,18 +163,28 @@ function ProductionProductDetailPage() {
             Етап №{step.sort_order}. {step.name || '—'}
           </Text>
 
-          <Button
-            type="text"
-            size="small"
-            icon={<InfoCircleOutlined />}
-            style={{
-              color: '#595959',
-              paddingInline: 0,
+          <Link
+            to={`/production/product-steps/${step.id}`}
+            state={{
+              productId: product.id,
+              productLabel: `${product.product_family_code || '—'} v.${
+                product.version || '—'
+              }`,
+              stepLabel: `Етап ${step.sort_order || '—'}. ${step.name || '—'}`,
             }}
-            onClick={() => setExpandedStepDescriptionId(null)}
           >
-            Інформація
-          </Button>
+            <Button
+              type="text"
+              size="small"
+              icon={<InfoCircleOutlined />}
+              style={{
+                color: '#595959',
+                paddingInline: 0,
+              }}
+            >
+              Інформація
+            </Button>
+          </Link>
         </Flex>
       ),
       dataIndex: 'description',

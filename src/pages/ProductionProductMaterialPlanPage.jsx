@@ -84,6 +84,7 @@ function ProductionProductMaterialPlanPage() {
           id: `${item.inv_item_id}-${step.product_step_id}`,
           isDetailRow: true,
           inv_item_id: item.inv_item_id,
+          product_step_sort_order: step.product_step_sort_order,
           unit_symbol: item.unit_symbol,
         }));
 
@@ -105,8 +106,15 @@ function ProductionProductMaterialPlanPage() {
         record.isDetailRow ? (
           <Flex justify="flex-end" align="center" gap={6}>
             <span>
+              {record.product_step_sort_order || '—'}.{' '}
               {record.product_step_name || '—'}
-              {workTracking && <> | {record.product_work_name || '—'}</>}
+              {workTracking && (
+                <>
+                  {' '}
+                  | {record.product_work_sort_order || '—'}.{' '}
+                  {record.product_work_name || '—'}
+                </>
+              )}
             </span>
 
             <Link

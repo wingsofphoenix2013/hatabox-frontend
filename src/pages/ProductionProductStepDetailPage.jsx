@@ -10,6 +10,7 @@ import {
   Alert,
   Button,
   Card,
+  Empty,
   Col,
   Flex,
   Input,
@@ -932,7 +933,12 @@ function ProductionProductStepDetailPage() {
                   pagination={false}
                   size="small"
                   locale={{
-                    emptyText: 'Компоненти відсутні',
+                    emptyText: (
+                      <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description="Компоненти відсутні"
+                      />
+                    ),
                   }}
                 />
 

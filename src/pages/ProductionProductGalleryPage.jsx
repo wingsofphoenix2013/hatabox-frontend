@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { RollbackOutlined } from '@ant-design/icons';
+import { PlusOutlined, RollbackOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
   Card,
   Col,
+  Divider,
   Flex,
   Row,
   Skeleton,
@@ -12,6 +13,7 @@ import {
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
+import ProductionProductGalleryCreateDrawer from '../components/ProductionProductGalleryCreateDrawer';
 
 const { Title, Text } = Typography;
 
@@ -21,6 +23,7 @@ function ProductionProductGalleryPage() {
   const [attachmentsOverview, setAttachmentsOverview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   useEffect(() => {
     loadAttachmentsOverview();
@@ -84,19 +87,32 @@ function ProductionProductGalleryPage() {
       <Row gutter={20} align="top">
         <Col xs={24} lg={6}>
           <Card title="Навігація">
-            <Link
-              to={`/production/products/${product?.id || id}`}
-              state={{
-                productLabel: product?.code,
-              }}
-            >
+            <Flex vertical gap={8}>
+              <Link
+                to={`/production/products/${product?.id || id}`}
+                state={{
+                  productLabel: product?.code,
+                }}
+              >
+                <Button
+                  block
+                  icon={<RollbackOutlined style={{ color: '#1677ff' }} />}
+                >
+                  Повернутись до продукту
+                </Button>
+              </Link>
+
+              <Divider dashed style={{ margin: '8px 0' }} />
+
               <Button
                 block
-                icon={<RollbackOutlined style={{ color: '#1677ff' }} />}
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setIsCreateDrawerOpen(true)}
               >
-                Повернутись до продукту
+                Додати файли
               </Button>
-            </Link>
+            </Flex>
           </Card>
         </Col>
 
@@ -117,6 +133,11 @@ function ProductionProductGalleryPage() {
           </Flex>
         </Col>
       </Row>
+
+      <ProductionProductGalleryCreateDrawer
+        open={isCreateDrawerOpen}
+        onClose={() => setIsCreateDrawerOpen(false)}
+      />
     </div>
   );
 }

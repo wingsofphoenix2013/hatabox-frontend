@@ -843,7 +843,7 @@ function ProductionProductStepDetailPage() {
             <Link
               to={`/production/products/${step.product_id}`}
               state={{
-                productCode: step.product_code,
+                productLabel: step.product_code,
               }}
             >
               <Button

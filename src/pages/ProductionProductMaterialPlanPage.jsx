@@ -228,7 +228,7 @@ function ProductionProductMaterialPlanPage() {
               <Link
                 to={`/production/products/${product?.id || id}`}
                 state={{
-                  productCode: product?.code,
+                  productLabel: product?.code,
                 }}
               >
                 <Button

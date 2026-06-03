@@ -54,30 +54,66 @@ function ProductionProductMaterialPlanPage() {
 
   const items = Array.isArray(materialPlan?.items) ? materialPlan.items : [];
 
+  const tableData = items.flatMap((item) => {
+    const detailRows =
+      expandedInvItemId === item.inv_item_id
+        ? (item.steps || []).flatMap((step) =>
+            (step.works || []).map((work) => ({
+              ...work,
+              id: `${item.inv_item_id}-${step.product_step_id}-${work.product_work_id}`,
+              isDetailRow: true,
+              inv_item_id: item.inv_item_id,
+              product_step_id: step.product_step_id,
+              product_step_name: step.product_step_name,
+              product_step_sort_order: step.product_step_sort_order,
+              unit_symbol: item.unit_symbol,
+            })),
+          )
+        : [];
+
+    return [item, ...detailRows];
+  });
+
   const columns = [
     {
       title: '№',
       width: 70,
       align: 'center',
-      render: (_, __, index) => index + 1,
+      render: (_, record, index) => (record.isDetailRow ? null : index + 1),
     },
     {
       title: 'Назва компоненту',
       dataIndex: 'inv_item_name',
       key: 'inv_item_name',
-      render: (value, record) => (
-        <Flex align="center" gap={6}>
-          <span>{value || '—'}</span>
-          <a
-            href={`/inventory/stock/${record.inv_item_id}`}
-            target="_blank"
-            rel="noreferrer"
-            style={{ display: 'inline-flex' }}
-          >
-            <InfoCircleOutlined style={{ color: '#595959' }} />
-          </a>
-        </Flex>
-      ),
+      render: (value, record) =>
+        record.isDetailRow ? (
+          <Flex justify="flex-end" align="center" gap={6}>
+            <span>
+              {record.product_step_name || '—'} |{' '}
+              {record.product_work_name || '—'}
+            </span>
+
+            <Link
+              to={`/production/product-steps/${record.product_step_id}#work-${record.product_work_id}`}
+              target="_blank"
+              style={{ display: 'inline-flex' }}
+            >
+              <InfoCircleOutlined style={{ color: '#595959' }} />
+            </Link>
+          </Flex>
+        ) : (
+          <Flex align="center" gap={6}>
+            <span>{value || '—'}</span>
+            <a
+              href={`/inventory/stock/${record.inv_item_id}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ display: 'inline-flex' }}
+            >
+              <InfoCircleOutlined style={{ color: '#595959' }} />
+            </a>
+          </Flex>
+        ),
     },
     {
       title: 'К-сть.',
@@ -85,15 +121,21 @@ function ProductionProductMaterialPlanPage() {
       width: 160,
       align: 'center',
       render: (_, record) =>
-        `${formatQuantity(record.total_quantity)} ${record.unit_symbol || ''}`,
+        record.isDetailRow
+          ? `${formatQuantity(record.quantity)} ${record.unit_symbol || ''}`
+          : `${formatQuantity(record.total_quantity)} ${
+              record.unit_symbol || ''
+            }`,
     },
     {
       title: <UnorderedListOutlined />,
       key: 'details',
       width: 70,
       align: 'center',
-      render: (_, record) =>
-        expandedInvItemId === record.inv_item_id ? (
+      render: (_, record) => {
+        if (record.isDetailRow) return null;
+
+        return expandedInvItemId === record.inv_item_id ? (
           <MenuFoldOutlined
             style={{ color: '#595959', cursor: 'pointer' }}
             onClick={() => setExpandedInvItemId(null)}
@@ -103,7 +145,8 @@ function ProductionProductMaterialPlanPage() {
             style={{ color: '#595959', cursor: 'pointer' }}
             onClick={() => setExpandedInvItemId(record.inv_item_id)}
           />
-        ),
+        );
+      },
     },
   ];
 
@@ -168,9 +211,11 @@ function ProductionProductMaterialPlanPage() {
 
           <Card title="Комплектація виробу">
             <Table
-              rowKey="inv_item_id"
+              rowKey={(record) =>
+                record.isDetailRow ? record.id : record.inv_item_id
+              }
               columns={columns}
-              dataSource={items}
+              dataSource={tableData}
               pagination={false}
               size="small"
             />

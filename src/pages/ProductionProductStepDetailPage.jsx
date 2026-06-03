@@ -965,6 +965,8 @@ function ProductionProductStepDetailPage() {
               {works.map((work) => (
                 <Card
                   key={work.id}
+                  id={`work-${work.id}`}
+                  style={{ scrollMarginTop: 20 }}
                   title={`Робочій процес №${work.sort_order || '—'}. ${
                     work.name || '—'
                   }`}

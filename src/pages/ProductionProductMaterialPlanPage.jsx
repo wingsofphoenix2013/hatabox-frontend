@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
-import { RollbackOutlined } from '@ant-design/icons';
+import {
+  InfoCircleOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  RollbackOutlined,
+  UnorderedListOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -8,10 +14,12 @@ import {
   Flex,
   Row,
   Skeleton,
+  Table,
   Typography,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
@@ -21,6 +29,7 @@ function ProductionProductMaterialPlanPage() {
   const [materialPlan, setMaterialPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [expandedInvItemId, setExpandedInvItemId] = useState(null);
 
   useEffect(() => {
     loadMaterialPlan();
@@ -42,6 +51,60 @@ function ProductionProductMaterialPlanPage() {
       setLoading(false);
     }
   };
+
+  const items = Array.isArray(materialPlan?.items) ? materialPlan.items : [];
+
+  const columns = [
+    {
+      title: '№',
+      width: 70,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Назва компоненту',
+      dataIndex: 'inv_item_name',
+      key: 'inv_item_name',
+      render: (value, record) => (
+        <Flex align="center" gap={6}>
+          <span>{value || '—'}</span>
+          <a
+            href={`/inventory/stock/${record.inv_item_id}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <InfoCircleOutlined style={{ color: '#595959' }} />
+          </a>
+        </Flex>
+      ),
+    },
+    {
+      title: 'К-сть.',
+      key: 'quantity',
+      width: 160,
+      align: 'center',
+      render: (_, record) =>
+        `${formatQuantity(record.total_quantity)} ${record.unit_symbol || ''}`,
+    },
+    {
+      title: <UnorderedListOutlined />,
+      key: 'details',
+      width: 70,
+      align: 'center',
+      render: (_, record) =>
+        expandedInvItemId === record.inv_item_id ? (
+          <MenuFoldOutlined
+            style={{ color: '#595959', cursor: 'pointer' }}
+            onClick={() => setExpandedInvItemId(null)}
+          />
+        ) : (
+          <MenuUnfoldOutlined
+            style={{ color: '#595959', cursor: 'pointer' }}
+            onClick={() => setExpandedInvItemId(record.inv_item_id)}
+          />
+        ),
+    },
+  ];
 
   if (loading) {
     return (
@@ -103,7 +166,13 @@ function ProductionProductMaterialPlanPage() {
           </Card>
 
           <Card title="Комплектація виробу">
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            <Table
+              rowKey="inv_item_id"
+              columns={columns}
+              dataSource={items}
+              pagination={false}
+              size="small"
+            />
           </Card>
         </Col>
       </Row>

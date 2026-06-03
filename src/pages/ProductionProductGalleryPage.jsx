@@ -1,12 +1,122 @@
-import { useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { RollbackOutlined } from '@ant-design/icons';
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Flex,
+  Row,
+  Skeleton,
+  Typography,
+} from 'antd';
+import { Link, useParams } from 'react-router-dom';
+import api from '../api/client';
+
+const { Title, Text } = Typography;
 
 function ProductionProductGalleryPage() {
   const { id } = useParams();
 
+  const [attachmentsOverview, setAttachmentsOverview] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    loadAttachmentsOverview();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const loadAttachmentsOverview = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const response = await api.get(`products/${id}/attachments-overview/`);
+      setAttachmentsOverview(response.data || null);
+    } catch (err) {
+      console.error('Failed to load product gallery page:', err);
+      setError('Не вдалося завантажити галерею продукту.');
+      setAttachmentsOverview(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ padding: 20 }}>
+        <Skeleton active paragraph={{ rows: 10 }} />
+      </div>
+    );
+  }
+
+  if (error && !attachmentsOverview) {
+    return (
+      <div style={{ padding: 20 }}>
+        <Alert type="error" description={error} showIcon />
+      </div>
+    );
+  }
+
+  const product = attachmentsOverview?.product;
+  const attachmentGroups = Array.isArray(attachmentsOverview?.attachment_groups)
+    ? attachmentsOverview.attachment_groups
+    : [];
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <h2>Галерея продукту</h2>
-      <div>Продукт ID: {id}</div>
+    <div style={{ padding: 20 }}>
+      <Flex
+        justify="space-between"
+        align="flex-start"
+        gap={16}
+        style={{ marginBottom: 20 }}
+      >
+        <Flex vertical gap={4}>
+          <Title level={2} style={{ margin: 0 }}>
+            {`Галерея ${product?.code || '—'}`}
+          </Title>
+
+          <Text type="secondary">Зведена медіа бібліотека продукту</Text>
+        </Flex>
+      </Flex>
+
+      <Row gutter={20} align="top">
+        <Col xs={24} lg={6}>
+          <Card title="Навігація">
+            <Link
+              to={`/production/products/${product?.id || id}`}
+              state={{
+                productLabel: product?.code,
+              }}
+            >
+              <Button
+                block
+                icon={<RollbackOutlined style={{ color: '#1677ff' }} />}
+              >
+                Повернутись до продукту
+              </Button>
+            </Link>
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={18}>
+          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
+            <Text type="secondary">Дані зʼявляться пізніше</Text>
+          </Card>
+
+          <Flex vertical gap={20}>
+            {attachmentGroups.map((group) => (
+              <Card
+                key={group.attachment_type}
+                title={group.attachment_type_display || '—'}
+              >
+                <Text type="secondary">Дані зʼявляться пізніше</Text>
+              </Card>
+            ))}
+          </Flex>
+        </Col>
+      </Row>
     </div>
   );
 }

@@ -1,28 +1,62 @@
 import { DeleteOutlined, InboxOutlined } from '@ant-design/icons';
 import { useState } from 'react';
-import { Button, Card, Drawer, Flex, Tooltip, Typography, Upload } from 'antd';
+import {
+  Alert,
+  Button,
+  Card,
+  Drawer,
+  Flex,
+  Input,
+  Select,
+  Tooltip,
+  Typography,
+  Upload,
+} from 'antd';
+import api from '../api/client';
 
 const { Text } = Typography;
 
 const { Dragger } = Upload;
 
-function ProductionProductGalleryCreateDrawer({ open, onClose }) {
+function ProductionProductGalleryCreateDrawer({ open, onClose, productId }) {
   const [fileList, setFileList] = useState([]);
   const [uploadMode, setUploadMode] = useState(null);
   const [hoveredFileUid, setHoveredFileUid] = useState(null);
+  const [attachmentTypeOptions, setAttachmentTypeOptions] = useState([]);
+  const [attachmentTargets, setAttachmentTargets] = useState(null);
+  const [attachmentType, setAttachmentType] = useState(null);
+  const [attachmentTarget, setAttachmentTarget] = useState(null);
+  const [attachmentName, setAttachmentName] = useState('');
+  const [attachmentDescription, setAttachmentDescription] = useState('');
 
   const handleClose = () => {
     setFileList([]);
     setUploadMode(null);
+    setAttachmentType(null);
+    setAttachmentTarget(null);
+    setAttachmentName('');
+    setAttachmentDescription('');
     onClose();
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (fileList.length === 0) {
       return;
     }
 
-    setUploadMode(fileList.length === 1 ? 'single' : 'bulk');
+    const nextUploadMode = fileList.length === 1 ? 'single' : 'bulk';
+
+    setUploadMode(nextUploadMode);
+
+    const [typesResponse, targetsResponse] = await Promise.all([
+      api.get('product-attachments/attachment-types/'),
+      api.get(`products/${productId}/attachment-targets/`),
+    ]);
+
+    setAttachmentTypeOptions(
+      Array.isArray(typesResponse.data) ? typesResponse.data : [],
+    );
+    setAttachmentTargets(targetsResponse.data || null);
   };
 
   return (
@@ -122,13 +156,125 @@ function ProductionProductGalleryCreateDrawer({ open, onClose }) {
 
         {uploadMode && (
           <>
-            <Card title="2">
-              <Text type="secondary">Дані зʼявляться пізніше</Text>
+            <Card title="2. Налаштування медіа">
+              <Flex vertical gap={14}>
+                <div>
+                  <Text
+                    style={{
+                      display: 'block',
+                      marginBottom: 6,
+                      fontSize: 12,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {uploadMode === 'single'
+                      ? 'Оберіть тип файла'
+                      : 'Оберіть тип файлів'}
+                  </Text>
+
+                  <Select
+                    value={attachmentType}
+                    options={attachmentTypeOptions}
+                    placeholder="Тип вкладення"
+                    style={{ width: '100%' }}
+                    onChange={setAttachmentType}
+                  />
+                </div>
+
+                <div>
+                  <Text
+                    style={{
+                      display: 'block',
+                      marginBottom: 6,
+                      fontSize: 12,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    Оберіть привʼязку до продукту, етапу або робочого процесу
+                  </Text>
+
+                  <Select
+                    value={attachmentTarget}
+                    placeholder="Привʼязка"
+                    style={{ width: '100%' }}
+                    onChange={setAttachmentTarget}
+                    options={[
+                      attachmentTargets?.product
+                        ? {
+                            value: `product:${attachmentTargets.product.id}`,
+                            label: attachmentTargets.product.label,
+                          }
+                        : null,
+                      ...(attachmentTargets?.steps || []).flatMap((step) => [
+                        {
+                          value: `step:${step.id}`,
+                          label: step.label,
+                        },
+                        ...(step.works || []).map((work) => ({
+                          value: `work:${work.id}`,
+                          label: work.label,
+                        })),
+                      ]),
+                    ].filter(Boolean)}
+                  />
+                </div>
+              </Flex>
             </Card>
 
-            <Card title="3">
-              <Text type="secondary">Дані зʼявляться пізніше</Text>
-            </Card>
+            {uploadMode === 'single' && (
+              <Card title="3. Опис файла">
+                <Flex vertical gap={14}>
+                  <div>
+                    <Text
+                      style={{
+                        display: 'block',
+                        marginBottom: 6,
+                        fontSize: 12,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      Оберіть назву
+                    </Text>
+
+                    <Input
+                      value={attachmentName}
+                      onChange={(event) =>
+                        setAttachmentName(event.target.value)
+                      }
+                      placeholder="Назва файла"
+                    />
+                  </div>
+
+                  <div>
+                    <Text
+                      style={{
+                        display: 'block',
+                        marginBottom: 6,
+                        fontSize: 12,
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      Додайте опис
+                    </Text>
+
+                    <Input.TextArea
+                      rows={4}
+                      value={attachmentDescription}
+                      onChange={(event) =>
+                        setAttachmentDescription(event.target.value)
+                      }
+                      placeholder="Опис файла"
+                    />
+                  </div>
+
+                  <Alert
+                    type="warning"
+                    showIcon
+                    message="Ці поля не є обовʼязковими."
+                  />
+                </Flex>
+              </Card>
+            )}
           </>
         )}
 

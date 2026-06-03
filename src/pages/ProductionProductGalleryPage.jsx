@@ -137,6 +137,7 @@ function ProductionProductGalleryPage() {
       <ProductionProductGalleryCreateDrawer
         open={isCreateDrawerOpen}
         onClose={() => setIsCreateDrawerOpen(false)}
+        productId={product?.id || id}
       />
     </div>
   );

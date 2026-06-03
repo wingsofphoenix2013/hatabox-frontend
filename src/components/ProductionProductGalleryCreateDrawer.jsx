@@ -56,46 +56,7 @@ function ProductionProductGalleryCreateDrawer({ open, onClose }) {
                   setUploadMode(null);
                   setHoveredFileUid(null);
                 }}
-                itemRender={(_, file, __, actions) => (
-                  <Flex
-                    justify="space-between"
-                    align="center"
-                    gap={12}
-                    style={{
-                      padding: '6px 10px',
-                      border: '1px solid #f0f0f0',
-                      borderRadius: 6,
-                      background:
-                        hoveredFileUid === file.uid ? '#fafafa' : '#ffffff',
-                    }}
-                    onMouseEnter={() => setHoveredFileUid(file.uid)}
-                    onMouseLeave={() => setHoveredFileUid(null)}
-                  >
-                    <Text
-                      style={{
-                        minWidth: 0,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}
-                      title={file.name}
-                    >
-                      {file.name}
-                    </Text>
-
-                    {!(uploadMode === 'single' && fileList.length === 1) && (
-                      <DeleteOutlined
-                        style={{
-                          color:
-                            hoveredFileUid === file.uid ? '#ff4d4f' : '#595959',
-                          cursor: 'pointer',
-                          flex: '0 0 auto',
-                        }}
-                        onClick={() => actions.remove()}
-                      />
-                    )}
-                  </Flex>
-                )}
+                showUploadList={false}
               >
                 <p className="ant-upload-drag-icon">
                   <InboxOutlined />
@@ -110,6 +71,52 @@ function ProductionProductGalleryCreateDrawer({ open, onClose }) {
                 </p>
               </Dragger>
             )}
+
+            {fileList.map((file) => (
+              <Flex
+                key={file.uid}
+                justify="space-between"
+                align="center"
+                gap={12}
+                style={{
+                  padding: '6px 10px',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: 6,
+                  background:
+                    hoveredFileUid === file.uid ? '#fafafa' : '#ffffff',
+                }}
+                onMouseEnter={() => setHoveredFileUid(file.uid)}
+                onMouseLeave={() => setHoveredFileUid(null)}
+              >
+                <Text
+                  style={{
+                    minWidth: 0,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}
+                  title={file.name}
+                >
+                  {file.name}
+                </Text>
+
+                {!(uploadMode === 'single' && fileList.length === 1) && (
+                  <DeleteOutlined
+                    style={{
+                      color:
+                        hoveredFileUid === file.uid ? '#ff4d4f' : '#595959',
+                      cursor: 'pointer',
+                      flex: '0 0 auto',
+                    }}
+                    onClick={() => {
+                      setFileList((prev) =>
+                        prev.filter((item) => item.uid !== file.uid),
+                      );
+                    }}
+                  />
+                )}
+              </Flex>
+            ))}
           </Flex>
         </Card>
 

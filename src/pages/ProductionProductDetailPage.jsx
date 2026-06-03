@@ -367,15 +367,22 @@ function ProductionProductDetailPage() {
                 </Button>
               )}
 
-              <Tooltip title="Функціонал перебуває в стадії розробки">
+              <Link
+                to={`/production/products/${product.id}/material-plan`}
+                state={{
+                  productId: product.id,
+                  productCode: `${product.product_family_code || '—'} v.${
+                    product.version || '—'
+                  }`,
+                }}
+              >
                 <Button
                   block
-                  disabled
                   icon={<FileTextOutlined style={{ color: '#1677ff' }} />}
                 >
                   Загальна комплектація
                 </Button>
-              </Tooltip>
+              </Link>
 
               <Tooltip title="Функціонал перебуває в стадії розробки">
                 <Button

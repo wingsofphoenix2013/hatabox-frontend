@@ -57,29 +57,27 @@ function ProductionProductGalleryCreateDrawer({ open, onClose }) {
                 Можна додати один або кілька файлів.
               </p>
             </Dragger>
-
-            <Flex justify="flex-end">
-              <Tooltip
-                title={
-                  fileList.length === 0
-                    ? 'Для наступного кроку потрібно додати хоча б один файл.'
-                    : ''
-                }
-              >
-                <Button
-                  type="primary"
-                  disabled={fileList.length === 0}
-                  onClick={handleNextStep}
-                >
-                  Наступний крок
-                </Button>
-              </Tooltip>
-            </Flex>
           </Flex>
         </Card>
 
         <Flex justify="space-between" align="center" gap={12} wrap>
           <Button onClick={handleClose}>Закрити</Button>
+
+          <Tooltip
+            title={
+              fileList.length === 0
+                ? 'Для наступного кроку потрібно додати хоча б один файл.'
+                : ''
+            }
+          >
+            <Button
+              type="primary"
+              disabled={fileList.length === 0}
+              onClick={handleNextStep}
+            >
+              Наступний крок
+            </Button>
+          </Tooltip>
         </Flex>
       </Flex>
     </Drawer>

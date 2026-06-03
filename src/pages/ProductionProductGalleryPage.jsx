@@ -5,10 +5,10 @@ import {
   Button,
   Card,
   Col,
-  Divider,
   Flex,
   Row,
   Skeleton,
+  Tag,
   Typography,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
@@ -66,6 +66,49 @@ function ProductionProductGalleryPage() {
   const attachmentGroups = Array.isArray(attachmentsOverview?.attachment_groups)
     ? attachmentsOverview.attachment_groups
     : [];
+
+  const renderAttachmentGroupExtra = (group) => {
+    const hasProductAttachments =
+      Array.isArray(group.product_attachments) &&
+      group.product_attachments.length > 0;
+
+    const stepSortOrders = Array.from(
+      new Set(
+        (Array.isArray(group.steps) ? group.steps : [])
+          .map((step) => step.sort_order)
+          .filter((sortOrder) => sortOrder !== null && sortOrder !== undefined),
+      ),
+    );
+
+    return (
+      <Flex align="center" gap={8} wrap justify="flex-end">
+        {hasProductAttachments && (
+          <Tag
+            style={{
+              marginInlineEnd: 0,
+              color: '#595959',
+              fontSize: 12,
+            }}
+          >
+            {product?.code || '—'}
+          </Tag>
+        )}
+
+        {stepSortOrders.map((sortOrder) => (
+          <Tag
+            key={sortOrder}
+            style={{
+              marginInlineEnd: 0,
+              color: '#595959',
+              fontSize: 12,
+            }}
+          >
+            Етап {sortOrder}
+          </Tag>
+        ))}
+      </Flex>
+    );
+  };
 
   return (
     <div style={{ padding: 20 }}>
@@ -130,6 +173,7 @@ function ProductionProductGalleryPage() {
               <Card
                 key={group.attachment_type}
                 title={group.attachment_type_display || '—'}
+                extra={renderAttachmentGroupExtra(group)}
               >
                 <Text type="secondary">Дані зʼявляться пізніше</Text>
               </Card>

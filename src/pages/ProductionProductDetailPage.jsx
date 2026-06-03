@@ -385,15 +385,21 @@ function ProductionProductDetailPage() {
                 </Button>
               </Link>
 
-              <Tooltip title="Функціонал перебуває в стадії розробки">
+              <Link
+                to={`/production/products/${product.id}/gallery`}
+                state={{
+                  productLabel: `${product.product_family_code || '—'} v.${
+                    product.version || '—'
+                  }`,
+                }}
+              >
                 <Button
                   block
-                  disabled
                   icon={<FileImageOutlined style={{ color: '#1677ff' }} />}
                 >
                   Галерея продукту
                 </Button>
-              </Tooltip>
+              </Link>
 
               <Tooltip title="Функціонал перебуває в стадії розробки">
                 <Button

@@ -11,14 +11,21 @@ import {
   Tooltip,
   Typography,
   Upload,
+  message,
 } from 'antd';
 import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const { Text } = Typography;
 
 const { Dragger } = Upload;
 
-function ProductionProductGalleryCreateDrawer({ open, onClose, productId }) {
+function ProductionProductGalleryCreateDrawer({
+  open,
+  onClose,
+  productId,
+  onCompleted,
+}) {
   const [fileList, setFileList] = useState([]);
   const [uploadMode, setUploadMode] = useState(null);
   const [hoveredFileUid, setHoveredFileUid] = useState(null);
@@ -28,6 +35,8 @@ function ProductionProductGalleryCreateDrawer({ open, onClose, productId }) {
   const [attachmentTarget, setAttachmentTarget] = useState(null);
   const [attachmentName, setAttachmentName] = useState('');
   const [attachmentDescription, setAttachmentDescription] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleClose = () => {
     setFileList([]);
@@ -36,6 +45,8 @@ function ProductionProductGalleryCreateDrawer({ open, onClose, productId }) {
     setAttachmentTarget(null);
     setAttachmentName('');
     setAttachmentDescription('');
+    setSaving(false);
+    setSubmitError('');
     onClose();
   };
 
@@ -57,6 +68,77 @@ function ProductionProductGalleryCreateDrawer({ open, onClose, productId }) {
       Array.isArray(typesResponse.data) ? typesResponse.data : [],
     );
     setAttachmentTargets(targetsResponse.data || null);
+  };
+
+  const canUpload = Boolean(attachmentType && attachmentTarget) && !saving;
+
+  const appendAttachmentTarget = (formData) => {
+    const [targetType, targetId] = String(attachmentTarget).split(':');
+
+    if (targetType === 'product') {
+      formData.append('product', targetId);
+    }
+
+    if (targetType === 'step') {
+      formData.append('product_step', targetId);
+    }
+
+    if (targetType === 'work') {
+      formData.append('product_work', targetId);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!canUpload) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setSubmitError('');
+
+      const formData = new FormData();
+
+      formData.append('attachment_type', attachmentType);
+      appendAttachmentTarget(formData);
+
+      if (uploadMode === 'single') {
+        const file = fileList[0]?.originFileObj;
+
+        formData.append('file', file);
+
+        if (String(attachmentName).trim()) {
+          formData.append('name', attachmentName.trim());
+        }
+
+        if (String(attachmentDescription).trim()) {
+          formData.append('description', attachmentDescription.trim());
+        }
+
+        await api.post('product-attachments/', formData);
+      } else {
+        fileList.forEach((file) => {
+          formData.append('files', file.originFileObj);
+        });
+
+        await api.post('product-attachments/bulk-upload/', formData);
+      }
+
+      message.success('Файли завантажено.');
+
+      if (onCompleted) {
+        await onCompleted();
+      }
+
+      handleClose();
+    } catch (err) {
+      setSubmitError(
+        getApiErrorMessage(err.response?.data) ||
+          'Не вдалося завантажити файли.',
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -266,12 +348,6 @@ function ProductionProductGalleryCreateDrawer({ open, onClose, productId }) {
                       placeholder="Опис файла"
                     />
                   </div>
-
-                  <Alert
-                    type="warning"
-                    showIcon
-                    message="Ці поля не є обовʼязковими."
-                  />
                 </Flex>
               </Card>
             )}
@@ -298,9 +374,28 @@ function ProductionProductGalleryCreateDrawer({ open, onClose, productId }) {
               </Button>
             </Tooltip>
           ) : (
-            <Button type="primary">Завантажити</Button>
+            <Tooltip
+              title={
+                !attachmentType || !attachmentTarget
+                  ? 'Для завантаження потрібно обрати тип файлів і привʼязку.'
+                  : ''
+              }
+            >
+              <span>
+                <Button
+                  type="primary"
+                  loading={saving}
+                  disabled={!canUpload}
+                  onClick={handleUpload}
+                >
+                  Завантажити
+                </Button>
+              </span>
+            </Tooltip>
           )}
         </Flex>
+
+        {submitError && <Alert type="error" showIcon message={submitError} />}
       </Flex>
     </Drawer>
   );

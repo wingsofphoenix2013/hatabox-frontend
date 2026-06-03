@@ -102,16 +102,20 @@ function ProductionProductGalleryPage() {
                 </Button>
               </Link>
 
-              <Divider dashed style={{ margin: '8px 0' }} />
+              {product?.development_status === 'in_development' && (
+                <>
+                  <Divider dashed style={{ margin: '8px 0' }} />
 
-              <Button
-                block
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setIsCreateDrawerOpen(true)}
-              >
-                Додати файли
-              </Button>
+                  <Button
+                    block
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => setIsCreateDrawerOpen(true)}
+                  >
+                    Додати файли
+                  </Button>
+                </>
+              )}
             </Flex>
           </Card>
         </Col>
@@ -138,6 +142,7 @@ function ProductionProductGalleryPage() {
         open={isCreateDrawerOpen}
         onClose={() => setIsCreateDrawerOpen(false)}
         productId={product?.id || id}
+        onCompleted={loadAttachmentsOverview}
       />
     </div>
   );

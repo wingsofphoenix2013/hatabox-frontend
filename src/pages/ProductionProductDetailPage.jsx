@@ -374,6 +374,7 @@ function ProductionProductDetailPage() {
                   productCode: `${product.product_family_code || '—'} v.${
                     product.version || '—'
                   }`,
+                  workTracking: product.work_tracking,
                 }}
               >
                 <Button

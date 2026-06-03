@@ -17,7 +17,7 @@ import {
   Table,
   Typography,
 } from 'antd';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
 
@@ -25,6 +25,9 @@ const { Title, Text } = Typography;
 
 function ProductionProductMaterialPlanPage() {
   const { id } = useParams();
+  const location = useLocation();
+
+  const workTracking = location.state?.workTracking;
 
   const [materialPlan, setMaterialPlan] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +44,11 @@ function ProductionProductMaterialPlanPage() {
       setLoading(true);
       setError('');
 
-      const response = await api.get(`products/${id}/work-material-plan/`);
+      const endpoint = workTracking
+        ? `products/${id}/work-material-plan/`
+        : `products/${id}/step-material-plan/`;
+
+      const response = await api.get(endpoint);
       setMaterialPlan(response.data || null);
     } catch (err) {
       console.error('Failed to load product material plan page:', err);
@@ -55,21 +62,30 @@ function ProductionProductMaterialPlanPage() {
   const items = Array.isArray(materialPlan?.items) ? materialPlan.items : [];
 
   const tableData = items.flatMap((item) => {
-    const detailRows =
-      expandedInvItemId === item.inv_item_id
-        ? (item.steps || []).flatMap((step) =>
-            (step.works || []).map((work) => ({
-              ...work,
-              id: `${item.inv_item_id}-${step.product_step_id}-${work.product_work_id}`,
-              isDetailRow: true,
-              inv_item_id: item.inv_item_id,
-              product_step_id: step.product_step_id,
-              product_step_name: step.product_step_name,
-              product_step_sort_order: step.product_step_sort_order,
-              unit_symbol: item.unit_symbol,
-            })),
-          )
-        : [];
+    if (expandedInvItemId !== item.inv_item_id) {
+      return [item];
+    }
+
+    const detailRows = workTracking
+      ? (item.steps || []).flatMap((step) =>
+          (step.works || []).map((work) => ({
+            ...work,
+            id: `${item.inv_item_id}-${step.product_step_id}-${work.product_work_id}`,
+            isDetailRow: true,
+            inv_item_id: item.inv_item_id,
+            product_step_id: step.product_step_id,
+            product_step_name: step.product_step_name,
+            product_step_sort_order: step.product_step_sort_order,
+            unit_symbol: item.unit_symbol,
+          })),
+        )
+      : (item.steps || []).map((step) => ({
+          ...step,
+          id: `${item.inv_item_id}-${step.product_step_id}`,
+          isDetailRow: true,
+          inv_item_id: item.inv_item_id,
+          unit_symbol: item.unit_symbol,
+        }));
 
     return [item, ...detailRows];
   });
@@ -89,12 +105,16 @@ function ProductionProductMaterialPlanPage() {
         record.isDetailRow ? (
           <Flex justify="flex-end" align="center" gap={6}>
             <span>
-              {record.product_step_name || '—'} |{' '}
-              {record.product_work_name || '—'}
+              {record.product_step_name || '—'}
+              {workTracking && <> | {record.product_work_name || '—'}</>}
             </span>
 
             <Link
-              to={`/production/product-steps/${record.product_step_id}#work-${record.product_work_id}`}
+              to={
+                workTracking
+                  ? `/production/product-steps/${record.product_step_id}#work-${record.product_work_id}`
+                  : `/production/product-steps/${record.product_step_id}`
+              }
               target="_blank"
               style={{ display: 'inline-flex' }}
             >

@@ -40,6 +40,7 @@ function ProductionProductGalleryCreateDrawer({ open, onClose }) {
             <Dragger
               multiple
               beforeUpload={() => false}
+              style={{ marginBottom: 12 }}
               fileList={fileList}
               onChange={({ fileList: nextFileList }) => {
                 setFileList(nextFileList);

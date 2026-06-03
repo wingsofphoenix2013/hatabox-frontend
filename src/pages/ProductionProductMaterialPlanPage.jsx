@@ -72,6 +72,7 @@ function ProductionProductMaterialPlanPage() {
             href={`/inventory/stock/${record.inv_item_id}`}
             target="_blank"
             rel="noreferrer"
+            style={{ display: 'inline-flex' }}
           >
             <InfoCircleOutlined style={{ color: '#595959' }} />
           </a>

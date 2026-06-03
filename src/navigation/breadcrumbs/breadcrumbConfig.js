@@ -107,6 +107,30 @@ export const breadcrumbConfig = [
     },
   },
   {
+    match: (pathname) =>
+      pathname.startsWith('/production/products/') &&
+      pathname.endsWith('/gallery'),
+    build: ({ pathname, search, state }) => {
+      const pathParts = pathname.split('/');
+      const productId = pathParts[pathParts.length - 2];
+      const productLabel = state?.productLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Виробництво'),
+        makeLinkItem(`/production/products${search}`, 'Каталог продукції'),
+        productLabel
+          ? makeLinkItem(
+              `/production/products/${productId}${search}`,
+              productLabel,
+              { productLabel },
+            )
+          : makeTextItem(`Продукт ID ${productId}`),
+        makeTextItem('Галерея продукту'),
+      ];
+    },
+  },
+  {
     match: (pathname) => pathname.startsWith('/production/product-steps/'),
     build: ({ pathname, search, state }) => {
       const currentId = getCurrentId(pathname);

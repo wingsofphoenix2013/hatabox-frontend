@@ -45,6 +45,7 @@ import ProductionProductDetailPage from './pages/ProductionProductDetailPage';
 import ProductionProductMaterialPlanPage from './pages/ProductionProductMaterialPlanPage';
 import ProductionProductStepCreatePage from './pages/ProductionProductStepCreatePage';
 import ProductionProductStepDetailPage from './pages/ProductionProductStepDetailPage';
+import ProductionProductGalleryPage from './pages/ProductionProductGalleryPage';
 
 import OrganisationsRegisterPage from './pages/OrganisationsRegisterPage';
 import OrganizationDetailsPage from './pages/OrganizationDetailsPage';
@@ -166,8 +167,8 @@ function App() {
               element={<ProductionProductPage />}
             />
             <Route
-              path="/production/products/:id"
-              element={<ProductionProductDetailPage />}
+              path="/production/products/:id/gallery"
+              element={<ProductionProductGalleryPage />}
             />
             <Route
               path="/production/products/:id/material-plan"
@@ -181,7 +182,10 @@ function App() {
               path="/production/product-steps/:id"
               element={<ProductionProductStepDetailPage />}
             />
-
+            <Route
+              path="/production/products/:id"
+              element={<ProductionProductDetailPage />}
+            />
             <Route
               path="/production/components"
               element={<ProductionComponentsPage />}

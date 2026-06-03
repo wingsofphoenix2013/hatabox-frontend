@@ -169,60 +169,76 @@ function ProductionProductMaterialPlanPage() {
   const product = materialPlan?.product;
 
   return (
-    <div style={{ padding: 20 }}>
-      <Flex
-        justify="space-between"
-        align="flex-start"
-        gap={16}
-        style={{ marginBottom: 20 }}
-      >
-        <Flex vertical gap={4}>
-          <Title level={2} style={{ margin: 0 }}>
-            Загальна комплектація
-          </Title>
+    <>
+      <style>
+        {`
+          .expanded-material-row td {
+            background: #f0f5ff !important;
+          }
+        `}
+      </style>
 
-          <Text type="secondary">{product?.code || '—'}</Text>
+      <div style={{ padding: 20 }}>
+        <Flex
+          justify="space-between"
+          align="flex-start"
+          gap={16}
+          style={{ marginBottom: 20 }}
+        >
+          <Flex vertical gap={4}>
+            <Title level={2} style={{ margin: 0 }}>
+              Загальна комплектація
+            </Title>
+
+            <Text type="secondary">{product?.code || '—'}</Text>
+          </Flex>
         </Flex>
-      </Flex>
 
-      <Row gutter={20} align="top">
-        <Col xs={24} lg={6}>
-          <Card title="Навігація">
-            <Link
-              to={`/production/products/${product?.id || id}`}
-              state={{
-                productCode: product?.code,
-              }}
-            >
-              <Button
-                block
-                icon={<RollbackOutlined style={{ color: '#1677ff' }} />}
+        <Row gutter={20} align="top">
+          <Col xs={24} lg={6}>
+            <Card title="Навігація">
+              <Link
+                to={`/production/products/${product?.id || id}`}
+                state={{
+                  productCode: product?.code,
+                }}
               >
-                Повернутись до продукту
-              </Button>
-            </Link>
-          </Card>
-        </Col>
+                <Button
+                  block
+                  icon={<RollbackOutlined style={{ color: '#1677ff' }} />}
+                >
+                  Повернутись до продукту
+                </Button>
+              </Link>
+            </Card>
+          </Col>
 
-        <Col xs={24} lg={18}>
-          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
-          </Card>
+          <Col xs={24} lg={18}>
+            <Card title="Основна інформація" style={{ marginBottom: 20 }}>
+              <Text type="secondary">Дані зʼявляться пізніше</Text>
+            </Card>
 
-          <Card title="Комплектація виробу">
-            <Table
-              rowKey={(record) =>
-                record.isDetailRow ? record.id : record.inv_item_id
-              }
-              columns={columns}
-              dataSource={tableData}
-              pagination={false}
-              size="small"
-            />
-          </Card>
-        </Col>
-      </Row>
-    </div>
+            <Card title="Комплектація виробу">
+              <Table
+                rowKey={(record) =>
+                  record.isDetailRow ? record.id : record.inv_item_id
+                }
+                columns={columns}
+                dataSource={tableData}
+                pagination={false}
+                size="small"
+                rowClassName={(record) =>
+                  !record.isDetailRow &&
+                  expandedInvItemId === record.inv_item_id
+                    ? 'expanded-material-row'
+                    : ''
+                }
+              />
+            </Card>
+          </Col>
+        </Row>
+      </div>
+    </>
   );
 }
 

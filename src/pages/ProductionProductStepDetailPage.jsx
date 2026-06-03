@@ -933,12 +933,7 @@ function ProductionProductStepDetailPage() {
                   pagination={false}
                   size="small"
                   locale={{
-                    emptyText: (
-                      <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description="Компоненти відсутні"
-                      />
-                    ),
+                    emptyText: <Empty description="Компоненти відсутні" />,
                   }}
                 />
 
@@ -1051,7 +1046,7 @@ function ProductionProductStepDetailPage() {
                       pagination={false}
                       size="small"
                       locale={{
-                        emptyText: 'Компоненти відсутні',
+                        emptyText: <Empty description="Компоненти відсутні" />,
                       }}
                     />
 

@@ -314,7 +314,20 @@ function ProductionProductDetailPage() {
                 padding: 12,
               }}
             >
-              <Text type="secondary">Дані зʼявляться пізніше</Text>
+              {product.primary_image?.file ? (
+                <img
+                  src={product.primary_image.file}
+                  alt={product.primary_image.display_filename || ''}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain',
+                    display: 'block',
+                  }}
+                />
+              ) : (
+                <Text type="secondary">Головне зображення не призначено</Text>
+              )}
             </div>
           </Card>
 

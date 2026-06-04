@@ -21,6 +21,7 @@ import {
   Col,
   Divider,
   Flex,
+  Image,
   Popconfirm,
   Popover,
   Row,
@@ -385,12 +386,12 @@ function ProductionProductGalleryPage() {
                               }}
                             >
                               {isImageAttachment(attachment) ? (
-                                <img
+                                <Image
                                   src={attachment.file}
                                   alt={attachment.name || ''}
+                                  width={120}
+                                  height={120}
                                   style={{
-                                    width: '100%',
-                                    height: '100%',
                                     objectFit: 'cover',
                                     display: 'block',
                                   }}
@@ -484,6 +485,7 @@ function ProductionProductGalleryPage() {
                                 }
                               >
                                 <InfoCircleOutlined
+                                  onClick={(event) => event.stopPropagation()}
                                   style={{
                                     position: 'absolute',
                                     top: 8,
@@ -510,6 +512,7 @@ function ProductionProductGalleryPage() {
                                   }
                                 >
                                   <DeleteOutlined
+                                    onClick={(event) => event.stopPropagation()}
                                     style={{
                                       position: 'absolute',
                                       right: 8,

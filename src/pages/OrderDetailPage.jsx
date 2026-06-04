@@ -6,6 +6,7 @@ import {
   DownloadOutlined,
   EditOutlined,
   FileImageOutlined,
+  FilePdfOutlined,
   InfoCircleOutlined,
   LinkOutlined,
   SettingOutlined,
@@ -143,6 +144,10 @@ function OrderDetailPage() {
   const hasOrderItems = Array.isArray(order?.items) && order.items.length > 0;
   const hasReceiptDocuments =
     Array.isArray(receiptDocuments) && receiptDocuments.length > 0;
+  const refundDocuments = Array.isArray(order?.refund_documents)
+    ? order.refund_documents
+    : [];
+  const hasRefundDocuments = refundDocuments.length > 0;
   const canCreateRefund =
     isInProgress &&
     Array.isArray(order?.payment_documents) &&
@@ -779,6 +784,46 @@ function OrderDetailPage() {
           },
         ]
       : []),
+  ];
+
+  const refundColumns = [
+    {
+      title: 'Дата',
+      dataIndex: 'refund_date',
+      key: 'refund_date',
+      width: 130,
+      align: 'center',
+      render: (value) => formatDateDisplay(value),
+    },
+    {
+      title: '№ документа',
+      dataIndex: 'refund_no',
+      key: 'refund_no',
+      render: (value, record) => (
+        <Flex align="center" gap={6}>
+          <span>{value || '—'}</span>
+
+          {record.file && (
+            <FilePdfOutlined
+              style={{
+                color: '#ff4d4f',
+                fontSize: 14,
+                cursor: 'pointer',
+              }}
+              onClick={() => window.open(record.file, '_blank')}
+            />
+          )}
+        </Flex>
+      ),
+    },
+    {
+      title: 'Сума',
+      dataIndex: 'refund_amount',
+      key: 'refund_amount',
+      width: 140,
+      align: 'center',
+      render: (value) => formatMoney(value),
+    },
   ];
 
   const paymentColumns = [
@@ -1700,12 +1745,30 @@ function OrderDetailPage() {
             </Card>
           )}
 
+          {hasRefundDocuments && (
+            <Card
+              title="Повернення коштів"
+              style={{
+                marginBottom: 20,
+                background: '#fff2f0',
+                borderColor: '#ffccc7',
+              }}
+            >
+              <Table
+                rowKey="id"
+                columns={refundColumns}
+                dataSource={refundDocuments}
+                pagination={false}
+                size="small"
+                tableLayout="fixed"
+              />
+            </Card>
+          )}
+
           {!isDraft && (
             <Card
               title={
                 <Flex justify="space-between" align="center" wrap>
-                  <span>Оплата</span>
-
                   <Text>
                     Баланс:{' '}
                     <strong

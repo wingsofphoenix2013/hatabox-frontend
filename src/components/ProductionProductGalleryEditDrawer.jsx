@@ -5,6 +5,7 @@ import {
   FileWordOutlined,
   PlayCircleOutlined,
 } from '@ant-design/icons';
+import { useEffect, useState } from 'react';
 import { Button, Card, Drawer, Flex, Input, Typography } from 'antd';
 
 const { Text } = Typography;
@@ -17,6 +18,15 @@ const compactLabelStyle = {
 };
 
 function ProductionProductGalleryEditDrawer({ open, onClose, attachment }) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+
+    setName(attachment?.name || '');
+    setDescription(attachment?.description || '');
+  }, [open, attachment]);
   const fileName = String(attachment?.file || '')
     .split('?')[0]
     .toLowerCase();
@@ -106,13 +116,22 @@ function ProductionProductGalleryEditDrawer({ open, onClose, attachment }) {
             <div>
               <Text style={compactLabelStyle}>Назва</Text>
 
-              <Input placeholder="Назва файла" />
+              <Input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Назва файла"
+              />
             </div>
 
             <div>
               <Text style={compactLabelStyle}>Опис</Text>
 
-              <Input.TextArea rows={4} placeholder="Опис файла" />
+              <Input.TextArea
+                rows={4}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Опис файла"
+              />
             </div>
           </Flex>
         </Card>

@@ -33,6 +33,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
 import ProductionProductGalleryCreateDrawer from '../components/ProductionProductGalleryCreateDrawer';
+import ProductionProductGalleryEditDrawer from '../components/ProductionProductGalleryEditDrawer';
 
 const { Title, Text } = Typography;
 
@@ -47,6 +48,7 @@ function ProductionProductGalleryPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [activeGroupFilters, setActiveGroupFilters] = useState({});
   const [expandedAttachmentGroups, setExpandedAttachmentGroups] = useState({});
+  const [editingAttachment, setEditingAttachment] = useState(null);
 
   useEffect(() => {
     loadAttachmentsOverview();
@@ -493,6 +495,10 @@ function ProductionProductGalleryPage() {
                                           color: '#595959',
                                           fontSize: 12,
                                         }}
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          setEditingAttachment(attachment);
+                                        }}
                                       >
                                         <EditOutlined /> Редагувати
                                       </Tag>
@@ -636,6 +642,12 @@ function ProductionProductGalleryPage() {
         onClose={() => setIsCreateDrawerOpen(false)}
         productId={product?.id || id}
         onCompleted={loadAttachmentsOverview}
+      />
+
+      <ProductionProductGalleryEditDrawer
+        open={Boolean(editingAttachment)}
+        onClose={() => setEditingAttachment(null)}
+        attachment={editingAttachment}
       />
     </div>
   );

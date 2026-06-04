@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import {
   DeleteOutlined,
   EditOutlined,
+  FileExcelOutlined,
+  FilePdfOutlined,
+  FilePptOutlined,
+  FileWordOutlined,
   InfoCircleOutlined,
+  PlayCircleOutlined,
   PlusOutlined,
   RollbackOutlined,
 } from '@ant-design/icons';
@@ -87,6 +92,39 @@ function ProductionProductGalleryPage() {
       console.error('Failed to delete product attachment:', err);
       message.error('Не вдалося видалити файл.');
     }
+  };
+
+  const getAttachmentIcon = (attachment) => {
+    const fileName = String(attachment?.file || '')
+      .split('?')[0]
+      .toLowerCase();
+
+    if (fileName.endsWith('.pdf')) {
+      return <FilePdfOutlined style={{ fontSize: 48, color: '#595959' }} />;
+    }
+
+    if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
+      return <FileWordOutlined style={{ fontSize: 48, color: '#595959' }} />;
+    }
+
+    if (fileName.endsWith('.xls') || fileName.endsWith('.xlsx')) {
+      return <FileExcelOutlined style={{ fontSize: 48, color: '#595959' }} />;
+    }
+
+    if (fileName.endsWith('.ppt') || fileName.endsWith('.pptx')) {
+      return <FilePptOutlined style={{ fontSize: 48, color: '#595959' }} />;
+    }
+
+    if (
+      fileName.endsWith('.mp4') ||
+      fileName.endsWith('.mov') ||
+      fileName.endsWith('.avi') ||
+      fileName.endsWith('.webm')
+    ) {
+      return <PlayCircleOutlined style={{ fontSize: 48, color: '#595959' }} />;
+    }
+
+    return null;
   };
 
   const isImageAttachment = (attachment) => {
@@ -244,21 +282,20 @@ function ProductionProductGalleryPage() {
                 extra={renderAttachmentGroupExtra(group)}
               >
                 <Flex wrap gap={12}>
-                  {getGroupAttachments(group)
-                    .filter(isImageAttachment)
-                    .map((attachment) => (
-                      <div
-                        key={attachment.id}
-                        style={{
-                          position: 'relative',
-                          width: 120,
-                          height: 120,
-                          borderRadius: 8,
-                          overflow: 'hidden',
-                          border: '1px solid #f0f0f0',
-                          background: '#fafafa',
-                        }}
-                      >
+                  {getGroupAttachments(group).map((attachment) => (
+                    <div
+                      key={attachment.id}
+                      style={{
+                        position: 'relative',
+                        width: 120,
+                        height: 120,
+                        borderRadius: 8,
+                        overflow: 'hidden',
+                        border: '1px solid #f0f0f0',
+                        background: '#fafafa',
+                      }}
+                    >
+                      {isImageAttachment(attachment) ? (
                         <img
                           src={attachment.file}
                           alt={attachment.name || ''}
@@ -269,60 +306,97 @@ function ProductionProductGalleryPage() {
                             display: 'block',
                           }}
                         />
+                      ) : (
+                        <Flex
+                          justify="center"
+                          align="center"
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                          }}
+                        >
+                          {getAttachmentIcon(attachment)}
+                        </Flex>
+                      )}
 
-                        <Popover
-                          trigger="click"
-                          content={
-                            <Flex vertical gap={8} style={{ minWidth: 300 }}>
-                              <Flex vertical gap={2}>
-                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                  Назва
-                                </Text>
-                                <Text strong>{attachment.name || '—'}</Text>
-                              </Flex>
-
-                              <Divider dashed style={{ margin: '4px 0' }} />
-
-                              <Flex vertical gap={2}>
-                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                  Опис
-                                </Text>
-                                <Text>
-                                  {attachment.description || 'Опис відсутній'}
-                                </Text>
-                              </Flex>
-
-                              <Divider dashed style={{ margin: '4px 0' }} />
-
-                              <Flex vertical gap={2}>
-                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                  Привʼязка
-                                </Text>
-                                <Text>{attachment.targetLabel || '—'}</Text>
-                              </Flex>
-
-                              <Divider dashed style={{ margin: '4px 0' }} />
-
-                              <Flex justify="flex-end">
-                                <Tag
-                                  style={{
-                                    marginInlineEnd: 0,
-                                    cursor: 'pointer',
-                                    color: '#595959',
-                                    fontSize: 12,
-                                  }}
-                                >
-                                  <EditOutlined /> Редагувати
-                                </Tag>
-                              </Flex>
+                      <Popover
+                        trigger="click"
+                        content={
+                          <Flex vertical gap={8} style={{ minWidth: 300 }}>
+                            <Flex vertical gap={2}>
+                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                Назва
+                              </Text>
+                              <Text strong>{attachment.name || '—'}</Text>
                             </Flex>
+
+                            <Divider dashed style={{ margin: '4px 0' }} />
+
+                            <Flex vertical gap={2}>
+                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                Опис
+                              </Text>
+                              <Text>
+                                {attachment.description || 'Опис відсутній'}
+                              </Text>
+                            </Flex>
+
+                            <Divider dashed style={{ margin: '4px 0' }} />
+
+                            <Flex vertical gap={2}>
+                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                Привʼязка
+                              </Text>
+                              <Text>{attachment.targetLabel || '—'}</Text>
+                            </Flex>
+
+                            <Divider dashed style={{ margin: '4px 0' }} />
+
+                            <Flex justify="flex-end">
+                              <Tag
+                                style={{
+                                  marginInlineEnd: 0,
+                                  cursor: 'pointer',
+                                  color: '#595959',
+                                  fontSize: 12,
+                                }}
+                              >
+                                <EditOutlined /> Редагувати
+                              </Tag>
+                            </Flex>
+                          </Flex>
+                        }
+                      >
+                        <InfoCircleOutlined
+                          style={{
+                            position: 'absolute',
+                            top: 8,
+                            left: 8,
+                            color: '#595959',
+                            background: 'rgba(255, 255, 255, 0.85)',
+                            borderRadius: '50%',
+                            padding: 4,
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </Popover>
+
+                      {product?.development_status === 'in_development' && (
+                        <Popconfirm
+                          title="Видалити файл?"
+                          description="Файл буде видалено без можливості відновлення."
+                          okText="Так, видалити"
+                          cancelText="Скасувати"
+                          okButtonProps={{ danger: true }}
+                          onConfirm={() =>
+                            handleDeleteAttachment(attachment.id)
                           }
                         >
-                          <InfoCircleOutlined
+                          <DeleteOutlined
                             style={{
                               position: 'absolute',
-                              top: 8,
-                              left: 8,
+                              right: 8,
+                              bottom: 8,
                               color: '#595959',
                               background: 'rgba(255, 255, 255, 0.85)',
                               borderRadius: '50%',
@@ -330,35 +404,10 @@ function ProductionProductGalleryPage() {
                               cursor: 'pointer',
                             }}
                           />
-                        </Popover>
-
-                        {product?.development_status === 'in_development' && (
-                          <Popconfirm
-                            title="Видалити файл?"
-                            description="Файл буде видалено без можливості відновлення."
-                            okText="Так, видалити"
-                            cancelText="Скасувати"
-                            okButtonProps={{ danger: true }}
-                            onConfirm={() =>
-                              handleDeleteAttachment(attachment.id)
-                            }
-                          >
-                            <DeleteOutlined
-                              style={{
-                                position: 'absolute',
-                                right: 8,
-                                bottom: 8,
-                                color: '#595959',
-                                background: 'rgba(255, 255, 255, 0.85)',
-                                borderRadius: '50%',
-                                padding: 4,
-                                cursor: 'pointer',
-                              }}
-                            />
-                          </Popconfirm>
-                        )}
-                      </div>
-                    ))}
+                        </Popconfirm>
+                      )}
+                    </div>
+                  ))}
                 </Flex>
               </Card>
             ))}

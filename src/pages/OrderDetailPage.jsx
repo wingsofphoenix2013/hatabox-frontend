@@ -85,6 +85,7 @@ function OrderDetailPage() {
   const [isEditingOrderComment, setIsEditingOrderComment] = useState(false);
   const [editingOrderComment, setEditingOrderComment] = useState('');
   const [savingOrderComment, setSavingOrderComment] = useState(false);
+  const [deletingOrder, setDeletingOrder] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -475,6 +476,26 @@ function OrderDetailPage() {
       message.error(backendMessage || 'Не вдалося зберегти коментар.');
     } finally {
       setSavingOrderComment(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    try {
+      setDeletingOrder(true);
+
+      await api.delete(`orders/${id}/`);
+
+      message.success('Замовлення видалено.');
+      navigate('/orders/register');
+    } catch (err) {
+      console.error('Failed to delete order:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData);
+
+      message.error(backendMessage || 'Не вдалося видалити замовлення.');
+    } finally {
+      setDeletingOrder(false);
     }
   };
 
@@ -1430,9 +1451,15 @@ function OrderDetailPage() {
                       description="Ця операція незворотна! Ви впевнені?"
                       okText="Так"
                       cancelText="Ні"
-                      onConfirm={() => {}}
+                      onConfirm={handleDeleteOrder}
+                      disabled={deletingOrder}
                     >
-                      <Button block danger icon={<StopOutlined />}>
+                      <Button
+                        block
+                        danger
+                        icon={<StopOutlined />}
+                        loading={deletingOrder}
+                      >
                         Відміна замовлення
                       </Button>
                     </Popconfirm>

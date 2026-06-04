@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  CloseCircleOutlined,
   DeleteOutlined,
   EditOutlined,
   FileExcelOutlined,
@@ -39,6 +40,7 @@ function ProductionProductGalleryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [activeGroupFilters, setActiveGroupFilters] = useState({});
 
   useEffect(() => {
     loadAttachmentsOverview();
@@ -146,6 +148,7 @@ function ProductionProductGalleryPage() {
       ? group.product_attachments.map((attachment) => ({
           ...attachment,
           targetLabel: product?.code || '—',
+          targetFilterKey: 'product',
         }))
       : [];
 
@@ -156,6 +159,7 @@ function ProductionProductGalleryPage() {
         (attachment) => ({
           ...attachment,
           targetLabel: `${step.sort_order || '—'}. ${step.name || '—'}`,
+          targetFilterKey: `step:${step.id}`,
         }),
       ),
       ...(Array.isArray(step.works) ? step.works : []).flatMap((work) =>
@@ -165,12 +169,36 @@ function ProductionProductGalleryPage() {
             targetLabel: `${step.sort_order || '—'}. ${step.name || '—'} ${
               work.sort_order || '—'
             }. ${work.name || '—'}`,
+            targetFilterKey: `step:${step.id}`,
           }),
         ),
       ),
     ]);
 
-    return [...productAttachments, ...stepAttachments];
+    const attachments = [...productAttachments, ...stepAttachments];
+
+    const activeFilters = activeGroupFilters[group.attachment_type] || [];
+
+    if (activeFilters.length === 0) {
+      return attachments;
+    }
+
+    return attachments.filter((attachment) =>
+      activeFilters.includes(attachment.targetFilterKey),
+    );
+  };
+
+  const toggleGroupFilter = (attachmentType, filterKey) => {
+    setActiveGroupFilters((prev) => {
+      const currentFilters = prev[attachmentType] || [];
+
+      return {
+        ...prev,
+        [attachmentType]: currentFilters.includes(filterKey)
+          ? currentFilters.filter((item) => item !== filterKey)
+          : [...currentFilters, filterKey],
+      };
+    });
   };
 
   const renderAttachmentGroupExtra = (group) => {
@@ -190,28 +218,57 @@ function ProductionProductGalleryPage() {
       <Flex align="center" gap={8} wrap justify="flex-end">
         {hasProductAttachments && (
           <Tag
+            color={
+              (activeGroupFilters[group.attachment_type] || []).includes(
+                'product',
+              )
+                ? 'processing'
+                : 'default'
+            }
             style={{
               marginInlineEnd: 0,
+              cursor: 'pointer',
               color: '#595959',
               fontSize: 12,
             }}
+            onClick={() => toggleGroupFilter(group.attachment_type, 'product')}
           >
+            {(activeGroupFilters[group.attachment_type] || []).includes(
+              'product',
+            ) && <CloseCircleOutlined />}{' '}
             {product?.code || '—'}
           </Tag>
         )}
 
-        {stepSortOrders.map((sortOrder) => (
-          <Tag
-            key={sortOrder}
-            style={{
-              marginInlineEnd: 0,
-              color: '#595959',
-              fontSize: 12,
-            }}
-          >
-            Етап {sortOrder}
-          </Tag>
-        ))}
+        {stepSortOrders.map((sortOrder) => {
+          const step = (Array.isArray(group.steps) ? group.steps : []).find(
+            (item) => item.sort_order === sortOrder,
+          );
+
+          const filterKey = `step:${step?.id}`;
+
+          const isActive = (
+            activeGroupFilters[group.attachment_type] || []
+          ).includes(filterKey);
+
+          return (
+            <Tag
+              key={sortOrder}
+              color={isActive ? 'processing' : 'default'}
+              style={{
+                marginInlineEnd: 0,
+                cursor: 'pointer',
+                color: '#595959',
+                fontSize: 12,
+              }}
+              onClick={() =>
+                toggleGroupFilter(group.attachment_type, filterKey)
+              }
+            >
+              {isActive && <CloseCircleOutlined />} Етап {sortOrder}
+            </Tag>
+          );
+        })}
       </Flex>
     );
   };

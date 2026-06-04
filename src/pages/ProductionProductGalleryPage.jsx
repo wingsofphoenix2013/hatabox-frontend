@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
   CloseCircleOutlined,
+  CrownFilled,
+  CrownOutlined,
   DeleteOutlined,
   EditOutlined,
   FileExcelOutlined,
@@ -91,6 +93,18 @@ function ProductionProductGalleryPage() {
   const attachmentGroups = Array.isArray(attachmentsOverview?.attachment_groups)
     ? attachmentsOverview.attachment_groups
     : [];
+
+  const handleSetPrimaryImage = async (attachmentId) => {
+    try {
+      await api.post(`product-attachments/${attachmentId}/set-primary-image/`);
+
+      message.success('Головне зображення оновлено.');
+      await loadAttachmentsOverview();
+    } catch (err) {
+      console.error('Failed to set primary product image:', err);
+      message.error('Не вдалося призначити головне зображення.');
+    }
+  };
 
   const handleDeleteAttachment = async (attachmentId) => {
     try {
@@ -427,6 +441,20 @@ function ProductionProductGalleryPage() {
                                 </Flex>
                               )}
 
+                              {attachment.is_primary_image && (
+                                <CrownFilled
+                                  style={{
+                                    position: 'absolute',
+                                    top: 8,
+                                    right: 8,
+                                    color: '#fa8c16',
+                                    background: 'rgba(255, 255, 255, 0.85)',
+                                    borderRadius: '50%',
+                                    padding: 4,
+                                  }}
+                                />
+                              )}
+
                               <Popover
                                 trigger="click"
                                 content={
@@ -487,7 +515,30 @@ function ProductionProductGalleryPage() {
                                       style={{ margin: '4px 0' }}
                                     />
 
-                                    <Flex justify="flex-end">
+                                    <Flex justify="space-between" gap={8} wrap>
+                                      {attachment.attachment_type === 'photo' &&
+                                        !attachment.is_primary_image &&
+                                        product?.development_status ===
+                                          'in_development' && (
+                                          <Tag
+                                            color="warning"
+                                            style={{
+                                              marginInlineEnd: 0,
+                                              cursor: 'pointer',
+                                              fontSize: 12,
+                                            }}
+                                            onClick={(event) => {
+                                              event.stopPropagation();
+                                              handleSetPrimaryImage(
+                                                attachment.id,
+                                              );
+                                            }}
+                                          >
+                                            <CrownOutlined /> Призначити
+                                            головним
+                                          </Tag>
+                                        )}
+
                                       <Tag
                                         style={{
                                           marginInlineEnd: 0,

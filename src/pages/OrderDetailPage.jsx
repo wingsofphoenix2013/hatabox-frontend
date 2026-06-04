@@ -1769,6 +1769,8 @@ function OrderDetailPage() {
             <Card
               title={
                 <Flex justify="space-between" align="center" wrap>
+                  <span>Оплата</span>
+
                   <Text>
                     Баланс:{' '}
                     <strong

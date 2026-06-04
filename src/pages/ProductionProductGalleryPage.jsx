@@ -370,8 +370,12 @@ function ProductionProductGalleryPage() {
                             ATTACHMENT_GROUP_PREVIEW_LIMIT,
                           );
 
+                    const previewImageItems = groupAttachments
+                      .filter(isImageAttachment)
+                      .map((attachment) => attachment.file);
+
                     return (
-                      <>
+                      <Image.PreviewGroup items={previewImageItems}>
                         {visibleAttachments.map((attachment) => (
                           <Flex key={attachment.id} vertical gap={6}>
                             <div
@@ -602,7 +606,7 @@ function ProductionProductGalleryPage() {
                               </Text>
                             </Flex>
                           )}
-                      </>
+                      </Image.PreviewGroup>
                     );
                   })()}
                 </Flex>

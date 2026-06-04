@@ -10,10 +10,13 @@ import {
   InputNumber,
   Tooltip,
   Typography,
+  Upload,
   message,
 } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
+import { extractFileFromUploadEvent } from '../utils/fileHelpers';
 
 const { Text } = Typography;
 
@@ -29,6 +32,7 @@ function OrderRefundDrawer({ open, onClose, order, onSaved }) {
   const [refundAmount, setRefundAmount] = useState(null);
   const [refundDate, setRefundDate] = useState(null);
   const [comment, setComment] = useState('');
+  const [refundFile, setRefundFile] = useState(null);
   const [saving, setSaving] = useState(false);
 
   const suggestedRefundNo = useMemo(() => {
@@ -53,6 +57,7 @@ function OrderRefundDrawer({ open, onClose, order, onSaved }) {
     setRefundAmount(null);
     setRefundDate(null);
     setComment('');
+    setRefundFile(null);
     setSaving(false);
   };
 
@@ -71,7 +76,25 @@ function OrderRefundDrawer({ open, onClose, order, onSaved }) {
     setRefundAmount(null);
     setRefundDate(dayjs());
     setComment('');
+    setRefundFile(null);
   }, [open, suggestedRefundNo]);
+
+  const handleFileChange = ({ fileList }) => {
+    const fileObj = extractFileFromUploadEvent(fileList);
+
+    if (!fileObj) {
+      setRefundFile(null);
+      return;
+    }
+
+    if (fileObj.type !== 'application/pdf') {
+      message.error('Дозволено завантажувати лише PDF-файл.');
+      setRefundFile(null);
+      return;
+    }
+
+    setRefundFile(fileObj);
+  };
 
   const handleSave = async () => {
     if (!canSubmit) {
@@ -82,12 +105,21 @@ function OrderRefundDrawer({ open, onClose, order, onSaved }) {
     try {
       setSaving(true);
 
-      await api.post('refund-documents/', {
-        refund_no: refundNo,
-        order: Number(order.id),
-        refund_amount: String(refundAmount),
-        refund_date: refundDate.format('YYYY-MM-DD'),
-        comment,
+      const payload = new FormData();
+      payload.append('refund_no', refundNo);
+      payload.append('order', String(order.id));
+      payload.append('refund_amount', String(refundAmount));
+      payload.append('refund_date', refundDate.format('YYYY-MM-DD'));
+      payload.append('comment', comment || '');
+
+      if (refundFile) {
+        payload.append('file', refundFile);
+      }
+
+      await api.post('refund-documents/', payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
       message.success('Документ повернення коштів створено.');
@@ -107,6 +139,7 @@ function OrderRefundDrawer({ open, onClose, order, onSaved }) {
         'refund_amount',
         'refund_date',
         'comment',
+        'file',
       ]);
 
       message.error(
@@ -160,6 +193,19 @@ function OrderRefundDrawer({ open, onClose, order, onSaved }) {
                 onChange={setRefundDate}
                 style={{ width: '100%' }}
               />
+            </div>
+
+            <div>
+              <Text style={compactLabelStyle}>PDF-файл платіжки</Text>
+
+              <Upload
+                beforeUpload={() => false}
+                maxCount={1}
+                accept=".pdf"
+                onChange={handleFileChange}
+              >
+                <Button icon={<UploadOutlined />}>Обрати PDF</Button>
+              </Upload>
             </div>
 
             <div>

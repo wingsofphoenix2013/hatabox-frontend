@@ -8,7 +8,9 @@ import {
   FilePptOutlined,
   FileWordOutlined,
   InfoCircleOutlined,
+  MinusCircleOutlined,
   PlayCircleOutlined,
+  PlusCircleOutlined,
   PlusOutlined,
   RollbackOutlined,
 } from '@ant-design/icons';
@@ -33,6 +35,8 @@ import ProductionProductGalleryCreateDrawer from '../components/ProductionProduc
 
 const { Title, Text } = Typography;
 
+const ATTACHMENT_GROUP_PREVIEW_LIMIT = 15;
+
 function ProductionProductGalleryPage() {
   const { id } = useParams();
 
@@ -41,6 +45,7 @@ function ProductionProductGalleryPage() {
   const [error, setError] = useState('');
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [activeGroupFilters, setActiveGroupFilters] = useState({});
+  const [expandedAttachmentGroups, setExpandedAttachmentGroups] = useState({});
 
   useEffect(() => {
     loadAttachmentsOverview();
@@ -201,6 +206,13 @@ function ProductionProductGalleryPage() {
     });
   };
 
+  const toggleAttachmentGroupExpanded = (attachmentType) => {
+    setExpandedAttachmentGroups((prev) => ({
+      ...prev,
+      [attachmentType]: !prev[attachmentType],
+    }));
+  };
+
   const renderAttachmentGroupExtra = (group) => {
     const hasProductAttachments =
       Array.isArray(group.product_attachments) &&
@@ -339,154 +351,257 @@ function ProductionProductGalleryPage() {
                 extra={renderAttachmentGroupExtra(group)}
               >
                 <Flex wrap gap={12}>
-                  {getGroupAttachments(group).map((attachment) => (
-                    <Flex key={attachment.id} vertical gap={6}>
-                      <div
-                        style={{
-                          position: 'relative',
-                          width: 120,
-                          height: 120,
-                          borderRadius: 8,
-                          overflow: 'hidden',
-                          border: '1px solid #f0f0f0',
-                          background: '#fafafa',
-                        }}
-                      >
-                        {isImageAttachment(attachment) ? (
-                          <img
-                            src={attachment.file}
-                            alt={attachment.name || ''}
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                              display: 'block',
-                            }}
-                          />
-                        ) : (
-                          <Flex
-                            justify="center"
-                            align="center"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                            }}
-                          >
-                            {getAttachmentIcon(attachment)}
-                          </Flex>
-                        )}
+                  {(() => {
+                    const groupAttachments = getGroupAttachments(group);
+                    const isGroupFiltered =
+                      (activeGroupFilters[group.attachment_type] || []).length >
+                      0;
+                    const isGroupExpanded =
+                      expandedAttachmentGroups[group.attachment_type] === true;
 
-                        <Popover
-                          trigger="click"
-                          content={
-                            <Flex vertical gap={8} style={{ minWidth: 300 }}>
-                              <Flex vertical gap={2}>
-                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                  Назва
-                                </Text>
-                                <Text strong>{attachment.name || '—'}</Text>
-                              </Flex>
+                    const visibleAttachments =
+                      isGroupFiltered ||
+                      isGroupExpanded ||
+                      groupAttachments.length <= ATTACHMENT_GROUP_PREVIEW_LIMIT
+                        ? groupAttachments
+                        : groupAttachments.slice(
+                            0,
+                            ATTACHMENT_GROUP_PREVIEW_LIMIT,
+                          );
 
-                              <Divider dashed style={{ margin: '4px 0' }} />
-
-                              <Flex vertical gap={2}>
-                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                  Опис
-                                </Text>
-                                <Text>
-                                  {attachment.description || 'Опис відсутній'}
-                                </Text>
-                              </Flex>
-
-                              <Divider dashed style={{ margin: '4px 0' }} />
-
-                              <Flex vertical gap={2}>
-                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                  Привʼязка
-                                </Text>
-                                <Text>{attachment.targetLabel || '—'}</Text>
-                              </Flex>
-
-                              <Divider dashed style={{ margin: '4px 0' }} />
-
-                              <Flex justify="flex-end">
-                                <Tag
+                    return (
+                      <>
+                        {visibleAttachments.map((attachment) => (
+                          <Flex key={attachment.id} vertical gap={6}>
+                            <div
+                              style={{
+                                position: 'relative',
+                                width: 120,
+                                height: 120,
+                                borderRadius: 8,
+                                overflow: 'hidden',
+                                border: '1px solid #f0f0f0',
+                                background: '#fafafa',
+                              }}
+                            >
+                              {isImageAttachment(attachment) ? (
+                                <img
+                                  src={attachment.file}
+                                  alt={attachment.name || ''}
                                   style={{
-                                    marginInlineEnd: 0,
-                                    cursor: 'pointer',
-                                    color: '#595959',
-                                    fontSize: 12,
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    display: 'block',
+                                  }}
+                                />
+                              ) : (
+                                <Flex
+                                  justify="center"
+                                  align="center"
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
                                   }}
                                 >
-                                  <EditOutlined /> Редагувати
-                                </Tag>
-                              </Flex>
+                                  {getAttachmentIcon(attachment)}
+                                </Flex>
+                              )}
+
+                              <Popover
+                                trigger="click"
+                                content={
+                                  <Flex
+                                    vertical
+                                    gap={8}
+                                    style={{ minWidth: 300 }}
+                                  >
+                                    <Flex vertical gap={2}>
+                                      <Text
+                                        type="secondary"
+                                        style={{ fontSize: 12 }}
+                                      >
+                                        Назва
+                                      </Text>
+                                      <Text strong>
+                                        {attachment.name || '—'}
+                                      </Text>
+                                    </Flex>
+
+                                    <Divider
+                                      dashed
+                                      style={{ margin: '4px 0' }}
+                                    />
+
+                                    <Flex vertical gap={2}>
+                                      <Text
+                                        type="secondary"
+                                        style={{ fontSize: 12 }}
+                                      >
+                                        Опис
+                                      </Text>
+                                      <Text>
+                                        {attachment.description ||
+                                          'Опис відсутній'}
+                                      </Text>
+                                    </Flex>
+
+                                    <Divider
+                                      dashed
+                                      style={{ margin: '4px 0' }}
+                                    />
+
+                                    <Flex vertical gap={2}>
+                                      <Text
+                                        type="secondary"
+                                        style={{ fontSize: 12 }}
+                                      >
+                                        Привʼязка
+                                      </Text>
+                                      <Text>
+                                        {attachment.targetLabel || '—'}
+                                      </Text>
+                                    </Flex>
+
+                                    <Divider
+                                      dashed
+                                      style={{ margin: '4px 0' }}
+                                    />
+
+                                    <Flex justify="flex-end">
+                                      <Tag
+                                        style={{
+                                          marginInlineEnd: 0,
+                                          cursor: 'pointer',
+                                          color: '#595959',
+                                          fontSize: 12,
+                                        }}
+                                      >
+                                        <EditOutlined /> Редагувати
+                                      </Tag>
+                                    </Flex>
+                                  </Flex>
+                                }
+                              >
+                                <InfoCircleOutlined
+                                  style={{
+                                    position: 'absolute',
+                                    top: 8,
+                                    left: 8,
+                                    color: '#595959',
+                                    background: 'rgba(255, 255, 255, 0.85)',
+                                    borderRadius: '50%',
+                                    padding: 4,
+                                    cursor: 'pointer',
+                                  }}
+                                />
+                              </Popover>
+
+                              {product?.development_status ===
+                                'in_development' && (
+                                <Popconfirm
+                                  title="Видалити файл?"
+                                  description="Файл буде видалено без можливості відновлення."
+                                  okText="Так, видалити"
+                                  cancelText="Скасувати"
+                                  okButtonProps={{ danger: true }}
+                                  onConfirm={() =>
+                                    handleDeleteAttachment(attachment.id)
+                                  }
+                                >
+                                  <DeleteOutlined
+                                    style={{
+                                      position: 'absolute',
+                                      right: 8,
+                                      bottom: 8,
+                                      color: '#595959',
+                                      background: 'rgba(255, 255, 255, 0.85)',
+                                      borderRadius: '50%',
+                                      padding: 4,
+                                      cursor: 'pointer',
+                                    }}
+                                  />
+                                </Popconfirm>
+                              )}
+                            </div>
+
+                            {!isImageAttachment(attachment) && (
+                              <Text
+                                style={{
+                                  width: 120,
+                                  fontSize: 12,
+                                  lineHeight: 1.2,
+                                  textAlign: 'center',
+                                }}
+                                ellipsis={{
+                                  tooltip:
+                                    attachment.name ||
+                                    attachment.display_filename ||
+                                    '—',
+                                }}
+                              >
+                                {attachment.name ||
+                                  attachment.display_filename ||
+                                  '—'}
+                              </Text>
+                            )}
+                          </Flex>
+                        ))}
+
+                        {!isGroupFiltered &&
+                          groupAttachments.length >
+                            ATTACHMENT_GROUP_PREVIEW_LIMIT && (
+                            <Flex vertical gap={6}>
+                              <div
+                                style={{
+                                  width: 120,
+                                  height: 120,
+                                  borderRadius: 8,
+                                  border: '1px solid #f0f0f0',
+                                  background: '#fafafa',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  cursor: 'pointer',
+                                }}
+                                onClick={() =>
+                                  toggleAttachmentGroupExpanded(
+                                    group.attachment_type,
+                                  )
+                                }
+                              >
+                                {isGroupExpanded ? (
+                                  <MinusCircleOutlined
+                                    style={{
+                                      fontSize: 48,
+                                      color: '#595959',
+                                    }}
+                                  />
+                                ) : (
+                                  <PlusCircleOutlined
+                                    style={{
+                                      fontSize: 48,
+                                      color: '#595959',
+                                    }}
+                                  />
+                                )}
+                              </div>
+
+                              <Text
+                                style={{
+                                  width: 120,
+                                  fontSize: 12,
+                                  lineHeight: 1.2,
+                                  textAlign: 'center',
+                                }}
+                              >
+                                {isGroupExpanded ? 'Приховати...' : 'Ще...'}
+                              </Text>
                             </Flex>
-                          }
-                        >
-                          <InfoCircleOutlined
-                            style={{
-                              position: 'absolute',
-                              top: 8,
-                              left: 8,
-                              color: '#595959',
-                              background: 'rgba(255, 255, 255, 0.85)',
-                              borderRadius: '50%',
-                              padding: 4,
-                              cursor: 'pointer',
-                            }}
-                          />
-                        </Popover>
-
-                        {product?.development_status === 'in_development' && (
-                          <Popconfirm
-                            title="Видалити файл?"
-                            description="Файл буде видалено без можливості відновлення."
-                            okText="Так, видалити"
-                            cancelText="Скасувати"
-                            okButtonProps={{ danger: true }}
-                            onConfirm={() =>
-                              handleDeleteAttachment(attachment.id)
-                            }
-                          >
-                            <DeleteOutlined
-                              style={{
-                                position: 'absolute',
-                                right: 8,
-                                bottom: 8,
-                                color: '#595959',
-                                background: 'rgba(255, 255, 255, 0.85)',
-                                borderRadius: '50%',
-                                padding: 4,
-                                cursor: 'pointer',
-                              }}
-                            />
-                          </Popconfirm>
-                        )}
-                      </div>
-
-                      {!isImageAttachment(attachment) && (
-                        <Text
-                          style={{
-                            width: 120,
-                            fontSize: 12,
-                            lineHeight: 1.2,
-                            textAlign: 'center',
-                          }}
-                          ellipsis={{
-                            tooltip:
-                              attachment.name ||
-                              attachment.display_filename ||
-                              '—',
-                          }}
-                        >
-                          {attachment.name ||
-                            attachment.display_filename ||
-                            '—'}
-                        </Text>
-                      )}
-                    </Flex>
-                  ))}
+                          )}
+                      </>
+                    );
+                  })()}
                 </Flex>
               </Card>
             ))}

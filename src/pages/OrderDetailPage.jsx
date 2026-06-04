@@ -46,6 +46,7 @@ import OrderReceiptDrawer from '../components/OrderReceiptDrawer';
 import OrderPaymentsDrawer from '../components/OrderPaymentsDrawer';
 import OrderItemsDrawer from '../components/OrderItemsDrawer';
 import OrderReclamationDrawer from '../components/OrderReclamationDrawer';
+import OrderRefundDrawer from '../components/OrderRefundDrawer';
 
 import PdfPreview from '../components/PdfPreview';
 
@@ -101,6 +102,7 @@ function OrderDetailPage() {
   const [isReceiptDrawerOpen, setIsReceiptDrawerOpen] = useState(false);
   const [isOrderItemsDrawerOpen, setIsOrderItemsDrawerOpen] = useState(false);
   const [isReclamationDrawerOpen, setIsReclamationDrawerOpen] = useState(false);
+  const [isRefundDrawerOpen, setIsRefundDrawerOpen] = useState(false);
   const [selectedReceiptDocumentId, setSelectedReceiptDocumentId] =
     useState(null);
 
@@ -1439,7 +1441,12 @@ function OrderDetailPage() {
                 <Divider style={{ margin: '4px 0 8px 0' }} />
 
                 {canCreateRefund && (
-                  <Button block danger icon={<BankOutlined />}>
+                  <Button
+                    block
+                    danger
+                    icon={<BankOutlined />}
+                    onClick={() => setIsRefundDrawerOpen(true)}
+                  >
                     Повернення коштів
                   </Button>
                 )}
@@ -1799,6 +1806,13 @@ function OrderDetailPage() {
         onClose={() => setIsReclamationDrawerOpen(false)}
         order={order}
         onOrderUpdated={() => loadOrderPage({ silent: true })}
+      />
+
+      <OrderRefundDrawer
+        open={isRefundDrawerOpen}
+        onClose={() => setIsRefundDrawerOpen(false)}
+        order={order}
+        onSaved={() => loadOrderPage({ silent: true })}
       />
     </div>
   );

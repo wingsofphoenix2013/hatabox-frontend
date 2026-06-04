@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   DeleteOutlined,
+  EditOutlined,
   InfoCircleOutlined,
   PlusOutlined,
   RollbackOutlined,
@@ -104,15 +105,30 @@ function ProductionProductGalleryPage() {
 
   const getGroupAttachments = (group) => {
     const productAttachments = Array.isArray(group.product_attachments)
-      ? group.product_attachments
+      ? group.product_attachments.map((attachment) => ({
+          ...attachment,
+          targetLabel: product?.code || '—',
+        }))
       : [];
 
     const stepAttachments = (
       Array.isArray(group.steps) ? group.steps : []
     ).flatMap((step) => [
-      ...(Array.isArray(step.attachments) ? step.attachments : []),
+      ...(Array.isArray(step.attachments) ? step.attachments : []).map(
+        (attachment) => ({
+          ...attachment,
+          targetLabel: `${step.sort_order || '—'}. ${step.name || '—'}`,
+        }),
+      ),
       ...(Array.isArray(step.works) ? step.works : []).flatMap((work) =>
-        Array.isArray(work.attachments) ? work.attachments : [],
+        (Array.isArray(work.attachments) ? work.attachments : []).map(
+          (attachment) => ({
+            ...attachment,
+            targetLabel: `${step.sort_order || '—'}. ${step.name || '—'} ${
+              work.sort_order || '—'
+            }. ${work.name || '—'}`,
+          }),
+        ),
       ),
     ]);
 
@@ -257,11 +273,48 @@ function ProductionProductGalleryPage() {
                         <Popover
                           trigger="click"
                           content={
-                            <Flex vertical gap={6} style={{ maxWidth: 260 }}>
-                              <Text strong>{attachment.name || '—'}</Text>
-                              <Text type="secondary">
-                                {attachment.description || 'Опис відсутній'}
-                              </Text>
+                            <Flex vertical gap={8} style={{ minWidth: 300 }}>
+                              <Flex vertical gap={2}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                  Назва
+                                </Text>
+                                <Text strong>{attachment.name || '—'}</Text>
+                              </Flex>
+
+                              <Divider dashed style={{ margin: '4px 0' }} />
+
+                              <Flex vertical gap={2}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                  Опис
+                                </Text>
+                                <Text>
+                                  {attachment.description || 'Опис відсутній'}
+                                </Text>
+                              </Flex>
+
+                              <Divider dashed style={{ margin: '4px 0' }} />
+
+                              <Flex vertical gap={2}>
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                  Привʼязка
+                                </Text>
+                                <Text>{attachment.targetLabel || '—'}</Text>
+                              </Flex>
+
+                              <Divider dashed style={{ margin: '4px 0' }} />
+
+                              <Flex justify="flex-end">
+                                <Tag
+                                  style={{
+                                    marginInlineEnd: 0,
+                                    cursor: 'pointer',
+                                    color: '#595959',
+                                    fontSize: 12,
+                                  }}
+                                >
+                                  <EditOutlined /> Редагувати
+                                </Tag>
+                              </Flex>
                             </Flex>
                           }
                         >

@@ -648,6 +648,7 @@ function ProductionProductGalleryPage() {
         open={Boolean(editingAttachment)}
         onClose={() => setEditingAttachment(null)}
         attachment={editingAttachment}
+        onCompleted={loadAttachmentsOverview}
       />
     </div>
   );

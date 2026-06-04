@@ -6,6 +6,9 @@ import {
   PlayCircleOutlined,
 } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
+import { message } from 'antd';
+import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 import { Button, Card, Drawer, Flex, Input, Typography } from 'antd';
 
 const { Text } = Typography;
@@ -17,9 +20,15 @@ const compactLabelStyle = {
   lineHeight: 1.2,
 };
 
-function ProductionProductGalleryEditDrawer({ open, onClose, attachment }) {
+function ProductionProductGalleryEditDrawer({
+  open,
+  onClose,
+  attachment,
+  onCompleted,
+}) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -65,6 +74,36 @@ function ProductionProductGalleryEditDrawer({ open, onClose, attachment }) {
     }
 
     return null;
+  };
+
+  const handleSave = async () => {
+    if (!attachment?.id || saving) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      await api.patch(`product-attachments/${attachment.id}/`, {
+        name: name.trim(),
+        description: description.trim(),
+      });
+
+      message.success('Інформацію про файл оновлено.');
+
+      if (onCompleted) {
+        await onCompleted();
+      }
+
+      onClose();
+    } catch (err) {
+      message.error(
+        getApiErrorMessage(err.response?.data) ||
+          'Не вдалося оновити інформацію про файл.',
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -139,7 +178,15 @@ function ProductionProductGalleryEditDrawer({ open, onClose, attachment }) {
         <Flex justify="space-between" align="center" gap={12} wrap>
           <Button onClick={onClose}>Закрити</Button>
 
-          <Button type="primary">Зберегти</Button>
+          <Button
+            type="primary"
+            loading={saving}
+            onClick={() => {
+              void handleSave();
+            }}
+          >
+            Зберегти
+          </Button>
         </Flex>
       </Flex>
     </Drawer>

@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { PlusOutlined, RollbackOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  InfoCircleOutlined,
+  PlusOutlined,
+  RollbackOutlined,
+} from '@ant-design/icons';
 import {
   Alert,
   Button,
@@ -67,6 +72,37 @@ function ProductionProductGalleryPage() {
   const attachmentGroups = Array.isArray(attachmentsOverview?.attachment_groups)
     ? attachmentsOverview.attachment_groups
     : [];
+
+  const isImageAttachment = (attachment) => {
+    const fileName = String(attachment?.file || '')
+      .split('?')[0]
+      .toLowerCase();
+
+    return (
+      fileName.endsWith('.jpg') ||
+      fileName.endsWith('.jpeg') ||
+      fileName.endsWith('.png') ||
+      fileName.endsWith('.webp') ||
+      fileName.endsWith('.gif')
+    );
+  };
+
+  const getGroupAttachments = (group) => {
+    const productAttachments = Array.isArray(group.product_attachments)
+      ? group.product_attachments
+      : [];
+
+    const stepAttachments = (
+      Array.isArray(group.steps) ? group.steps : []
+    ).flatMap((step) => [
+      ...(Array.isArray(step.attachments) ? step.attachments : []),
+      ...(Array.isArray(step.works) ? step.works : []).flatMap((work) =>
+        Array.isArray(work.attachments) ? work.attachments : [],
+      ),
+    ]);
+
+    return [...productAttachments, ...stepAttachments];
+  };
 
   const renderAttachmentGroupExtra = (group) => {
     const hasProductAttachments =
@@ -176,7 +212,61 @@ function ProductionProductGalleryPage() {
                 title={group.attachment_type_display || '—'}
                 extra={renderAttachmentGroupExtra(group)}
               >
-                <Text type="secondary">Дані зʼявляться пізніше</Text>
+                <Flex wrap gap={12}>
+                  {getGroupAttachments(group)
+                    .filter(isImageAttachment)
+                    .map((attachment) => (
+                      <div
+                        key={attachment.id}
+                        style={{
+                          position: 'relative',
+                          width: 120,
+                          height: 120,
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          border: '1px solid #f0f0f0',
+                          background: '#fafafa',
+                        }}
+                      >
+                        <img
+                          src={attachment.file}
+                          alt={attachment.name || ''}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block',
+                          }}
+                        />
+
+                        <InfoCircleOutlined
+                          style={{
+                            position: 'absolute',
+                            top: 8,
+                            left: 8,
+                            color: '#595959',
+                            background: 'rgba(255, 255, 255, 0.85)',
+                            borderRadius: '50%',
+                            padding: 4,
+                          }}
+                        />
+
+                        {product?.development_status === 'in_development' && (
+                          <DeleteOutlined
+                            style={{
+                              position: 'absolute',
+                              right: 8,
+                              bottom: 8,
+                              color: '#595959',
+                              background: 'rgba(255, 255, 255, 0.85)',
+                              borderRadius: '50%',
+                              padding: 4,
+                            }}
+                          />
+                        )}
+                      </div>
+                    ))}
+                </Flex>
               </Card>
             ))}
           </Flex>

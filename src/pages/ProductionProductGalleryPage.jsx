@@ -10,12 +10,14 @@ import {
   Button,
   Card,
   Col,
-  Divider,
   Flex,
+  Popconfirm,
+  Popover,
   Row,
   Skeleton,
   Tag,
   Typography,
+  message,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
@@ -72,6 +74,18 @@ function ProductionProductGalleryPage() {
   const attachmentGroups = Array.isArray(attachmentsOverview?.attachment_groups)
     ? attachmentsOverview.attachment_groups
     : [];
+
+  const handleDeleteAttachment = async (attachmentId) => {
+    try {
+      await api.delete(`product-attachments/${attachmentId}/`);
+
+      message.success('Файл видалено.');
+      await loadAttachmentsOverview();
+    } catch (err) {
+      console.error('Failed to delete product attachment:', err);
+      message.error('Не вдалося видалити файл.');
+    }
+  };
 
   const isImageAttachment = (attachment) => {
     const fileName = String(attachment?.file || '')
@@ -239,30 +253,55 @@ function ProductionProductGalleryPage() {
                           }}
                         />
 
-                        <InfoCircleOutlined
-                          style={{
-                            position: 'absolute',
-                            top: 8,
-                            left: 8,
-                            color: '#595959',
-                            background: 'rgba(255, 255, 255, 0.85)',
-                            borderRadius: '50%',
-                            padding: 4,
-                          }}
-                        />
-
-                        {product?.development_status === 'in_development' && (
-                          <DeleteOutlined
+                        <Popover
+                          trigger="click"
+                          content={
+                            <Flex vertical gap={6} style={{ maxWidth: 260 }}>
+                              <Text strong>{attachment.name || '—'}</Text>
+                              <Text type="secondary">
+                                {attachment.description || 'Опис відсутній'}
+                              </Text>
+                            </Flex>
+                          }
+                        >
+                          <InfoCircleOutlined
                             style={{
                               position: 'absolute',
-                              right: 8,
-                              bottom: 8,
+                              top: 8,
+                              left: 8,
                               color: '#595959',
                               background: 'rgba(255, 255, 255, 0.85)',
                               borderRadius: '50%',
                               padding: 4,
+                              cursor: 'pointer',
                             }}
                           />
+                        </Popover>
+
+                        {product?.development_status === 'in_development' && (
+                          <Popconfirm
+                            title="Видалити файл?"
+                            description="Файл буде видалено без можливості відновлення."
+                            okText="Так, видалити"
+                            cancelText="Скасувати"
+                            okButtonProps={{ danger: true }}
+                            onConfirm={() =>
+                              handleDeleteAttachment(attachment.id)
+                            }
+                          >
+                            <DeleteOutlined
+                              style={{
+                                position: 'absolute',
+                                right: 8,
+                                bottom: 8,
+                                color: '#595959',
+                                background: 'rgba(255, 255, 255, 0.85)',
+                                borderRadius: '50%',
+                                padding: 4,
+                                cursor: 'pointer',
+                              }}
+                            />
+                          </Popconfirm>
                         )}
                       </div>
                     ))}

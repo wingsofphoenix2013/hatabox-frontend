@@ -517,30 +517,33 @@ function ProductionProductGalleryPage() {
 
                               {product?.development_status ===
                                 'in_development' && (
-                                <Popconfirm
-                                  title="Видалити файл?"
-                                  description="Файл буде видалено без можливості відновлення."
-                                  okText="Так, видалити"
-                                  cancelText="Скасувати"
-                                  okButtonProps={{ danger: true }}
-                                  onConfirm={() =>
-                                    handleDeleteAttachment(attachment.id)
-                                  }
+                                <span
+                                  onClick={(event) => event.stopPropagation()}
                                 >
-                                  <DeleteOutlined
-                                    onClick={(event) => event.stopPropagation()}
-                                    style={{
-                                      position: 'absolute',
-                                      right: 8,
-                                      bottom: 8,
-                                      color: '#595959',
-                                      background: 'rgba(255, 255, 255, 0.85)',
-                                      borderRadius: '50%',
-                                      padding: 4,
-                                      cursor: 'pointer',
-                                    }}
-                                  />
-                                </Popconfirm>
+                                  <Popconfirm
+                                    title="Видалити файл?"
+                                    description="Файл буде видалено без можливості відновлення."
+                                    okText="Так, видалити"
+                                    cancelText="Скасувати"
+                                    okButtonProps={{ danger: true }}
+                                    onConfirm={() =>
+                                      handleDeleteAttachment(attachment.id)
+                                    }
+                                  >
+                                    <DeleteOutlined
+                                      style={{
+                                        position: 'absolute',
+                                        right: 8,
+                                        bottom: 8,
+                                        color: '#595959',
+                                        background: 'rgba(255, 255, 255, 0.85)',
+                                        borderRadius: '50%',
+                                        padding: 4,
+                                        cursor: 'pointer',
+                                      }}
+                                    />
+                                  </Popconfirm>
+                                </span>
                               )}
                             </div>
 

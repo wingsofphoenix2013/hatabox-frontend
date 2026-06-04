@@ -141,6 +141,12 @@ function OrderDetailPage() {
   const hasOrderItems = Array.isArray(order?.items) && order.items.length > 0;
   const hasReceiptDocuments =
     Array.isArray(receiptDocuments) && receiptDocuments.length > 0;
+  const canCreateRefund =
+    isInProgress &&
+    Array.isArray(order?.payment_documents) &&
+    order.payment_documents.some(
+      (item) => item.status === 'paid' && Number(item.payment_amount) > 0,
+    );
   const activeReclamationReturns = Array.isArray(order?.reclamation_returns)
     ? order.reclamation_returns.filter((item) => item.status !== 'cancelled')
     : [];
@@ -1431,6 +1437,12 @@ function OrderDetailPage() {
                 )}
 
                 <Divider style={{ margin: '4px 0 8px 0' }} />
+
+                {canCreateRefund && (
+                  <Button block danger icon={<BankOutlined />}>
+                    Повернення коштів
+                  </Button>
+                )}
 
                 {order?.can_start_reclamation_flow && (
                   <Button

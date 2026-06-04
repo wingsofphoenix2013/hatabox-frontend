@@ -84,10 +84,12 @@ function ProductionProductGalleryEditDrawer({
     try {
       setSaving(true);
 
-      await api.patch(`product-attachments/${attachment.id}/`, {
-        name: name.trim(),
-        description: description.trim(),
-      });
+      const formData = new FormData();
+
+      formData.append('name', name.trim());
+      formData.append('description', description.trim());
+
+      await api.patch(`product-attachments/${attachment.id}/`, formData);
 
       message.success('Інформацію про файл оновлено.');
 

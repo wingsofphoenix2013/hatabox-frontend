@@ -39,7 +39,7 @@ import {
   Upload,
   message,
 } from 'antd';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import api from '../api/client';
 
 import OrderReceiptDrawer from '../components/OrderReceiptDrawer';
@@ -75,6 +75,7 @@ const { Title, Text } = Typography;
 
 function OrderDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [order, setOrder] = useState(null);
   const [receiptDocuments, setReceiptDocuments] = useState([]);

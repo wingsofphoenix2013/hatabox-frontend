@@ -387,6 +387,18 @@ function ProductionProductGalleryPage() {
                                 overflow: 'hidden',
                                 border: '1px solid #f0f0f0',
                                 background: '#fafafa',
+                                cursor: isImageAttachment(attachment)
+                                  ? 'default'
+                                  : 'pointer',
+                              }}
+                              onClick={() => {
+                                if (!isImageAttachment(attachment)) {
+                                  window.open(
+                                    attachment.file,
+                                    '_blank',
+                                    'noreferrer',
+                                  );
+                                }
                               }}
                             >
                               {isImageAttachment(attachment) ? (

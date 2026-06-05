@@ -1877,6 +1877,19 @@ function OrderDetailPage() {
               pagination={false}
               size="small"
               tableLayout="fixed"
+              onRow={(record) => {
+                const shouldHighlight =
+                  order.receipt_state === 'partially_received' &&
+                  Number(record.remaining_quantity) > 0;
+
+                return shouldHighlight
+                  ? {
+                      style: {
+                        backgroundColor: '#fff2f0',
+                      },
+                    }
+                  : {};
+              }}
             />
           </Card>
         </Col>

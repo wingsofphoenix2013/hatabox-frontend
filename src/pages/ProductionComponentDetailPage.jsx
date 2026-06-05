@@ -1,458 +1,315 @@
+import {
+  DeleteOutlined,
+  InboxOutlined,
+  QuestionCircleOutlined,
+} from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   Button,
   Card,
-  Col,
+  Drawer,
   Flex,
   Image,
   Input,
-  Row,
-  Skeleton,
-  Typography,
   Select,
   Switch,
-  message,
+  Tooltip,
+  Typography,
+  Upload,
 } from 'antd';
-import { QrcodeOutlined } from '@ant-design/icons';
-import { useParams } from 'react-router-dom';
 import api from '../api/client';
 
-const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
+const { Text } = Typography;
 
-function ProductionComponentDetailPage() {
-  const { id } = useParams();
+const { Dragger } = Upload;
 
-  const [item, setItem] = useState(null);
+function ProductionComponentCreateDrawer({ open, onClose }) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState(null);
+  const [unit, setUnit] = useState(null);
   const [categories, setCategories] = useState([]);
   const [units, setUnits] = useState([]);
-
-  const [formData, setFormData] = useState({
-    name: '',
-    category: null,
-    category_name: '',
-    unit: null,
-    unit_name: '',
-    unit_symbol: '',
-    qr_item: false,
-    description: '',
-    internal_code: '',
-    image: '',
-  });
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [requiresStoragePlace, setRequiresStoragePlace] = useState(true);
+  const [isSplittable, setIsSplittable] = useState(false);
+  const [qrItem, setQrItem] = useState(false);
+  const [fileList, setFileList] = useState([]);
 
   useEffect(() => {
-    loadItem();
-    loadCategories();
-    loadUnits();
-  }, [id]);
-
-  const loadCategories = async () => {
-    try {
-      const response = await api.get('categories/');
-      setCategories(
-        Array.isArray(response.data.results) ? response.data.results : [],
-      );
-    } catch (err) {
-      console.error('Failed to load categories:', err);
-      setCategories([]);
-    }
-  };
-
-  const loadUnits = async () => {
-    try {
-      const response = await api.get('units/');
-      setUnits(
-        Array.isArray(response.data.results) ? response.data.results : [],
-      );
-    } catch (err) {
-      console.error('Failed to load units:', err);
-      setUnits([]);
-    }
-  };
-
-  const loadItem = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const response = await api.get(`items/${id}/`);
-      const data = response.data;
-
-      setItem(data);
-      setFormData({
-        name: data.name || '',
-        category: data.category ?? null,
-        category_name: data.category_name || '',
-        unit: data.unit ?? null,
-        unit_name: data.unit_name || '',
-        unit_symbol: data.unit_symbol || '',
-        qr_item: !!data.qr_item,
-        description: data.description || '',
-        internal_code: data.internal_code || '',
-        image: data.image || '',
-      });
-    } catch (err) {
-      console.error('Failed to load component detail:', err);
-      setError('Не вдалося завантажити дані компонента.');
-      setItem(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleToggleEdit = async () => {
-    if (!isEditing) {
-      setIsEditing(true);
+    if (!open) {
       return;
     }
 
-    try {
-      setSaving(true);
+    const loadDictionaries = async () => {
+      const [categoriesResponse, unitsResponse] = await Promise.all([
+        api.get('categories/'),
+        api.get('units/'),
+      ]);
 
-      const payload = {
-        name: formData.name,
-        description: formData.description,
-        category: formData.category,
-        unit: formData.unit,
-        qr_item: formData.qr_item,
-      };
+      setCategories(
+        Array.isArray(categoriesResponse.data.results)
+          ? categoriesResponse.data.results
+          : [],
+      );
+      setUnits(
+        Array.isArray(unitsResponse.data.results)
+          ? unitsResponse.data.results
+          : [],
+      );
+    };
 
-      const response = await api.patch(`items/${id}/`, payload);
-      const data = response.data;
+    loadDictionaries();
+  }, [open]);
 
-      setItem(data);
-      setFormData({
-        name: data.name || '',
-        category: data.category ?? null,
-        category_name: data.category_name || '',
-        unit: data.unit ?? null,
-        unit_name: data.unit_name || '',
-        unit_symbol: data.unit_symbol || '',
-        qr_item: !!data.qr_item,
-        description: data.description || '',
-        internal_code: data.internal_code || '',
-        image: data.image || '',
-      });
-
-      setIsEditing(false);
-      message.success('Дані компонента збережено.');
-    } catch (err) {
-      console.error('Failed to save component:', err);
-      message.error('Не вдалося зберегти зміни.');
-    } finally {
-      setSaving(false);
-    }
+  const handleClose = () => {
+    setName('');
+    setDescription('');
+    setCategory(null);
+    setUnit(null);
+    setRequiresStoragePlace(true);
+    setIsSplittable(false);
+    setQrItem(false);
+    setFileList([]);
+    onClose();
   };
 
-  const handleChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const renderField = (label, content) => (
-    <div style={{ marginBottom: 20 }}>
-      <Text
-        type="secondary"
-        style={{ display: 'block', marginBottom: 6, fontSize: 12 }}
-      >
-        {label}
-      </Text>
-      {content}
-    </div>
-  );
-
-  if (loading) {
-    return (
-      <div style={{ padding: 20 }}>
-        <Skeleton active paragraph={{ rows: 8 }} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ padding: 20 }}>
-        <Alert type="error" description={error} showIcon />
-      </div>
-    );
-  }
-
-  if (!item) {
-    return (
-      <div style={{ padding: 20 }}>
-        <Alert type="warning" description="Компонент не знайдено." showIcon />
-      </div>
-    );
-  }
+  const canSave = Boolean(name.trim() && category && unit);
+  const previewFile = fileList[0];
 
   return (
-    <div style={{ padding: 20 }}>
-      <Flex
-        justify="space-between"
-        align="flex-start"
-        gap={16}
-        style={{ marginBottom: 20 }}
-      >
-        <div>
-          <Title level={2} style={{ margin: 0, marginBottom: 4 }}>
-            {formData.name || '—'}
-          </Title>
-          <Text type="secondary">
-            Внутрішній код: {formData.internal_code || '—'}
-          </Text>
-        </div>
+    <Drawer
+      title="Створення компонента"
+      placement="right"
+      size="large"
+      open={open}
+      onClose={handleClose}
+      maskClosable={false}
+    >
+      <Flex vertical gap={16}>
+        <Card title="1. Загальна інформація">
+          <Flex vertical gap={14}>
+            <div>
+              <Text
+                style={{
+                  display: 'block',
+                  marginBottom: 6,
+                  fontSize: 12,
+                  lineHeight: 1.2,
+                }}
+              >
+                Назва
+              </Text>
 
-        <Button type="primary" onClick={handleToggleEdit} loading={saving}>
-          {isEditing ? 'Зберегти' : 'Редагувати'}
-        </Button>
-      </Flex>
+              <Input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Назва компонента"
+              />
+            </div>
 
-      <Row gutter={20} align="top">
-        {/* Ліва колонка */}
-        <Col xs={24} lg={6}>
-          <Card title="Зображення" style={{ marginBottom: 20 }}>
+            <div>
+              <Text
+                style={{
+                  display: 'block',
+                  marginBottom: 6,
+                  fontSize: 12,
+                  lineHeight: 1.2,
+                }}
+              >
+                Опис
+              </Text>
+
+              <Input.TextArea
+                rows={4}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Опис компонента"
+              />
+            </div>
+
+            <div>
+              <Text
+                style={{
+                  display: 'block',
+                  marginBottom: 6,
+                  fontSize: 12,
+                  lineHeight: 1.2,
+                }}
+              >
+                Оберіть категорію
+              </Text>
+
+              <Select
+                value={category}
+                placeholder="Категорія"
+                style={{ width: '100%' }}
+                onChange={setCategory}
+                options={categories.map((item) => ({
+                  value: item.id,
+                  label: item.name,
+                }))}
+              />
+            </div>
+
+            <div>
+              <Text
+                style={{
+                  display: 'block',
+                  marginBottom: 6,
+                  fontSize: 12,
+                  lineHeight: 1.2,
+                }}
+              >
+                Оберіть одиницю виміру
+              </Text>
+
+              <Select
+                value={unit}
+                placeholder="Одиниця виміру"
+                style={{ width: '100%' }}
+                onChange={setUnit}
+                options={units.map((item) => ({
+                  value: item.id,
+                  label: `${item.name} (${item.symbol})`,
+                }))}
+              />
+            </div>
+          </Flex>
+        </Card>
+
+        <Card title="2. Налаштування">
+          <Flex vertical gap={14}>
+            <Flex justify="space-between" align="center" gap={12}>
+              <Flex align="center" gap={6}>
+                <Text>Місце зберігання</Text>
+                <Tooltip title="Потребує прив’язки до конкретного місця зберігання на складі.">
+                  <QuestionCircleOutlined style={{ color: '#8c8c8c' }} />
+                </Tooltip>
+              </Flex>
+
+              <Switch
+                checked={requiresStoragePlace}
+                checkedChildren="Так"
+                unCheckedChildren="Ні"
+                onChange={setRequiresStoragePlace}
+              />
+            </Flex>
+
+            <Flex justify="space-between" align="center" gap={12}>
+              <Flex align="center" gap={6}>
+                <Text>Можна ділити</Text>
+                <Tooltip title="Допускає облік та операції з частиною товару.">
+                  <QuestionCircleOutlined style={{ color: '#8c8c8c' }} />
+                </Tooltip>
+              </Flex>
+
+              <Switch
+                checked={isSplittable}
+                checkedChildren="Так"
+                unCheckedChildren="Ні"
+                onChange={setIsSplittable}
+              />
+            </Flex>
+
+            <Flex justify="space-between" align="center" gap={12}>
+              <Flex align="center" gap={6}>
+                <Text>Використання QR</Text>
+                <Tooltip title="Допускає маркування товару індивідуальним QR-кодом.">
+                  <QuestionCircleOutlined style={{ color: '#8c8c8c' }} />
+                </Tooltip>
+              </Flex>
+
+              <Switch
+                checked={qrItem}
+                checkedChildren="Так"
+                unCheckedChildren="Ні"
+                onChange={setQrItem}
+              />
+            </Flex>
+          </Flex>
+        </Card>
+
+        <Card title="3. Ілюстрація">
+          {!previewFile ? (
+            <Dragger
+              multiple={false}
+              maxCount={1}
+              beforeUpload={() => false}
+              fileList={fileList}
+              onChange={({ fileList: nextFileList }) => {
+                setFileList(nextFileList);
+              }}
+              showUploadList={false}
+            >
+              <p className="ant-upload-drag-icon">
+                <InboxOutlined />
+              </p>
+
+              <p className="ant-upload-text">
+                Натисніть або перетягніть зображення в цю область
+              </p>
+
+              <p className="ant-upload-hint">Можна додати лише один файл.</p>
+            </Dragger>
+          ) : (
             <div
               style={{
+                position: 'relative',
                 width: '100%',
-                aspectRatio: '1 / 1',
                 border: '1px solid #f0f0f0',
-                borderRadius: 12,
-                background: '#ffffff', // ← белый фон
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
+                borderRadius: 8,
+                background: '#fafafa',
+                padding: 12,
               }}
             >
-              {formData.image ? (
-                <Image
-                  src={formData.image}
-                  alt={formData.name}
-                  preview
-                  style={{
-                    maxWidth: '80%',
-                    maxHeight: '80%',
-                    objectFit: 'contain',
-                    margin: '0 auto', // ← ключ к центрированию
-                    display: 'block', // ← фикс поведения inline-image
-                  }}
-                />
-              ) : (
-                <Text type="secondary">Немає зображення</Text>
-              )}
+              <Image
+                src={URL.createObjectURL(previewFile.originFileObj)}
+                alt={previewFile.name}
+                style={{
+                  maxHeight: 260,
+                  objectFit: 'contain',
+                  width: '100%',
+                }}
+              />
+
+              <DeleteOutlined
+                style={{
+                  position: 'absolute',
+                  right: 16,
+                  bottom: 16,
+                  color: '#ff4d4f',
+                  background: '#ffffff',
+                  border: '1px solid #f0f0f0',
+                  borderRadius: 6,
+                  padding: 8,
+                  cursor: 'pointer',
+                }}
+                onClick={() => setFileList([])}
+              />
             </div>
-          </Card>
+          )}
+        </Card>
 
-          <Card title="Статистика">
-            <Text type="secondary">Дані з’являться пізніше</Text>
-          </Card>
-        </Col>
+        <Flex justify="space-between" align="center" gap={12} wrap>
+          <Button onClick={handleClose}>Закрити</Button>
 
-        {/* Центральна колонка */}
-        <Col xs={24} lg={12}>
-          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-            {renderField(
-              'Назва',
-              isEditing ? (
-                <Input
-                  value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                />
-              ) : (
-                <Paragraph style={{ marginBottom: 0 }}>
-                  {formData.name || '—'}
-                </Paragraph>
-              ),
-            )}
-
-            {renderField(
-              'Внутрішній код',
-              <Paragraph style={{ marginBottom: 0 }}>
-                {formData.internal_code || '—'}
-              </Paragraph>,
-            )}
-
-            {renderField(
-              'Опис',
-              isEditing ? (
-                <TextArea
-                  rows={6}
-                  value={formData.description}
-                  onChange={(e) => handleChange('description', e.target.value)}
-                />
-              ) : (
-                <Paragraph style={{ marginBottom: 0, whiteSpace: 'pre-wrap' }}>
-                  {formData.description || '—'}
-                </Paragraph>
-              ),
-            )}
-          </Card>
-          <Card title="Додаткова інформація">
-            <table
-              style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                tableLayout: 'fixed',
-              }}
-            >
-              <thead>
-                <tr>
-                  <th
-                    style={{
-                      border: '1px solid #f0f0f0',
-                      background: '#fafafa',
-                      padding: '10px 12px',
-                      textAlign: 'center',
-                      fontWeight: 600,
-                    }}
-                  >
-                    Категорія
-                  </th>
-                  <th
-                    style={{
-                      border: '1px solid #f0f0f0',
-                      background: '#fafafa',
-                      padding: '10px 12px',
-                      textAlign: 'center',
-                      fontWeight: 600,
-                    }}
-                  >
-                    Одиниця вимірювання
-                  </th>
-                  <th
-                    style={{
-                      border: '1px solid #f0f0f0',
-                      background: '#fafafa',
-                      padding: '10px 12px',
-                      textAlign: 'center',
-                      fontWeight: 600,
-                    }}
-                  >
-                    <Flex align="center" justify="center" gap={6}>
-                      <QrcodeOutlined />
-                      <span>Позиція з QR</span>
-                    </Flex>
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                <tr>
-                  <td
-                    style={{
-                      border: '1px solid #f0f0f0',
-                      padding: '12px',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    {isEditing ? (
-                      <Select
-                        value={formData.category}
-                        style={{ width: '100%' }}
-                        options={categories.map((category) => ({
-                          value: category.id,
-                          label: category.name,
-                        }))}
-                        onChange={(value) => {
-                          const selected = categories.find(
-                            (c) => c.id === value,
-                          );
-                          setFormData((prev) => ({
-                            ...prev,
-                            category: value,
-                            category_name: selected ? selected.name : '',
-                          }));
-                        }}
-                      />
-                    ) : (
-                      <div style={{ textAlign: 'center' }}>
-                        <Text>{formData.category_name || '—'}</Text>
-                      </div>
-                    )}
-                  </td>
-
-                  <td
-                    style={{
-                      border: '1px solid #f0f0f0',
-                      padding: '12px',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    {isEditing ? (
-                      <Select
-                        value={formData.unit}
-                        style={{ width: '100%' }}
-                        options={units.map((unit) => ({
-                          value: unit.id,
-                          label: `${unit.symbol} — ${unit.name}`,
-                        }))}
-                        onChange={(value) => {
-                          const selected = units.find((u) => u.id === value);
-                          setFormData((prev) => ({
-                            ...prev,
-                            unit: value,
-                            unit_name: selected ? selected.name : '',
-                            unit_symbol: selected ? selected.symbol : '',
-                          }));
-                        }}
-                      />
-                    ) : (
-                      <div style={{ textAlign: 'center' }}>
-                        <Text>
-                          {formData.unit_symbol && formData.unit_name
-                            ? `${formData.unit_symbol} — ${formData.unit_name}`
-                            : '—'}
-                        </Text>
-                      </div>
-                    )}
-                  </td>
-
-                  <td
-                    style={{
-                      border: '1px solid #f0f0f0',
-                      padding: '12px',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    {isEditing ? (
-                      <Flex align="center" justify="center" gap={8}>
-                        <Switch
-                          checked={formData.qr_item}
-                          onChange={(checked) =>
-                            handleChange('qr_item', checked)
-                          }
-                        />
-                        <Text>{formData.qr_item ? 'Так' : 'Ні'}</Text>
-                      </Flex>
-                    ) : (
-                      <Flex align="center" justify="center" gap={8}>
-                        <Text>{formData.qr_item ? '✅ Так' : '❌ Ні'}</Text>
-                      </Flex>
-                    )}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </Card>
-        </Col>
-
-        {/* Права колонка */}
-        <Col xs={24} lg={6}>
-          <Card title="Історія">
-            <Text type="secondary">Історія змін з’явиться пізніше</Text>
-          </Card>
-        </Col>
-      </Row>
-    </div>
+          <Tooltip
+            title={
+              canSave
+                ? ''
+                : 'Для збереження потрібно заповнити назву, категорію та одиницю виміру.'
+            }
+          >
+            <span>
+              <Button type="primary" disabled={!canSave}>
+                Зберегти
+              </Button>
+            </span>
+          </Tooltip>
+        </Flex>
+      </Flex>
+    </Drawer>
   );
 }
 
-export default ProductionComponentDetailPage;
+export default ProductionComponentCreateDrawer;

@@ -153,6 +153,8 @@ function OrderDetailPage() {
     ? order.reclamation_returns.filter((item) => item.status !== 'cancelled')
     : [];
   const hasReclamation = activeReclamationReturns.length > 0;
+  const hasPrimaryActions = isDraft || isInProgress || !isCompleted;
+
   const hasDangerActions =
     canCreateRefund || order?.can_start_reclamation_flow || order?.can_delete;
   const canSendToWork = isDraft && hasOrderItems;
@@ -1481,7 +1483,9 @@ function OrderDetailPage() {
                 )}
                 {hasDangerActions && (
                   <>
-                    <Divider style={{ margin: '4px 0 8px 0' }} />
+                    {hasPrimaryActions && (
+                      <Divider style={{ margin: '4px 0 8px 0' }} />
+                    )}
 
                     {canCreateRefund && (
                       <Button

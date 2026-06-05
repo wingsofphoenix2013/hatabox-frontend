@@ -148,12 +148,7 @@ function OrderDetailPage() {
     ? order.refund_documents
     : [];
   const hasRefundDocuments = refundDocuments.length > 0;
-  const canCreateRefund =
-    isInProgress &&
-    Array.isArray(order?.payment_documents) &&
-    order.payment_documents.some(
-      (item) => item.status === 'paid' && Number(item.payment_amount) > 0,
-    );
+  const canCreateRefund = Boolean(order?.can_create_refund);
   const activeReclamationReturns = Array.isArray(order?.reclamation_returns)
     ? order.reclamation_returns.filter((item) => item.status !== 'cancelled')
     : [];

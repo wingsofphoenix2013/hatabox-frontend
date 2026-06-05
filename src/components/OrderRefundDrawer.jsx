@@ -73,11 +73,15 @@ function OrderRefundDrawer({ open, onClose, order, onSaved }) {
     }
 
     setRefundNo(suggestedRefundNo);
-    setRefundAmount(null);
+    setRefundAmount(
+      order?.refund_possible_amount !== undefined
+        ? Number(order.refund_possible_amount)
+        : null,
+    );
     setRefundDate(dayjs());
     setComment('');
     setRefundFile(null);
-  }, [open, suggestedRefundNo]);
+  }, [open, suggestedRefundNo, order?.refund_possible_amount]);
 
   const handleFileChange = ({ fileList }) => {
     const fileObj = extractFileFromUploadEvent(fileList);
@@ -99,6 +103,11 @@ function OrderRefundDrawer({ open, onClose, order, onSaved }) {
   const handleSave = async () => {
     if (!canSubmit) {
       message.error('Заповніть обов’язкові поля.');
+      return;
+    }
+
+    if (Number(refundAmount) > Number(order?.refund_possible_amount || 0)) {
+      message.error('Сума повернення перевищує допустиму.');
       return;
     }
 
@@ -176,6 +185,7 @@ function OrderRefundDrawer({ open, onClose, order, onSaved }) {
 
               <InputNumber
                 min={0.01}
+                max={Number(order?.refund_possible_amount) || undefined}
                 step={0.01}
                 controls={false}
                 value={refundAmount}

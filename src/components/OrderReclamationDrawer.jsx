@@ -194,16 +194,19 @@ function OrderReclamationDrawer({ open, onClose, order, onOrderUpdated }) {
     try {
       setSaving(true);
 
-      await api.post('reclamation-return-documents/create-from-cart/', {
-        order: Number(order.id),
-        return_date: dayjs().format('YYYY-MM-DD'),
-        reason,
-        comment,
-        items: cartItems.map((item) => ({
-          order_item: item.order_item_id,
-          quantity: String(item.return_quantity),
-        })),
-      });
+      const response = await api.post(
+        'reclamation-return-documents/create-from-cart/',
+        {
+          order: Number(order.id),
+          return_date: dayjs().format('YYYY-MM-DD'),
+          reason,
+          comment,
+          items: cartItems.map((item) => ({
+            order_item: item.order_item_id,
+            quantity: String(item.return_quantity),
+          })),
+        },
+      );
 
       message.success('Повернення оформлено.');
 
@@ -216,6 +219,7 @@ function OrderReclamationDrawer({ open, onClose, order, onOrderUpdated }) {
       navigate(`/orders/${order.id}/reclamation`, {
         state: {
           orderLabel: `№ ${order.order_no} від ${formatDateUa(order.created_at)}`,
+          reclamationId: response.data.id,
         },
       });
     } catch (err) {

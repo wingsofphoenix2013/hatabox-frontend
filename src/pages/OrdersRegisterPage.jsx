@@ -709,7 +709,9 @@ function OrdersRegisterPage() {
       width: 180,
       sorter: true,
       sortOrder: getSorterOrder(ordering, 'payment_percent'),
-      render: (value) => {
+      render: (value, record) => {
+        if (record.status === 'cancelled') return '—';
+
         const percent = Number(value) || 0;
 
         return (
@@ -729,6 +731,8 @@ function OrdersRegisterPage() {
       sorter: true,
       sortOrder: getSorterOrder(ordering, 'receipt_percent'),
       render: (value, record) => {
+        if (record.status === 'cancelled') return '—';
+
         const percent = Number(value) || 0;
         const isOverdue = Boolean(record.is_receipt_overdue);
 

@@ -709,7 +709,9 @@ function OrderDetailPage() {
       key: 'payment_percent',
       align: 'center',
       width: '36%',
-      render: (value) => {
+      render: (value, record) => {
+        if (record.status === 'cancelled') return '—';
+
         const percent = Number(value) || 0;
 
         return (
@@ -730,6 +732,8 @@ function OrderDetailPage() {
       align: 'center',
       width: hasReclamation ? '28%' : '36%',
       render: (value, record) => {
+        if (record.status === 'cancelled') return '—';
+
         const percent = Number(value) || 0;
         const isOverdue = Boolean(record.is_receipt_overdue);
 

@@ -12,18 +12,19 @@ import {
   Typography,
   Input,
 } from 'antd';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
+import ProductionComponentCreateDrawer from '../components/ProductionComponentCreateDrawer';
 
 const { Title } = Typography;
 
 function ProductionComponentsPage() {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
 
   const [loading, setLoading] = useState(true);
+  const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
 
   const [selectedCategories, setSelectedCategories] = useState(
     searchParams.getAll('category').map(Number),
@@ -216,7 +217,7 @@ function ProductionComponentsPage() {
             type="primary"
             size="large"
             icon={<PlusOutlined />}
-            onClick={() => navigate('/production/components/new')}
+            onClick={() => setCreateDrawerOpen(true)}
           >
             Додати позицію
           </Button>
@@ -290,6 +291,10 @@ function ProductionComponentsPage() {
             scroll={{ x: 900 }}
           />
         </Card>
+        <ProductionComponentCreateDrawer
+          open={createDrawerOpen}
+          onClose={() => setCreateDrawerOpen(false)}
+        />
       </Flex>
     </div>
   );

@@ -155,8 +155,14 @@ function OrderDetailPage() {
   const hasReclamation = activeReclamationReturns.length > 0;
   const hasPrimaryActions = isDraft || isInProgress || !isCompleted;
 
+  const canHardDeleteOrder = order?.delete_mode === 'hard';
+  const canSoftCancelOrder = order?.delete_mode === 'soft';
+  const canShowDeleteOrderAction = canHardDeleteOrder || canSoftCancelOrder;
+
   const hasDangerActions =
-    canCreateRefund || order?.can_start_reclamation_flow || order?.can_delete;
+    canCreateRefund ||
+    order?.can_start_reclamation_flow ||
+    canShowDeleteOrderAction;
   const canSendToWork = isDraft && hasOrderItems;
 
   const selectedPaymentDocument = useMemo(() => {
@@ -496,17 +502,30 @@ function OrderDetailPage() {
     try {
       setDeletingOrder(true);
 
-      await api.delete(`orders/${id}/`);
+      if (canHardDeleteOrder) {
+        await api.delete(`orders/${id}/`);
 
-      message.success('Замовлення видалено.');
-      navigate('/orders/register');
+        message.success('Замовлення видалено.');
+        navigate('/orders/register');
+        return;
+      }
+
+      if (canSoftCancelOrder) {
+        const response = await api.post(`orders/${id}/cancel/`);
+
+        setOrder(response.data);
+        message.success('Замовлення скасовано.');
+        return;
+      }
     } catch (err) {
-      console.error('Failed to delete order:', err);
+      console.error('Failed to delete or cancel order:', err);
 
       const responseData = err?.response?.data;
       const backendMessage = getApiErrorMessage(responseData);
 
-      message.error(backendMessage || 'Не вдалося видалити замовлення.');
+      message.error(
+        backendMessage || 'Не вдалося виконати дію із замовленням.',
+      );
     } finally {
       setDeletingOrder(false);
     }
@@ -1509,10 +1528,14 @@ function OrderDetailPage() {
                       </Button>
                     )}
 
-                    {order?.can_delete && (
+                    {canShowDeleteOrderAction && (
                       <Popconfirm
                         title="Увага!"
-                        description="Ця операція незворотна! Ви впевнені?"
+                        description={
+                          canHardDeleteOrder
+                            ? 'Замовлення буде видалено без можливості відновлення. Ви впевнені?'
+                            : 'Замовлення буде скасовано. Ви впевнені?'
+                        }
                         okText="Так"
                         cancelText="Ні"
                         onConfirm={handleDeleteOrder}
@@ -1524,7 +1547,9 @@ function OrderDetailPage() {
                           icon={<StopOutlined />}
                           loading={deletingOrder}
                         >
-                          Відміна замовлення
+                          {canHardDeleteOrder
+                            ? 'Видалити замовлення'
+                            : 'Скасувати замовлення'}
                         </Button>
                       </Popconfirm>
                     )}

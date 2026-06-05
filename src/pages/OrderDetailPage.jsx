@@ -148,15 +148,15 @@ function OrderDetailPage() {
     ? order.refund_documents
     : [];
   const hasRefundDocuments = refundDocuments.length > 0;
-  const hasCompletedReclamation = activeReclamationReturns.some(
-    (item) => item.status === 'completed',
-  );
-  const shouldShowRefundCard =
-    hasRefundDocuments || (order?.can_create_refund && hasCompletedReclamation);
   const canCreateRefund = Boolean(order?.can_create_refund);
   const activeReclamationReturns = Array.isArray(order?.reclamation_returns)
     ? order.reclamation_returns.filter((item) => item.status !== 'cancelled')
     : [];
+  const hasCompletedReclamation = activeReclamationReturns.some(
+    (item) => item.status === 'completed',
+  );
+  const shouldShowRefundCard =
+    hasRefundDocuments || (canCreateRefund && hasCompletedReclamation);
   const hasReclamation = activeReclamationReturns.length > 0;
   const hasPrimaryActions = isDraft || isInProgress || !isCompleted;
 

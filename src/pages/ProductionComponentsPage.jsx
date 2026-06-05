@@ -1,14 +1,9 @@
 import { useEffect, useState } from 'react';
-import {
-  AppstoreAddOutlined,
-  PlusOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import {
   Alert,
   Button,
   Card,
-  Divider,
   Flex,
   Image,
   Select,
@@ -19,7 +14,7 @@ import {
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 function ProductionComponentsPage() {
   const navigate = useNavigate();
@@ -28,7 +23,6 @@ function ProductionComponentsPage() {
   const [categories, setCategories] = useState([]);
 
   const [loading, setLoading] = useState(true);
-  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   const [selectedCategories, setSelectedCategories] = useState(
     searchParams.getAll('category').map(Number),
@@ -103,23 +97,14 @@ function ProductionComponentsPage() {
         Array.isArray(response.data.results) ? response.data.results : [],
       );
       setTotal(response.data.count || 0);
-      setSelectedRowKeys([]);
     } catch (err) {
       console.error('Failed to load items:', err);
       setError('Не вдалося завантажити номенклатуру компонентів!');
       setItems([]);
       setTotal(0);
-      setSelectedRowKeys([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (newSelectedRowKeys) => {
-      setSelectedRowKeys(newSelectedRowKeys);
-    },
   };
 
   const handleTableChange = (pagination) => {
@@ -214,21 +199,6 @@ function ProductionComponentsPage() {
         );
       },
     },
-    {
-      title: '',
-      key: 'action',
-      width: 56,
-      align: 'center',
-      render: () => (
-        <AppstoreAddOutlined
-          style={{
-            fontSize: 17,
-            color: '#8c8c8c',
-            cursor: 'default',
-          }}
-        />
-      ),
-    },
   ];
 
   return (
@@ -254,21 +224,6 @@ function ProductionComponentsPage() {
         <Card size="small">
           <Flex align="center" wrap gap={16}>
             <Flex align="center" gap={12} wrap>
-              <Text>
-                Обрано: <strong>{selectedRowKeys.length}</strong>
-              </Text>
-
-              <Select
-                placeholder="Дії"
-                style={{ width: 180 }}
-                disabled={selectedRowKeys.length === 0}
-                options={[{ value: 'placeholder', label: 'Дії' }]}
-              />
-            </Flex>
-
-            <Flex align="center" gap={12} wrap>
-              <Divider type="vertical" style={{ height: 28 }} />
-
               <Input
                 placeholder="Пошук..."
                 allowClear
@@ -310,7 +265,6 @@ function ProductionComponentsPage() {
             loading={loading}
             dataSource={items}
             columns={columns}
-            rowSelection={rowSelection}
             size="small"
             onChange={handleTableChange}
             pagination={{

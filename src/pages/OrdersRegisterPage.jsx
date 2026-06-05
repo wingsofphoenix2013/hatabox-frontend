@@ -651,7 +651,8 @@ function OrdersRegisterPage() {
       render: (value, record) => {
         const hasComment = Boolean(record.comment);
         const isCompleted = record.status === 'completed';
-        const showCommentIcon = hasComment && !isCompleted;
+        const isCancelled = record.status === 'cancelled';
+        const showCommentIcon = hasComment && !isCompleted && !isCancelled;
 
         return (
           <Flex align="center" justify="flex-start" gap={6}>

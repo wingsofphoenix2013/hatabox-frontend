@@ -1157,9 +1157,32 @@ function OrderDetailPage() {
     {
       title: 'К-сть',
       key: 'quantity',
-      width: 100,
+      width: 150,
       align: 'center',
-      render: (_, record) => formatQuantity(record.quantity),
+      render: (_, record) => {
+        const showConvertedQuantity =
+          isCompleted &&
+          record.requires_unit_conversion &&
+          record.received_converted_quantity !== null &&
+          record.received_converted_quantity !== undefined;
+
+        if (!showConvertedQuantity) {
+          return formatQuantity(record.quantity);
+        }
+
+        return (
+          <Flex align="center" justify="center" gap={4}>
+            <span>{formatQuantity(record.received_quantity)}</span>
+            <span>/</span>
+            <Tooltip title="Кількість після конвертації одиниць виміру">
+              <span style={{ cursor: 'help' }}>
+                {formatQuantity(record.received_converted_quantity)}{' '}
+                {record.vendor_item_inv_item_unit_symbol || ''}
+              </span>
+            </Tooltip>
+          </Flex>
+        );
+      },
     },
     {
       title: 'Ціна',

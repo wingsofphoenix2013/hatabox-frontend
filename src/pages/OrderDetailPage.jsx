@@ -153,6 +153,8 @@ function OrderDetailPage() {
     ? order.reclamation_returns.filter((item) => item.status !== 'cancelled')
     : [];
   const hasReclamation = activeReclamationReturns.length > 0;
+  const hasDangerActions =
+    canCreateRefund || order?.can_start_reclamation_flow || order?.can_delete;
   const canSendToWork = isDraft && hasOrderItems;
 
   const selectedPaymentDocument = useMemo(() => {
@@ -1477,52 +1479,51 @@ function OrderDetailPage() {
                     Комплектація замовлення
                   </Button>
                 )}
-
-                <Divider style={{ margin: '4px 0 8px 0' }} />
-
-                {canCreateRefund && (
-                  <Button
-                    block
-                    danger
-                    icon={<BankOutlined />}
-                    onClick={() => setIsRefundDrawerOpen(true)}
-                  >
-                    Повернення коштів
-                  </Button>
-                )}
-
-                {order?.can_start_reclamation_flow && (
-                  <Button
-                    block
-                    danger
-                    icon={<WarningOutlined />}
-                    onClick={() => setIsReclamationDrawerOpen(true)}
-                  >
-                    Рекламація
-                  </Button>
-                )}
-
-                {order?.can_delete && (
+                {hasDangerActions && (
                   <>
                     <Divider style={{ margin: '4px 0 8px 0' }} />
 
-                    <Popconfirm
-                      title="Увага!"
-                      description="Ця операція незворотна! Ви впевнені?"
-                      okText="Так"
-                      cancelText="Ні"
-                      onConfirm={handleDeleteOrder}
-                      disabled={deletingOrder}
-                    >
+                    {canCreateRefund && (
                       <Button
                         block
                         danger
-                        icon={<StopOutlined />}
-                        loading={deletingOrder}
+                        icon={<BankOutlined />}
+                        onClick={() => setIsRefundDrawerOpen(true)}
                       >
-                        Відміна замовлення
+                        Повернення коштів
                       </Button>
-                    </Popconfirm>
+                    )}
+
+                    {order?.can_start_reclamation_flow && (
+                      <Button
+                        block
+                        danger
+                        icon={<WarningOutlined />}
+                        onClick={() => setIsReclamationDrawerOpen(true)}
+                      >
+                        Рекламація
+                      </Button>
+                    )}
+
+                    {order?.can_delete && (
+                      <Popconfirm
+                        title="Увага!"
+                        description="Ця операція незворотна! Ви впевнені?"
+                        okText="Так"
+                        cancelText="Ні"
+                        onConfirm={handleDeleteOrder}
+                        disabled={deletingOrder}
+                      >
+                        <Button
+                          block
+                          danger
+                          icon={<StopOutlined />}
+                          loading={deletingOrder}
+                        >
+                          Відміна замовлення
+                        </Button>
+                      </Popconfirm>
+                    )}
                   </>
                 )}
               </Flex>

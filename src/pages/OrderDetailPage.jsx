@@ -1394,25 +1394,27 @@ function OrderDetailPage() {
             </div>
 
             {currentFileUrl ? (
-              <Flex vertical gap={8}>
-                <Popconfirm
-                  title="Видалити файл?"
-                  description="Після видалення можна буде завантажити новий файл."
-                  okText="Так"
-                  cancelText="Ні"
-                  onConfirm={handleDeleteFile}
-                  disabled={deletingFile}
-                >
-                  <Button
-                    block
-                    danger
-                    icon={<DeleteOutlined />}
-                    loading={deletingFile}
+              !isCompleted && (
+                <Flex vertical gap={8}>
+                  <Popconfirm
+                    title="Видалити файл?"
+                    description="Після видалення можна буде завантажити новий файл."
+                    okText="Так"
+                    cancelText="Ні"
+                    onConfirm={handleDeleteFile}
+                    disabled={deletingFile}
                   >
-                    Видалити файл
-                  </Button>
-                </Popconfirm>
-              </Flex>
+                    <Button
+                      block
+                      danger
+                      icon={<DeleteOutlined />}
+                      loading={deletingFile}
+                    >
+                      Видалити файл
+                    </Button>
+                  </Popconfirm>
+                </Flex>
+              )
             ) : (
               <Flex vertical gap={8}>
                 <Upload

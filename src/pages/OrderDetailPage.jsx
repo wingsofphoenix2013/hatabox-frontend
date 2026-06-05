@@ -148,6 +148,11 @@ function OrderDetailPage() {
     ? order.refund_documents
     : [];
   const hasRefundDocuments = refundDocuments.length > 0;
+  const hasCompletedReclamation = activeReclamationReturns.some(
+    (item) => item.status === 'completed',
+  );
+  const shouldShowRefundCard =
+    hasRefundDocuments || (order?.can_create_refund && hasCompletedReclamation);
   const canCreateRefund = Boolean(order?.can_create_refund);
   const activeReclamationReturns = Array.isArray(order?.reclamation_returns)
     ? order.reclamation_returns.filter((item) => item.status !== 'cancelled')
@@ -1770,7 +1775,7 @@ function OrderDetailPage() {
             </Card>
           )}
 
-          {hasRefundDocuments && (
+          {shouldShowRefundCard && (
             <Card
               title="Повернення коштів"
               style={{
@@ -1779,14 +1784,21 @@ function OrderDetailPage() {
                 borderColor: '#ffccc7',
               }}
             >
-              <Table
-                rowKey="id"
-                columns={refundColumns}
-                dataSource={refundDocuments}
-                pagination={false}
-                size="small"
-                tableLayout="fixed"
-              />
+              {hasRefundDocuments ? (
+                <Table
+                  rowKey="id"
+                  columns={refundColumns}
+                  dataSource={refundDocuments}
+                  pagination={false}
+                  size="small"
+                  tableLayout="fixed"
+                />
+              ) : (
+                <Text type="secondary">
+                  Є виконана рекламація. Очікується оформлення повернення
+                  коштів.
+                </Text>
+              )}
             </Card>
           )}
 

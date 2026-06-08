@@ -39,14 +39,15 @@ export const breadcrumbConfig = [
   },
   {
     match: (pathname) => pathname.startsWith('/production/components/'),
-    build: ({ pathname, search }) => {
+    build: ({ pathname, search, state }) => {
       const currentId = getCurrentId(pathname);
+      const componentLabel = state?.componentLabel;
 
       return [
         makeHomeItem(),
         makeTextItem('Виробництво'),
         makeLinkItem(`/production/components${search}`, 'Каталог компонентів'),
-        makeTextItem(`Компонент ID ${currentId}`),
+        makeTextItem(componentLabel || `Компонент ID ${currentId}`),
       ];
     },
   },

@@ -130,6 +130,9 @@ function ProductionComponentsPage() {
       render: (_, record) => (
         <Link
           to={`/production/components/${record.id}?${searchParams.toString()}`}
+          state={{
+            componentLabel: record.name,
+          }}
         >
           {record.name}
         </Link>
@@ -296,7 +299,11 @@ function ProductionComponentsPage() {
           open={createDrawerOpen}
           onClose={() => setCreateDrawerOpen(false)}
           onCompleted={(createdItem) => {
-            navigate(`/production/components/${createdItem.id}`);
+            navigate(`/production/components/${createdItem.id}`, {
+              state: {
+                componentLabel: createdItem.name,
+              },
+            });
           }}
         />
       </Flex>

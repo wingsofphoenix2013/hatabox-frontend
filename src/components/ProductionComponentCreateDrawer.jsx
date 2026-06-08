@@ -5,6 +5,7 @@ import {
 } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import {
+  Alert,
   Button,
   Card,
   Drawer,
@@ -16,14 +17,16 @@ import {
   Tooltip,
   Typography,
   Upload,
+  message,
 } from 'antd';
 import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const { Text } = Typography;
 
 const { Dragger } = Upload;
 
-function ProductionComponentCreateDrawer({ open, onClose }) {
+function ProductionComponentCreateDrawer({ open, onClose, onCompleted }) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState(null);
@@ -34,6 +37,8 @@ function ProductionComponentCreateDrawer({ open, onClose }) {
   const [isSplittable, setIsSplittable] = useState(false);
   const [qrItem, setQrItem] = useState(false);
   const [fileList, setFileList] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {
     if (!open) {
@@ -70,7 +75,55 @@ function ProductionComponentCreateDrawer({ open, onClose }) {
     setIsSplittable(false);
     setQrItem(false);
     setFileList([]);
+    setSaving(false);
+    setSubmitError('');
     onClose();
+  };
+
+  const handleSave = async () => {
+    if (!canSave) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setSubmitError('');
+
+      const formData = new FormData();
+
+      formData.append('name', name.trim());
+      formData.append('category', category);
+      formData.append('unit', unit);
+      formData.append('requires_storage_place', requiresStoragePlace);
+      formData.append('is_splittable', isSplittable);
+      formData.append('qr_item', qrItem);
+      formData.append('is_required_for_step_start', true);
+
+      if (description.trim()) {
+        formData.append('description', description.trim());
+      }
+
+      if (fileList[0]?.originFileObj) {
+        formData.append('image', fileList[0].originFileObj);
+      }
+
+      const response = await api.post('items/', formData);
+
+      message.success('Компонент створено.');
+
+      if (onCompleted) {
+        await onCompleted(response.data);
+      }
+
+      handleClose();
+    } catch (err) {
+      setSubmitError(
+        getApiErrorMessage(err.response?.data, ['name', 'category', 'unit']) ||
+          'Не вдалося створити компонент.',
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   const canSave = Boolean(name.trim() && category && unit);
@@ -291,7 +344,9 @@ function ProductionComponentCreateDrawer({ open, onClose }) {
         </Card>
 
         <Flex justify="space-between" align="center" gap={12} wrap>
-          <Button onClick={handleClose}>Закрити</Button>
+          <Button onClick={handleClose} disabled={saving}>
+            Закрити
+          </Button>
 
           <Tooltip
             title={
@@ -301,12 +356,19 @@ function ProductionComponentCreateDrawer({ open, onClose }) {
             }
           >
             <span>
-              <Button type="primary" disabled={!canSave}>
+              <Button
+                type="primary"
+                loading={saving}
+                disabled={!canSave}
+                onClick={handleSave}
+              >
                 Зберегти
               </Button>
             </span>
           </Tooltip>
         </Flex>
+
+        {submitError && <Alert type="error" showIcon message={submitError} />}
       </Flex>
     </Drawer>
   );

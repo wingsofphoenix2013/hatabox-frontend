@@ -12,13 +12,14 @@ import {
   Typography,
   Input,
 } from 'antd';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api/client';
 import ProductionComponentCreateDrawer from '../components/ProductionComponentCreateDrawer';
 
 const { Title } = Typography;
 
 function ProductionComponentsPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -294,6 +295,9 @@ function ProductionComponentsPage() {
         <ProductionComponentCreateDrawer
           open={createDrawerOpen}
           onClose={() => setCreateDrawerOpen(false)}
+          onCompleted={(createdItem) => {
+            navigate(`/production/components/${createdItem.id}`);
+          }}
         />
       </Flex>
     </div>

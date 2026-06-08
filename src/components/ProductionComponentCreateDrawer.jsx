@@ -287,7 +287,21 @@ function ProductionComponentCreateDrawer({ open, onClose, onCompleted }) {
             <Dragger
               multiple={false}
               maxCount={1}
-              beforeUpload={() => false}
+              accept="image/jpeg,image/png"
+              beforeUpload={(file) => {
+                const isAllowed =
+                  file.type === 'image/jpeg' || file.type === 'image/png';
+
+                if (!isAllowed) {
+                  message.error(
+                    'Дозволено завантажувати лише JPG або PNG зображення.',
+                  );
+
+                  return Upload.LIST_IGNORE;
+                }
+
+                return false;
+              }}
               fileList={fileList}
               onChange={({ fileList: nextFileList }) => {
                 setFileList(nextFileList);
@@ -308,11 +322,7 @@ function ProductionComponentCreateDrawer({ open, onClose, onCompleted }) {
             <div
               style={{
                 position: 'relative',
-                width: '100%',
-                border: '1px solid #f0f0f0',
-                borderRadius: 8,
-                background: '#fafafa',
-                padding: 12,
+                display: 'inline-block',
               }}
             >
               <Image
@@ -321,15 +331,15 @@ function ProductionComponentCreateDrawer({ open, onClose, onCompleted }) {
                 style={{
                   maxHeight: 260,
                   objectFit: 'contain',
-                  width: '100%',
+                  maxWidth: '100%',
                 }}
               />
 
               <DeleteOutlined
                 style={{
                   position: 'absolute',
-                  right: 16,
-                  bottom: 16,
+                  right: 8,
+                  bottom: 8,
                   color: '#ff4d4f',
                   background: '#ffffff',
                   border: '1px solid #f0f0f0',

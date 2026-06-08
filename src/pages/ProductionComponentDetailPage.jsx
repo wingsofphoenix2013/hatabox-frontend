@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Alert, Card, Col, Row, Skeleton, Typography } from 'antd';
+import { Alert, Card, Col, Row, Skeleton, Table, Typography } from 'antd';
+import { InfoCircleOutlined } from '@ant-design/icons';
 import { useLocation, useParams } from 'react-router-dom';
 import api from '../api/client';
 
@@ -10,6 +11,10 @@ function ProductionComponentDetailPage() {
   const location = useLocation();
 
   const [component, setComponent] = useState(null);
+  const [productUsage, setProductUsage] = useState({
+    usage_count: 0,
+    products: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -25,10 +30,20 @@ function ProductionComponentDetailPage() {
 
       const response = await api.get(`items/${id}/`);
       setComponent(response.data?.summary || null);
+      setProductUsage(
+        response.data?.product_usage || {
+          usage_count: 0,
+          products: [],
+        },
+      );
     } catch (err) {
       console.error('Failed to load component detail page:', err);
       setError('Не вдалося завантажити дані компонента.');
       setComponent(null);
+      setProductUsage({
+        usage_count: 0,
+        products: [],
+      });
     } finally {
       setLoading(false);
     }
@@ -60,6 +75,44 @@ function ProductionComponentDetailPage() {
 
   const componentLabel =
     component.name || location.state?.componentLabel || `Компонент ID ${id}`;
+
+  const productUsageRows = Array.isArray(productUsage.products)
+    ? productUsage.products
+    : [];
+
+  const productUsageColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 64,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Назва',
+      key: 'name',
+      render: (_, record) => (
+        <span>
+          {record.product_family_name || '—'} | {record.product_code || '—'}{' '}
+          <a
+            href={`/production/products/${record.product_id}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <InfoCircleOutlined style={{ color: '#1677ff' }} />
+          </a>
+        </span>
+      ),
+    },
+    {
+      title: 'К-сть.',
+      key: 'quantity',
+      width: 140,
+      align: 'center',
+      render: (_, record) =>
+        `${record.total_quantity || '—'} ${component.unit_symbol || ''}`.trim(),
+    },
+  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -120,7 +173,13 @@ function ProductionComponentDetailPage() {
           </Card>
 
           <Card title="Інформація про використання">
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            <Table
+              rowKey="product_id"
+              columns={productUsageColumns}
+              dataSource={productUsageRows}
+              pagination={false}
+              size="small"
+            />
           </Card>
         </Col>
       </Row>

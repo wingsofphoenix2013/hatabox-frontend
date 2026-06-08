@@ -321,34 +321,41 @@ function ProductionComponentCreateDrawer({ open, onClose, onCompleted }) {
           ) : (
             <div
               style={{
-                position: 'relative',
-                display: 'inline-block',
+                display: 'flex',
+                justifyContent: 'center',
               }}
             >
-              <Image
-                src={URL.createObjectURL(previewFile.originFileObj)}
-                alt={previewFile.name}
+              <div
                 style={{
-                  maxHeight: 260,
-                  objectFit: 'contain',
-                  maxWidth: '100%',
+                  position: 'relative',
+                  display: 'inline-block',
                 }}
-              />
+              >
+                <Image
+                  src={URL.createObjectURL(previewFile.originFileObj)}
+                  alt={previewFile.name}
+                  style={{
+                    maxHeight: 260,
+                    objectFit: 'contain',
+                    maxWidth: '100%',
+                  }}
+                />
 
-              <DeleteOutlined
-                style={{
-                  position: 'absolute',
-                  right: 8,
-                  bottom: 8,
-                  color: '#ff4d4f',
-                  background: '#ffffff',
-                  border: '1px solid #f0f0f0',
-                  borderRadius: 6,
-                  padding: 8,
-                  cursor: 'pointer',
-                }}
-                onClick={() => setFileList([])}
-              />
+                <DeleteOutlined
+                  style={{
+                    position: 'absolute',
+                    right: 8,
+                    bottom: 8,
+                    color: '#ff4d4f',
+                    background: '#ffffff',
+                    border: '1px solid #f0f0f0',
+                    borderRadius: 6,
+                    padding: 8,
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setFileList([])}
+                />
+              </div>
             </div>
           )}
         </Card>

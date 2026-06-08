@@ -1139,19 +1139,45 @@ function OrderDetailPage() {
 
   const orderItemsColumns = [
     {
+      title: '№',
+      key: 'index',
+      width: 70,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
       title: 'Товар',
       key: 'vendor_item_name',
       render: (_, record) => (
-        <div
-          style={{
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-          title={record.vendor_item_name || '—'}
-        >
-          {record.vendor_item_name || '—'}
-        </div>
+        <Flex align="center" gap={6} wrap={false} style={{ minWidth: 0 }}>
+          <div
+            style={{
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={record.vendor_item_name || '—'}
+          >
+            {record.vendor_item_name || '—'}
+          </div>
+
+          {record.vendor_item_inv_item_id && (
+            <InfoCircleOutlined
+              style={{
+                color: '#1677ff',
+                fontSize: 13,
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+              onClick={() =>
+                window.open(
+                  `/production/components/${record.vendor_item_inv_item_id}`,
+                  '_blank',
+                )
+              }
+            />
+          )}
+        </Flex>
       ),
     },
     {

@@ -15,6 +15,7 @@ function ProductionComponentDetailPage() {
     usage_count: 0,
     products: [],
   });
+  const [vendorAliases, setVendorAliases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -30,6 +31,11 @@ function ProductionComponentDetailPage() {
 
       const response = await api.get(`items/${id}/`);
       setComponent(response.data?.summary || null);
+      setVendorAliases(
+        Array.isArray(response.data?.vendor_aliases)
+          ? response.data.vendor_aliases
+          : [],
+      );
       setProductUsage(
         response.data?.product_usage || {
           usage_count: 0,
@@ -40,6 +46,7 @@ function ProductionComponentDetailPage() {
       console.error('Failed to load component detail page:', err);
       setError('Не вдалося завантажити дані компонента.');
       setComponent(null);
+      setVendorAliases([]);
       setProductUsage({
         usage_count: 0,
         products: [],
@@ -79,6 +86,38 @@ function ProductionComponentDetailPage() {
   const productUsageRows = Array.isArray(productUsage.products)
     ? productUsage.products
     : [];
+
+  const vendorAliasColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 64,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Постачальник',
+      key: 'vendor',
+      render: (_, record) => (
+        <span>
+          {record.vendor_name || '—'}{' '}
+          <a
+            href={`/orders/vendors/${record.vendor_id}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            <InfoCircleOutlined style={{ color: '#1677ff' }} />
+          </a>
+        </span>
+      ),
+    },
+    {
+      title: 'Назва',
+      key: 'name',
+      render: (_, record) =>
+        `${record.vendor_sku || '—'} | ${record.vendor_item_name || '—'}`,
+    },
+  ];
 
   const productUsageColumns = [
     {
@@ -169,7 +208,16 @@ function ProductionComponentDetailPage() {
           </Card>
 
           <Card title="Пропозиції постачальників" style={{ marginBottom: 20 }}>
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            <Table
+              rowKey="vendor_item_id"
+              columns={vendorAliasColumns}
+              dataSource={vendorAliases}
+              pagination={false}
+              size="small"
+              locale={{
+                emptyText: 'Пропозиції постачальників відсутні.',
+              }}
+            />
           </Card>
 
           <Card title="Інформація про використання">
@@ -179,6 +227,10 @@ function ProductionComponentDetailPage() {
               dataSource={productUsageRows}
               pagination={false}
               size="small"
+              locale={{
+                emptyText:
+                  'Компонент не використовується у завершених продуктах.',
+              }}
             />
           </Card>
         </Col>

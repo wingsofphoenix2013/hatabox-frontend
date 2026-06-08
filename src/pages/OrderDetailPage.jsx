@@ -1162,20 +1162,23 @@ function OrderDetailPage() {
           </div>
 
           {record.vendor_item_inv_item_id && (
-            <InfoCircleOutlined
-              style={{
-                color: '#1677ff',
-                fontSize: 13,
-                cursor: 'pointer',
-                flexShrink: 0,
+            <Link
+              to={`/production/components/${record.vendor_item_inv_item_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              state={{
+                componentLabel: record.vendor_item_inv_item_name,
               }}
-              onClick={() =>
-                window.open(
-                  `/production/components/${record.vendor_item_inv_item_id}`,
-                  '_blank',
-                )
-              }
-            />
+            >
+              <InfoCircleOutlined
+                style={{
+                  color: '#1677ff',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                }}
+              />
+            </Link>
           )}
         </Flex>
       ),

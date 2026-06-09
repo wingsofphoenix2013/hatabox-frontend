@@ -233,37 +233,6 @@ function WarehouseStockDetailPage() {
           ? `${formatQuantity(record.quantity)} ${unitSymbol}`
           : formatQuantity(record.quantity),
     },
-    {
-      title: 'Дії',
-      key: 'actions',
-      width: 80,
-      align: 'center',
-      render: () => (
-        <Dropdown
-          menu={{
-            items: [
-              {
-                key: 'placeholder',
-                label: (
-                  <div style={{ padding: '4px 0' }}>
-                    Дії будуть додані пізніше
-                  </div>
-                ),
-              },
-            ],
-          }}
-          trigger={['click']}
-        >
-          <AppstoreAddOutlined
-            style={{
-              fontSize: 17,
-              color: '#8c8c8c',
-              cursor: 'pointer',
-            }}
-          />
-        </Dropdown>
-      ),
-    },
   ];
 
   const reservedStockColumns = [
@@ -1089,9 +1058,22 @@ function WarehouseStockDetailPage() {
           </Col>
 
           <Col xs={24} lg={18}>
-            <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-              <Text type="secondary">Вміст буде додано пізніше.</Text>
-            </Card>
+            {stockRows.length > 0 && (
+              <Card title="Доступно на складах" style={{ marginBottom: 20 }}>
+                <Table
+                  rowKey={(record) =>
+                    `${record.placement_type}-${record.location_id}-${
+                      record.storage_place_id || 'location'
+                    }`
+                  }
+                  columns={availableStockColumns}
+                  dataSource={stockRows}
+                  pagination={false}
+                  size="small"
+                  tableLayout="fixed"
+                />
+              </Card>
+            )}
 
             {shouldShowShortageCard && (
               <Card
@@ -1336,23 +1318,6 @@ function WarehouseStockDetailPage() {
                     </Text>
                   )}
                 </Flex>
-              </Card>
-            )}
-
-            {stockRows.length > 0 && (
-              <Card title="Доступно на складах" style={{ marginBottom: 20 }}>
-                <Table
-                  rowKey={(record) =>
-                    `${record.placement_type}-${record.location_id}-${
-                      record.storage_place_id || 'location'
-                    }`
-                  }
-                  columns={availableStockColumns}
-                  dataSource={stockRows}
-                  pagination={false}
-                  size="small"
-                  tableLayout="fixed"
-                />
               </Card>
             )}
 

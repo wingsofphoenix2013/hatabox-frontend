@@ -15,7 +15,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 
 import api from '../api/client';
-import { formatDateDisplay } from '../utils/orderFormatters';
+import { formatDateDisplay, formatMoney } from '../utils/orderFormatters';
 
 const { Title, Text } = Typography;
 
@@ -45,6 +45,27 @@ function SalesOrdersMaterialPlanPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [materialCostSummary, setMaterialCostSummary] = useState(null);
+  const [materialCostSummaryLoading, setMaterialCostSummaryLoading] =
+    useState(false);
+
+  const loadMaterialCostSummary = async (productionOrderId) => {
+    try {
+      setMaterialCostSummaryLoading(true);
+
+      const response = await api.get(
+        `production-orders/${productionOrderId}/material-snapshot-summary/`,
+      );
+
+      setMaterialCostSummary(response.data || null);
+    } catch (err) {
+      console.error('Failed to load material cost summary:', err);
+      setMaterialCostSummary(null);
+    } finally {
+      setMaterialCostSummaryLoading(false);
+    }
+  };
+
   const loadPage = async () => {
     try {
       setLoading(true);
@@ -52,6 +73,8 @@ function SalesOrdersMaterialPlanPage() {
 
       const response = await api.get(`sales-orders/${id}/`);
       setOrder(response.data);
+
+      await loadMaterialCostSummary(response.data.production_order);
     } catch (err) {
       console.error('Failed to load sale order:', err);
       setError('Не вдалося завантажити дані замовлення.');
@@ -282,6 +305,45 @@ function SalesOrdersMaterialPlanPage() {
                 }
               />
             </Flex>
+          </Card>
+
+          <Card
+            title="Розрахунок собівартості"
+            style={{ marginTop: 20 }}
+            loading={materialCostSummaryLoading}
+          >
+            <div style={{ marginBottom: 12 }}>
+              <Text strong>Вартість комплектуючих</Text>
+            </div>
+
+            <Descriptions
+              bordered
+              size="small"
+              column={3}
+              items={[
+                {
+                  key: 'total_cost_without_vat',
+                  label: 'Вартість без ПДВ',
+                  children: materialCostSummary
+                    ? formatMoney(materialCostSummary.total_cost_without_vat)
+                    : '—',
+                },
+                {
+                  key: 'total_vat_amount',
+                  label: 'ПДВ',
+                  children: materialCostSummary
+                    ? formatMoney(materialCostSummary.total_vat_amount)
+                    : '—',
+                },
+                {
+                  key: 'total_cost_with_vat',
+                  label: 'Вартість з ПДВ',
+                  children: materialCostSummary
+                    ? formatMoney(materialCostSummary.total_cost_with_vat)
+                    : '—',
+                },
+              ]}
+            />
           </Card>
         </Col>
       </Row>

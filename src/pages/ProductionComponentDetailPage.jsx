@@ -16,13 +16,29 @@ function ProductionComponentDetailPage() {
     products: [],
   });
   const [vendorAliases, setVendorAliases] = useState([]);
+  const [intakeSummary, setIntakeSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     loadComponent();
+    loadIntakeSummary();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const loadIntakeSummary = async () => {
+    try {
+      const response = await api.get(
+        `inventory-intake-history/?inv_item=${id}&summary_only=true`,
+      );
+
+      setIntakeSummary(response.data || null);
+    } catch (err) {
+      console.error('Failed to load intake summary:', err);
+      setIntakeSummary(null);
+    }
+  };
 
   const loadComponent = async () => {
     try {
@@ -198,7 +214,89 @@ function ProductionComponentDetailPage() {
           </Card>
 
           <Card title="Статистика">
-            <Text type="secondary">Дані зʼявляться пізніше</Text>
+            {intakeSummary ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '90px 1fr auto',
+                  rowGap: 10,
+                  columnGap: 8,
+                  alignItems: 'center',
+                }}
+              >
+                <Text strong style={{ textAlign: 'right' }}>
+                  Отримано
+                </Text>
+
+                <div
+                  style={{
+                    borderBottom: '1px dotted #bfbfbf',
+                    transform: 'translateY(2px)',
+                  }}
+                />
+
+                <Text strong>
+                  {intakeSummary.total_intake_quantity || 0}{' '}
+                  {intakeSummary.unit_symbol || ''}
+                </Text>
+
+                <Text
+                  type="secondary"
+                  style={{
+                    textAlign: 'right',
+                    fontSize: 12,
+                  }}
+                >
+                  закупка
+                </Text>
+
+                <div
+                  style={{
+                    borderBottom: '1px dotted #d9d9d9',
+                    transform: 'translateY(2px)',
+                  }}
+                />
+
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: 12,
+                  }}
+                >
+                  {intakeSummary.external_intake_quantity || 0}{' '}
+                  {intakeSummary.unit_symbol || ''}
+                </Text>
+
+                <Text
+                  type="secondary"
+                  style={{
+                    textAlign: 'right',
+                    fontSize: 12,
+                  }}
+                >
+                  давальче
+                </Text>
+
+                <div
+                  style={{
+                    borderBottom: '1px dotted #d9d9d9',
+                    transform: 'translateY(2px)',
+                  }}
+                />
+
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: 12,
+                  }}
+                >
+                  {intakeSummary.tolling_intake_quantity || 0}{' '}
+                  {intakeSummary.unit_symbol || ''}
+                </Text>
+              </div>
+            ) : (
+              <Text type="secondary">Дані відсутні</Text>
+            )}
           </Card>
         </Col>
 

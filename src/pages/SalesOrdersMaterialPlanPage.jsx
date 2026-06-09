@@ -63,6 +63,7 @@ function SalesOrdersMaterialPlanPage() {
 
   useEffect(() => {
     loadPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   if (loading) {
@@ -135,7 +136,8 @@ function SalesOrdersMaterialPlanPage() {
                 textAlign: 'center',
               }}
             >
-              <span
+              <Text
+                strong
                 style={{
                   fontSize: 72,
                   lineHeight: '42px',
@@ -144,7 +146,7 @@ function SalesOrdersMaterialPlanPage() {
                 }}
               >
                 № {order.production_order_serial_number || '—'}
-              </span>
+              </Text>
             </div>
           </Card>
 

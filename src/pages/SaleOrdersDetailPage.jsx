@@ -294,7 +294,10 @@ function SaleOrdersDetailPage() {
 
       await loadOrderEvents();
       await loadDiaryEntriesCount();
-      await loadMaterialCostSummary(response.data?.production_order);
+
+      if (['ready', 'completed'].includes(response.data?.status)) {
+        await loadMaterialCostSummary(response.data?.production_order);
+      }
 
       if (response.data?.status === 'draft') {
         await loadConfirmationStatus();
@@ -1159,42 +1162,46 @@ function SaleOrdersDetailPage() {
             </Flex>
           </Card>
 
-          <Card
-            title="Розрахунок собівартості"
-            style={{ marginBottom: 20 }}
-            loading={materialCostSummaryLoading}
-          >
-            <Title level={5}>Вартість комплектуючих</Title>
+          {['ready', 'completed'].includes(order.status) && (
+            <Card
+              title="Розрахунок собівартості"
+              style={{ marginBottom: 20 }}
+              loading={materialCostSummaryLoading}
+            >
+              <div style={{ marginBottom: 12 }}>
+                <Text strong>Вартість комплектуючих</Text>
+              </div>
 
-            <Descriptions
-              bordered
-              size="small"
-              column={3}
-              items={[
-                {
-                  key: 'total_cost_without_vat',
-                  label: 'Вартість без ПДВ',
-                  children: materialCostSummary
-                    ? formatMoney(materialCostSummary.total_cost_without_vat)
-                    : '—',
-                },
-                {
-                  key: 'total_vat_amount',
-                  label: 'ПДВ',
-                  children: materialCostSummary
-                    ? formatMoney(materialCostSummary.total_vat_amount)
-                    : '—',
-                },
-                {
-                  key: 'total_cost_with_vat',
-                  label: 'Вартість з ПДВ',
-                  children: materialCostSummary
-                    ? formatMoney(materialCostSummary.total_cost_with_vat)
-                    : '—',
-                },
-              ]}
-            />
-          </Card>
+              <Descriptions
+                bordered
+                size="small"
+                column={3}
+                items={[
+                  {
+                    key: 'total_cost_without_vat',
+                    label: 'Вартість без ПДВ',
+                    children: materialCostSummary
+                      ? formatMoney(materialCostSummary.total_cost_without_vat)
+                      : '—',
+                  },
+                  {
+                    key: 'total_vat_amount',
+                    label: 'ПДВ',
+                    children: materialCostSummary
+                      ? formatMoney(materialCostSummary.total_vat_amount)
+                      : '—',
+                  },
+                  {
+                    key: 'total_cost_with_vat',
+                    label: 'Вартість з ПДВ',
+                    children: materialCostSummary
+                      ? formatMoney(materialCostSummary.total_cost_with_vat)
+                      : '—',
+                  },
+                ]}
+              />
+            </Card>
+          )}
 
           {isDraft && missingCustomerComponents.length > 0 && (
             <Card title="Дефіцит товарів замовника">

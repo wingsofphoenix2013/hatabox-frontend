@@ -11,6 +11,7 @@ import {
   Row,
   Skeleton,
   Tag,
+  Tooltip,
   Typography,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';

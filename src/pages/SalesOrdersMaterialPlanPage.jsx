@@ -141,7 +141,17 @@ function SalesOrdersMaterialPlanPage() {
     ? materialSnapshot.own_components
     : [];
 
-  const ownComponentColumns = [
+  const donorComponents = Array.isArray(materialSnapshot?.donor_components)
+    ? materialSnapshot.donor_components
+    : [];
+
+  const customerComponents = Array.isArray(
+    materialSnapshot?.customer_components,
+  )
+    ? materialSnapshot.customer_components
+    : [];
+
+  const componentColumns = [
     {
       title: '№',
       key: 'index',
@@ -213,6 +223,50 @@ function SalesOrdersMaterialPlanPage() {
       render: (value) => <Text strong>{formatMoney(value)}</Text>,
     },
   ];
+
+  const freeComponentColumns = componentColumns.map((column) => {
+    if (
+      ['cost_without_vat', 'vat_amount', 'cost_with_vat'].includes(column.key)
+    ) {
+      return {
+        ...column,
+        render: () => '—',
+      };
+    }
+
+    if (column.key === 'name') {
+      return {
+        ...column,
+        render: (_, record) => (
+          <Flex align="center" gap={6} wrap>
+            <span>
+              {record.inv_item__internal_code || '—'} |{' '}
+              {record.inv_item__name || '—'}
+            </span>
+
+            {record.tolling_source_order_item__order_id && (
+              <Tooltip title="Детальна інформація про отримання">
+                <Link
+                  to={`/orders/tolling/${record.tolling_source_order_item__order_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <InfoCircleOutlined
+                    style={{
+                      color: '#8c8c8c',
+                      fontSize: 14,
+                    }}
+                  />
+                </Link>
+              </Tooltip>
+            )}
+          </Flex>
+        ),
+      };
+    }
+
+    return column;
+  });
 
   return (
     <div style={{ padding: 20 }}>
@@ -447,17 +501,59 @@ function SalesOrdersMaterialPlanPage() {
             />
           </Card>
 
-          <Card title="Закуплені компоненти" style={{ marginTop: 20 }}>
-            <Table
-              rowKey={(record) =>
-                `${record.inv_item_id}-${record.external_order_id}-${record.vendor_item_id}-${record.unit_price}`
-              }
-              size="small"
-              loading={materialSnapshotLoading}
-              dataSource={ownComponents}
-              columns={ownComponentColumns}
-              pagination={false}
-            />
+          <Card title="Спецификація компонентів" style={{ marginTop: 20 }}>
+            <Flex vertical gap={20}>
+              <div>
+                <div style={{ marginBottom: 12 }}>
+                  <Text strong>Закуплені компоненти</Text>
+                </div>
+
+                <Table
+                  rowKey={(record) =>
+                    `${record.inv_item_id}-${record.external_order_id}-${record.vendor_item_id}-${record.unit_price}`
+                  }
+                  size="small"
+                  loading={materialSnapshotLoading}
+                  dataSource={ownComponents}
+                  columns={componentColumns}
+                  pagination={false}
+                />
+              </div>
+
+              <div>
+                <div style={{ marginBottom: 12 }}>
+                  <Text strong>Отримано від спонсорів</Text>
+                </div>
+
+                <Table
+                  rowKey={(record) =>
+                    `${record.inv_item_id}-${record.tolling_source_order_item_id}`
+                  }
+                  size="small"
+                  loading={materialSnapshotLoading}
+                  dataSource={donorComponents}
+                  columns={freeComponentColumns}
+                  pagination={false}
+                />
+              </div>
+
+              <div>
+                <div style={{ marginBottom: 12 }}>
+                  <Text strong>Отримано від замовника</Text>
+                </div>
+
+                <Table
+                  rowKey={(record) =>
+                    `${record.inv_item_id}-${record.tolling_source_order_item_id}`
+                  }
+                  size="small"
+                  loading={materialSnapshotLoading}
+                  dataSource={customerComponents}
+                  columns={freeComponentColumns}
+                  pagination={false}
+                />
+              </div>
+            </Flex>
           </Card>
         </Col>
       </Row>

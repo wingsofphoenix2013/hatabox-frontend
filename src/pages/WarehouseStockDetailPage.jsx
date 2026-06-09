@@ -585,6 +585,19 @@ function WarehouseStockDetailPage() {
     },
   ];
 
+  const getProductionStepStatusTagColor = (status) => {
+    switch (status) {
+      case 'confirmed':
+        return 'processing';
+      case 'in_progress':
+        return 'purple';
+      case 'finished':
+        return 'success';
+      default:
+        return 'default';
+    }
+  };
+
   const shortageAllocationColumns = [
     {
       title: '№',
@@ -648,27 +661,41 @@ function WarehouseStockDetailPage() {
             {record.product_name || '—'}
           </Text>
 
-          <Text
-            type="secondary"
-            style={{
-              fontSize: 12,
-              lineHeight: 1.2,
-              minWidth: 0,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-            title={`${record.product_code || '—'} | Етап ${
-              record.source_product_step || '—'
-            }. ${record.source_product_step_name || '—'} | ${
-              record.production_order_step_status_display || '—'
-            }`}
-          >
-            {record.product_code || '—'} | Етап{' '}
-            {record.source_product_step || '—'}.{' '}
-            {record.source_product_step_name || '—'} |{' '}
-            {record.production_order_step_status_display || '—'}
-          </Text>
+          <Flex align="center" gap={6} wrap={false} style={{ minWidth: 0 }}>
+            <Text
+              type="secondary"
+              style={{
+                fontSize: 12,
+                lineHeight: 1.2,
+                minWidth: 0,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+              title={`${record.product_code || '—'} | Етап ${
+                record.source_product_step || '—'
+              }. ${record.source_product_step_name || '—'} | ${
+                record.production_order_step_status_display || '—'
+              }`}
+            >
+              {record.product_code || '—'} | Етап{' '}
+              {record.source_product_step || '—'}.{' '}
+              {record.source_product_step_name || '—'} |
+            </Text>
+
+            <Tag
+              color={getProductionStepStatusTagColor(
+                record.production_order_step_status,
+              )}
+              style={{
+                marginInlineEnd: 0,
+                fontSize: 12,
+                lineHeight: '18px',
+              }}
+            >
+              {record.production_order_step_status_display || '—'}
+            </Tag>
+          </Flex>
         </Flex>
       ),
     },
@@ -1224,7 +1251,7 @@ function WarehouseStockDetailPage() {
                       },
                       {
                         key: 'in_progress_quantity',
-                        label: 'Поточне',
+                        label: 'В роботі',
                         children: (
                           <Tag
                             color="purple"
@@ -1246,7 +1273,7 @@ function WarehouseStockDetailPage() {
                       },
                       {
                         key: 'finished_quantity',
-                        label: 'Спожито',
+                        label: 'Завершено',
                         children: (
                           <Tag
                             color="success"

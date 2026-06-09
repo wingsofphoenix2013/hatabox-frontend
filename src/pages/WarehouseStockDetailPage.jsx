@@ -55,6 +55,7 @@ function WarehouseStockDetailPage() {
   const [productionReservationSummary, setProductionReservationSummary] =
     useState(null);
   const [intakeHistoryRows, setIntakeHistoryRows] = useState([]);
+  const [intakeHistorySummary, setIntakeHistorySummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMovementDrawerOpen, setIsMovementDrawerOpen] = useState(false);
@@ -100,10 +101,11 @@ function WarehouseStockDetailPage() {
         productionReservationSummaryResponse.data || null,
       );
       setIntakeHistoryRows(
-        Array.isArray(intakeHistoryResponse.data)
-          ? intakeHistoryResponse.data
+        Array.isArray(intakeHistoryResponse.data?.results)
+          ? intakeHistoryResponse.data.results
           : [],
       );
+      setIntakeHistorySummary(intakeHistoryResponse.data?.summary || null);
     } catch (err) {
       console.error('Failed to load warehouse stock detail page:', err);
       setError('Не вдалося завантажити дані складського залишку.');
@@ -112,6 +114,7 @@ function WarehouseStockDetailPage() {
       setProductionReservationRows([]);
       setProductionReservationSummary(null);
       setIntakeHistoryRows([]);
+      setIntakeHistorySummary(null);
     } finally {
       setLoading(false);
     }
@@ -1348,7 +1351,21 @@ function WarehouseStockDetailPage() {
               </Card>
             )}
 
-            <Card title="Історія отримання товару">
+            <Card
+              title={
+                <Flex justify="space-between" align="center" gap={12}>
+                  <span>Історія отримання товару</span>
+
+                  <Text strong>
+                    Всього:{' '}
+                    {formatQuantity(
+                      intakeHistorySummary?.total_intake_quantity,
+                    )}{' '}
+                    {intakeHistorySummary?.unit_symbol || unitSymbol}
+                  </Text>
+                </Flex>
+              }
+            >
               {intakeHistoryRows.length > 0 ? (
                 <Table
                   rowKey={(record) =>

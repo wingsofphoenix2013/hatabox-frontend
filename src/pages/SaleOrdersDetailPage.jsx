@@ -4,6 +4,7 @@ import {
   CloseCircleFilled,
   CloseOutlined,
   EditOutlined,
+  DollarOutlined,
   FileTextOutlined,
   InboxOutlined,
   InfoCircleOutlined,
@@ -599,6 +600,8 @@ function SaleOrdersDetailPage() {
   const shouldShowNavigationCard = !isCancelled || diaryEntriesCount > 0;
   const canEditDetails = !['completed', 'cancelled'].includes(order.status);
   const canConfirmOrder = Boolean(confirmationStatus?.can_confirm);
+  const canViewCostCalculation = ['ready', 'completed'].includes(order.status);
+  const orderLabel = `Замовлення №${order.id}`;
 
   const missingCustomerComponents = Array.isArray(
     confirmationStatus?.missing_components,
@@ -815,13 +818,53 @@ function SaleOrdersDetailPage() {
                 )}
 
                 {!isDraft && (
-                  <Button
-                    block
-                    icon={<FileTextOutlined style={{ color: '#1677ff' }} />}
-                    onClick={() => setIsDiaryDrawerOpen(true)}
-                  >
-                    Щоденник виробництва
-                  </Button>
+                  <>
+                    <Tooltip
+                      title={
+                        canViewCostCalculation
+                          ? ''
+                          : 'Розрахунок собівартості доступний тільки для виготовлених виробів.'
+                      }
+                    >
+                      <div>
+                        <Link
+                          to={`/sales/orders/${order.id}/material-plan`}
+                          state={{
+                            orderLabel,
+                          }}
+                          onClick={
+                            canViewCostCalculation
+                              ? undefined
+                              : (event) => event.preventDefault()
+                          }
+                        >
+                          <Button
+                            block
+                            disabled={!canViewCostCalculation}
+                            icon={
+                              <DollarOutlined
+                                style={{
+                                  color: canViewCostCalculation
+                                    ? '#1677ff'
+                                    : undefined,
+                                }}
+                              />
+                            }
+                          >
+                            Розрахунок собівартості
+                          </Button>
+                        </Link>
+                      </div>
+                    </Tooltip>
+
+                    <Button
+                      block
+                      icon={<FileTextOutlined style={{ color: '#1677ff' }} />}
+                      onClick={() => setIsDiaryDrawerOpen(true)}
+                    >
+                      Щоденник виробництва
+                    </Button>
+                  </>
                 )}
 
                 {canCancel && (

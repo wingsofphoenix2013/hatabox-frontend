@@ -46,6 +46,7 @@ import { getApiErrorMessage } from '../utils/apiError';
 import {
   formatDateDisplay,
   formatDateTimeDisplay,
+  formatMoney,
 } from '../utils/orderFormatters';
 import { formatQuantity } from '../utils/formatNumber';
 
@@ -133,6 +134,10 @@ function SaleOrdersDetailPage() {
 
   const [productionReadiness, setProductionReadiness] = useState(null);
   const [productionReadinessLoading, setProductionReadinessLoading] =
+    useState(false);
+
+  const [materialCostSummary, setMaterialCostSummary] = useState(null);
+  const [materialCostSummaryLoading, setMaterialCostSummaryLoading] =
     useState(false);
 
   const productionReadinessPollRef = useRef(null);
@@ -239,6 +244,28 @@ function SaleOrdersDetailPage() {
     }
   };
 
+  const loadMaterialCostSummary = async (productionOrderId) => {
+    if (!productionOrderId) {
+      setMaterialCostSummary(null);
+      return;
+    }
+
+    try {
+      setMaterialCostSummaryLoading(true);
+
+      const response = await api.get(
+        `production-orders/${productionOrderId}/material-snapshot-summary/`,
+      );
+
+      setMaterialCostSummary(response.data || null);
+    } catch (err) {
+      console.error('Failed to load material cost summary:', err);
+      setMaterialCostSummary(null);
+    } finally {
+      setMaterialCostSummaryLoading(false);
+    }
+  };
+
   const loadConfirmationStatus = async () => {
     try {
       setConfirmationStatusLoading(true);
@@ -259,6 +286,7 @@ function SaleOrdersDetailPage() {
       setError('');
       setConfirmationStatus(null);
       setProductionReadiness(null);
+      setMaterialCostSummary(null);
       clearProductionReadinessPoll();
 
       const response = await api.get(`sales-orders/${id}/`);
@@ -266,6 +294,7 @@ function SaleOrdersDetailPage() {
 
       await loadOrderEvents();
       await loadDiaryEntriesCount();
+      await loadMaterialCostSummary(response.data?.production_order);
 
       if (response.data?.status === 'draft') {
         await loadConfirmationStatus();
@@ -1129,6 +1158,44 @@ function SaleOrdersDetailPage() {
               />
             </Flex>
           </Card>
+
+          <Card
+            title="Розрахунок собівартості"
+            style={{ marginBottom: 20 }}
+            loading={materialCostSummaryLoading}
+          >
+            <Title level={5}>Вартість комплектуючих</Title>
+
+            <Descriptions
+              bordered
+              size="small"
+              column={3}
+              items={[
+                {
+                  key: 'total_cost_without_vat',
+                  label: 'Вартість без ПДВ',
+                  children: materialCostSummary
+                    ? formatMoney(materialCostSummary.total_cost_without_vat)
+                    : '—',
+                },
+                {
+                  key: 'total_vat_amount',
+                  label: 'ПДВ',
+                  children: materialCostSummary
+                    ? formatMoney(materialCostSummary.total_vat_amount)
+                    : '—',
+                },
+                {
+                  key: 'total_cost_with_vat',
+                  label: 'Вартість з ПДВ',
+                  children: materialCostSummary
+                    ? formatMoney(materialCostSummary.total_cost_with_vat)
+                    : '—',
+                },
+              ]}
+            />
+          </Card>
+
           {isDraft && missingCustomerComponents.length > 0 && (
             <Card title="Дефіцит товарів замовника">
               <Table

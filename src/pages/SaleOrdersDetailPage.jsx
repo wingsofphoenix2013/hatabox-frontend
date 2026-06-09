@@ -1067,7 +1067,9 @@ function SaleOrdersDetailPage() {
                       ? 'Передано'
                       : 'Завершено',
                     children: ['ready', 'completed'].includes(order.status)
-                      ? '—'
+                      ? order.closed_at
+                        ? formatDateDisplay(order.closed_at)
+                        : '—'
                       : order.completed_at
                         ? formatDateDisplay(order.completed_at)
                         : '—',

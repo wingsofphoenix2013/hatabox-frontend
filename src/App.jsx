@@ -53,6 +53,7 @@ import OrganizationContactsRegisterPage from './pages/OrganizationContactsRegist
 
 import SaleOrdersRegisterPage from './pages/SaleOrdersRegisterPage';
 import SaleOrdersDetailPage from './pages/SaleOrdersDetailPage';
+import SalesOrdersMaterialPlanPage from './pages/SalesOrdersMaterialPlanPage';
 
 import ProductionOrderRegisterPage from './pages/ProductionOrderRegisterPage';
 import ProductionOrderDetailPage from './pages/ProductionOrderDetailPage';
@@ -116,6 +117,11 @@ function App() {
             <Route path="/home" element={<div>Головна</div>} />
 
             <Route path="/sales/orders" element={<SaleOrdersRegisterPage />} />
+
+            <Route
+              path="/sales/orders/:id/material-plan"
+              element={<SalesOrdersMaterialPlanPage />}
+            />
 
             <Route
               path="/sales/orders/:id"

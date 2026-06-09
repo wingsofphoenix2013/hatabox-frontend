@@ -15,6 +15,28 @@ export const breadcrumbConfig = [
     ],
   },
   {
+    match: (pathname) =>
+      pathname.startsWith('/sales/orders/') &&
+      pathname.endsWith('/material-plan'),
+    build: ({ pathname, state }) => {
+      const pathParts = pathname.split('/');
+      const orderId = pathParts[pathParts.length - 2];
+      const orderLabel = state?.orderLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Продажі'),
+        makeLinkItem('/sales/orders', 'Реєстр замовлень'),
+        makeLinkItem(
+          `/sales/orders/${orderId}`,
+          orderLabel || `Order ID ${orderId}`,
+          { orderLabel },
+        ),
+        makeTextItem('Собівартість закупівель'),
+      ];
+    },
+  },
+  {
     match: (pathname) => pathname.startsWith('/sales/orders/'),
     build: ({ pathname, state }) => {
       const currentId = getCurrentId(pathname);

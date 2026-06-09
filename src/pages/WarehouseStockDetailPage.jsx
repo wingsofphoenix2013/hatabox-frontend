@@ -153,6 +153,9 @@ function WarehouseStockDetailPage() {
   const shortageAllocations = productionReservationRows.filter(
     (row) => row.production_order_step_status !== 'finished',
   );
+  const consumedAllocations = productionReservationRows.filter(
+    (row) => row.production_order_step_status === 'finished',
+  );
   const getProductionReservationStepQuantity = (status) => {
     const item =
       productionReservationSummary?.by_production_order_step_status?.find(
@@ -1281,6 +1284,30 @@ function WarehouseStockDetailPage() {
                     size="small"
                     tableLayout="fixed"
                   />
+
+                  <Text strong>Спожито</Text>
+
+                  {consumedAllocations.length > 0 ? (
+                    <Table
+                      rowKey={(record) =>
+                        [
+                          record.sales_order,
+                          record.production_order,
+                          record.production_order_step,
+                          record.reservation_status,
+                        ].join('-')
+                      }
+                      columns={shortageAllocationColumns}
+                      dataSource={consumedAllocations}
+                      pagination={false}
+                      size="small"
+                      tableLayout="fixed"
+                    />
+                  ) : (
+                    <Text type="secondary">
+                      Компонент ще не використовувався у виробництві.
+                    </Text>
+                  )}
                 </Flex>
               </Card>
             )}

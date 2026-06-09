@@ -149,35 +149,30 @@ function SalesOrdersMaterialPlanPage() {
       render: (_, __, index) => index + 1,
     },
     {
-      title: 'Назва',
+      title: 'Компонент',
       key: 'name',
-      render: (_, record) =>
-        `${record.inv_item__internal_code || '—'} | ${
-          record.inv_item__name || '—'
-        }`,
-    },
-    {
-      title: 'Постачальник',
-      key: 'vendor',
       render: (_, record) => (
         <Flex align="center" gap={6} wrap>
           <span>
-            {record.vendor_name || '—'} | №{record.external_order_no || '—'}
+            {record.inv_item__internal_code || '—'} |{' '}
+            {record.inv_item__name || '—'}
           </span>
 
           {record.external_order_id && (
-            <Link
-              to={`/orders/${record.external_order_id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <InfoCircleOutlined
-                style={{
-                  color: '#8c8c8c',
-                  fontSize: 14,
-                }}
-              />
-            </Link>
+            <Tooltip title="Детальна інформація про закупівлю">
+              <Link
+                to={`/orders/${record.external_order_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <InfoCircleOutlined
+                  style={{
+                    color: '#8c8c8c',
+                    fontSize: 14,
+                  }}
+                />
+              </Link>
+            </Tooltip>
           )}
         </Flex>
       ),
@@ -191,14 +186,6 @@ function SalesOrdersMaterialPlanPage() {
         `${formatQuantity(record.quantity)} ${
           record.inv_item__unit__symbol || ''
         }`,
-    },
-    {
-      title: 'Ціна',
-      dataIndex: 'unit_price',
-      key: 'unit_price',
-      width: 130,
-      align: 'center',
-      render: (value) => formatMoney(value),
     },
     {
       title: 'В-сть. без ПДВ',

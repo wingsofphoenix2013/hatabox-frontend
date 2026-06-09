@@ -961,14 +961,12 @@ function WarehouseStockDetailPage() {
       render: (_, record) => (
         <Flex align="center" justify="center" gap={6}>
           <Text strong>
-            {record.requires_unit_conversion
-              ? '???'
-              : formatQuantity(record.quantity)}{' '}
+            {formatQuantity(record.converted_quantity ?? record.quantity)}{' '}
             {record.unit_symbol || ''}
           </Text>
 
           {record.requires_unit_conversion ? (
-            <Tooltip title="Потребує конвертації одиниць">
+            <Tooltip title="Відображено кількість після конвертації в одиниці складського обліку">
               <InfoCircleFilled style={{ color: '#faad14' }} />
             </Tooltip>
           ) : null}

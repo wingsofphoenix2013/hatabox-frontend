@@ -6,6 +6,7 @@ import {
   Card,
   Col,
   Descriptions,
+  Table,
   Flex,
   Row,
   Skeleton,
@@ -16,6 +17,7 @@ import { Link, useParams } from 'react-router-dom';
 
 import api from '../api/client';
 import { formatDateDisplay, formatMoney } from '../utils/orderFormatters';
+import { formatQuantity } from '../utils/formatNumber';
 
 const { Title, Text } = Typography;
 
@@ -49,6 +51,9 @@ function SalesOrdersMaterialPlanPage() {
   const [materialCostSummaryLoading, setMaterialCostSummaryLoading] =
     useState(false);
 
+  const [materialSnapshot, setMaterialSnapshot] = useState(null);
+  const [materialSnapshotLoading, setMaterialSnapshotLoading] = useState(false);
+
   const loadMaterialCostSummary = async (productionOrderId) => {
     try {
       setMaterialCostSummaryLoading(true);
@@ -66,6 +71,23 @@ function SalesOrdersMaterialPlanPage() {
     }
   };
 
+  const loadMaterialSnapshot = async (productionOrderId) => {
+    try {
+      setMaterialSnapshotLoading(true);
+
+      const response = await api.get(
+        `production-orders/${productionOrderId}/material-snapshot/`,
+      );
+
+      setMaterialSnapshot(response.data || null);
+    } catch (err) {
+      console.error('Failed to load material snapshot:', err);
+      setMaterialSnapshot(null);
+    } finally {
+      setMaterialSnapshotLoading(false);
+    }
+  };
+
   const loadPage = async () => {
     try {
       setLoading(true);
@@ -75,6 +97,7 @@ function SalesOrdersMaterialPlanPage() {
       setOrder(response.data);
 
       await loadMaterialCostSummary(response.data.production_order);
+      await loadMaterialSnapshot(response.data.production_order);
     } catch (err) {
       console.error('Failed to load sale order:', err);
       setError('Не вдалося завантажити дані замовлення.');
@@ -112,6 +135,96 @@ function SalesOrdersMaterialPlanPage() {
       </div>
     );
   }
+
+  const ownComponents = Array.isArray(materialSnapshot?.own_components)
+    ? materialSnapshot.own_components
+    : [];
+
+  const ownComponentColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 60,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Назва',
+      key: 'name',
+      render: (_, record) =>
+        `${record.inv_item__internal_code || '—'} | ${
+          record.inv_item__name || '—'
+        }`,
+    },
+    {
+      title: 'Постачальник',
+      key: 'vendor',
+      render: (_, record) => (
+        <Flex align="center" gap={6} wrap>
+          <span>
+            {record.vendor_name || '—'} | №{record.external_order_no || '—'}
+          </span>
+
+          {record.external_order_id && (
+            <Link
+              to={`/orders/${record.external_order_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <InfoCircleOutlined
+                style={{
+                  color: '#8c8c8c',
+                  fontSize: 14,
+                }}
+              />
+            </Link>
+          )}
+        </Flex>
+      ),
+    },
+    {
+      title: 'К-сть.',
+      key: 'quantity',
+      width: 130,
+      align: 'center',
+      render: (_, record) =>
+        `${formatQuantity(record.quantity)} ${
+          record.inv_item__unit__symbol || ''
+        }`,
+    },
+    {
+      title: 'Ціна',
+      dataIndex: 'unit_price',
+      key: 'unit_price',
+      width: 130,
+      align: 'center',
+      render: (value) => formatMoney(value),
+    },
+    {
+      title: 'В-сть. без ПДВ',
+      dataIndex: 'cost_without_vat',
+      key: 'cost_without_vat',
+      width: 160,
+      align: 'center',
+      render: (value) => formatMoney(value),
+    },
+    {
+      title: 'ПДВ',
+      dataIndex: 'vat_amount',
+      key: 'vat_amount',
+      width: 130,
+      align: 'center',
+      render: (value) => formatMoney(value),
+    },
+    {
+      title: 'В-сть. з ПДВ',
+      dataIndex: 'cost_with_vat',
+      key: 'cost_with_vat',
+      width: 160,
+      align: 'right',
+      render: (value) => <Text strong>{formatMoney(value)}</Text>,
+    },
+  ];
 
   return (
     <div style={{ padding: 20 }}>
@@ -343,6 +456,19 @@ function SalesOrdersMaterialPlanPage() {
                     : '—',
                 },
               ]}
+            />
+          </Card>
+
+          <Card title="Закуплені компоненти" style={{ marginTop: 20 }}>
+            <Table
+              rowKey={(record) =>
+                `${record.inv_item_id}-${record.external_order_id}-${record.vendor_item_id}-${record.unit_price}`
+              }
+              size="small"
+              loading={materialSnapshotLoading}
+              dataSource={ownComponents}
+              columns={ownComponentColumns}
+              pagination={false}
             />
           </Card>
         </Col>

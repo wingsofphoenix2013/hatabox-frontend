@@ -28,7 +28,7 @@ import {
 import { Link, useParams } from 'react-router-dom';
 import api from '../api/client';
 import { formatQuantity } from '../utils/formatNumber';
-import { formatDateDisplay, formatMoney } from '../utils/orderFormatters';
+import { formatDateDisplay } from '../utils/orderFormatters';
 import {
   getLocationTagStyle,
   renderStoragePlaceChain,
@@ -972,18 +972,6 @@ function WarehouseStockDetailPage() {
           ) : null}
         </Flex>
       ),
-    },
-    {
-      title: 'Ціна',
-      key: 'agreed_price',
-      width: 120,
-      align: 'center',
-      render: (_, record) =>
-        record.agreed_price ? (
-          <Text>{formatMoney(record.agreed_price)}</Text>
-        ) : (
-          <Text type="secondary">—</Text>
-        ),
     },
     {
       title: 'Дата отримання',

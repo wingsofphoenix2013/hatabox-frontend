@@ -96,7 +96,14 @@ const moduleConfig = {
     dictionaries: [
       {
         label: 'Каталог складів',
+
         path: '/inventory/warehouses',
+      },
+    ],
+    development: [
+      {
+        label: 'Топологія складів',
+        path: '/inventory/storage-topology',
       },
     ],
   },
@@ -534,7 +541,7 @@ function ProtectedLayout() {
     }
 
     if (
-      currentConfig.dictionaries.some((item) => item.path === location.pathname)
+      currentConfig.development?.some((item) => item.path === location.pathname)
     ) {
       return [location.pathname];
     }
@@ -665,6 +672,28 @@ function ProtectedLayout() {
                   items={currentConfig.dictionaries.map((item, i) => ({
                     key: item.path || 'd' + i,
                     icon: <ReadOutlined />,
+                    label: item.label || item,
+                  }))}
+                />
+              </>
+            )}
+            {currentConfig.development?.length > 0 && (
+              <>
+                <Divider style={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+
+                <Text strong style={{ color: '#fff', paddingLeft: 12 }}>
+                  Development
+                </Text>
+
+                <Menu
+                  mode="inline"
+                  theme="dark"
+                  style={{ background: '#2a3441', borderInlineEnd: 'none' }}
+                  selectedKeys={sidebar2SelectedKeys}
+                  onClick={({ key }) => navigate(key)}
+                  items={currentConfig.development.map((item, i) => ({
+                    key: item.path || 'dev' + i,
+                    icon: <ToolOutlined />,
                     label: item.label || item,
                   }))}
                 />

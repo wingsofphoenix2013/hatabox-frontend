@@ -203,9 +203,11 @@ function StoragePlacesRegisterPage() {
       key: 'address',
       width: 260,
       render: (value, record) => (
-        <Tooltip title={record.address_verbose || value || '—'}>
-          <Text type="link">{value || '—'}</Text>
-        </Tooltip>
+        <div style={{ paddingLeft: Number(record.level || 0) * 20 }}>
+          <Tooltip title={record.address_verbose || value || '—'}>
+            <Text type="link">{value || '—'}</Text>
+          </Tooltip>
+        </div>
       ),
     },
     {

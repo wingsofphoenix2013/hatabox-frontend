@@ -5,11 +5,14 @@ import {
   Card,
   Drawer,
   Flex,
+  Input,
   Select,
   Spin,
   Tooltip,
   Typography,
 } from 'antd';
+
+const { TextArea } = Input;
 import api from '../api/client';
 
 const { Text } = Typography;
@@ -56,10 +59,19 @@ function StoragePlaceCreateDrawer({
   const [parentOptionsError, setParentOptionsError] = useState('');
   const [finalPlacement, setFinalPlacement] = useState(null);
 
+  const [name, setName] = useState('');
+  const [comment, setComment] = useState('');
+
   const canSelectPlaceType = Boolean(selectedLocationId) && currentStep === 1;
   const canGoNextFromStep1 = Boolean(selectedLocationId && selectedPlaceType);
   const canGoNextFromStep2 = Boolean(finalPlacement);
-  const canGoNext = currentStep === 1 ? canGoNextFromStep1 : canGoNextFromStep2;
+  const canCreateStoragePlace = Boolean(name.trim());
+  const canGoNext =
+    currentStep === 1
+      ? canGoNextFromStep1
+      : currentStep === 2
+        ? canGoNextFromStep2
+        : canCreateStoragePlace;
 
   const locationOptions = locations.map((item) => ({
     value: item.id,
@@ -74,6 +86,8 @@ function StoragePlaceCreateDrawer({
     setParentOptionsLoading(false);
     setParentOptionsError('');
     setFinalPlacement(null);
+    setName('');
+    setComment('');
   };
 
   const handleCloseDrawer = () => {
@@ -123,6 +137,11 @@ function StoragePlaceCreateDrawer({
       setFinalPlacement(null);
       setParentLevels([]);
       await loadParentOptions();
+      return;
+    }
+
+    if (currentStep === 2) {
+      setCurrentStep(3);
     }
   };
 
@@ -239,6 +258,31 @@ function StoragePlaceCreateDrawer({
           </Card>
         )}
 
+        {currentStep >= 3 && (
+          <Card title="Опис місця зберігання">
+            <Flex vertical gap={14}>
+              <div>
+                <Text style={compactLabelStyle}>Назва</Text>
+                <Input
+                  placeholder="Вкажіть назву місця зберігання"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <Text style={compactLabelStyle}>Коментар</Text>
+                <TextArea
+                  placeholder="Додатковий опис або примітка"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={4}
+                />
+              </div>
+            </Flex>
+          </Card>
+        )}
+
         <Flex justify="space-between" align="center">
           <Button onClick={handleCloseDrawer}>Закрити</Button>
 
@@ -248,7 +292,9 @@ function StoragePlaceCreateDrawer({
                 ? ''
                 : currentStep === 1
                   ? 'Щоб перейти далі, оберіть локацію та тип місця зберігання.'
-                  : 'Щоб перейти далі, оберіть місце створення.'
+                  : currentStep === 2
+                    ? 'Щоб перейти далі, оберіть місце створення.'
+                    : 'Щоб створити місце зберігання, вкажіть назву.'
             }
           >
             <Button
@@ -257,7 +303,9 @@ function StoragePlaceCreateDrawer({
               loading={parentOptionsLoading}
               onClick={handleGoNext}
             >
-              Наступний крок
+              {currentStep === 3
+                ? 'Створити місце зберігання'
+                : 'Наступний крок'}
             </Button>
           </Tooltip>
         </Flex>

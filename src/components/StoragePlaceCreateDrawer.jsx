@@ -6,6 +6,7 @@ import {
   Drawer,
   Flex,
   Select,
+  Spin,
   Tooltip,
   Typography,
 } from 'antd';
@@ -205,6 +206,12 @@ function StoragePlaceCreateDrawer({
             <Flex vertical gap={14}>
               {parentOptionsError && (
                 <Alert type="error" description={parentOptionsError} showIcon />
+              )}
+
+              {parentOptionsLoading && parentLevels.length === 0 && (
+                <Flex justify="center" style={{ padding: '24px 0' }}>
+                  <Spin />
+                </Flex>
               )}
 
               {parentLevels.map((level, index) => (

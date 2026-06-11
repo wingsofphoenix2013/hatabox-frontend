@@ -224,39 +224,6 @@ function StoragePlacesRegisterPage() {
       ),
     },
     {
-      title: 'Назва',
-      dataIndex: 'name',
-      key: 'name',
-      width: 320,
-      render: (value, record) => (
-        <Flex align="center" gap={6} style={{ minWidth: 0 }}>
-          <div
-            style={{
-              minWidth: 0,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-            title={value || '—'}
-          >
-            {value || '—'}
-          </div>
-
-          {record.comment ? (
-            <Tooltip title={record.comment}>
-              <InfoCircleOutlined
-                style={{
-                  color: '#faad14',
-                  cursor: 'pointer',
-                  flexShrink: 0,
-                }}
-              />
-            </Tooltip>
-          ) : null}
-        </Flex>
-      ),
-    },
-    {
       title: 'Компоненти',
       key: 'preferred_items',
       width: 360,
@@ -272,7 +239,11 @@ function StoragePlacesRegisterPage() {
         );
 
         if (!firstItem) {
-          return '—';
+          return record.name ? (
+            <span style={{ fontStyle: 'italic' }}>{record.name}</span>
+          ) : (
+            '—'
+          );
         }
 
         return (

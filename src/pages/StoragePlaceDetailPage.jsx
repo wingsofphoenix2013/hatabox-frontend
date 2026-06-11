@@ -1,10 +1,37 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button, Flex, Spin, Typography, message } from 'antd';
+import {
+  Button,
+  Card,
+  Col,
+  Flex,
+  Row,
+  Skeleton,
+  Tag,
+  Typography,
+  message,
+} from 'antd';
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
+
+const getPlaceTypeTagColor = (placeType) => {
+  switch (placeType) {
+    case 'area':
+      return 'purple';
+    case 'container':
+      return 'blue';
+    case 'rack':
+      return 'green';
+    case 'shelf':
+      return 'magenta';
+    case 'box':
+      return 'orange';
+    default:
+      return 'default';
+  }
+};
 
 function StoragePlaceDetailPage() {
   const { id } = useParams();
@@ -60,50 +87,83 @@ function StoragePlaceDetailPage() {
 
   if (loading) {
     return (
-      <Flex justify="center" style={{ padding: 24 }}>
-        <Spin />
-      </Flex>
+      <div style={{ padding: 20 }}>
+        <Skeleton active paragraph={{ rows: 10 }} />
+      </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <h2>Точка зберігання</h2>
+    <div style={{ padding: 20 }}>
+      <Flex
+        justify="space-between"
+        align="flex-start"
+        gap={16}
+        style={{ marginBottom: 20 }}
+      >
+        <Flex align="center" gap={12} wrap>
+          <Title level={2} style={{ margin: 0 }}>
+            Місце зберігання {summary?.address || '—'}
+          </Title>
 
-      <div>
-        <Text strong>code: </Text>
-        <Text>{summary?.code || '—'}</Text>
-      </div>
+          <Tag
+            color={getPlaceTypeTagColor(summary?.place_type)}
+            style={{
+              fontSize: 20,
+              lineHeight: '32px',
+              paddingInline: 14,
+              paddingBlock: 6,
+              borderRadius: 10,
+              marginInlineEnd: 0,
+            }}
+          >
+            {summary?.place_type_name || '—'}
+          </Tag>
+        </Flex>
 
-      <div>
-        <Text strong>address: </Text>
-        <Text>{summary?.address || '—'}</Text>
-      </div>
-
-      <div>
-        <Text strong>address_verbose: </Text>
-        <Text>{summary?.address_verbose || '—'}</Text>
-      </div>
-
-      <Flex gap={8}>
-        <Button
-          type="primary"
-          loading={actionLoading}
-          disabled={summary?.is_active === true}
-          onClick={() => handleChangeActiveStatus('activate')}
-        >
-          Активувати
-        </Button>
-
-        <Button
-          danger
-          loading={actionLoading}
-          disabled={summary?.is_active === false}
-          onClick={() => handleChangeActiveStatus('deactivate')}
-        >
-          Деактивувати
-        </Button>
+        {summary?.is_active === false && (
+          <Tag
+            color="default"
+            style={{
+              fontSize: 20,
+              lineHeight: '32px',
+              paddingInline: 14,
+              paddingBlock: 6,
+              borderRadius: 10,
+              marginInlineEnd: 0,
+              border: '1px solid #d9d9d9',
+              background: '#fafafa',
+              color: '#595959',
+            }}
+          >
+            ВІДКЛЮЧЕНО
+          </Tag>
+        )}
       </Flex>
+
+      <Row gutter={20} align="top">
+        <Col xs={24} lg={6}>
+          <Card title="Назва" style={{ marginBottom: 20 }}>
+            <Title level={1} style={{ margin: 0, lineHeight: 1 }}>
+              {summary?.code || '—'}
+            </Title>
+          </Card>
+
+          <Card title="Навігація" style={{ marginBottom: 20 }}>
+            <Text type="secondary">Дані з’являться пізніше.</Text>
+          </Card>
+
+          <Card title="Історія місця зберігання">
+            <Text type="secondary">Дані з’являться пізніше.</Text>
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={18}>
+          <Card title="Основна інформація">
+            <Text type="secondary">Дані з’являться пізніше.</Text>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }

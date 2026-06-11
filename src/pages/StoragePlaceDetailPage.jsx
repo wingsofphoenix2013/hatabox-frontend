@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
+import { StopOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
 import {
   Button,
   Card,
   Col,
+  Divider,
   Flex,
+  Popconfirm,
   Row,
   Skeleton,
   Tag,
+  Tooltip,
   Typography,
   message,
 } from 'antd';
@@ -58,6 +62,27 @@ function StoragePlaceDetailPage() {
     loadStoragePlace();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const handleSetDefault = async () => {
+    try {
+      setActionLoading(true);
+
+      await api.post(`storage-places/${id}/set-default/`, {});
+
+      message.success('Площадку призначено за замовчуванням.');
+      await loadStoragePlace();
+    } catch (err) {
+      console.error('Failed to set default storage place:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(
+        backendMessage || 'Не вдалося призначити площадку за замовчуванням.',
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleChangeActiveStatus = async (action) => {
     try {
@@ -159,7 +184,83 @@ function StoragePlaceDetailPage() {
           </Card>
 
           <Card title="Навігація" style={{ marginBottom: 20 }}>
-            <Text type="secondary">Дані з’являться пізніше.</Text>
+            <Flex vertical gap={8}>
+              {summary?.place_type === 'area' && summary?.can_set_default && (
+                <Popconfirm
+                  title="Призначити за замовчуванням?"
+                  description="Ця площадка стане площадкою за замовчуванням для локації. Ви впевнені?"
+                  okText="Так"
+                  cancelText="Ні"
+                  onConfirm={handleSetDefault}
+                  disabled={actionLoading}
+                >
+                  <Button block type="primary" loading={actionLoading}>
+                    За замовчуванням
+                  </Button>
+                </Popconfirm>
+              )}
+
+              {summary?.is_active === false &&
+                (summary?.can_activate ? (
+                  <Popconfirm
+                    title="Активувати місце зберігання?"
+                    description="Місце зберігання знову стане доступним для використання. Ви впевнені?"
+                    okText="Так"
+                    cancelText="Ні"
+                    onConfirm={() => handleChangeActiveStatus('activate')}
+                    disabled={actionLoading}
+                  >
+                    <Button block type="primary" loading={actionLoading}>
+                      Активувати місце зберігання
+                    </Button>
+                  </Popconfirm>
+                ) : (
+                  <Tooltip
+                    title={
+                      summary?.activate_block_reason ||
+                      'Активація зараз недоступна.'
+                    }
+                  >
+                    <Button block disabled>
+                      Активувати місце зберігання
+                    </Button>
+                  </Tooltip>
+                ))}
+
+              <Divider dashed style={{ margin: '4px 0 8px 0' }} />
+
+              {summary?.is_active === true &&
+                (summary?.can_deactivate ? (
+                  <Popconfirm
+                    title="Вимкнути місце зберігання?"
+                    description="Місце зберігання буде деактивовано. Ви впевнені?"
+                    okText="Так"
+                    cancelText="Ні"
+                    onConfirm={() => handleChangeActiveStatus('deactivate')}
+                    disabled={actionLoading}
+                  >
+                    <Button
+                      block
+                      danger
+                      icon={<StopOutlined />}
+                      loading={actionLoading}
+                    >
+                      Вимкнути
+                    </Button>
+                  </Popconfirm>
+                ) : (
+                  <Tooltip
+                    title={
+                      summary?.deactivate_block_reason ||
+                      'Деактивація зараз недоступна.'
+                    }
+                  >
+                    <Button block disabled icon={<StopOutlined />}>
+                      Вимкнути
+                    </Button>
+                  </Tooltip>
+                ))}
+            </Flex>
           </Card>
 
           <Card title="Історія місця зберігання">

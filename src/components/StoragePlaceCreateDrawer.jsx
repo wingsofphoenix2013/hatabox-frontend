@@ -37,12 +37,27 @@ const PLACE_TYPE_OPTIONS = [
 const buildParentOptionValue = (item) =>
   item.id === null ? CREATE_HERE_VALUE : String(item.id);
 
-const buildParentOptions = (items) =>
-  items.map((item) => ({
+const buildParentOptions = (items) => {
+  const options = items.map((item) => ({
     value: buildParentOptionValue(item),
     label: item.label || '—',
     item,
   }));
+
+  if (options.length <= 1) {
+    return options;
+  }
+
+  return [
+    options[0],
+    {
+      value: '__divider__',
+      label: <div style={{ borderTop: '1px solid #f0f0f0' }} />,
+      disabled: true,
+    },
+    ...options.slice(1),
+  ];
+};
 
 function StoragePlaceCreateDrawer({
   open,
@@ -113,15 +128,29 @@ function StoragePlaceCreateDrawer({
       );
 
       const results = Array.isArray(response.data) ? response.data : [];
+      const options = buildParentOptions(results);
+      const actionOptions = results.filter((item) => item.id === null);
+      const realOptions = results.filter((item) => item.id !== null);
+      const shouldAutoSelectCreateHere =
+        levelIndex > 0 &&
+        actionOptions.length === 1 &&
+        realOptions.length === 0;
 
       setParentLevels((prevLevels) => [
         ...prevLevels.slice(0, levelIndex),
         {
           parentId,
-          value: null,
-          options: buildParentOptions(results),
+          value: shouldAutoSelectCreateHere ? CREATE_HERE_VALUE : null,
+          options,
         },
       ]);
+
+      if (shouldAutoSelectCreateHere) {
+        setFinalPlacement({
+          location: null,
+          parent: parentId,
+        });
+      }
     } catch (err) {
       console.error('Failed to load storage parent options:', err);
       setParentOptionsError('Не вдалося завантажити варіанти розміщення.');

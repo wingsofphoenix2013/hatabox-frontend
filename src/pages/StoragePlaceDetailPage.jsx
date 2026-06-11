@@ -168,9 +168,15 @@ function StoragePlaceDetailPage() {
         </Col>
 
         <Col xs={24} lg={18}>
-          <Card title="Основна інформація">
+          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
             <Text type="secondary">Дані з’являться пізніше.</Text>
           </Card>
+
+          {summary?.has_children && (
+            <Card title="Вкладені місця зберігання">
+              <Text type="secondary">Дані з’являться пізніше.</Text>
+            </Card>
+          )}
         </Col>
       </Row>
     </div>

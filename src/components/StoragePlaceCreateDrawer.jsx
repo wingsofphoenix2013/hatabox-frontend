@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { Button, Card, Drawer, Flex, Select, Tooltip, Typography } from 'antd';
+import {
+  Alert,
+  Button,
+  Card,
+  Drawer,
+  Flex,
+  Select,
+  Tooltip,
+  Typography,
+} from 'antd';
+import api from '../api/client';
 
 const { Text } = Typography;
 
@@ -10,6 +20,8 @@ const compactLabelStyle = {
   lineHeight: 1.2,
 };
 
+const CREATE_HERE_VALUE = '__create_here__';
+
 const PLACE_TYPE_OPTIONS = [
   { value: 'area', label: 'Площадка' },
   { value: 'container', label: 'Контейнер' },
@@ -17,6 +29,16 @@ const PLACE_TYPE_OPTIONS = [
   { value: 'shelf', label: 'Полка' },
   { value: 'box', label: 'Коробка' },
 ];
+
+const buildParentOptionValue = (item) =>
+  item.id === null ? CREATE_HERE_VALUE : String(item.id);
+
+const buildParentOptions = (items) =>
+  items.map((item) => ({
+    value: buildParentOptionValue(item),
+    label: item.label || '—',
+    item,
+  }));
 
 function StoragePlaceCreateDrawer({
   open,
@@ -28,8 +50,15 @@ function StoragePlaceCreateDrawer({
   const [selectedPlaceType, setSelectedPlaceType] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
 
+  const [parentLevels, setParentLevels] = useState([]);
+  const [parentOptionsLoading, setParentOptionsLoading] = useState(false);
+  const [parentOptionsError, setParentOptionsError] = useState('');
+  const [finalPlacement, setFinalPlacement] = useState(null);
+
   const canSelectPlaceType = Boolean(selectedLocationId) && currentStep === 1;
-  const canGoNext = Boolean(selectedLocationId && selectedPlaceType);
+  const canGoNextFromStep1 = Boolean(selectedLocationId && selectedPlaceType);
+  const canGoNextFromStep2 = Boolean(finalPlacement);
+  const canGoNext = currentStep === 1 ? canGoNextFromStep1 : canGoNextFromStep2;
 
   const locationOptions = locations.map((item) => ({
     value: item.id,
@@ -40,11 +69,89 @@ function StoragePlaceCreateDrawer({
     setSelectedLocationId(null);
     setSelectedPlaceType(null);
     setCurrentStep(1);
+    setParentLevels([]);
+    setParentOptionsLoading(false);
+    setParentOptionsError('');
+    setFinalPlacement(null);
   };
 
   const handleCloseDrawer = () => {
     resetForm();
     onClose();
+  };
+
+  const loadParentOptions = async (parentId = null, levelIndex = 0) => {
+    try {
+      setParentOptionsLoading(true);
+      setParentOptionsError('');
+
+      const params = new URLSearchParams();
+      params.append('location', String(selectedLocationId));
+      params.append('place_type', selectedPlaceType);
+
+      if (parentId) {
+        params.append('parent', String(parentId));
+      }
+
+      const response = await api.get(
+        `storage-parent-options/?${params.toString()}`,
+      );
+
+      const results = Array.isArray(response.data) ? response.data : [];
+
+      setParentLevels((prevLevels) => [
+        ...prevLevels.slice(0, levelIndex),
+        {
+          parentId,
+          value: null,
+          options: buildParentOptions(results),
+        },
+      ]);
+    } catch (err) {
+      console.error('Failed to load storage parent options:', err);
+      setParentOptionsError('Не вдалося завантажити варіанти розміщення.');
+      setParentLevels((prevLevels) => prevLevels.slice(0, levelIndex));
+    } finally {
+      setParentOptionsLoading(false);
+    }
+  };
+
+  const handleGoNext = async () => {
+    if (currentStep === 1) {
+      setCurrentStep(2);
+      setFinalPlacement(null);
+      setParentLevels([]);
+      await loadParentOptions();
+    }
+  };
+
+  const handleChangeParentLevel = async (levelIndex, value, option) => {
+    const selectedItem = option?.item || null;
+
+    setFinalPlacement(null);
+
+    setParentLevels((prevLevels) =>
+      prevLevels.map((level, index) =>
+        index === levelIndex ? { ...level, value } : level,
+      ),
+    );
+
+    if (!selectedItem) {
+      setParentLevels((prevLevels) => prevLevels.slice(0, levelIndex + 1));
+      return;
+    }
+
+    if (value === CREATE_HERE_VALUE) {
+      setFinalPlacement({
+        location: levelIndex === 0 ? selectedLocationId : null,
+        parent: levelIndex === 0 ? null : parentLevels[levelIndex]?.parentId,
+      });
+      setParentLevels((prevLevels) => prevLevels.slice(0, levelIndex + 1));
+      return;
+    }
+
+    setParentLevels((prevLevels) => prevLevels.slice(0, levelIndex + 1));
+    await loadParentOptions(selectedItem.id, levelIndex + 1);
   };
 
   return (
@@ -93,7 +200,37 @@ function StoragePlaceCreateDrawer({
           </Flex>
         </Card>
 
-        {currentStep >= 2 && <Card title="Налаштування розміщення" />}
+        {currentStep >= 2 && (
+          <Card title="Налаштування розміщення">
+            <Flex vertical gap={14}>
+              {parentOptionsError && (
+                <Alert type="error" description={parentOptionsError} showIcon />
+              )}
+
+              {parentLevels.map((level, index) => (
+                <div key={`${level.parentId || 'root'}-${index}`}>
+                  <Text style={compactLabelStyle}>
+                    {index === 0 ? 'Оберіть розміщення' : 'Уточнення'}
+                  </Text>
+
+                  <Select
+                    placeholder={
+                      index === 0 ? 'Оберіть розміщення' : 'Уточніть розміщення'
+                    }
+                    style={{ width: '100%' }}
+                    value={level.value}
+                    options={level.options}
+                    loading={parentOptionsLoading}
+                    optionFilterProp="label"
+                    onChange={(value, option) =>
+                      handleChangeParentLevel(index, value, option)
+                    }
+                  />
+                </div>
+              ))}
+            </Flex>
+          </Card>
+        )}
 
         <Flex justify="space-between" align="center">
           <Button onClick={handleCloseDrawer}>Закрити</Button>
@@ -102,13 +239,16 @@ function StoragePlaceCreateDrawer({
             title={
               canGoNext
                 ? ''
-                : 'Щоб перейти далі, оберіть локацію та тип місця зберігання.'
+                : currentStep === 1
+                  ? 'Щоб перейти далі, оберіть локацію та тип місця зберігання.'
+                  : 'Щоб перейти далі, оберіть місце створення.'
             }
           >
             <Button
               type="primary"
-              disabled={!canGoNext || currentStep >= 2}
-              onClick={() => setCurrentStep(2)}
+              disabled={!canGoNext}
+              loading={parentOptionsLoading}
+              onClick={handleGoNext}
             >
               Наступний крок
             </Button>

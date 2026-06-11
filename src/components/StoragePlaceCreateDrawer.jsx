@@ -26,8 +26,9 @@ function StoragePlaceCreateDrawer({
 }) {
   const [selectedLocationId, setSelectedLocationId] = useState(null);
   const [selectedPlaceType, setSelectedPlaceType] = useState(null);
+  const [currentStep, setCurrentStep] = useState(1);
 
-  const canSelectPlaceType = Boolean(selectedLocationId);
+  const canSelectPlaceType = Boolean(selectedLocationId) && currentStep === 1;
   const canGoNext = Boolean(selectedLocationId && selectedPlaceType);
 
   const locationOptions = locations.map((item) => ({
@@ -38,6 +39,7 @@ function StoragePlaceCreateDrawer({
   const resetForm = () => {
     setSelectedLocationId(null);
     setSelectedPlaceType(null);
+    setCurrentStep(1);
   };
 
   const handleCloseDrawer = () => {
@@ -68,6 +70,7 @@ function StoragePlaceCreateDrawer({
                 options={locationOptions}
                 loading={locationsLoading}
                 optionFilterProp="label"
+                disabled={currentStep > 1}
                 onChange={(value) => {
                   setSelectedLocationId(value);
                   setSelectedPlaceType(null);
@@ -90,6 +93,8 @@ function StoragePlaceCreateDrawer({
           </Flex>
         </Card>
 
+        {currentStep >= 2 && <Card title="Налаштування розміщення" />}
+
         <Flex justify="space-between" align="center">
           <Button onClick={handleCloseDrawer}>Закрити</Button>
 
@@ -100,7 +105,11 @@ function StoragePlaceCreateDrawer({
                 : 'Щоб перейти далі, оберіть локацію та тип місця зберігання.'
             }
           >
-            <Button type="primary" disabled={!canGoNext}>
+            <Button
+              type="primary"
+              disabled={!canGoNext || currentStep >= 2}
+              onClick={() => setCurrentStep(2)}
+            >
               Наступний крок
             </Button>
           </Tooltip>

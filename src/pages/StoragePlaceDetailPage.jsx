@@ -150,7 +150,7 @@ function StoragePlaceDetailPage() {
                 style={{
                   margin: 0,
                   lineHeight: 1,
-                  fontSize: 56,
+                  fontSize: 32,
                 }}
               >
                 {summary?.address || '—'}

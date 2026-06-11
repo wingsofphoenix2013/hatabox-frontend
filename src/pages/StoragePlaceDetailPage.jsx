@@ -103,7 +103,7 @@ function StoragePlaceDetailPage() {
       >
         <Flex align="center" gap={12} wrap>
           <Title level={2} style={{ margin: 0 }}>
-            Місце зберігання {summary?.address || '—'}
+            Місце зберігання {summary?.code || '—'}
           </Title>
 
           <Tag
@@ -153,7 +153,7 @@ function StoragePlaceDetailPage() {
                   fontSize: 56,
                 }}
               >
-                {summary?.code || '—'}
+                {summary?.address || '—'}
               </Title>
             </Flex>
           </Card>

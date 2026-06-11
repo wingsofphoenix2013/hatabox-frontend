@@ -18,6 +18,7 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
+import { Link } from 'react-router-dom';
 import api from '../api/client';
 import StoragePlaceCreateDrawer from '../components/StoragePlaceCreateDrawer';
 
@@ -208,7 +209,16 @@ function StoragePlacesRegisterPage() {
       render: (value, record) => (
         <div style={{ paddingLeft: Number(record.level || 0) * 20 }}>
           <Tooltip title={record.address_verbose || value || '—'}>
-            <Text type="link">{value || '—'}</Text>
+            <Link
+              to={`/inventory/storage-topology/${record.id}`}
+              state={{
+                storagePlaceLabel: `${record.address || '—'} ${
+                  record.name || ''
+                }`.trim(),
+              }}
+            >
+              {value || '—'}
+            </Link>
           </Tooltip>
         </div>
       ),

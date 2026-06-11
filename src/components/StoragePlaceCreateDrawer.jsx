@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Alert,
   Button,
@@ -10,10 +11,12 @@ import {
   Spin,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
+import api from '../api/client';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const { TextArea } = Input;
-import api from '../api/client';
 
 const { Text } = Typography;
 
@@ -65,6 +68,7 @@ function StoragePlaceCreateDrawer({
   locations,
   locationsLoading,
 }) {
+  const navigate = useNavigate();
   const [selectedLocationId, setSelectedLocationId] = useState(null);
   const [selectedPlaceType, setSelectedPlaceType] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
@@ -76,6 +80,7 @@ function StoragePlaceCreateDrawer({
 
   const [name, setName] = useState('');
   const [comment, setComment] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const canSelectPlaceType = Boolean(selectedLocationId) && currentStep === 1;
   const canGoNextFromStep1 = Boolean(selectedLocationId && selectedPlaceType);
@@ -103,6 +108,7 @@ function StoragePlaceCreateDrawer({
     setFinalPlacement(null);
     setName('');
     setComment('');
+    setSaving(false);
   };
 
   const handleCloseDrawer = () => {
@@ -160,6 +166,54 @@ function StoragePlaceCreateDrawer({
     }
   };
 
+  const handleCreateStoragePlace = async () => {
+    if (!finalPlacement || !name.trim()) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const response = await api.post('storage-places/', {
+        location: finalPlacement.location,
+        parent: finalPlacement.parent,
+        place_type: selectedPlaceType,
+        name: name.trim(),
+        comment,
+      });
+
+      const createdStoragePlace = response.data || {};
+
+      message.success('Місце зберігання створено.');
+
+      resetForm();
+      onClose();
+
+      navigate(`/inventory/storage-topology/${createdStoragePlace.id}`, {
+        state: {
+          storagePlaceLabel: `${createdStoragePlace.address || '—'} ${
+            createdStoragePlace.name || ''
+          }`.trim(),
+        },
+      });
+    } catch (err) {
+      console.error('Failed to create storage place:', err);
+
+      const responseData = err?.response?.data;
+      const backendMessage = getApiErrorMessage(responseData, [
+        'location',
+        'parent',
+        'place_type',
+        'name',
+        'comment',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося створити місце зберігання.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleGoNext = async () => {
     if (currentStep === 1) {
       setCurrentStep(2);
@@ -171,6 +225,11 @@ function StoragePlaceCreateDrawer({
 
     if (currentStep === 2) {
       setCurrentStep(3);
+      return;
+    }
+
+    if (currentStep === 3) {
+      await handleCreateStoragePlace();
     }
   };
 
@@ -329,7 +388,7 @@ function StoragePlaceCreateDrawer({
             <Button
               type="primary"
               disabled={!canGoNext}
-              loading={parentOptionsLoading}
+              loading={parentOptionsLoading || saving}
               onClick={handleGoNext}
             >
               {currentStep === 3

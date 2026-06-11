@@ -23,6 +23,7 @@ import WarehouseStockDetailPage from './pages/WarehouseStockDetailPage';
 import WarehouseProductionMovementRegisterPage from './pages/WarehouseProductionMovementRegisterPage';
 
 import StoragePlacesRegisterPage from './pages/StoragePlacesRegisterPage';
+import StoragePlaceDetailPage from './pages/StoragePlaceDetailPage';
 
 import OrderDetailPage from './pages/OrderDetailPage';
 import OrdersRegisterPage from './pages/OrdersRegisterPage';
@@ -256,6 +257,11 @@ function App() {
             <Route
               path="/inventory/storage-topology"
               element={<StoragePlacesRegisterPage />}
+            />
+
+            <Route
+              path="/inventory/storage-topology/:id"
+              element={<StoragePlaceDetailPage />}
             />
             <Route
               path="/organizations"

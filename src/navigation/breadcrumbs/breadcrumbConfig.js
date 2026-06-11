@@ -308,6 +308,20 @@ export const breadcrumbConfig = [
     ],
   },
   {
+    match: (pathname) => pathname.startsWith('/inventory/storage-topology/'),
+    build: ({ pathname, state }) => {
+      const currentId = getCurrentId(pathname);
+      const storagePlaceLabel = state?.storagePlaceLabel;
+
+      return [
+        makeHomeItem(),
+        makeTextItem('Склад'),
+        makeLinkItem('/inventory/storage-topology', 'Топологія складів'),
+        makeTextItem(storagePlaceLabel || `Точка зберігання ID ${currentId}`),
+      ];
+    },
+  },
+  {
     match: (pathname) => pathname === '/orders/shortage',
     build: () => [
       makeHomeItem(),

@@ -207,7 +207,7 @@ function StoragePlacesRegisterPage() {
       key: 'address',
       width: 260,
       render: (value, record) => (
-        <div style={{ paddingLeft: Number(record.level || 0) * 20 }}>
+        <div style={{ paddingLeft: Number(record.level || 0) * 10 }}>
           <Tooltip title={record.address_verbose || value || '—'}>
             <Link
               to={`/inventory/storage-topology/${record.id}`}

@@ -19,6 +19,7 @@ import {
   Typography,
 } from 'antd';
 import api from '../api/client';
+import StoragePlaceCreateDrawer from '../components/StoragePlaceCreateDrawer';
 
 const { Title, Text } = Typography;
 
@@ -83,6 +84,8 @@ function StoragePlacesRegisterPage() {
   const [locationsLoading, setLocationsLoading] = useState(true);
   const [error, setError] = useState('');
   const [total, setTotal] = useState(0);
+
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
 
   useEffect(() => {
     loadLocations();
@@ -300,7 +303,12 @@ function StoragePlacesRegisterPage() {
             </Text>
           </Flex>
 
-          <Button type="primary" size="large" icon={<PlusOutlined />}>
+          <Button
+            type="primary"
+            size="large"
+            icon={<PlusOutlined />}
+            onClick={() => setIsCreateDrawerOpen(true)}
+          >
             Додати місце зберігання
           </Button>
         </Flex>
@@ -389,6 +397,12 @@ function StoragePlacesRegisterPage() {
           />
         </Card>
       </Flex>
+      <StoragePlaceCreateDrawer
+        open={isCreateDrawerOpen}
+        onClose={() => setIsCreateDrawerOpen(false)}
+        locations={locations}
+        locationsLoading={locationsLoading}
+      />
     </div>
   );
 }

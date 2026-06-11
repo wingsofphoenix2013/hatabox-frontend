@@ -183,7 +183,7 @@ function StoragePlacesRegisterPage() {
     {
       title: 'Локація',
       key: 'location',
-      width: 220,
+      width: 180,
       render: (_, record) => (
         <Tag color="default">
           {record.location_code || '—'} - {record.location_name || '—'}
@@ -194,7 +194,7 @@ function StoragePlacesRegisterPage() {
       title: 'Тип',
       dataIndex: 'place_type_name',
       key: 'place_type_name',
-      width: 130,
+      width: 120,
       render: (value, record) => (
         <Tag color={getPlaceTypeTagColor(record.place_type)}>
           {value || '—'}

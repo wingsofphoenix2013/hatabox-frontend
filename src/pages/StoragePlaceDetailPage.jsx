@@ -144,9 +144,18 @@ function StoragePlaceDetailPage() {
       <Row gutter={20} align="top">
         <Col xs={24} lg={6}>
           <Card title="Назва" style={{ marginBottom: 20 }}>
-            <Title level={1} style={{ margin: 0, lineHeight: 1 }}>
-              {summary?.code || '—'}
-            </Title>
+            <Flex justify="center" align="center">
+              <Title
+                level={1}
+                style={{
+                  margin: 0,
+                  lineHeight: 1,
+                  fontSize: 56,
+                }}
+              >
+                {summary?.code || '—'}
+              </Title>
+            </Flex>
           </Card>
 
           <Card title="Навігація" style={{ marginBottom: 20 }}>

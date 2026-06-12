@@ -7,13 +7,13 @@ import {
   SaveOutlined,
 } from '@ant-design/icons';
 import {
-  AutoComplete,
   Button,
   Card,
   Drawer,
   Flex,
   Input,
   Popconfirm,
+  Select,
   Table,
   Tooltip,
   Typography,
@@ -31,78 +31,6 @@ const compactLabelStyle = {
   fontSize: 12,
   lineHeight: 1.2,
 };
-
-function PreferredItemSearchInput({ onSelect }) {
-  const [searchText, setSearchText] = useState('');
-  const [options, setOptions] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!searchText.trim()) {
-      setOptions([]);
-      return;
-    }
-
-    const timerId = setTimeout(async () => {
-      try {
-        setLoading(true);
-
-        const response = await api.get(
-          `inventory-item-options/?search=${encodeURIComponent(
-            searchText.trim(),
-          )}`,
-        );
-
-        const results = Array.isArray(response.data) ? response.data : [];
-
-        setOptions(
-          results.map((item) => {
-            const label = `${item.internal_code || '—'} — ${item.name || '—'}`;
-
-            return {
-              value: label,
-              label,
-              item,
-            };
-          }),
-        );
-      } catch (err) {
-        console.error('Failed to load inventory item options:', err);
-        setOptions([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 200);
-
-    return () => clearTimeout(timerId);
-  }, [searchText]);
-
-  return (
-    <AutoComplete
-      allowClear
-      placeholder="Почніть вводити назву компонента"
-      style={{ width: '100%' }}
-      value={searchText}
-      options={options}
-      onSearch={(value) => {
-        setSearchText(value);
-      }}
-      onClear={() => {
-        setSearchText('');
-        setOptions([]);
-        onSelect(null);
-      }}
-      onSelect={(value, option) => {
-        setSearchText(value);
-        onSelect({
-          id: option?.item?.id ? String(option.item.id) : null,
-          item: option?.item || null,
-        });
-      }}
-      notFoundContent={loading ? 'Завантаження...' : null}
-    />
-  );
-}
 
 function StoragePlaceEditDrawer({
   open,
@@ -122,6 +50,9 @@ function StoragePlaceEditDrawer({
   const [isAddingPreferredItem, setIsAddingPreferredItem] = useState(false);
   const [selectedInvItemId, setSelectedInvItemId] = useState(null);
   const [selectedInvItem, setSelectedInvItem] = useState(null);
+  const [invItemSearchText, setInvItemSearchText] = useState('');
+  const [invItemOptions, setInvItemOptions] = useState([]);
+  const [invItemsLoading, setInvItemsLoading] = useState(false);
   const [savingPreferredItem, setSavingPreferredItem] = useState(false);
   const [deletingPreferredItemId, setDeletingPreferredItemId] = useState(null);
 
@@ -138,6 +69,9 @@ function StoragePlaceEditDrawer({
       setIsAddingPreferredItem(false);
       setSelectedInvItemId(null);
       setSelectedInvItem(null);
+      setInvItemSearchText('');
+      setInvItemOptions([]);
+      setInvItemsLoading(false);
       setSavingPreferredItem(false);
       setDeletingPreferredItemId(null);
     }
@@ -180,10 +114,39 @@ function StoragePlaceEditDrawer({
     }
   };
 
+  useEffect(() => {
+    if (!isAddingPreferredItem) {
+      return;
+    }
+
+    const timerId = setTimeout(async () => {
+      try {
+        setInvItemsLoading(true);
+
+        const response = await api.get('inventory-item-options/', {
+          params: {
+            search: invItemSearchText,
+          },
+        });
+
+        setInvItemOptions(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        console.error('Failed to load inventory item options:', err);
+        setInvItemOptions([]);
+      } finally {
+        setInvItemsLoading(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timerId);
+  }, [isAddingPreferredItem, invItemSearchText]);
+
   const resetPreferredItemDraft = () => {
     setIsAddingPreferredItem(false);
     setSelectedInvItemId(null);
     setSelectedInvItem(null);
+    setInvItemSearchText('');
+    setInvItemOptions([]);
   };
 
   const handleSavePreferredItem = async () => {
@@ -267,10 +230,29 @@ function StoragePlaceEditDrawer({
       key: 'name',
       render: (_, record) =>
         record.isDraft ? (
-          <PreferredItemSearchInput
-            onSelect={(selected) => {
-              setSelectedInvItemId(selected?.id || null);
-              setSelectedInvItem(selected?.item || null);
+          <Select
+            showSearch
+            value={selectedInvItemId}
+            placeholder="Оберіть компонент"
+            filterOption={false}
+            loading={invItemsLoading}
+            options={invItemOptions
+              .filter(
+                (item) =>
+                  !preferredItemsState.some(
+                    (preferredItem) => preferredItem.id === item.id,
+                  ),
+              )
+              .map((item) => ({
+                value: item.id,
+                label: `${item.internal_code || '—'} — ${item.name || '—'}`,
+                item,
+              }))}
+            style={{ width: '100%' }}
+            onSearch={setInvItemSearchText}
+            onChange={(value, option) => {
+              setSelectedInvItemId(value);
+              setSelectedInvItem(option?.item || null);
             }}
           />
         ) : (

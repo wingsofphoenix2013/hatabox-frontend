@@ -12,6 +12,7 @@ import {
   Flex,
   Input,
   Popover,
+  Segmented,
   Select,
   Table,
   Tag,
@@ -79,6 +80,7 @@ function StoragePlacesRegisterPage() {
   const [debouncedSearchText, setDebouncedSearchText] = useState('');
   const [selectedLocationIds, setSelectedLocationIds] = useState([]);
   const [selectedPlaceTypes, setSelectedPlaceTypes] = useState([]);
+  const [selectedActiveStatus, setSelectedActiveStatus] = useState('true');
   const [currentPage, setCurrentPage] = useState(1);
 
   const [loading, setLoading] = useState(true);
@@ -109,6 +111,7 @@ function StoragePlacesRegisterPage() {
     debouncedSearchText,
     selectedLocationIds,
     selectedPlaceTypes,
+    selectedActiveStatus,
   ]);
 
   const loadLocations = async () => {
@@ -148,6 +151,8 @@ function StoragePlacesRegisterPage() {
       selectedPlaceTypes.forEach((placeType) => {
         params.append('place_type', placeType);
       });
+
+      params.append('is_active', selectedActiveStatus);
 
       const response = await api.get(
         `storage-places-summary/?${params.toString()}`,
@@ -358,17 +363,32 @@ function StoragePlacesRegisterPage() {
               showSizeChanger: false,
               onChange: (page) => setCurrentPage(page),
               showTotal: (totalValue, range) => (
-                <span>
-                  Показано{' '}
-                  <span style={{ color: '#1677ff', fontWeight: 600 }}>
-                    {range[0]}–{range[1]}
-                  </span>{' '}
-                  з{' '}
-                  <span style={{ color: '#1677ff', fontWeight: 600 }}>
-                    {totalValue}
-                  </span>{' '}
-                  місць зберігання
-                </span>
+                <Flex align="center" gap={16} wrap>
+                  <Segmented
+                    size="small"
+                    value={selectedActiveStatus}
+                    options={[
+                      { label: 'Активні', value: 'true' },
+                      { label: 'Неактивні', value: 'false' },
+                    ]}
+                    onChange={(value) => {
+                      setSelectedActiveStatus(value);
+                      setCurrentPage(1);
+                    }}
+                  />
+
+                  <span>
+                    Показано{' '}
+                    <span style={{ color: '#1677ff', fontWeight: 600 }}>
+                      {range[0]}–{range[1]}
+                    </span>{' '}
+                    з{' '}
+                    <span style={{ color: '#1677ff', fontWeight: 600 }}>
+                      {totalValue}
+                    </span>{' '}
+                    місць зберігання
+                  </span>
+                </Flex>
               ),
             }}
             locale={{

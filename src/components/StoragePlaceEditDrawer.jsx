@@ -7,12 +7,12 @@ import {
   SaveOutlined,
 } from '@ant-design/icons';
 import {
+  AutoComplete,
   Button,
   Card,
   Drawer,
   Flex,
   Input,
-  AutoComplete,
   Popconfirm,
   Table,
   Tooltip,
@@ -86,7 +86,6 @@ function PreferredItemSearchInput({ onSelect }) {
       options={options}
       onSearch={(value) => {
         setSearchText(value);
-        onSelect(null);
       }}
       onClear={() => {
         setSearchText('');
@@ -110,7 +109,6 @@ function StoragePlaceEditDrawer({
   onClose,
   storagePlace,
   preferredItems = [],
-  onUpdated,
 }) {
   const [name, setName] = useState('');
   const [comment, setComment] = useState('');
@@ -119,7 +117,6 @@ function StoragePlaceEditDrawer({
   const [editingComment, setEditingComment] = useState(false);
 
   const [savingField, setSavingField] = useState(null);
-  const [hasChanges, setHasChanges] = useState(false);
 
   const [preferredItemsState, setPreferredItemsState] = useState([]);
   const [isAddingPreferredItem, setIsAddingPreferredItem] = useState(false);
@@ -135,7 +132,6 @@ function StoragePlaceEditDrawer({
       setEditingName(false);
       setEditingComment(false);
       setSavingField(null);
-      setHasChanges(false);
       setPreferredItemsState(
         Array.isArray(preferredItems) ? preferredItems : [],
       );
@@ -163,8 +159,6 @@ function StoragePlaceEditDrawer({
       message.success(
         fieldName === 'name' ? 'Назву збережено.' : 'Опис збережено.',
       );
-
-      setHasChanges(true);
 
       if (fieldName === 'name') {
         setEditingName(false);
@@ -221,7 +215,6 @@ function StoragePlaceEditDrawer({
       ]);
 
       message.success('Бажану номенклатуру додано.');
-      setHasChanges(true);
       resetPreferredItemDraft();
     } catch (err) {
       console.error('Failed to add preferred item:', err);
@@ -248,7 +241,6 @@ function StoragePlaceEditDrawer({
       );
 
       message.success('Бажану номенклатуру видалено.');
-      setHasChanges(true);
     } catch (err) {
       console.error('Failed to delete preferred item:', err);
 
@@ -363,7 +355,7 @@ function StoragePlaceEditDrawer({
     ? [...preferredItemsState, { id: '__draft__', isDraft: true }]
     : preferredItemsState;
 
-  const handleCloseDrawer = async () => {
+  const handleCloseDrawer = () => {
     onClose();
   };
 

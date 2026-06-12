@@ -65,7 +65,13 @@ function StoragePlaceEditDrawer({
       setEditingComment(false);
       setSavingField(null);
       setPreferredItemsState(
-        Array.isArray(preferredItems) ? preferredItems : [],
+        Array.isArray(preferredItems)
+          ? preferredItems.map((item) => ({
+              ...item,
+              internal_code: item.internal_code || item.inv_item_code || '—',
+              name: item.name || item.inv_item_name || '—',
+            }))
+          : [],
       );
       setIsAddingPreferredItem(false);
       setSelectedInvItemId(null);
@@ -106,8 +112,6 @@ function StoragePlaceEditDrawer({
       if (fieldName === 'comment') {
         setEditingComment(false);
       }
-
-      onUpdated?.();
     } catch (err) {
       console.error('Failed to update storage place:', err);
 
@@ -188,7 +192,6 @@ function StoragePlaceEditDrawer({
 
       message.success('Бажану номенклатуру додано.');
       resetPreferredItemDraft();
-      onUpdated?.();
     } catch (err) {
       console.error('Failed to add preferred item:', err);
 
@@ -214,7 +217,6 @@ function StoragePlaceEditDrawer({
       );
 
       message.success('Бажану номенклатуру видалено.');
-      onUpdated?.();
     } catch (err) {
       console.error('Failed to delete preferred item:', err);
 
@@ -345,6 +347,7 @@ function StoragePlaceEditDrawer({
     : preferredItemsState;
 
   const handleCloseDrawer = () => {
+    onUpdated?.();
     onClose();
   };
 

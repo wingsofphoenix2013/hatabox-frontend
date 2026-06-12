@@ -248,6 +248,7 @@ function StoragePlaceEditDrawer({
         record.isDraft ? (
           <Select
             showSearch
+            allowClear
             placeholder="Почніть вводити назву компонента"
             style={{ width: '100%' }}
             value={selectedInvItemId}
@@ -256,7 +257,15 @@ function StoragePlaceEditDrawer({
             loading={invItemsLoading}
             filterOption={false}
             autoClearSearchValue={false}
-            onSearch={setInvItemSearchText}
+            onSearch={(value) => {
+              setInvItemSearchText(value);
+            }}
+            onClear={() => {
+              setSelectedInvItemId(null);
+              setSelectedInvItem(null);
+              setInvItemSearchText('');
+              setInvItemOptions([]);
+            }}
             onChange={(value, option) => {
               setSelectedInvItemId(value);
               setSelectedInvItem(option?.item || null);

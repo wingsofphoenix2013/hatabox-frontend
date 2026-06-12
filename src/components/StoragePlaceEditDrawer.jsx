@@ -239,6 +239,7 @@ function StoragePlaceEditDrawer({
     {
       title: 'Назва',
       key: 'name',
+      ellipsis: true,
       render: (_, record) =>
         record.isDraft ? (
           <Select
@@ -489,6 +490,7 @@ function StoragePlaceEditDrawer({
               dataSource={preferredItemsDataSource}
               pagination={false}
               size="small"
+              tableLayout="fixed"
               locale={{
                 emptyText: 'Бажану номенклатуру ще не додано.',
               }}

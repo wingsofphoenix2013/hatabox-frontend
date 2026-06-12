@@ -12,8 +12,8 @@ import {
   Drawer,
   Flex,
   Input,
+  AutoComplete,
   Popconfirm,
-  Select,
   Table,
   Tooltip,
   Typography,
@@ -139,7 +139,7 @@ function StoragePlaceEditDrawer({
 
         setInvItemOptions(
           results.map((item) => ({
-            value: item.id,
+            value: String(item.id),
             label: `${item.internal_code || '—'} — ${item.name || '—'}`,
             item,
           })),
@@ -177,7 +177,7 @@ function StoragePlaceEditDrawer({
 
       const response = await api.post('storage-place-preferred-items/', {
         storage_place: storagePlace.id,
-        inv_item: selectedInvItemId,
+        inv_item: Number(selectedInvItemId),
       });
 
       const createdItem = response.data || {};
@@ -246,19 +246,16 @@ function StoragePlaceEditDrawer({
       key: 'name',
       render: (_, record) =>
         record.isDraft ? (
-          <Select
-            showSearch
+          <AutoComplete
             allowClear
             placeholder="Почніть вводити назву компонента"
             style={{ width: '100%' }}
-            value={selectedInvItemId}
-            searchValue={invItemSearchText}
+            value={invItemSearchText}
             options={invItemOptions}
-            loading={invItemsLoading}
-            filterOption={false}
-            autoClearSearchValue={false}
             onSearch={(value) => {
               setInvItemSearchText(value);
+              setSelectedInvItemId(null);
+              setSelectedInvItem(null);
             }}
             onClear={() => {
               setSelectedInvItemId(null);
@@ -266,7 +263,7 @@ function StoragePlaceEditDrawer({
               setInvItemSearchText('');
               setInvItemOptions([]);
             }}
-            onChange={(value, option) => {
+            onSelect={(value, option) => {
               setSelectedInvItemId(value);
               setSelectedInvItem(option?.item || null);
               setInvItemSearchText(option?.label || '');

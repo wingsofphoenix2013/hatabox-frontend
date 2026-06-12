@@ -6,7 +6,6 @@ import {
   Card,
   Drawer,
   Flex,
-  Input,
   Select,
   Spin,
   Tooltip,
@@ -15,8 +14,6 @@ import {
 } from 'antd';
 import api from '../api/client';
 import { getApiErrorMessage } from '../utils/apiError';
-
-const { TextArea } = Input;
 
 const { Text } = Typography;
 
@@ -78,20 +75,12 @@ function StoragePlaceCreateDrawer({
   const [parentOptionsError, setParentOptionsError] = useState('');
   const [finalPlacement, setFinalPlacement] = useState(null);
 
-  const [name, setName] = useState('');
-  const [comment, setComment] = useState('');
   const [saving, setSaving] = useState(false);
 
   const canSelectPlaceType = Boolean(selectedLocationId) && currentStep === 1;
   const canGoNextFromStep1 = Boolean(selectedLocationId && selectedPlaceType);
   const canGoNextFromStep2 = Boolean(finalPlacement);
-  const canCreateStoragePlace = Boolean(name.trim());
-  const canGoNext =
-    currentStep === 1
-      ? canGoNextFromStep1
-      : currentStep === 2
-        ? canGoNextFromStep2
-        : canCreateStoragePlace;
+  const canGoNext = currentStep === 1 ? canGoNextFromStep1 : canGoNextFromStep2;
 
   const locationOptions = locations.map((item) => ({
     value: item.id,
@@ -106,8 +95,6 @@ function StoragePlaceCreateDrawer({
     setParentOptionsLoading(false);
     setParentOptionsError('');
     setFinalPlacement(null);
-    setName('');
-    setComment('');
     setSaving(false);
   };
 
@@ -167,7 +154,7 @@ function StoragePlaceCreateDrawer({
   };
 
   const handleCreateStoragePlace = async () => {
-    if (!finalPlacement || !name.trim()) {
+    if (!finalPlacement) {
       return;
     }
 
@@ -178,8 +165,6 @@ function StoragePlaceCreateDrawer({
         location: finalPlacement.location,
         parent: finalPlacement.parent,
         place_type: selectedPlaceType,
-        name: name.trim(),
-        comment,
       });
 
       const createdStoragePlace = response.data || {};
@@ -224,11 +209,6 @@ function StoragePlaceCreateDrawer({
     }
 
     if (currentStep === 2) {
-      setCurrentStep(3);
-      return;
-    }
-
-    if (currentStep === 3) {
       await handleCreateStoragePlace();
     }
   };
@@ -346,31 +326,6 @@ function StoragePlaceCreateDrawer({
           </Card>
         )}
 
-        {currentStep >= 3 && (
-          <Card title="Опис місця зберігання">
-            <Flex vertical gap={14}>
-              <div>
-                <Text style={compactLabelStyle}>Назва</Text>
-                <Input
-                  placeholder="Вкажіть назву місця зберігання"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <Text style={compactLabelStyle}>Коментар</Text>
-                <TextArea
-                  placeholder="Додатковий опис або примітка"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  rows={4}
-                />
-              </div>
-            </Flex>
-          </Card>
-        )}
-
         <Flex justify="space-between" align="center">
           <Button onClick={handleCloseDrawer}>Закрити</Button>
 
@@ -382,7 +337,7 @@ function StoragePlaceCreateDrawer({
                   ? 'Щоб перейти далі, оберіть локацію та тип місця зберігання.'
                   : currentStep === 2
                     ? 'Щоб перейти далі, оберіть місце створення.'
-                    : 'Щоб створити місце зберігання, вкажіть назву.'
+                    : 'Щоб створити місце зберігання, оберіть місце створення.'
             }
           >
             <Button
@@ -391,7 +346,7 @@ function StoragePlaceCreateDrawer({
               loading={parentOptionsLoading || saving}
               onClick={handleGoNext}
             >
-              {currentStep === 3
+              {currentStep === 2
                 ? 'Створити місце зберігання'
                 : 'Наступний крок'}
             </Button>

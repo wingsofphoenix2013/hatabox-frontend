@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StopOutlined } from '@ant-design/icons';
+import { SettingOutlined, StopOutlined } from '@ant-design/icons';
 import { useParams } from 'react-router-dom';
 import {
   Button,
@@ -43,6 +43,7 @@ function StoragePlaceDetailPage() {
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
 
   const loadStoragePlace = async () => {
     try {
@@ -226,6 +227,15 @@ function StoragePlaceDetailPage() {
                     </Button>
                   </Tooltip>
                 ))}
+
+              <Button
+                block
+                icon={<SettingOutlined style={{ color: '#1677ff' }} />}
+                onClick={() => setIsEditDrawerOpen(true)}
+                style={{ color: '#1677ff' }}
+              >
+                Налаштування місця зберігання
+              </Button>
 
               <Divider dashed style={{ margin: '4px 0 8px 0' }} />
 

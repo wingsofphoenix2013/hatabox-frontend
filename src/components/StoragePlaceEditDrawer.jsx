@@ -37,6 +37,7 @@ function StoragePlaceEditDrawer({
   onClose,
   storagePlace,
   preferredItems = [],
+  onUpdated,
 }) {
   const [name, setName] = useState('');
   const [comment, setComment] = useState('');
@@ -78,6 +79,10 @@ function StoragePlaceEditDrawer({
   }, [open, storagePlace, preferredItems]);
 
   const handleSaveField = async (fieldName) => {
+    if (savingField) {
+      return;
+    }
+
     try {
       setSavingField(fieldName);
 
@@ -101,6 +106,8 @@ function StoragePlaceEditDrawer({
       if (fieldName === 'comment') {
         setEditingComment(false);
       }
+
+      onUpdated?.();
     } catch (err) {
       console.error('Failed to update storage place:', err);
 
@@ -133,6 +140,7 @@ function StoragePlaceEditDrawer({
       } catch (err) {
         console.error('Failed to load inventory item options:', err);
         setInvItemOptions([]);
+        message.error('Не вдалося завантажити номенклатуру.');
       } finally {
         setInvItemsLoading(false);
       }
@@ -172,6 +180,7 @@ function StoragePlaceEditDrawer({
         ...prevItems,
         {
           id: createdItem.id,
+          inv_item: createdItem.inv_item,
           internal_code: createdItem.inv_item_code || '—',
           name: createdItem.inv_item_name || '—',
         },
@@ -179,6 +188,7 @@ function StoragePlaceEditDrawer({
 
       message.success('Бажану номенклатуру додано.');
       resetPreferredItemDraft();
+      onUpdated?.();
     } catch (err) {
       console.error('Failed to add preferred item:', err);
 
@@ -204,6 +214,7 @@ function StoragePlaceEditDrawer({
       );
 
       message.success('Бажану номенклатуру видалено.');
+      onUpdated?.();
     } catch (err) {
       console.error('Failed to delete preferred item:', err);
 
@@ -236,18 +247,11 @@ function StoragePlaceEditDrawer({
             placeholder="Оберіть компонент"
             filterOption={false}
             loading={invItemsLoading}
-            options={invItemOptions
-              .filter(
-                (item) =>
-                  !preferredItemsState.some(
-                    (preferredItem) => preferredItem.id === item.id,
-                  ),
-              )
-              .map((item) => ({
-                value: item.id,
-                label: `${item.internal_code || '—'} — ${item.name || '—'}`,
-                item,
-              }))}
+            options={invItemOptions.map((item) => ({
+              value: item.id,
+              label: `${item.internal_code || '—'} — ${item.name || '—'}`,
+              item,
+            }))}
             style={{ width: '100%' }}
             onSearch={setInvItemSearchText}
             onChange={(value, option) => {
@@ -402,9 +406,7 @@ function StoragePlaceEditDrawer({
               </Flex>
 
               {!editingName ? (
-                <Text style={{ whiteSpace: 'pre-wrap' }}>
-                  {storagePlace?.name || '—'}
-                </Text>
+                <Text style={{ whiteSpace: 'pre-wrap' }}>{name || '—'}</Text>
               ) : (
                 <Input
                   value={name}
@@ -463,9 +465,7 @@ function StoragePlaceEditDrawer({
               </Flex>
 
               {!editingComment ? (
-                <Text style={{ whiteSpace: 'pre-wrap' }}>
-                  {storagePlace?.comment || '—'}
-                </Text>
+                <Text style={{ whiteSpace: 'pre-wrap' }}>{comment || '—'}</Text>
               ) : (
                 <TextArea
                   value={comment}

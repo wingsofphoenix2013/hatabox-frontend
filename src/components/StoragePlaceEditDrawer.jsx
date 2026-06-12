@@ -492,19 +492,6 @@ function StoragePlaceEditDrawer({
               locale={{
                 emptyText: 'Бажану номенклатуру ще не додано.',
               }}
-              components={{
-                body: {
-                  cell: (props) => (
-                    <td
-                      {...props}
-                      style={{
-                        fontSize: 12.5,
-                        padding: '7px 8px',
-                      }}
-                    />
-                  ),
-                },
-              }}
             />
 
             <Flex justify="flex-end">

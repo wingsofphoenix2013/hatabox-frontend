@@ -16,6 +16,7 @@ import {
   message,
 } from 'antd';
 import api from '../api/client';
+import StoragePlaceEditDrawer from '../components/StoragePlaceEditDrawer';
 import { getApiErrorMessage } from '../utils/apiError';
 
 const { Text, Title } = Typography;
@@ -290,6 +291,13 @@ function StoragePlaceDetailPage() {
           )}
         </Col>
       </Row>
+
+      <StoragePlaceEditDrawer
+        open={isEditDrawerOpen}
+        onClose={() => setIsEditDrawerOpen(false)}
+        storagePlace={summary}
+        onUpdated={loadStoragePlace}
+      />
     </div>
   );
 }

@@ -32,6 +32,75 @@ const compactLabelStyle = {
   lineHeight: 1.2,
 };
 
+function PreferredItemSearchInput({ onSelect }) {
+  const [searchText, setSearchText] = useState('');
+  const [options, setOptions] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!searchText.trim()) {
+      setOptions([]);
+      return;
+    }
+
+    const timerId = setTimeout(async () => {
+      try {
+        setLoading(true);
+
+        const response = await api.get(
+          `inventory-item-options/?search=${encodeURIComponent(
+            searchText.trim(),
+          )}`,
+        );
+
+        const results = Array.isArray(response.data) ? response.data : [];
+
+        setOptions(
+          results.map((item) => ({
+            value: String(item.id),
+            label: `${item.internal_code || '—'} — ${item.name || '—'}`,
+            item,
+          })),
+        );
+      } catch (err) {
+        console.error('Failed to load inventory item options:', err);
+        setOptions([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timerId);
+  }, [searchText]);
+
+  return (
+    <AutoComplete
+      allowClear
+      placeholder="Почніть вводити назву компонента"
+      style={{ width: '100%' }}
+      value={searchText}
+      options={options}
+      onSearch={(value) => {
+        setSearchText(value);
+        onSelect(null);
+      }}
+      onClear={() => {
+        setSearchText('');
+        setOptions([]);
+        onSelect(null);
+      }}
+      onSelect={(value, option) => {
+        setSearchText(option?.label || '');
+        onSelect({
+          id: value,
+          item: option?.item || null,
+        });
+      }}
+      notFoundContent={loading ? 'Завантаження...' : null}
+    />
+  );
+}
+
 function StoragePlaceEditDrawer({
   open,
   onClose,
@@ -52,9 +121,6 @@ function StoragePlaceEditDrawer({
   const [isAddingPreferredItem, setIsAddingPreferredItem] = useState(false);
   const [selectedInvItemId, setSelectedInvItemId] = useState(null);
   const [selectedInvItem, setSelectedInvItem] = useState(null);
-  const [invItemOptions, setInvItemOptions] = useState([]);
-  const [invItemSearchText, setInvItemSearchText] = useState('');
-  const [invItemsLoading, setInvItemsLoading] = useState(false);
   const [savingPreferredItem, setSavingPreferredItem] = useState(false);
   const [deletingPreferredItemId, setDeletingPreferredItemId] = useState(null);
 
@@ -72,9 +138,6 @@ function StoragePlaceEditDrawer({
       setIsAddingPreferredItem(false);
       setSelectedInvItemId(null);
       setSelectedInvItem(null);
-      setInvItemOptions([]);
-      setInvItemSearchText('');
-      setInvItemsLoading(false);
       setSavingPreferredItem(false);
       setDeletingPreferredItemId(null);
     }
@@ -119,48 +182,10 @@ function StoragePlaceEditDrawer({
     }
   };
 
-  useEffect(() => {
-    if (!isAddingPreferredItem || !invItemSearchText.trim()) {
-      setInvItemOptions([]);
-      return;
-    }
-
-    const timerId = setTimeout(async () => {
-      try {
-        setInvItemsLoading(true);
-
-        const response = await api.get(
-          `inventory-item-options/?search=${encodeURIComponent(
-            invItemSearchText.trim(),
-          )}`,
-        );
-
-        const results = Array.isArray(response.data) ? response.data : [];
-
-        setInvItemOptions(
-          results.map((item) => ({
-            value: String(item.id),
-            label: `${item.internal_code || '—'} — ${item.name || '—'}`,
-            item,
-          })),
-        );
-      } catch (err) {
-        console.error('Failed to load inventory item options:', err);
-        setInvItemOptions([]);
-      } finally {
-        setInvItemsLoading(false);
-      }
-    }, 200);
-
-    return () => clearTimeout(timerId);
-  }, [isAddingPreferredItem, invItemSearchText]);
-
   const resetPreferredItemDraft = () => {
     setIsAddingPreferredItem(false);
     setSelectedInvItemId(null);
     setSelectedInvItem(null);
-    setInvItemOptions([]);
-    setInvItemSearchText('');
   };
 
   const handleSavePreferredItem = async () => {
@@ -246,27 +271,10 @@ function StoragePlaceEditDrawer({
       key: 'name',
       render: (_, record) =>
         record.isDraft ? (
-          <AutoComplete
-            allowClear
-            placeholder="Почніть вводити назву компонента"
-            style={{ width: '100%' }}
-            value={invItemSearchText}
-            options={invItemOptions}
-            onSearch={(value) => {
-              setInvItemSearchText(value);
-              setSelectedInvItemId(null);
-              setSelectedInvItem(null);
-            }}
-            onClear={() => {
-              setSelectedInvItemId(null);
-              setSelectedInvItem(null);
-              setInvItemSearchText('');
-              setInvItemOptions([]);
-            }}
-            onSelect={(value, option) => {
-              setSelectedInvItemId(value);
-              setSelectedInvItem(option?.item || null);
-              setInvItemSearchText(option?.label || '');
+          <PreferredItemSearchInput
+            onSelect={(selected) => {
+              setSelectedInvItemId(selected?.id || null);
+              setSelectedInvItem(selected?.item || null);
             }}
           />
         ) : (
@@ -352,10 +360,6 @@ function StoragePlaceEditDrawer({
     : preferredItemsState;
 
   const handleCloseDrawer = async () => {
-    if (hasChanges && onUpdated) {
-      await onUpdated();
-    }
-
     onClose();
   };
 

@@ -168,7 +168,7 @@ function StoragePlaceDetailPage() {
 
       <Row gutter={20} align="top">
         <Col xs={24} lg={6}>
-          <Card title="Назва" style={{ marginBottom: 20 }}>
+          <Card title="Стікер" style={{ marginBottom: 20 }}>
             <Flex justify="center" align="center">
               <Title
                 level={1}

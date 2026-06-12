@@ -251,13 +251,16 @@ function StoragePlaceEditDrawer({
             placeholder="Почніть вводити назву компонента"
             style={{ width: '100%' }}
             value={selectedInvItemId}
+            searchValue={invItemSearchText}
             options={invItemOptions}
             loading={invItemsLoading}
             filterOption={false}
+            autoClearSearchValue={false}
             onSearch={setInvItemSearchText}
             onChange={(value, option) => {
               setSelectedInvItemId(value);
               setSelectedInvItem(option?.item || null);
+              setInvItemSearchText(option?.label || '');
             }}
           />
         ) : (

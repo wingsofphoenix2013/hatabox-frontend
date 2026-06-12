@@ -70,10 +70,6 @@ function StoragePlaceEditDrawer({ open, onClose, storagePlace, onUpdated }) {
       if (fieldName === 'comment') {
         setEditingComment(false);
       }
-
-      if (onUpdated) {
-        await onUpdated({ silent: true });
-      }
     } catch (err) {
       console.error('Failed to update storage place:', err);
 
@@ -89,7 +85,7 @@ function StoragePlaceEditDrawer({ open, onClose, storagePlace, onUpdated }) {
 
   const handleCloseDrawer = async () => {
     if (hasChanges && onUpdated) {
-      await onUpdated({ silent: true });
+      await onUpdated();
     }
 
     onClose();
@@ -237,15 +233,8 @@ function StoragePlaceEditDrawer({ open, onClose, storagePlace, onUpdated }) {
           <Text type="secondary">Дані з’являться пізніше.</Text>
         </Card>
 
-        <Flex justify="space-between" align="center">
+        <Flex justify="flex-end" align="center">
           <Button onClick={handleCloseDrawer}>Закрити</Button>
-
-          <Button
-            type={hasChanges ? 'primary' : 'default'}
-            onClick={handleCloseDrawer}
-          >
-            Зберегти зміни
-          </Button>
         </Flex>
       </Flex>
     </Drawer>

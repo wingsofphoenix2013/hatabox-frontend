@@ -56,11 +56,15 @@ function PreferredItemSearchInput({ onSelect }) {
         const results = Array.isArray(response.data) ? response.data : [];
 
         setOptions(
-          results.map((item) => ({
-            value: String(item.id),
-            label: `${item.internal_code || '—'} — ${item.name || '—'}`,
-            item,
-          })),
+          results.map((item) => {
+            const label = `${item.internal_code || '—'} — ${item.name || '—'}`;
+
+            return {
+              value: label,
+              label,
+              item,
+            };
+          }),
         );
       } catch (err) {
         console.error('Failed to load inventory item options:', err);
@@ -90,9 +94,9 @@ function PreferredItemSearchInput({ onSelect }) {
         onSelect(null);
       }}
       onSelect={(value, option) => {
-        setSearchText(option?.label || '');
+        setSearchText(value);
         onSelect({
-          id: value,
+          id: option?.item?.id ? String(option.item.id) : null,
           item: option?.item || null,
         });
       }}

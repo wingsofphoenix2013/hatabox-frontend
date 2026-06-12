@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
-import { CloseOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
+import {
+  CloseOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  PlusCircleOutlined,
+  SaveOutlined,
+} from '@ant-design/icons';
 import {
   Button,
   Card,
   Drawer,
   Flex,
   Input,
+  Popconfirm,
+  Select,
+  Table,
   Tooltip,
   Typography,
   message,
@@ -23,7 +32,13 @@ const compactLabelStyle = {
   lineHeight: 1.2,
 };
 
-function StoragePlaceEditDrawer({ open, onClose, storagePlace, onUpdated }) {
+function StoragePlaceEditDrawer({
+  open,
+  onClose,
+  storagePlace,
+  preferredItems = [],
+  onUpdated,
+}) {
   const [name, setName] = useState('');
   const [comment, setComment] = useState('');
 
@@ -33,6 +48,16 @@ function StoragePlaceEditDrawer({ open, onClose, storagePlace, onUpdated }) {
   const [savingField, setSavingField] = useState(null);
   const [hasChanges, setHasChanges] = useState(false);
 
+  const [preferredItemsState, setPreferredItemsState] = useState([]);
+  const [isAddingPreferredItem, setIsAddingPreferredItem] = useState(false);
+  const [selectedInvItemId, setSelectedInvItemId] = useState(null);
+  const [selectedInvItem, setSelectedInvItem] = useState(null);
+  const [invItemOptions, setInvItemOptions] = useState([]);
+  const [invItemSearchText, setInvItemSearchText] = useState('');
+  const [invItemsLoading, setInvItemsLoading] = useState(false);
+  const [savingPreferredItem, setSavingPreferredItem] = useState(false);
+  const [deletingPreferredItemId, setDeletingPreferredItemId] = useState(null);
+
   useEffect(() => {
     if (open) {
       setName(storagePlace?.name || '');
@@ -41,8 +66,19 @@ function StoragePlaceEditDrawer({ open, onClose, storagePlace, onUpdated }) {
       setEditingComment(false);
       setSavingField(null);
       setHasChanges(false);
+      setPreferredItemsState(
+        Array.isArray(preferredItems) ? preferredItems : [],
+      );
+      setIsAddingPreferredItem(false);
+      setSelectedInvItemId(null);
+      setSelectedInvItem(null);
+      setInvItemOptions([]);
+      setInvItemSearchText('');
+      setInvItemsLoading(false);
+      setSavingPreferredItem(false);
+      setDeletingPreferredItemId(null);
     }
-  }, [open, storagePlace]);
+  }, [open, storagePlace, preferredItems]);
 
   const handleSaveField = async (fieldName) => {
     try {
@@ -82,6 +118,229 @@ function StoragePlaceEditDrawer({ open, onClose, storagePlace, onUpdated }) {
       setSavingField(null);
     }
   };
+
+  useEffect(() => {
+    if (!isAddingPreferredItem || !invItemSearchText.trim()) {
+      setInvItemOptions([]);
+      return;
+    }
+
+    const timerId = setTimeout(async () => {
+      try {
+        setInvItemsLoading(true);
+
+        const response = await api.get(
+          `inventory-item-options/?search=${encodeURIComponent(
+            invItemSearchText.trim(),
+          )}`,
+        );
+
+        const results = Array.isArray(response.data) ? response.data : [];
+
+        setInvItemOptions(
+          results.map((item) => ({
+            value: item.id,
+            label: `${item.internal_code || '—'} — ${item.name || '—'}`,
+            item,
+          })),
+        );
+      } catch (err) {
+        console.error('Failed to load inventory item options:', err);
+        setInvItemOptions([]);
+      } finally {
+        setInvItemsLoading(false);
+      }
+    }, 200);
+
+    return () => clearTimeout(timerId);
+  }, [isAddingPreferredItem, invItemSearchText]);
+
+  const resetPreferredItemDraft = () => {
+    setIsAddingPreferredItem(false);
+    setSelectedInvItemId(null);
+    setSelectedInvItem(null);
+    setInvItemOptions([]);
+    setInvItemSearchText('');
+  };
+
+  const handleSavePreferredItem = async () => {
+    if (
+      savingPreferredItem ||
+      !selectedInvItemId ||
+      selectedInvItem?.requires_storage_place === false
+    ) {
+      return;
+    }
+
+    try {
+      setSavingPreferredItem(true);
+
+      const response = await api.post('storage-place-preferred-items/', {
+        storage_place: storagePlace.id,
+        inv_item: selectedInvItemId,
+      });
+
+      const createdItem = response.data || {};
+
+      setPreferredItemsState((prevItems) => [
+        ...prevItems,
+        {
+          id: createdItem.id,
+          internal_code: createdItem.inv_item_code || '—',
+          name: createdItem.inv_item_name || '—',
+        },
+      ]);
+
+      message.success('Бажану номенклатуру додано.');
+      setHasChanges(true);
+      resetPreferredItemDraft();
+    } catch (err) {
+      console.error('Failed to add preferred item:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data, [
+        'storage_place',
+        'inv_item',
+      ]);
+
+      message.error(backendMessage || 'Не вдалося додати бажану номенклатуру.');
+    } finally {
+      setSavingPreferredItem(false);
+    }
+  };
+
+  const handleDeletePreferredItem = async (preferredItemId) => {
+    try {
+      setDeletingPreferredItemId(preferredItemId);
+
+      await api.delete(`storage-place-preferred-items/${preferredItemId}/`);
+
+      setPreferredItemsState((prevItems) =>
+        prevItems.filter((item) => item.id !== preferredItemId),
+      );
+
+      message.success('Бажану номенклатуру видалено.');
+      setHasChanges(true);
+    } catch (err) {
+      console.error('Failed to delete preferred item:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(
+        backendMessage || 'Не вдалося видалити бажану номенклатуру.',
+      );
+    } finally {
+      setDeletingPreferredItemId(null);
+    }
+  };
+
+  const preferredItemsColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 60,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Назва',
+      key: 'name',
+      render: (_, record) =>
+        record.isDraft ? (
+          <Select
+            showSearch
+            placeholder="Почніть вводити назву компонента"
+            style={{ width: '100%' }}
+            value={selectedInvItemId}
+            options={invItemOptions}
+            loading={invItemsLoading}
+            filterOption={false}
+            onSearch={setInvItemSearchText}
+            onChange={(value, option) => {
+              setSelectedInvItemId(value);
+              setSelectedInvItem(option?.item || null);
+            }}
+          />
+        ) : (
+          <Text>
+            {record.internal_code || '—'} — {record.name || '—'}
+          </Text>
+        ),
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 90,
+      align: 'center',
+      render: (_, record) =>
+        record.isDraft ? (
+          <Flex justify="center" gap={10}>
+            <Tooltip
+              title={
+                selectedInvItem?.requires_storage_place === false
+                  ? 'Цю номенклатуру не можна використовувати як бажану для місця зберігання.'
+                  : ''
+              }
+            >
+              <SaveOutlined
+                style={{
+                  color:
+                    selectedInvItemId &&
+                    selectedInvItem?.requires_storage_place !== false &&
+                    !savingPreferredItem
+                      ? '#52c41a'
+                      : '#bfbfbf',
+                  cursor:
+                    selectedInvItemId &&
+                    selectedInvItem?.requires_storage_place !== false &&
+                    !savingPreferredItem
+                      ? 'pointer'
+                      : 'default',
+                  opacity: savingPreferredItem ? 0.5 : 1,
+                  fontSize: 16,
+                }}
+                onClick={handleSavePreferredItem}
+              />
+            </Tooltip>
+
+            <CloseOutlined
+              style={{
+                color: '#262626',
+                cursor: 'pointer',
+                fontSize: 16,
+              }}
+              onClick={resetPreferredItemDraft}
+            />
+          </Flex>
+        ) : (
+          <Popconfirm
+            title="Видалити бажану номенклатуру?"
+            description="Ви впевнені, що хочете видалити цей компонент?"
+            okText="Так"
+            cancelText="Ні"
+            onConfirm={() => handleDeletePreferredItem(record.id)}
+            disabled={deletingPreferredItemId === record.id}
+          >
+            <DeleteOutlined
+              style={{
+                color: '#8c8c8c',
+                cursor: 'pointer',
+                fontSize: 16,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#ff4d4f';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#8c8c8c';
+              }}
+            />
+          </Popconfirm>
+        ),
+    },
+  ];
+
+  const preferredItemsDataSource = isAddingPreferredItem
+    ? [...preferredItemsState, { id: '__draft__', isDraft: true }]
+    : preferredItemsState;
 
   const handleCloseDrawer = async () => {
     if (hasChanges && onUpdated) {
@@ -230,11 +489,50 @@ function StoragePlaceEditDrawer({ open, onClose, storagePlace, onUpdated }) {
         </Card>
 
         <Card title="Бажана номенклатура">
-          <Text type="secondary">Дані з’являться пізніше.</Text>
+          <Flex vertical gap={12}>
+            <Table
+              rowKey="id"
+              columns={preferredItemsColumns}
+              dataSource={preferredItemsDataSource}
+              pagination={false}
+              size="small"
+              locale={{
+                emptyText: 'Бажану номенклатуру ще не додано.',
+              }}
+              components={{
+                body: {
+                  cell: (props) => (
+                    <td
+                      {...props}
+                      style={{
+                        fontSize: 12.5,
+                        padding: '7px 8px',
+                      }}
+                    />
+                  ),
+                },
+              }}
+            />
+
+            <Flex justify="flex-end">
+              <Button
+                type="link"
+                size="small"
+                icon={<PlusCircleOutlined />}
+                disabled={isAddingPreferredItem}
+                onClick={() => setIsAddingPreferredItem(true)}
+                style={{ padding: 0 }}
+              >
+                Додати бажаний компонент
+              </Button>
+            </Flex>
+          </Flex>
         </Card>
 
-        <Flex justify="flex-end" align="center">
+        <Flex justify="space-between" align="center">
           <Button onClick={handleCloseDrawer}>Закрити</Button>
+
+          <span />
         </Flex>
       </Flex>
     </Drawer>

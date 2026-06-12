@@ -42,6 +42,7 @@ function StoragePlaceDetailPage() {
   const { id } = useParams();
 
   const [summary, setSummary] = useState(null);
+  const [preferredItems, setPreferredItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
@@ -52,6 +53,11 @@ function StoragePlaceDetailPage() {
 
       const response = await api.get(`storage-places/${id}/detail-view/`);
       setSummary(response.data?.summary || null);
+      setPreferredItems(
+        Array.isArray(response.data?.preferred_items)
+          ? response.data.preferred_items
+          : [],
+      );
     } catch (err) {
       console.error('Failed to load storage place detail:', err);
       message.error('Не вдалося завантажити точку зберігання.');
@@ -296,6 +302,7 @@ function StoragePlaceDetailPage() {
         open={isEditDrawerOpen}
         onClose={() => setIsEditDrawerOpen(false)}
         storagePlace={summary}
+        preferredItems={preferredItems}
         onUpdated={loadStoragePlace}
       />
     </div>

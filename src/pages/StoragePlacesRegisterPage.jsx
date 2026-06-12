@@ -301,6 +301,21 @@ function StoragePlacesRegisterPage() {
 
         <Card size="small">
           <Flex align="center" wrap gap={16}>
+            <Segmented
+              size="small"
+              value={selectedActiveStatus}
+              options={[
+                { label: 'Активні', value: 'true' },
+                { label: 'Неактивні', value: 'false' },
+              ]}
+              onChange={(value) => {
+                setSelectedActiveStatus(value);
+                setCurrentPage(1);
+              }}
+            />
+
+            <Divider type="vertical" style={{ height: 28 }} />
+
             <Input
               placeholder="Пошук по коду, адресі, назві або компоненту"
               allowClear
@@ -363,32 +378,17 @@ function StoragePlacesRegisterPage() {
               showSizeChanger: false,
               onChange: (page) => setCurrentPage(page),
               showTotal: (totalValue, range) => (
-                <Flex align="center" gap={16} wrap>
-                  <Segmented
-                    size="small"
-                    value={selectedActiveStatus}
-                    options={[
-                      { label: 'Активні', value: 'true' },
-                      { label: 'Неактивні', value: 'false' },
-                    ]}
-                    onChange={(value) => {
-                      setSelectedActiveStatus(value);
-                      setCurrentPage(1);
-                    }}
-                  />
-
-                  <span>
-                    Показано{' '}
-                    <span style={{ color: '#1677ff', fontWeight: 600 }}>
-                      {range[0]}–{range[1]}
-                    </span>{' '}
-                    з{' '}
-                    <span style={{ color: '#1677ff', fontWeight: 600 }}>
-                      {totalValue}
-                    </span>{' '}
-                    місць зберігання
-                  </span>
-                </Flex>
+                <span>
+                  Показано{' '}
+                  <span style={{ color: '#1677ff', fontWeight: 600 }}>
+                    {range[0]}–{range[1]}
+                  </span>{' '}
+                  з{' '}
+                  <span style={{ color: '#1677ff', fontWeight: 600 }}>
+                    {totalValue}
+                  </span>{' '}
+                  місць зберігання
+                </span>
               ),
             }}
             locale={{

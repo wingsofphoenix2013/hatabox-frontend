@@ -244,6 +244,7 @@ function StoragePlaceEditDrawer({
           <Select
             showSearch
             value={selectedInvItemId}
+            searchValue={invItemSearchText}
             placeholder="Оберіть компонент"
             filterOption={false}
             loading={invItemsLoading}
@@ -257,6 +258,7 @@ function StoragePlaceEditDrawer({
             onChange={(value, option) => {
               setSelectedInvItemId(value);
               setSelectedInvItem(option?.item || null);
+              setInvItemSearchText('');
             }}
           />
         ) : (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Alert,
@@ -64,10 +64,14 @@ function StoragePlaceCreateDrawer({
   onClose,
   locations,
   locationsLoading,
+  initialParent = null,
 }) {
   const navigate = useNavigate();
   const [selectedLocationId, setSelectedLocationId] = useState(null);
   const [selectedPlaceType, setSelectedPlaceType] = useState(null);
+  const [childTypeOptions, setChildTypeOptions] = useState([]);
+  const [childTypeOptionsLoading, setChildTypeOptionsLoading] = useState(false);
+  const [childTypeOptionsError, setChildTypeOptionsError] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
 
   const [parentLevels, setParentLevels] = useState([]);
@@ -77,8 +81,13 @@ function StoragePlaceCreateDrawer({
 
   const [saving, setSaving] = useState(false);
 
-  const canSelectPlaceType = Boolean(selectedLocationId) && currentStep === 1;
-  const canGoNextFromStep1 = Boolean(selectedLocationId && selectedPlaceType);
+  const isCreateInsideMode = Boolean(initialParent);
+
+  const canSelectPlaceType =
+    (Boolean(selectedLocationId) || isCreateInsideMode) && currentStep === 1;
+  const canGoNextFromStep1 = isCreateInsideMode
+    ? Boolean(selectedPlaceType)
+    : Boolean(selectedLocationId && selectedPlaceType);
   const canGoNextFromStep2 = Boolean(finalPlacement);
   const canGoNext = currentStep === 1 ? canGoNextFromStep1 : canGoNextFromStep2;
 
@@ -90,6 +99,9 @@ function StoragePlaceCreateDrawer({
   const resetForm = () => {
     setSelectedLocationId(null);
     setSelectedPlaceType(null);
+    setChildTypeOptions([]);
+    setChildTypeOptionsLoading(false);
+    setChildTypeOptionsError('');
     setCurrentStep(1);
     setParentLevels([]);
     setParentOptionsLoading(false);
@@ -102,6 +114,44 @@ function StoragePlaceCreateDrawer({
     resetForm();
     onClose();
   };
+
+  const loadChildTypeOptions = async () => {
+    if (!initialParent?.id) {
+      return;
+    }
+
+    try {
+      setChildTypeOptionsLoading(true);
+      setChildTypeOptionsError('');
+
+      const response = await api.get('storage-child-type-options/', {
+        params: {
+          parent: initialParent.id,
+        },
+      });
+
+      setChildTypeOptions(Array.isArray(response.data) ? response.data : []);
+    } catch (err) {
+      console.error('Failed to load storage child type options:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+      setChildTypeOptions([]);
+      setChildTypeOptionsError(
+        backendMessage ||
+          'Не вдалося завантажити доступні типи вкладених місць.',
+      );
+    } finally {
+      setChildTypeOptionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open && initialParent) {
+      setSelectedLocationId(initialParent.location_id || null);
+      loadChildTypeOptions();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialParent]);
 
   const loadParentOptions = async (parentId = null, levelIndex = 0) => {
     try {
@@ -162,8 +212,8 @@ function StoragePlaceCreateDrawer({
       setSaving(true);
 
       const response = await api.post('storage-places/', {
-        location: finalPlacement.location,
-        parent: finalPlacement.parent,
+        location: isCreateInsideMode ? null : finalPlacement.location,
+        parent: isCreateInsideMode ? initialParent.id : finalPlacement.parent,
         place_type: selectedPlaceType,
       });
 
@@ -200,6 +250,11 @@ function StoragePlaceCreateDrawer({
   };
 
   const handleGoNext = async () => {
+    if (isCreateInsideMode) {
+      await handleCreateStoragePlace();
+      return;
+    }
+
     if (currentStep === 1) {
       setCurrentStep(2);
       setFinalPlacement(null);
@@ -255,23 +310,33 @@ function StoragePlaceCreateDrawer({
       <Flex vertical gap={16}>
         <Card title="Основна інформація">
           <Flex vertical gap={14}>
-            <div>
-              <Text style={compactLabelStyle}>Оберіть локацію</Text>
-              <Select
-                showSearch
-                placeholder="Локація"
-                style={{ width: '100%' }}
-                value={selectedLocationId}
-                options={locationOptions}
-                loading={locationsLoading}
-                optionFilterProp="label"
-                disabled={currentStep > 1}
-                onChange={(value) => {
-                  setSelectedLocationId(value);
-                  setSelectedPlaceType(null);
-                }}
-              />
-            </div>
+            {isCreateInsideMode ? (
+              <div>
+                <Text style={compactLabelStyle}>Створення всередині</Text>
+                <Text>
+                  {initialParent.address || '—'} —{' '}
+                  {initialParent.place_type_name || '—'}
+                </Text>
+              </div>
+            ) : (
+              <div>
+                <Text style={compactLabelStyle}>Оберіть локацію</Text>
+                <Select
+                  showSearch
+                  placeholder="Локація"
+                  style={{ width: '100%' }}
+                  value={selectedLocationId}
+                  options={locationOptions}
+                  loading={locationsLoading}
+                  optionFilterProp="label"
+                  disabled={currentStep > 1}
+                  onChange={(value) => {
+                    setSelectedLocationId(value);
+                    setSelectedPlaceType(null);
+                  }}
+                />
+              </div>
+            )}
 
             <div>
               <Text style={compactLabelStyle}>Оберіть тип</Text>
@@ -279,16 +344,38 @@ function StoragePlaceCreateDrawer({
                 placeholder="Тип місця зберігання"
                 style={{ width: '100%' }}
                 value={selectedPlaceType}
-                options={PLACE_TYPE_OPTIONS}
+                options={
+                  isCreateInsideMode ? childTypeOptions : PLACE_TYPE_OPTIONS
+                }
+                loading={childTypeOptionsLoading}
                 optionFilterProp="label"
-                disabled={!canSelectPlaceType}
+                disabled={
+                  !canSelectPlaceType ||
+                  childTypeOptionsLoading ||
+                  (isCreateInsideMode && childTypeOptions.length === 0)
+                }
                 onChange={setSelectedPlaceType}
               />
             </div>
           </Flex>
         </Card>
 
-        {currentStep >= 2 && (
+        {childTypeOptionsError && (
+          <Alert type="error" description={childTypeOptionsError} showIcon />
+        )}
+
+        {isCreateInsideMode &&
+          !childTypeOptionsLoading &&
+          childTypeOptions.length === 0 &&
+          !childTypeOptionsError && (
+            <Alert
+              type="warning"
+              description="У цьому місці зберігання неможливо створити вкладене місце."
+              showIcon
+            />
+          )}
+
+        {!isCreateInsideMode && currentStep >= 2 && (
           <Card title="Налаштування розміщення">
             <Flex vertical gap={14}>
               {parentOptionsError && (
@@ -346,7 +433,7 @@ function StoragePlaceCreateDrawer({
               loading={parentOptionsLoading || saving}
               onClick={handleGoNext}
             >
-              {currentStep === 2
+              {currentStep === 2 || isCreateInsideMode
                 ? 'Створити місце зберігання'
                 : 'Наступний крок'}
             </Button>

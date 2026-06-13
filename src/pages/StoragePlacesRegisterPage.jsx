@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  AppstoreOutlined,
   InfoCircleOutlined,
   PlusOutlined,
   SearchOutlined,
@@ -12,16 +13,19 @@ import {
   Flex,
   Input,
   Popover,
+  Popconfirm,
   Segmented,
   Select,
   Table,
   Tag,
   Tooltip,
   Typography,
+  message,
 } from 'antd';
 import { Link } from 'react-router-dom';
 import api from '../api/client';
 import StoragePlaceCreateDrawer from '../components/StoragePlaceCreateDrawer';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const { Title, Text } = Typography;
 
@@ -89,6 +93,9 @@ function StoragePlacesRegisterPage() {
   const [total, setTotal] = useState(0);
 
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [createParent, setCreateParent] = useState(null);
+  const [hoveredActionRowId, setHoveredActionRowId] = useState(null);
+  const [actionLoadingId, setActionLoadingId] = useState(null);
 
   useEffect(() => {
     loadLocations();
@@ -176,6 +183,68 @@ function StoragePlacesRegisterPage() {
     value: String(item.id),
     label: `${item.code || '—'} — ${item.name || '—'}`,
   }));
+
+  const handleChangeActiveStatus = async (record, action) => {
+    try {
+      setActionLoadingId(record.id);
+
+      await api.post(`storage-places/${record.id}/${action}/`, {});
+
+      message.success(
+        action === 'activate'
+          ? 'Місце зберігання активовано.'
+          : 'Місце зберігання деактивовано.',
+      );
+
+      await loadStoragePlaces(currentPage);
+    } catch (err) {
+      console.error('Failed to change storage place active status:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(
+        backendMessage || 'Не вдалося змінити статус місця зберігання.',
+      );
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const openCreateInsideDrawer = (record) => {
+    setCreateParent(record);
+    setIsCreateDrawerOpen(true);
+  };
+
+  const getActionItems = (record) => {
+    const actions = [];
+
+    if (selectedActiveStatus === 'true' && record.can_add_inside) {
+      actions.push({
+        key: 'add_inside',
+        label: 'Додати вкладене місце',
+        onClick: () => openCreateInsideDrawer(record),
+      });
+    }
+
+    if (selectedActiveStatus === 'true' && record.can_deactivate) {
+      actions.push({
+        key: 'deactivate',
+        label: 'Вимкнути місце зберігання',
+        danger: true,
+        action: 'deactivate',
+      });
+    }
+
+    if (selectedActiveStatus === 'false' && record.can_activate) {
+      actions.push({
+        key: 'activate',
+        label: 'Увімкнути місце зберігання',
+        action: 'activate',
+      });
+    }
+
+    return actions;
+  };
 
   const columns = [
     {
@@ -270,6 +339,86 @@ function StoragePlacesRegisterPage() {
               </Popover>
             ) : null}
           </Flex>
+        );
+      },
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 70,
+      align: 'center',
+      render: (_, record) => {
+        const actions = getActionItems(record);
+        const hasActions = actions.length > 0;
+        const iconColor = hasActions
+          ? hoveredActionRowId === record.id
+            ? '#1677ff'
+            : '#595959'
+          : '#bfbfbf';
+
+        const content = (
+          <Flex vertical gap={8}>
+            {actions.map((actionItem) =>
+              actionItem.action ? (
+                <Popconfirm
+                  key={actionItem.key}
+                  title={
+                    actionItem.action === 'activate'
+                      ? 'Увімкнути місце зберігання?'
+                      : 'Вимкнути місце зберігання?'
+                  }
+                  okText="Так"
+                  cancelText="Ні"
+                  onConfirm={() =>
+                    handleChangeActiveStatus(record, actionItem.action)
+                  }
+                  disabled={actionLoadingId === record.id}
+                >
+                  <Button
+                    type="link"
+                    danger={actionItem.danger}
+                    loading={actionLoadingId === record.id}
+                    style={{ padding: 0, height: 'auto' }}
+                  >
+                    {actionItem.label}
+                  </Button>
+                </Popconfirm>
+              ) : (
+                <Button
+                  key={actionItem.key}
+                  type="link"
+                  style={{ padding: 0, height: 'auto' }}
+                  onClick={actionItem.onClick}
+                >
+                  {actionItem.label}
+                </Button>
+              ),
+            )}
+          </Flex>
+        );
+
+        return hasActions ? (
+          <Popover placement="bottomRight" content={content} trigger="click">
+            <AppstoreOutlined
+              style={{
+                color: iconColor,
+                cursor: 'pointer',
+                fontSize: 17,
+              }}
+              onMouseEnter={() => setHoveredActionRowId(record.id)}
+              onMouseLeave={() => setHoveredActionRowId(null)}
+            />
+          </Popover>
+        ) : (
+          <Tooltip title="Для цього місця зберігання немає доступних дій.">
+            <AppstoreOutlined
+              style={{
+                color: iconColor,
+                cursor: 'default',
+                fontSize: 17,
+              }}
+            />
+          </Tooltip>
         );
       },
     },
@@ -400,9 +549,13 @@ function StoragePlacesRegisterPage() {
       </Flex>
       <StoragePlaceCreateDrawer
         open={isCreateDrawerOpen}
-        onClose={() => setIsCreateDrawerOpen(false)}
+        onClose={() => {
+          setIsCreateDrawerOpen(false);
+          setCreateParent(null);
+        }}
         locations={locations}
         locationsLoading={locationsLoading}
+        initialParent={createParent}
       />
     </div>
   );

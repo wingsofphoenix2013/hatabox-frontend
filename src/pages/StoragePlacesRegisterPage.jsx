@@ -188,7 +188,7 @@ function StoragePlacesRegisterPage() {
     {
       title: 'Локація',
       key: 'location',
-      width: 180,
+      width: 100,
       render: (_, record) => (
         <Tag color="default">
           {record.location_code || '—'} - {record.location_name || '—'}
@@ -199,7 +199,7 @@ function StoragePlacesRegisterPage() {
       title: 'Тип',
       dataIndex: 'place_type_name',
       key: 'place_type_name',
-      width: 120,
+      width: 100,
       render: (value, record) => (
         <Tag color={getPlaceTypeTagColor(record.place_type)}>
           {value || '—'}
@@ -231,7 +231,7 @@ function StoragePlacesRegisterPage() {
     {
       title: 'Компоненти',
       key: 'preferred_items',
-      width: 360,
+      width: 460,
       render: (_, record) => {
         const preferredItems = Array.isArray(record.preferred_items)
           ? record.preferred_items

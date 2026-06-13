@@ -357,7 +357,7 @@ function StoragePlacesRegisterPage() {
           : '#bfbfbf';
 
         const content = (
-          <Flex vertical gap={8}>
+          <Flex vertical gap={8} align="flex-start">
             {actions.map((actionItem) =>
               actionItem.action ? (
                 <Popconfirm
@@ -378,7 +378,7 @@ function StoragePlacesRegisterPage() {
                     type="link"
                     danger={actionItem.danger}
                     loading={actionLoadingId === record.id}
-                    style={{ padding: 0, height: 'auto' }}
+                    style={{ padding: 0, height: 'auto', textAlign: 'left' }}
                   >
                     {actionItem.label}
                   </Button>
@@ -387,7 +387,7 @@ function StoragePlacesRegisterPage() {
                 <Button
                   key={actionItem.key}
                   type="link"
-                  style={{ padding: 0, height: 'auto' }}
+                  style={{ padding: 0, height: 'auto', textAlign: 'left' }}
                   onClick={actionItem.onClick}
                 >
                   {actionItem.label}

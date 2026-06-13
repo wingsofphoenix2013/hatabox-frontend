@@ -68,6 +68,7 @@ function StoragePlaceEditDrawer({
         Array.isArray(preferredItems)
           ? preferredItems.map((item) => ({
               ...item,
+              preferred_item_id: item.preferred_item_id || item.id,
               internal_code: item.internal_code || item.inv_item_code || '—',
               name: item.name || item.inv_item_name || '—',
             }))
@@ -183,7 +184,8 @@ function StoragePlaceEditDrawer({
       setPreferredItemsState((prevItems) => [
         ...prevItems,
         {
-          id: createdItem.id,
+          id: createdItem.inv_item,
+          preferred_item_id: createdItem.id,
           inv_item: createdItem.inv_item,
           internal_code: createdItem.inv_item_code || '—',
           name: createdItem.inv_item_name || '—',
@@ -213,7 +215,7 @@ function StoragePlaceEditDrawer({
       await api.delete(`storage-place-preferred-items/${preferredItemId}/`);
 
       setPreferredItemsState((prevItems) =>
-        prevItems.filter((item) => item.id !== preferredItemId),
+        prevItems.filter((item) => item.preferred_item_id !== preferredItemId),
       );
 
       message.success('Бажану номенклатуру видалено.');
@@ -321,8 +323,10 @@ function StoragePlaceEditDrawer({
             description="Ви впевнені, що хочете видалити цей компонент?"
             okText="Так"
             cancelText="Ні"
-            onConfirm={() => handleDeletePreferredItem(record.id)}
-            disabled={deletingPreferredItemId === record.id}
+            onConfirm={() =>
+              handleDeletePreferredItem(record.preferred_item_id)
+            }
+            disabled={deletingPreferredItemId === record.preferred_item_id}
           >
             <DeleteOutlined
               style={{

@@ -204,7 +204,7 @@ function StoragePlaceCreateDrawer({
   };
 
   const handleCreateStoragePlace = async () => {
-    if (!finalPlacement) {
+    if (!isCreateInsideMode && !finalPlacement) {
       return;
     }
 

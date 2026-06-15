@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
-import { SettingOutlined, StopOutlined } from '@ant-design/icons';
-import { useParams } from 'react-router-dom';
+import {
+  AppstoreOutlined,
+  SettingOutlined,
+  StopOutlined,
+} from '@ant-design/icons';
+import { Link, useParams } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -8,8 +12,11 @@ import {
   Divider,
   Flex,
   Popconfirm,
+  Popover,
   Row,
+  Segmented,
   Skeleton,
+  Table,
   Tag,
   Tooltip,
   Typography,
@@ -17,6 +24,7 @@ import {
 } from 'antd';
 import api from '../api/client';
 import StoragePlaceEditDrawer from '../components/StoragePlaceEditDrawer';
+import StoragePlaceCreateDrawer from '../components/StoragePlaceCreateDrawer';
 import { getApiErrorMessage } from '../utils/apiError';
 
 const { Text, Title } = Typography;
@@ -43,21 +51,62 @@ function StoragePlaceDetailPage() {
 
   const [summary, setSummary] = useState(null);
   const [preferredItems, setPreferredItems] = useState([]);
+  const [childItems, setChildItems] = useState([]);
+  const [childItemsLoading, setChildItemsLoading] = useState(false);
+  const [childActiveStatus, setChildActiveStatus] = useState('true');
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [childActionLoadingId, setChildActionLoadingId] = useState(null);
+  const [hoveredChildActionRowId, setHoveredChildActionRowId] = useState(null);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+  const [createParent, setCreateParent] = useState(null);
+
+  const loadChildStoragePlaces = async (
+    parentId = id,
+    activeStatus = childActiveStatus,
+  ) => {
+    try {
+      setChildItemsLoading(true);
+
+      const response = await api.get('storage-places-summary/', {
+        params: {
+          parent: parentId,
+          is_active: activeStatus,
+        },
+      });
+
+      setChildItems(
+        Array.isArray(response.data?.results) ? response.data.results : [],
+      );
+    } catch (err) {
+      console.error('Failed to load child storage places:', err);
+      message.error('Не вдалося завантажити вкладені місця зберігання.');
+      setChildItems([]);
+    } finally {
+      setChildItemsLoading(false);
+    }
+  };
 
   const loadStoragePlace = async () => {
     try {
       setLoading(true);
 
       const response = await api.get(`storage-places/${id}/detail-view/`);
-      setSummary(response.data?.summary || null);
+      const loadedSummary = response.data?.summary || null;
+
+      setSummary(loadedSummary);
       setPreferredItems(
         Array.isArray(response.data?.preferred_items)
           ? response.data.preferred_items
           : [],
       );
+
+      if (loadedSummary?.has_children) {
+        await loadChildStoragePlaces(loadedSummary.id, childActiveStatus);
+      } else {
+        setChildItems([]);
+      }
     } catch (err) {
       console.error('Failed to load storage place detail:', err);
       message.error('Не вдалося завантажити точку зберігання.');
@@ -70,6 +119,13 @@ function StoragePlaceDetailPage() {
     loadStoragePlace();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  useEffect(() => {
+    if (summary?.has_children) {
+      loadChildStoragePlaces(summary.id, childActiveStatus);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [childActiveStatus]);
 
   const handleSetDefault = async () => {
     try {
@@ -117,6 +173,219 @@ function StoragePlaceDetailPage() {
       setActionLoading(false);
     }
   };
+
+  const handleChangeChildActiveStatus = async (record, action) => {
+    try {
+      setChildActionLoadingId(record.id);
+
+      await api.post(`storage-places/${record.id}/${action}/`, {});
+
+      message.success(
+        action === 'activate'
+          ? 'Місце зберігання активовано.'
+          : 'Місце зберігання деактивовано.',
+      );
+
+      await loadChildStoragePlaces(summary.id, childActiveStatus);
+    } catch (err) {
+      console.error('Failed to change child storage place active status:', err);
+
+      const backendMessage = getApiErrorMessage(err?.response?.data);
+
+      message.error(
+        backendMessage || 'Не вдалося змінити статус місця зберігання.',
+      );
+    } finally {
+      setChildActionLoadingId(null);
+    }
+  };
+
+  const openCreateInsideDrawer = (record) => {
+    setCreateParent(record);
+    setIsCreateDrawerOpen(true);
+  };
+
+  const renderPreferredItem = (item) => (
+    <Text>
+      {item.internal_code || '—'} {item.name || '—'}
+    </Text>
+  );
+
+  const getChildActionItems = (record) => {
+    const actions = [];
+
+    if (childActiveStatus === 'true' && record.can_add_inside) {
+      actions.push({
+        key: 'add_inside',
+        label: 'Додати вкладене місце',
+        onClick: () => openCreateInsideDrawer(record),
+      });
+    }
+
+    if (childActiveStatus === 'true' && record.can_deactivate) {
+      actions.push({
+        key: 'deactivate',
+        label: 'Вимкнути місце зберігання',
+        danger: true,
+        action: 'deactivate',
+      });
+    }
+
+    if (childActiveStatus === 'false' && record.can_activate) {
+      actions.push({
+        key: 'activate',
+        label: 'Увімкнути місце зберігання',
+        action: 'activate',
+      });
+    }
+
+    return actions;
+  };
+
+  const childColumns = [
+    {
+      title: '№',
+      key: 'index',
+      width: 60,
+      align: 'center',
+      render: (_, __, index) => index + 1,
+    },
+    {
+      title: 'Тип',
+      dataIndex: 'place_type_name',
+      key: 'place_type_name',
+      width: 110,
+      render: (value, record) => (
+        <Tag color={getPlaceTypeTagColor(record.place_type)}>
+          {value || '—'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Код',
+      dataIndex: 'address',
+      key: 'address',
+      width: 220,
+      render: (value, record) => (
+        <Tooltip title={record.address_verbose || value || '—'}>
+          <Link to={`/inventory/storage-topology/${record.id}`}>
+            {value || '—'}
+          </Link>
+        </Tooltip>
+      ),
+    },
+    {
+      title: 'Компоненти',
+      key: 'preferred_items',
+      ellipsis: true,
+      render: (_, record) => {
+        const childPreferredItems = Array.isArray(record.preferred_items)
+          ? record.preferred_items
+          : [];
+        const firstItem = childPreferredItems[0];
+        const restCount = Math.max(
+          Number(record.preferred_items_count || 0) - 1,
+          0,
+        );
+
+        if (!firstItem) {
+          return record.name ? (
+            <span style={{ fontStyle: 'italic' }}>{record.name}</span>
+          ) : (
+            '—'
+          );
+        }
+
+        return (
+          <Flex align="center" gap={8} wrap={false}>
+            {renderPreferredItem(firstItem)}
+
+            {restCount > 0 && <Tag>+{restCount}</Tag>}
+          </Flex>
+        );
+      },
+    },
+    {
+      title: 'Дії',
+      key: 'actions',
+      width: 70,
+      align: 'center',
+      render: (_, record) => {
+        const actions = getChildActionItems(record);
+        const hasActions = actions.length > 0;
+        const iconColor = hasActions
+          ? hoveredChildActionRowId === record.id
+            ? '#1677ff'
+            : '#595959'
+          : '#bfbfbf';
+
+        const content = (
+          <Flex vertical gap={8} align="flex-start">
+            {actions.map((actionItem) =>
+              actionItem.action ? (
+                <Popconfirm
+                  key={actionItem.key}
+                  title={
+                    actionItem.action === 'activate'
+                      ? 'Увімкнути місце зберігання?'
+                      : 'Вимкнути місце зберігання?'
+                  }
+                  okText="Так"
+                  cancelText="Ні"
+                  onConfirm={() =>
+                    handleChangeChildActiveStatus(record, actionItem.action)
+                  }
+                  disabled={childActionLoadingId === record.id}
+                >
+                  <Button
+                    type="link"
+                    danger={actionItem.danger}
+                    loading={childActionLoadingId === record.id}
+                    style={{ padding: 0, height: 'auto', textAlign: 'left' }}
+                  >
+                    {actionItem.label}
+                  </Button>
+                </Popconfirm>
+              ) : (
+                <Button
+                  key={actionItem.key}
+                  type="link"
+                  style={{ padding: 0, height: 'auto', textAlign: 'left' }}
+                  onClick={actionItem.onClick}
+                >
+                  {actionItem.label}
+                </Button>
+              ),
+            )}
+          </Flex>
+        );
+
+        return hasActions ? (
+          <Popover placement="bottomRight" content={content} trigger="click">
+            <AppstoreOutlined
+              style={{
+                color: iconColor,
+                cursor: 'pointer',
+                fontSize: 17,
+              }}
+              onMouseEnter={() => setHoveredChildActionRowId(record.id)}
+              onMouseLeave={() => setHoveredChildActionRowId(null)}
+            />
+          </Popover>
+        ) : (
+          <Tooltip title="Для цього місця зберігання немає доступних дій.">
+            <AppstoreOutlined
+              style={{
+                color: iconColor,
+                cursor: 'default',
+                fontSize: 17,
+              }}
+            />
+          </Tooltip>
+        );
+      },
+    },
+  ];
 
   if (loading) {
     return (
@@ -291,8 +560,35 @@ function StoragePlaceDetailPage() {
           </Card>
 
           {summary?.has_children && (
-            <Card title="Вкладені місця зберігання">
-              <Text type="secondary">Дані з’являться пізніше.</Text>
+            <Card
+              title={
+                <Flex justify="space-between" align="center" gap={12}>
+                  <span>Вкладені місця зберігання</span>
+
+                  <Segmented
+                    size="small"
+                    value={childActiveStatus}
+                    options={[
+                      { label: 'Активні', value: 'true' },
+                      { label: 'Неактивні', value: 'false' },
+                    ]}
+                    onChange={setChildActiveStatus}
+                  />
+                </Flex>
+              }
+            >
+              <Table
+                rowKey="id"
+                columns={childColumns}
+                dataSource={childItems}
+                loading={childItemsLoading}
+                pagination={false}
+                size="small"
+                tableLayout="fixed"
+                locale={{
+                  emptyText: 'Вкладених місць зберігання немає.',
+                }}
+              />
             </Card>
           )}
         </Col>
@@ -304,6 +600,17 @@ function StoragePlaceDetailPage() {
         storagePlace={summary}
         preferredItems={preferredItems}
         onUpdated={loadStoragePlace}
+      />
+
+      <StoragePlaceCreateDrawer
+        open={isCreateDrawerOpen}
+        onClose={() => {
+          setIsCreateDrawerOpen(false);
+          setCreateParent(null);
+        }}
+        locations={[]}
+        locationsLoading={false}
+        initialParent={createParent}
       />
     </div>
   );

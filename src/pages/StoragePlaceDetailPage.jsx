@@ -49,6 +49,64 @@ const getPlaceTypeTagColor = (placeType) => {
   }
 };
 
+const renderAddressChain = (summary) => {
+  const chain = Array.isArray(summary?.address_chain)
+    ? summary.address_chain
+    : [];
+
+  if (chain.length === 0) {
+    return summary?.address_verbose || '—';
+  }
+
+  return (
+    <Flex align="center" gap={6} wrap>
+      {chain.map((item, index) => {
+        const isFirst = index === 0;
+        const isLast = index === chain.length - 1;
+        const tag = (
+          <Tag
+            color={
+              item.place_type === 'location'
+                ? 'default'
+                : getPlaceTypeTagColor(item.place_type)
+            }
+            style={{ marginInlineEnd: 0 }}
+          >
+            {item.code || '—'}
+          </Tag>
+        );
+
+        return (
+          <Flex
+            key={`${item.place_type}-${item.code}-${index}`}
+            align="center"
+            gap={4}
+          >
+            <span>{item.label || '—'}</span>
+
+            {!isFirst && !isLast && item.id ? (
+              <Link
+                to={`/inventory/storage-topology/${item.id}`}
+                state={{
+                  storagePlaceLabel: `${item.code || '—'} ${
+                    item.label || ''
+                  }`.trim(),
+                }}
+              >
+                {tag}
+              </Link>
+            ) : (
+              tag
+            )}
+
+            {!isLast && <span>|</span>}
+          </Flex>
+        );
+      })}
+    </Flex>
+  );
+};
+
 function StoragePlaceDetailPage() {
   const { id } = useParams();
 
@@ -643,7 +701,7 @@ function StoragePlaceDetailPage() {
                 </Descriptions.Item>
 
                 <Descriptions.Item label="Розміщення">
-                  {summary?.address_verbose || '—'}
+                  {renderAddressChain(summary)}
                 </Descriptions.Item>
 
                 <Descriptions.Item label="Бажані компоненти">

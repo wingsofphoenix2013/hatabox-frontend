@@ -71,7 +71,7 @@ function StoragePlaceDetailPage() {
 
       const response = await api.get('storage-places-summary/', {
         params: {
-          parent: parentId,
+          root_parent: parentId,
           is_active: activeStatus,
         },
       });
@@ -267,18 +267,20 @@ function StoragePlaceDetailPage() {
       key: 'address',
       width: 220,
       render: (value, record) => (
-        <Tooltip title={record.address_verbose || value || '—'}>
-          <Link
-            to={`/inventory/storage-topology/${record.id}`}
-            state={{
-              storagePlaceLabel: `${record.address || '—'} ${
-                record.name || ''
-              }`.trim(),
-            }}
-          >
-            {value || '—'}
-          </Link>
-        </Tooltip>
+        <div style={{ paddingLeft: Number(record.level || 0) * 10 }}>
+          <Tooltip title={record.address_verbose || value || '—'}>
+            <Link
+              to={`/inventory/storage-topology/${record.id}`}
+              state={{
+                storagePlaceLabel: `${record.address || '—'} ${
+                  record.name || ''
+                }`.trim(),
+              }}
+            >
+              {value || '—'}
+            </Link>
+          </Tooltip>
+        </div>
       ),
     },
     {

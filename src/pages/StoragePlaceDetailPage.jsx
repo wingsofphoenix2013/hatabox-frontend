@@ -268,7 +268,14 @@ function StoragePlaceDetailPage() {
       width: 220,
       render: (value, record) => (
         <Tooltip title={record.address_verbose || value || '—'}>
-          <Link to={`/inventory/storage-topology/${record.id}`}>
+          <Link
+            to={`/inventory/storage-topology/${record.id}`}
+            state={{
+              storagePlaceLabel: `${record.address || '—'} ${
+                record.name || ''
+              }`.trim(),
+            }}
+          >
             {value || '—'}
           </Link>
         </Tooltip>

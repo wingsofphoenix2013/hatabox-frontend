@@ -3,6 +3,7 @@ import {
   AppstoreOutlined,
   SettingOutlined,
   StopOutlined,
+  WarningFilled,
 } from '@ant-design/icons';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -447,6 +448,12 @@ function StoragePlaceDetailPage() {
               color: '#595959',
             }}
           >
+            <WarningFilled
+              style={{
+                color: '#ff4d4f',
+                marginRight: 6,
+              }}
+            />
             ВІДКЛЮЧЕНО
           </Tag>
         )}

@@ -18,7 +18,9 @@ import {
   InputNumber,
   Popconfirm,
   Select,
+  Switch,
   Table,
+  Tooltip,
   Typography,
   Upload,
   message,
@@ -51,6 +53,7 @@ function OrderReceiptDrawer({
   const [receiptNo, setReceiptNo] = useState('');
   const [receiptDate, setReceiptDate] = useState(null);
   const [receiptFile, setReceiptFile] = useState(null);
+  const [useNewScenario, setUseNewScenario] = useState(false);
   const [creatingReceiptDocument, setCreatingReceiptDocument] = useState(false);
 
   const [activeReceiptDocument, setActiveReceiptDocument] = useState(null);
@@ -70,6 +73,7 @@ function OrderReceiptDrawer({
     setReceiptNo('');
     setReceiptDate(null);
     setReceiptFile(null);
+    setUseNewScenario(false);
     setCreatingReceiptDocument(false);
   };
 
@@ -409,6 +413,7 @@ function OrderReceiptDrawer({
       payload.append('order', String(order.id));
       payload.append('receipt_date', receiptDate.format('YYYY-MM-DD'));
       payload.append('comment', '');
+      payload.append('use_new_scenario', useNewScenario ? 'true' : 'false');
 
       if (receiptFile) {
         payload.append('image', receiptFile);
@@ -926,7 +931,26 @@ function OrderReceiptDrawer({
       onClose={onClose}
     >
       <Flex vertical gap={16}>
-        <Card title="1. Оберіть прибуткову накладну">
+        <Card
+          title={
+            <Flex justify="space-between" align="center">
+              <span>1. Оберіть прибуткову накладну</span>
+
+              <Tooltip title="НЕ ЧІПАТИ!">
+                <Flex align="center" gap={8}>
+                  <span>Новий сценарій</span>
+
+                  <Switch
+                    checked={useNewScenario}
+                    onChange={setUseNewScenario}
+                  />
+
+                  <span>{useNewScenario ? 'Так' : 'Ні'}</span>
+                </Flex>
+              </Tooltip>
+            </Flex>
+          }
+        >
           <Flex vertical gap={16}>
             {!hasReceiptDocuments && !receiptDocumentsLoading && (
               <>

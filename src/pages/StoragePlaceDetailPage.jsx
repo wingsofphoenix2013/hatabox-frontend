@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   AppstoreOutlined,
+  InfoCircleOutlined,
   SettingOutlined,
   StopOutlined,
   WarningFilled,
@@ -10,6 +11,7 @@ import {
   Button,
   Card,
   Col,
+  Descriptions,
   Divider,
   Flex,
   Popconfirm,
@@ -571,8 +573,113 @@ function StoragePlaceDetailPage() {
         </Col>
 
         <Col xs={24} lg={18}>
-          <Card title="Основна інформація" style={{ marginBottom: 20 }}>
-            <Text type="secondary">Дані з’являться пізніше.</Text>
+          <Card
+            title="Основна інформація"
+            extra={
+              <Button
+                type="link"
+                icon={<SettingOutlined />}
+                onClick={() => setIsEditDrawerOpen(true)}
+                style={{
+                  color: '#595959',
+                  paddingInline: 0,
+                }}
+              >
+                Налаштування місця зберігання
+              </Button>
+            }
+            style={{ marginBottom: 20 }}
+          >
+            <Flex vertical gap={16}>
+              {summary?.name ? (
+                <div>
+                  <Text
+                    type="secondary"
+                    style={{
+                      display: 'block',
+                      marginBottom: 4,
+                      fontSize: 12,
+                    }}
+                  >
+                    Назва місця зберігання
+                  </Text>
+
+                  <Text>{summary.name}</Text>
+                </div>
+              ) : null}
+
+              {summary?.comment ? (
+                <div>
+                  <Text
+                    type="secondary"
+                    style={{
+                      display: 'block',
+                      marginBottom: 4,
+                      fontSize: 12,
+                    }}
+                  >
+                    Опис місця зберігання
+                  </Text>
+
+                  <Text style={{ whiteSpace: 'pre-wrap' }}>
+                    {summary.comment}
+                  </Text>
+                </div>
+              ) : null}
+              <Descriptions
+                column={1}
+                size="small"
+                styles={{
+                  label: {
+                    width: 180,
+                  },
+                }}
+              >
+                <Descriptions.Item label="Локація">
+                  <Tag color="default">
+                    {summary?.location_code || '—'} -{' '}
+                    {summary?.location_name || '—'}
+                  </Tag>
+                </Descriptions.Item>
+
+                <Descriptions.Item label="Розміщення">
+                  {summary?.address_verbose || '—'}
+                </Descriptions.Item>
+
+                <Descriptions.Item label="Бажані компоненти">
+                  {preferredItems.length > 0 ? (
+                    <Flex vertical gap={6} align="flex-start">
+                      {preferredItems.map((item) => (
+                        <Flex key={item.id} align="center" gap={6} wrap={false}>
+                          <Text>
+                            {item.internal_code || '—'} {item.name || '—'}
+                          </Text>
+
+                          <Tooltip title="Відкрити картку залишку">
+                            <InfoCircleOutlined
+                              style={{
+                                color: '#8c8c8c',
+                                cursor: 'pointer',
+                              }}
+                              onClick={() => {
+                                if (item.inv_item_id) {
+                                  window.open(
+                                    `/inventory/stock/${item.inv_item_id}`,
+                                    '_blank',
+                                  );
+                                }
+                              }}
+                            />
+                          </Tooltip>
+                        </Flex>
+                      ))}
+                    </Flex>
+                  ) : (
+                    '—'
+                  )}
+                </Descriptions.Item>
+              </Descriptions>
+            </Flex>
           </Card>
 
           {summary?.has_children && (

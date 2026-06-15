@@ -103,7 +103,7 @@ function StoragePlaceDetailPage() {
       );
 
       if (loadedSummary?.has_children) {
-        await loadChildStoragePlaces(loadedSummary.id, childActiveStatus);
+        loadChildStoragePlaces(loadedSummary.id, childActiveStatus);
       } else {
         setChildItems([]);
       }

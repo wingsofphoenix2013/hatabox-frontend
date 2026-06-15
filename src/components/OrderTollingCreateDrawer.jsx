@@ -17,7 +17,9 @@ import {
   Modal,
   Select,
   Space,
+  Switch,
   Table,
+  Tooltip,
   Typography,
   message,
 } from 'antd';
@@ -101,6 +103,7 @@ function OrderTollingCreateDrawer({
 
   const [organizationDraftId, setOrganizationDraftId] = useState(null);
   const [createdOrderId, setCreatedOrderId] = useState(null);
+  const [useNewScenario, setUseNewScenario] = useState(false);
 
   const [selectedInvItemId, setSelectedInvItemId] = useState(null);
   const [selectedQuantity, setSelectedQuantity] = useState(null);
@@ -178,6 +181,7 @@ function OrderTollingCreateDrawer({
   const resetAll = () => {
     setOrganizationDraftId(null);
     setCreatedOrderId(null);
+    setUseNewScenario(false);
     setSelectedInvItemId(null);
     setSelectedQuantity(null);
     setSelectedExpectedDate(null);
@@ -337,6 +341,7 @@ function OrderTollingCreateDrawer({
 
       const response = await api.post('tolling-orders/', {
         organization: organizationDraftId,
+        use_new_scenario: useNewScenario,
       });
 
       const createdOrder = response.data;
@@ -672,7 +677,24 @@ function OrderTollingCreateDrawer({
       <Flex vertical gap={16}>
         {!isEditMode && (
           <Card
-            title="1. Оберіть організацію"
+            title={
+              <Flex justify="space-between" align="center">
+                <span>1. Оберіть організацію</span>
+
+                <Tooltip title="НЕ ЧІПАТИ!">
+                  <Flex align="center" gap={8}>
+                    <span>Новий сценарій</span>
+
+                    <Switch
+                      checked={useNewScenario}
+                      onChange={setUseNewScenario}
+                    />
+
+                    <span>{useNewScenario ? 'Так' : 'Ні'}</span>
+                  </Flex>
+                </Tooltip>
+              </Flex>
+            }
             styles={{
               body: {
                 opacity: step1Locked ? 0.7 : 1,
